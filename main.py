@@ -2,48 +2,99 @@ import asyncio
 import logging
 import sys
 from os import getenv
+from typing import Any, Dict
+import sqlite3
 
-from aiogram import Bot, Dispatcher, html
+from aiogram import Bot, Dispatcher, F, Router, html
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart
-from aiogram.types import Message
+from aiogram.filters import Command, CommandStart
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import (
+    KeyboardButton,
+    Message,
+    ReplyKeyboardMarkup,
+    ReplyKeyboardRemove,
+)
 
 from messages import *
 
-# Bot token can be obtained via https://t.me/BotFather
-TOKEN = "7715248537:AAGHC6W-52_TMYn9L2n7vmBCaToSejpryAw"
-
-# All handlers should be attached to the Router (or Dispatcher)
-
+TOKEN = KEY
 dp = Dispatcher()
 
+# Состояния FSM
+class WordStates(StatesGroup):
+        waiting_for_word = State()  # Ожидание слова
+        waiting_for_part_of_speech = State()  # Ожидание части речи
+        waiting_for_translation = State()  # Ожидание перевода
+
+
 @dp.message(CommandStart())
-async def command_start_handler(message: Message) -> None:
-    """
-    This handler receives messages with `/start` command
-    """
-    # Most event objects have aliases for API methods that can be called in events' context
-    # For example if you want to answer to incoming message you can use `message.answer(...)` alias
-    # and the target chat will be passed to :ref:`aiogram.methods.send_message.SendMessage`
-    # method automatically or call API method directly via
-    # Bot instance: `bot.send_message(chat_id=message.chat.id, ...)`
-    await message.answer(f"🌟 Welcome to the Club, {html.bold(message.from_user.first_name)}! {GREETING}")
+async def command_start_handler(message: Message, state: FSMContext) -> None:
+    await message.answer(f"🌟 Welcome! {GREETING}")
 
 
-@dp.message()
-async def echo_handler(message: Message) -> None:
-    """
-    Handler will forward receive a message back to the sender
 
-    By default, message handler will handle all message types (like a text, photo, sticker etc.)
-    """
-    try:
-        # Send a copy of the received message
-        await message.send_copy(chat_id=message.chat.id)
-    except TypeError:
-        # But not all the types is supported to be copied so need to handle it
-        await message.answer("Nice try!")
+
+# Новый обработчик для начала добавления слова
+@dp.message(Command("addword"))
+async def start_add_word(message: Message, state: FSMContext) -> None:
+    await message.answer("📝 Enter a new word to learn:")
+    await state.set_state(WordStates.waiting_for_word)
+
+
+# Обработчик для ввода слова (теперь корректно работает)
+@dp.message(WordStates.waiting_for_word)
+async def add_word(message: Message, state: FSMContext) -> None:
+    # Сохраняем слово в состоянии
+    await state.update_data(word=message.text)
+
+    # Проверяем существование слова в БД
+    conn = sqlite3.connect('dictionary.db')
+    cursor = conn.cursor()
+    if cursor.execute(SELECT_WORD, (message.text,)).fetchone():
+        await message.answer("Word already exists")
+        conn.close()
+        await state.clear()
+        return
+
+    conn.close()
+
+    # Переходим к выбору части речи
+    await message.answer(
+        "What part of speech is it?",
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard=[
+                [KeyboardButton(text="Noun"), KeyboardButton(text="Verb")],
+                [KeyboardButton(text="Adjective"), KeyboardButton(text="Adverb")]
+            ],
+            resize_keyboard=True,
+        ),
+    )
+    await state.set_state(WordStates.waiting_for_part_of_speech)
+
+
+@dp.message(WordStates.waiting_for_part_of_speech)
+async def process_part_of_speech(message: Message, state: FSMContext) -> None:
+    data = await state.get_data()
+    word = data["word"]
+    part_of_speech = message.text.lower()
+
+    # Сохраняем в БД
+    conn = sqlite3.connect('dictionary.db')
+    cursor = conn.cursor()
+    cursor.execute(INSERT_WORD, (word, part_of_speech, None))
+    conn.commit()
+    conn.close()
+
+    print(word, part_of_speech)
+
+    await message.answer(
+        f"✅ Saved: {word} ({part_of_speech})",
+        reply_markup=ReplyKeyboardRemove()
+    )
+    await state.clear()
 
 
 async def main() -> None:
@@ -52,6 +103,7 @@ async def main() -> None:
 
     # And the run events dispatching
     await dp.start_polling(bot)
+
 
 
 if __name__ == "__main__":
