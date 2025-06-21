@@ -2,6 +2,7 @@ import asyncio
 import logging
 import sys
 import sqlite3
+import os
 from typing import List, Tuple, Optional
 
 from aiogram import Bot, Dispatcher, F
@@ -38,54 +39,74 @@ class EditState(StatesGroup):
 
 # ========== БАЗОВЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ ==========
 
+def get_user_db_path(user_id: int) -> str:
+    """Возвращает путь к файлу БД пользователя"""
+    return f'dbs/dictionary_{user_id}.db'
 
-# Удалите функцию get_db_connection()
-# Во всех функциях используйте прямое подключение:
+
+def ensure_user_db(user_id: int):
+    """Создает БД пользователя, если не существует"""
+    db_path = get_user_db_path(user_id)
+    if not os.path.exists(db_path):
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute(CREATE_TABLE)
+        conn.commit()
+        conn.close()
+        logging.info(f"Created new database for user {user_id}")
 
 
-async def get_words_from_db() -> List[Tuple[str, str, str]]:
-    """Получаем все слова из базы данных"""
-    conn = sqlite3.connect('dictionary.db')
+async def get_words_from_db(user_id: int) -> List[Tuple[str, str, str]]:
+    """Получаем все слова из базы данных пользователя"""
+    ensure_user_db(user_id)
+    db_path = get_user_db_path(user_id)
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     try:
         cursor.execute("SELECT word, part_of_speech, translation FROM words ORDER BY word")
         words = cursor.fetchall()
         return words
     except sqlite3.Error as e:
-        logging.error(f"Database error: {e}")
+        logging.error(f"Database error for user {user_id}: {e}")
         return []
     finally:
         conn.close()
 
 
-async def delete_word_from_db(word: str) -> bool:
-    """Удаляет слово из базы данных"""
-    conn = sqlite3.connect('dictionary.db')
+async def delete_word_from_db(user_id: int, word: str) -> bool:
+    """Удаляет слово из базы данных пользователя"""
+    ensure_user_db(user_id)
+    db_path = get_user_db_path(user_id)
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     try:
         cursor.execute("DELETE FROM words WHERE word = ?", (word,))
         conn.commit()
         return cursor.rowcount > 0
     except sqlite3.Error as e:
-        logging.error(f"Database error: {e}")
+        logging.error(f"Database error for user {user_id}: {e}")
         return False
     finally:
         conn.close()
 
 
-async def update_word_in_db(old_word: str, new_word: str, pos: str, value: str) -> bool:
-    conn = sqlite3.connect('dictionary.db')
+async def update_word_in_db(user_id: int, old_word: str, new_word: str, pos: str, value: str) -> bool:
+    """Обновляет слово в базе данных пользователя"""
+    ensure_user_db(user_id)
+    db_path = get_user_db_path(user_id)
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
+
     try:
-        # Если слово изменилось - удаляем старую запись и создаём новую
         if old_word != new_word:
             cursor.execute("DELETE FROM words WHERE word = ?", (old_word,))
+            # ИСПРАВЛЕНО: translation → value
             cursor.execute("""
                 INSERT INTO words (word, part_of_speech, translation)
                 VALUES (?, ?, ?)
             """, (new_word, pos, value))
-        # Если слово не менялось - просто обновляем остальные поля
         else:
+            # ИСПРАВЛЕНО: translation → value
             cursor.execute("""
                 UPDATE words 
                 SET part_of_speech = ?, translation = ?
@@ -95,24 +116,54 @@ async def update_word_in_db(old_word: str, new_word: str, pos: str, value: str) 
         conn.commit()
         return cursor.rowcount > 0
     except sqlite3.Error as e:
-        logging.error(f"Database error: {e}")
+        logging.error(f"Database error for user {user_id}: {e}")
         return False
     finally:
         conn.close()
 
+
+async def add_word_to_db(user_id: int, word: str, pos: str, value: str) -> bool:
+    """Добавляет новое слово в БД пользователя"""
+    ensure_user_db(user_id)
+    db_path = get_user_db_path(user_id)
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(INSERT_WORD, (word, pos, value))
+        conn.commit()
+        return cursor.rowcount > 0
+    except sqlite3.Error as e:
+        logging.error(f"Database error for user {user_id}: {e}")
+        return False
+    finally:
+        conn.close()
+
+
+async def check_word_exists(user_id: int, word: str) -> bool:
+    """Проверяет существование слова в БД пользователя"""
+    ensure_user_db(user_id)
+    db_path = get_user_db_path(user_id)
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(SELECT_WORD, (word,))
+        return cursor.fetchone() is not None
+    except sqlite3.Error as e:
+        logging.error(f"Database error for user {user_id}: {e}")
+        return False
+    finally:
+        conn.close()
 
 
 # ========== ОБРАБОТЧИКИ ДЛЯ ПРОСМОТРА СЛОВ ==========
 
 @dp.message(Command("words"))
 async def cmd_words(message: Message, state: FSMContext):
-    """Обработчик команды /words - показывает слова из базы"""
-    # Получаем слова из базы данных
-    conn = sqlite3.connect('dictionary.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT word, part_of_speech, translation FROM words ORDER BY word")
-    words = cursor.fetchall()
-    conn.close()
+    """Обработчик команды /words - показывает слова из базы пользователя"""
+    user_id = message.from_user.id
+
+    # Получаем слова из базы данных пользователя
+    words = await get_words_from_db(user_id)
 
     if not words:
         await message.answer("📭 Your dictionary is empty. Add some words first!")
@@ -148,7 +199,7 @@ async def show_current_word(message: Message, state: FSMContext, edit: bool = Fa
     word, pos, value = words[current_index]
 
     # Формируем текст сообщения
-    text = f"📖 <b>Word</b>: {word}{' '*(70 - len(word))}{current_index+1} of {len(words)} 🔢\n"
+    text = f"📖 <b>Word</b>: {word}{' ' * (70 - len(word))}{current_index + 1} of {len(words)} 🔢\n"
     text += f"🔤 <b>Part of speech:</b> {pos}\n"
     if value:
         text += f"💡 <b>Meaning:</b> {value}\n"
@@ -292,6 +343,7 @@ async def cancel_words(callback: CallbackQuery, state: FSMContext):
 @dp.callback_query(F.data == "delete_word", WordsViewState.viewing_words)
 async def delete_word_handler(callback: CallbackQuery, state: FSMContext):
     """Удаляет текущее слово"""
+    user_id = callback.from_user.id
     data = await state.get_data()
     words = data.get("words", [])
     current_index = data.get("current_index", 0)
@@ -302,10 +354,10 @@ async def delete_word_handler(callback: CallbackQuery, state: FSMContext):
 
     word, _, _ = words[current_index]
 
-    # Удаляем слово из базы данных
-    if await delete_word_from_db(word):
+    # Удаляем слово из базы данных пользователя
+    if await delete_word_from_db(user_id, word):
         # Обновляем список слов
-        words = await get_words_from_db()
+        words = await get_words_from_db(user_id)
 
         if not words:
             await callback.message.edit_text("✅ Word deleted\n")
@@ -336,8 +388,6 @@ async def start_edit_word(callback: CallbackQuery, state: FSMContext):
     words = data.get("words", [])
     current_index = data.get("current_index", 0)
 
-
-
     if not words or current_index >= len(words):
         await callback.answer("No word to edit")
         return
@@ -350,9 +400,9 @@ async def start_edit_word(callback: CallbackQuery, state: FSMContext):
         editing_pos=pos,
         editing_value=value,
         editing_index=current_index,
-        original_word = word,  # Добавляем
-        original_pos = pos,  # оригинальные
-        original_value = value  # значения
+        original_word=word,  # Добавляем
+        original_pos=pos,  # оригинальные
+        original_value=value  # значения
     )
 
     # Создаем клавиатуру для выбора, что редактировать
@@ -419,21 +469,23 @@ async def cancel_edit(callback: CallbackQuery, state: FSMContext):
 
 @dp.message(EditState.waiting_edit_word)
 async def handle_edit_word_text(message: Message, state: FSMContext):
+    user_id = message.from_user.id
     new_word = message.text.strip()
     data = await state.get_data()
-    original_word = data.get("original_word", "")  # Используем оригинальное слово
+    old_word = data.get("editing_word", "")
+    original_word = data.get("original_word", "")  # Получаем оригинальное слово
 
     # Если новое слово совпадает с оригинальным - пропускаем проверку
     if new_word != original_word:
-        # Проверяем, не существует ли уже нового слова
-        words = await get_words_from_db()
+        # Проверяем, не существует ли уже нового слова в БД пользователя
+        words = await get_words_from_db(user_id)
         if any(w[0].lower() == new_word.lower() for w in words):
             await message.answer("⚠️ This word already exists in the dictionary")
             return
 
     # Обновляем данные
     await state.update_data(editing_word=new_word)
-    await save_edited_word(message, state)
+    await save_edited_word(message, state, user_id)
 
 
 @dp.message(EditState.waiting_edit_value)
@@ -441,7 +493,7 @@ async def handle_edit_word_value(message: Message, state: FSMContext):
     """Обрабатывает новое значение"""
     new_value = message.text.strip()
     await state.update_data(editing_value=new_value)
-    await save_edited_word(message, state)
+    await save_edited_word(message, state, message.from_user.id)
 
 
 @dp.callback_query(F.data.startswith("newpos_"), EditState.waiting_edit_pos)
@@ -449,11 +501,11 @@ async def handle_edit_word_pos(callback: CallbackQuery, state: FSMContext):
     """Обрабатывает новую часть речи"""
     new_pos = callback.data.replace("newpos_", "")
     await state.update_data(editing_pos=new_pos)
-    await save_edited_word(callback.message, state)
+    await save_edited_word(callback.message, state, callback.from_user.id)
     await callback.answer()
 
 
-async def save_edited_word(message: Message, state: FSMContext):
+async def save_edited_word(message: Message, state: FSMContext, user_id: int):
     data = await state.get_data()
     # Получаем текущие значения
     new_word = data.get("editing_word", "")
@@ -476,11 +528,11 @@ async def save_edited_word(message: Message, state: FSMContext):
         await show_current_word(message, state, edit=True)
         return
 
-    # Обновляем слово в базе данных
-    success = await update_word_in_db(original_word, new_word, new_pos, new_value)
+    # Обновляем слово в базе данных пользователя
+    success = await update_word_in_db(user_id, original_word, new_word, new_pos, new_value)
     if success:
         # Обновляем список слов
-        words = await get_words_from_db()
+        words = await get_words_from_db(user_id)
 
         # Находим новую позицию отредактированного слова
         new_index = next((i for i, w in enumerate(words) if w[0] == new_word), editing_index)
@@ -499,10 +551,7 @@ async def save_edited_word(message: Message, state: FSMContext):
         await show_current_word(message, state, edit=True)
 
 
-# ========== ОСНОВНОЙ КОД ДОБАВЛЕНИЯ СЛОВ (БЕЗ ИЗМЕНЕНИЙ) ==========
-
-# ... (ваш существующий код для добавления слов)
-# Обратите внимание: нужно добавить MemoryStorage в диспетчер
+# ========== ОСНОВНОЙ КОД ДОБАВЛЕНИЯ СЛОВ ==========
 
 @dp.message(CommandStart())
 async def start(message: Message):
@@ -512,6 +561,8 @@ async def start(message: Message):
 
 async def process_word_input(message: Message, state: FSMContext):
     """Обработка ввода слова - основная логика"""
+    user_id = message.from_user.id
+
     # Обработка ввода слова и значения
     if ':' in message.text:
         parts = message.text.split(':', 1)
@@ -521,16 +572,11 @@ async def process_word_input(message: Message, state: FSMContext):
         word = message.text.strip()
         value = None
 
-    # Проверяем существование слова в БД
-    conn = sqlite3.connect('dictionary.db')
-    cursor = conn.cursor()
-    cursor.execute(CREATE_TABLE)
-    if cursor.execute(SELECT_WORD, (word,)).fetchone():
+    # Проверяем существование слова в БД пользователя
+    if await check_word_exists(user_id, word):
         await message.answer("⚠️ Word already exists")
-        conn.close()
         await state.clear()
         return
-    conn.close()
 
     # Сохраняем данные в состоянии
     await state.update_data(word=word, value=value)
@@ -556,28 +602,25 @@ async def handle_part_of_speech_text(message: Message):
 
 @dp.callback_query(F.data.startswith("pos_"), WordStates.waiting_for_part_of_speech)
 async def process_part_of_speech_callback(callback: CallbackQuery, state: FSMContext) -> None:
+    user_id = callback.from_user.id
     part_of_speech = callback.data.replace("pos_", "")
     data = await state.get_data()
     word = data.get("word")
     value = data.get("value")
 
-    # Сохраняем в БД
-    conn = sqlite3.connect('dictionary.db')
-    cursor = conn.cursor()
-    cursor.execute(INSERT_WORD, (word, part_of_speech, value))
-    conn.commit()
-    conn.close()
+    # Сохраняем в БД пользователя
+    if await add_word_to_db(user_id, word, part_of_speech, value):
+        # Формируем ответное сообщение
+        response = f"✅ Saved: {word} ({part_of_speech})"
+        if value:
+            response += f"\nMeaning: {value[:50] + '...' if len(value) > 50 else value}"
 
-    logging.info(f"Saved: {word} ({part_of_speech})")
-
-    # Формируем ответное сообщение
-    response = f"✅ Saved: {word} ({part_of_speech})"
-    if value:
-        response += f"\nMeaning: {value[:50]+'...' if len(value) > 50 else value}"
-
-    await callback.message.edit_text(response)
-    await callback.answer()
-    await state.clear()
+        await callback.message.edit_text(response)
+        await callback.answer()
+        await state.clear()
+    else:
+        await callback.message.edit_text("❌ Failed to save word")
+        await callback.answer()
 
 
 @dp.message()
@@ -606,16 +649,7 @@ async def handle_all_messages(message: Message, state: FSMContext):
     await process_word_input(message, state)
 
 
-async def init_db():
-    """Инициализирует базу данных при запуске"""
-    conn = sqlite3.connect('dictionary.db')
-    cursor = conn.cursor()
-    cursor.execute(CREATE_TABLE)
-    conn.commit()
-    conn.close()
-
 async def main() -> None:
-    await init_db()  # Инициализация БД перед запуском бота
     bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     await dp.start_polling(bot)
 
