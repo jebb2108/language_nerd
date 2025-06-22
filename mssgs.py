@@ -29,17 +29,3 @@ GREETING = ( "\n\nЧто умеет этот бот? Он поможет угл�
             
 "Let’s make your English unstoppable! 🚀")
 
-CREATE_TABLE = ("CREATE TABLE IF NOT EXISTS words ("
-    "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-    "word TEXT NOT NULL, "
-    "part_of_speech TEXT NULL, "
-    "translation TEXT NULL)")
-
-INSERT_WORD = "INSERT INTO words (word, part_of_speech, translation) VALUES (?, ?, ?)"
-
-UPDATE_PART_OF_SPEECH = "UPDATE words SET part_of_speech = ? WHERE word = ?"
-
-UPDATE_TRANSLATION = "UPDATE words SET translation = ? WHERE word = ?"
-
-SELECT_WORD = "SELECT * FROM words WHERE word = ?"
-

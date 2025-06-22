@@ -7,3 +7,6 @@ urllib3==2.4.0
 
 python-dotenv~=1.1.0
 aiogram~=3.20.0.post0
+aiosqlite~=0.21.0
+uvloop~=0.21.0
+cachetools~=6.1.0
