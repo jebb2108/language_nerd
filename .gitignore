@@ -1,5 +1,7 @@
 .idea/
 __pycache__/
 dictionary.db
-dbs/*.db
+dbs/*
 .env
+tests/*
+.DS_Store

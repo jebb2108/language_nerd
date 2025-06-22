@@ -11,9 +11,10 @@
 import asyncio  # Для асинхронного выполнения задач
 import logging  # Для записи логов работы бота
 import sys  # Для работы с системными функциями
-import sqlite3  # Для работы с базами данных SQLite
+import asyncpg
+from asyncpg.pool import Pool
 import os  # Для работы с файловой системой
-from typing import List, Tuple  # Аннотации типов для лучшей читаемости
+from typing import List, Tuple, Optional  # Аннотации типов для лучшей читаемости
 from dotenv import load_dotenv  # Для загрузки переменных окружения из .env файла
 
 # Импорт компонентов из библиотеки aiogram для работы с Telegram API
@@ -34,8 +35,29 @@ from aiogram.types import (  # Типы данных Telegram
 # Импорт текстовых сообщений из отдельного файла (mssgs.py)
 from mssgs import *
 
+# Загрузка переменных окружения ДОЛЖНА БЫТЬ ВЫЗВАНА
+load_dotenv(""".env""")
+
 # Загружаем переменные окружения из файла .env (токены ботов и другие настройки)
-load_dotenv()
+# Получение и проверка переменных окружения
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
+POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
+POSTGRES_DB = os.getenv("POSTGRES_DB", "telegram_bot")
+
+# Обработка порта с проверкой
+try:
+    POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
+except ValueError:
+    POSTGRES_PORT = 5432
+    logging.warning(f"Invalid POSTGRES_PORT value, using default: {POSTGRES_PORT}")
+
+# Проверка наличия обязательных параметров
+if not POSTGRES_PASSWORD or POSTGRES_PASSWORD == "password":
+    logging.warning("Using default PostgreSQL password - not secure for production!")
+
+# Глобальный пул соединений
+db_pool: Optional[Pool] = None
 
 """ 
 =============== БОТ 1: ОСНОВНОЙ БОТ (ГЛАВНОЕ МЕНЮ) =============== 
@@ -138,180 +160,102 @@ class EditState(StatesGroup):
 # = ФУНКЦИИ ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ =
 # Каждый пользователь имеет свою базу данных SQLite в папке dbs
 
-def get_user_db_path(user_id: int) -> str:
-    """
-    Генерирует путь к персональной базе данных пользователя
-    Формат: dbs/dictionary_12345.db (где 12345 - ID пользователя)
-    """
-    return f'dbs/dictionary_{user_id}.db'
-
-
-def ensure_user_db(user_id: int):
-    """
-    Создает базу данных и таблицу при первом обращении пользователя
-    Вызывается перед каждой операцией с БД
-    """
-    db_path = get_user_db_path(user_id)
-    # Проверяем существует ли файл базы данных
-    if not os.path.exists(db_path):
-        # Создаем подключение к базе данных
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
-        # Создаем таблицу слов (SQL-запрос берется из mssgs.py)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS words 
-            ( id INTEGER PRIMARY KEY AUTOINCREMENT,
-              word TEXT NOT NULL, 
-              part_of_speech TEXT NULL, 
-              translation TEXT NULL ) 
-        """)
-        # Сохраняем изменения
-        conn.commit()
-        # Закрываем соединение
-        conn.close()
-        # Записываем в лог информацию о создании новой базы
-        logging.info(f"Created new database for user {user_id}")
-
-
-async def get_words_from_db(user_id: int) -> List[Tuple[str, str, str]]:
-    """
-    Получает ВСЕ слова пользователя из базы данных
-    Возвращает список кортежей: (слово, часть_речи, перевод)
-    """
-    # Убеждаемся что база существует
-    ensure_user_db(user_id)
-    db_path = get_user_db_path(user_id)
-
-    # Открываем соединение с базой
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+async def init_db():
+    global db_pool
     try:
-        # Выполняем SQL-запрос для получения всех слов, отсортированных по алфавиту
-        cursor.execute("""
-            SELECT word, part_of_speech, translation 
-            FROM words 
-            ORDER BY word
-        """)
-        # Возвращаем все результаты
-        return cursor.fetchall()
-    except sqlite3.Error as e:
-        # В случае ошибки записываем в лог
-        logging.error(f"Database error: {e}")
-        return []
-    finally:
-        # Всегда закрываем соединение с базой
-        conn.close()
+        db_pool = await asyncpg.create_pool(
+            host=POSTGRES_HOST,
+            port=POSTGRES_PORT,
+            user=POSTGRES_USER,
+            password=POSTGRES_PASSWORD,
+            database=POSTGRES_DB,
+            min_size=5,
+            max_size=20
+        )
+        async with db_pool.acquire() as conn:
+            await conn.execute("""
+            CREATE TABLE IF NOT EXISTS words (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT NOT NULL,
+            word TEXT NOT NULL,
+            part_of_speech TEXT NOT NULL,
+            translation TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE (user_id, word)
+        );
+    """)
+        logging.info("Database initialized successfully")
+    except Exception as e:
+        logging.critical(f"Database initialization failed: {e}")
+        raise
 
+
+async def close_db():
+    """Закрытие пула соединений"""
+    global db_pool
+    if db_pool:
+        await db_pool.close()
+
+# Обновленные функции работы с БД
+async def get_words_from_db(user_id: int) -> List[Tuple[str, str, str]]:
+    async with db_pool.acquire() as conn:
+        rows = await conn.fetch(
+            "SELECT word, part_of_speech, translation FROM words WHERE user_id = $1 ORDER BY word",
+            user_id
+        )
+        return [(row['word'], row['part_of_speech'], row['translation']) for row in rows]
 
 async def delete_word_from_db(user_id: int, word: str) -> bool:
-    """
-    Удаляет слово из базы данных пользователя
-    Возвращает True если удаление прошло успешно
-    """
-    ensure_user_db(user_id)
-    db_path = get_user_db_path(user_id)
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    try:
-        # Выполняем SQL-запрос на удаление
-        cursor.execute("DELETE FROM words WHERE word = ?", (word,))
-        conn.commit()
-        # Проверяем было ли удалено хотя бы одно слово
-        return cursor.rowcount > 0
-    except sqlite3.Error as e:
-        logging.error(f"Database error: {e}")
-        return False
-    finally:
-        conn.close()
-
+    async with db_pool.acquire() as conn:
+        result = await conn.execute(
+            "DELETE FROM words WHERE user_id = $1 AND word = $2",
+            user_id, word
+        )
+        return "DELETE" in result
 
 async def update_word_in_db(user_id: int, old_word: str, new_word: str, pos: str, value: str) -> bool:
-    """
-    Обновляет слово в базе данных
-    Учитывает изменение самого слова (если слово поменялось)
-    Возвращает True если обновление прошло успешно
-    """
-    ensure_user_db(user_id)
-    db_path = get_user_db_path(user_id)
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    try:
-        # Если изменилось само слово (не только перевод или часть речи)
+    async with db_pool.acquire() as conn:
+        # Если слово изменилось
         if old_word != new_word:
-            # Удаляем старую запись
-            cursor.execute("DELETE FROM words WHERE word = ?", (old_word,))
-            # Создаем новую запись с новым словом
-            cursor.execute("""
-                INSERT INTO words (word, part_of_speech, translation)
-                VALUES (?, ?, ?)
-            """, (new_word, pos, value))
+            await conn.execute(
+                "DELETE FROM words WHERE user_id = $1 AND word = $2",
+                user_id, old_word
+            )
+            await conn.execute(
+                "INSERT INTO words (user_id, word, part_of_speech, translation) VALUES ($1, $2, $3, $4)",
+                user_id, new_word, pos, value
+            )
+            return True
         else:
-            # Если слово осталось прежним - обновляем остальные поля
-            cursor.execute("""
-                UPDATE words 
-                SET part_of_speech = ?, translation = ?
-                WHERE word = ?
-            """, (pos, value, new_word))
-        # Сохраняем изменения
-        conn.commit()
-        # Проверяем успешность операции
-        return cursor.rowcount > 0
-    except sqlite3.Error as e:
-        logging.error(f"Database error: {e}")
-        return False
-    finally:
-        conn.close()
-
+            result = await conn.execute(
+                """UPDATE words 
+                SET part_of_speech = $1, translation = $2 
+                WHERE user_id = $3 AND word = $4""",
+                pos, value, user_id, new_word
+            )
+            return "UPDATE" in result
 
 async def add_word_to_db(user_id: int, word: str, pos: str, value: str) -> bool:
-    """
-    Добавляет новое слово в базу данных пользователя
-    Возвращает True если добавление прошло успешно
-    """
-    ensure_user_db(user_id)
-    db_path = get_user_db_path(user_id)
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    try:
-        # Выполняем SQL-запрос на вставку (INSERT_WORD из mssgs.py)
-        cursor.execute("""
-        INSERT INTO words 
-        (word, part_of_speech, translation) 
-        VALUES (?, ?, ?)
-        """, (word, pos, value)
-        )
-        conn.commit()
-        return cursor.rowcount > 0
-    except sqlite3.Error as e:
-        logging.error(f"Database error: {e}")
-        return False
-    finally:
-        conn.close()
-
+    if value is None:
+        value = ""
+    async with db_pool.acquire() as conn:
+        try:
+            await conn.execute(
+                "INSERT INTO words (user_id, word, part_of_speech, translation) VALUES ($1, $2, $3, $4)",
+                user_id, word, pos, value
+            )
+            return True
+        except Exception as e:
+            logging.error(f"Database error: {e}")
+            return False
 
 async def check_word_exists(user_id: int, word: str) -> bool:
-    """
-    Проверяет существует ли слово в базе пользователя
-    Возвращает True если слово уже есть в словаре
-    """
-    ensure_user_db(user_id)
-    db_path = get_user_db_path(user_id)
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    try:
-        # Ищем слово в базе (SELECT_WORD из mssgs.py)
-        cursor.execute("""
-        SELECT *
-        FROM words
-        WHERE word = ?
-        """, (word,))
-        # Если нашли хотя бы одну запись - возвращаем True
-        return cursor.fetchone() is not None
-    except sqlite3.Error as e:
-        logging.error(f"Database error: {e}")
-        return False
-    finally:
-        conn.close()
+    async with db_pool.acquire() as conn:
+        row = await conn.fetchrow(
+            "SELECT 1 FROM words WHERE user_id = $1 AND word = $2 LIMIT 1",
+            user_id, word
+        )
+        return row is not None
 
 
 # = ОСНОВНЫЕ ОБРАБОТЧИКИ БОТА-СЛОВАРЯ =
@@ -1056,10 +1000,10 @@ async def process_word_input(message: Message, state: FSMContext):
         parts = text.split(':', 1)
         word = parts[0].strip()
         # Значение может быть пустым
-        value = parts[1].strip() if parts[1].strip() else None
+        value = parts[1].strip() if parts[1].strip() else ""
     else:
         # Если нет двоеточия - только слово, без значения
-        word, value = text, None
+        word, value = text, ""
 
     # Проверяем нет ли уже такого слова в словаре
     if await check_word_exists(user_id, word):
@@ -1118,41 +1062,37 @@ async def run_bot(bot_token: str, router: Router, storage=None):
 
 
 async def main():
-    """
-    Основная асинхронная функция
-    Запускает всех ботов параллельно
-    """
-    # Настраиваем систему логирования
+    # Настройка логирования
     logging.basicConfig(
-        level=logging.INFO,  # Уровень детализации логов
-        stream=sys.stdout,  # Вывод в консоль
+        level=logging.INFO,
+        stream=sys.stdout,
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
     )
 
-    # Создаем папку для баз данных если ее нет
-    if not os.path.exists("dbs"):
-        os.makedirs("dbs")
+    # Инициализация базы данных
+    await init_db()
+    logging.info("Database connection established")
 
-    # Список задач для запуска ботов
+    # Создаем задачи для ботов
     tasks = []
-
-    # Если есть токен основного бота - добавляем его в задачи
     if BOT_TOKEN_MAIN:
         logging.info("Starting Main Bot...")
         tasks.append(run_bot(BOT_TOKEN_MAIN, router_main))
 
-    # Если есть токен бота-словаря - добавляем его в задачи
     if BOT_TOKEN_DICT:
         logging.info("Starting Dictionary Bot...")
         tasks.append(run_bot(BOT_TOKEN_DICT, router_dict, storage))
 
-    # Если нет ни одного токена - сообщаем об ошибке
     if not tasks:
         logging.error("❌ Bot tokens not found.")
         return
 
-    # Запускаем всех ботов параллельно и ждем завершения
+    # Запускаем всех ботов параллельно
     await asyncio.gather(*tasks)
+
+    # Закрываем соединение с БД при завершении
+    await close_db()
+    logging.info("Database connection closed")
 
 
 # Точка входа в программу
