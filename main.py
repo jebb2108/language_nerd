@@ -6,68 +6,73 @@ import os
 from typing import List, Tuple, Optional
 from dotenv import load_dotenv
 
-# Основные компоненты aiogram для работы с Telegram API
-from aiogram import Bot, Dispatcher, F  # F - фильтры для обработки сообщений
+# Основные компоненты aiogram
+from aiogram import Bot, Dispatcher, Router, F
 from aiogram.client.default import DefaultBotProperties
-from aiogram.enums import ParseMode  # Режимы форматирования текста
-from aiogram.filters import Command, CommandStart  # Фильтры команд
-from aiogram.fsm.context import FSMContext  # Контекст машины состояний
-from aiogram.fsm.state import State, StatesGroup, default_state  # Система состояний
-from aiogram.fsm.storage.memory import MemoryStorage  # Хранилище состояний в памяти
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton  # Типы данных Telegram
+from aiogram.enums import ParseMode
+from aiogram.filters import Command, CommandStart
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup, default_state
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 
-# Импорт конфигурационных данных (токен бота и сообщения)
+# Импорт конфигурационных данных
 from messages import *
 
-# Загрузка переменных окружения из .env файла
+# Загрузка переменных окружения
 load_dotenv()
 
-
-TOKEN = os.getenv("BOT_TOKEN")
-storage = MemoryStorage()  # Хранилище состояний (в оперативной памяти)
-dp = Dispatcher(storage=storage)  # Центральный диспетчер для обработки событий
-
-if not TOKEN:
-    sys.exit("Bot token not found")
-
-"""
-Классы состояний (Finite State Machine):
-Как сценарий в игре - запоминают где находится пользователь в процессе взаимодействия.
-Например: 
-1. Начальное состояние -> 2. Добавление слова -> 3. Выбор части речи
-
-StatesGroup - контейнеры для связанных состояний
-"""
+""" =============== BOT 1: Main Bot =============== """
+BOT_TOKEN_MAIN = os.getenv("BOT_TOKEN_MAIN")
+router_main = Router()
 
 
+@router_main.message(Command("start"))
+async def start(message: Message):
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="📚 Бот-словарь", url="https://t.me/lllangbot"),
+            # InlineKeyboardButton(text="🛠 Техподдержка")
+        ],
+        [
+            # InlineKeyboardButton(text="💬 Практика общения"),
+            InlineKeyboardButton(text="ℹ️ О боте", callback_data="about")
+        ]
+    ])
+    await message.answer(WELCOME, reply_markup=keyboard)
+
+
+@router_main.callback_query(F.data == "about")
+async def about(callback: CallbackQuery):
+    await callback.message.edit_text(ABOUT)
+    await callback.answer()
+
+
+@router_main.message()
+async def handle_other_messages(message: Message):
+    await message.answer("Используйте /start для получения меню")
+
+
+""" =============== BOT 2: Dictionary Bot =============== """
+BOT_TOKEN_DICT = os.getenv("BOT_TOKEN_DICT")
+router_dict = Router()
+storage = MemoryStorage()
+
+
+# Состояния для словарного бота
 class WordStates(StatesGroup):
-    """Состояния для добавления нового слова"""
-    waiting_for_pos = State()  # Ожидание выбора части речи
+    waiting_for_pos = State()
     waiting_for_custom_pos = State()
 
 
 class WordsViewState(StatesGroup):
-    """Состояния для просмотра словаря"""
-    viewing_words = State()  # Режим просмотра слов
+    viewing_words = State()
 
 
 class EditState(StatesGroup):
-    """Состояния для редактирования слов"""
-    waiting_edit_word = State()  # Ожидание нового слова
-    waiting_edit_pos = State()  # Ожидание части речи
-    waiting_edit_value = State()  # Ожидание значения
-
-
-"""
-Работа с базой данных:
-Каждый пользователь хранит слова в своей SQLite базе.
-Путь к файлу: dbs/dictionary_12345.db (где 12345 - ID пользователя)
-
-Принцип работы:
-1. При первом обращении создается файл БД
-2. Все операции выполняются в отдельных соединениях
-3. Для асинхронной работы используем обычные функции (SQLite не поддерживает асинхронность)
-"""
+    waiting_edit_word = State()
+    waiting_edit_pos = State()
+    waiting_edit_value = State()
 
 
 def get_user_db_path(user_id: int) -> str:
@@ -199,7 +204,7 @@ async def check_word_exists(user_id: int, word: str) -> bool:
 """
 
 
-@dp.message(Command("words"))
+@router_dict.message(Command("list"))
 async def show_dictionary(message: Message, state: FSMContext):
     """Обработка команды /words - показывает словарь пользователя"""
     user_id = message.from_user.id
@@ -281,6 +286,7 @@ async def show_current_word(message: Message, state: FSMContext, edit: bool = Fa
     else:
         await message.answer(text, reply_markup=keyboard, parse_mode=ParseMode.HTML)
 
+
 """
 Обработка нажатий кнопок:
 Когда пользователь нажимает inline-кнопку, Telegram отправляет CallbackQuery
@@ -295,7 +301,7 @@ async def show_current_word(message: Message, state: FSMContext, edit: bool = Fa
 """
 
 
-@dp.callback_query(F.data == "prev_word", WordsViewState.viewing_words)
+@router_dict.callback_query(F.data == "prev_word", WordsViewState.viewing_words)
 async def prev_word_handler(callback: CallbackQuery, state: FSMContext):
     """Обработка кнопки 'Предыдущее слово'"""
     data = await state.get_data()
@@ -310,7 +316,7 @@ async def prev_word_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()  # Обязательно подтверждаем обработку
 
 
-@dp.callback_query(F.data == "next_word", WordsViewState.viewing_words)
+@router_dict.callback_query(F.data == "next_word", WordsViewState.viewing_words)
 async def next_word_handler(callback: CallbackQuery, state: FSMContext):
     """Обработка кнопки 'Следующее слово'"""
     data = await state.get_data()
@@ -326,7 +332,7 @@ async def next_word_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@dp.callback_query(F.data == "prev_letter", WordsViewState.viewing_words)
+@router_dict.callback_query(F.data == "prev_letter", WordsViewState.viewing_words)
 async def prev_letter_handler(callback: CallbackQuery, state: FSMContext):
     """Переход к первой букве в предыдущей группе слов"""
     data = await state.get_data()
@@ -361,7 +367,7 @@ async def prev_letter_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@dp.callback_query(F.data == "next_letter", WordsViewState.viewing_words)
+@router_dict.callback_query(F.data == "next_letter", WordsViewState.viewing_words)
 async def next_letter_handler(callback: CallbackQuery, state: FSMContext):
     """Переход к первой букве в следующей группе слов"""
     data = await state.get_data()
@@ -396,7 +402,7 @@ async def next_letter_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@dp.callback_query(F.data == "cancel_words", WordsViewState.viewing_words)
+@router_dict.callback_query(F.data == "cancel_words", WordsViewState.viewing_words)
 async def cancel_words_handler(callback: CallbackQuery, state: FSMContext):
     """Выход из режима просмотра слов"""
     await callback.message.delete()  # Удаляем сообщение с навигацией
@@ -404,7 +410,7 @@ async def cancel_words_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@dp.callback_query(F.data == "delete_word", WordsViewState.viewing_words)
+@router_dict.callback_query(F.data == "delete_word", WordsViewState.viewing_words)
 async def delete_word_handler(callback: CallbackQuery, state: FSMContext):
     """Удаление текущего слова из базы данных"""
     user_id = callback.from_user.id
@@ -446,7 +452,7 @@ async def delete_word_handler(callback: CallbackQuery, state: FSMContext):
         await callback.answer(f"❌ Failed to delete {word}")
 
 
-@dp.callback_query(F.data == "edit_word", WordsViewState.viewing_words)
+@router_dict.callback_query(F.data == "edit_word", WordsViewState.viewing_words)
 async def start_edit_word(callback: CallbackQuery, state: FSMContext):
     """Начало процесса редактирования слова"""
     data = await state.get_data()
@@ -493,7 +499,7 @@ async def start_edit_word(callback: CallbackQuery, state: FSMContext):
     await state.set_state(EditState.waiting_edit_word)
 
 
-@dp.callback_query(F.data.startswith("edit_word_"), EditState.waiting_edit_word)
+@router_dict.callback_query(F.data.startswith("edit_word_"), EditState.waiting_edit_word)
 async def handle_edit_choice(callback: CallbackQuery, state: FSMContext):
     """Обработка выбора поля для редактирования"""
     edit_type = callback.data.replace("edit_word_", "")
@@ -523,9 +529,9 @@ async def handle_edit_choice(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@dp.callback_query(F.data == "cancel_edit", EditState.waiting_edit_word)
-@dp.callback_query(F.data == "cancel_edit", EditState.waiting_edit_value)
-@dp.callback_query(F.data == "cancel_edit", EditState.waiting_edit_pos)
+@router_dict.callback_query(F.data == "cancel_edit", EditState.waiting_edit_word)
+@router_dict.callback_query(F.data == "cancel_edit", EditState.waiting_edit_value)
+@router_dict.callback_query(F.data == "cancel_edit", EditState.waiting_edit_pos)
 async def cancel_edit_handler(callback: CallbackQuery, state: FSMContext):
     """Отмена редактирования и возврат к просмотру"""
     await state.set_state(WordsViewState.viewing_words)
@@ -533,14 +539,15 @@ async def cancel_edit_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@dp.callback_query(F.data == "show_info", WordsViewState.viewing_words)
+@router_dict.callback_query(F.data == "show_info", WordsViewState.viewing_words)
 async def show_full_info_handler(callback: CallbackQuery, state: FSMContext):
     """Показывает полную информацию о слове"""
     # Редактируем текущее сообщение для показа полной информации
     await show_current_word(callback.message, state, edit=True, full_info=True)
     await callback.answer()
 
-@dp.callback_query(F.data == "go_back", WordsViewState.viewing_words)
+
+@router_dict.callback_query(F.data == "go_back", WordsViewState.viewing_words)
 async def go_back_handler(callback: CallbackQuery, state: FSMContext):
     """Возврат к стандартному виду информации"""
     # Возвращаем стандартный вид
@@ -548,7 +555,7 @@ async def go_back_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@dp.message(EditState.waiting_edit_word)
+@router_dict.message(EditState.waiting_edit_word)
 async def handle_edit_word_text(message: Message, state: FSMContext):
     """Обработка нового текста слова"""
     user_id = message.from_user.id
@@ -569,7 +576,7 @@ async def handle_edit_word_text(message: Message, state: FSMContext):
     await save_edited_word(message, state, user_id)
 
 
-@dp.message(EditState.waiting_edit_value)
+@router_dict.message(EditState.waiting_edit_value)
 async def handle_edit_word_value(message: Message, state: FSMContext):
     """Обработка нового значения слова"""
     new_value = message.text.strip()
@@ -577,7 +584,7 @@ async def handle_edit_word_value(message: Message, state: FSMContext):
     await save_edited_word(message, state, message.from_user.id)
 
 
-@dp.callback_query(F.data.startswith("newpos_"), EditState.waiting_edit_pos)
+@router_dict.callback_query(F.data.startswith("newpos_"), EditState.waiting_edit_pos)
 async def handle_edit_word_pos(callback: CallbackQuery, state: FSMContext):
     """Обработка выбора новой части речи"""
     new_pos = callback.data.replace("newpos_", "")
@@ -587,15 +594,16 @@ async def handle_edit_word_pos(callback: CallbackQuery, state: FSMContext):
 
 
 # Обработка кнопки Cancel
-@dp.callback_query(F.data == "pos_cancel", WordStates.waiting_for_pos)
+@router_dict.callback_query(F.data == "pos_cancel", WordStates.waiting_for_pos)
 async def cancel_adding_word(callback: CallbackQuery, state: FSMContext):
     """Отмена добавления слова"""
     await state.clear()
     await callback.message.edit_text("❌ Adding word canceled.")
     await callback.answer()
 
+
 # Обработка кнопки Other
-@dp.callback_query(F.data == "pos_other", WordStates.waiting_for_pos)
+@router_dict.callback_query(F.data == "pos_other", WordStates.waiting_for_pos)
 async def ask_custom_part_of_speech(callback: CallbackQuery, state: FSMContext):
     """Запрос на ручной ввод части речи"""
     await callback.message.edit_text("✍️ Please enter the part of speech manually:")
@@ -604,7 +612,7 @@ async def ask_custom_part_of_speech(callback: CallbackQuery, state: FSMContext):
 
 
 # Обработка ручного ввода части речи
-@dp.message(WordStates.waiting_for_custom_pos)
+@router_dict.message(WordStates.waiting_for_custom_pos)
 async def handle_custom_part_of_speech(message: Message, state: FSMContext):
     """Обработка ручного ввода части речи"""
     custom_pos = message.text.strip()
@@ -681,22 +689,24 @@ async def save_edited_word(message: Message, state: FSMContext, user_id: int):
     2. Бот переводит в состояние ожидания части речи
     3. Пользователь выбирает часть речи
     4. Бот сохраняет слово в БД
-    
+
     FSMContext - контекст состояния, хранящий данные между шагами
     """
 
-@ dp.message(CommandStart())
-async def start_command_handler(message: Message):
 
+@router_dict.message(CommandStart())
+async def start_command_handler(message: Message):
     """Обработка команды /start - приветствие"""
     await message.answer(f"👋 Hello, {message.from_user.first_name}! {GREETING}", parse_mode=ParseMode.HTML)
 
-@dp.message(WordStates.waiting_for_pos)
+
+@router_dict.message(WordStates.waiting_for_pos)
 async def handle_part_of_speech_text(message: Message):
     """Напоминание использовать кнопки при вводе текста вместо выбора части речи"""
     await message.answer("⚠️ Please select a part of speech from the buttons above")
 
-@dp.callback_query(F.data.startswith("pos_"), WordStates.waiting_for_pos)
+
+@router_dict.callback_query(F.data.startswith("pos_"), WordStates.waiting_for_pos)
 async def save_new_word_handler(callback: CallbackQuery, state: FSMContext) -> None:
     """Сохранение нового слова после выбора части речи"""
     user_id = callback.from_user.id
@@ -720,8 +730,7 @@ async def save_new_word_handler(callback: CallbackQuery, state: FSMContext) -> N
         await callback.answer()
 
 
-
-@dp.message()
+@router_dict.message()
 async def universal_message_handler(message: Message, state: FSMContext):
     """
     Универсальный обработчик текстовых сообщений
@@ -793,34 +802,31 @@ async def process_word_input(message: Message, state: FSMContext):
     await state.set_state(WordStates.waiting_for_pos)
 
 
+""" =============== Запуск всех ботов =============== """
 
-"""
-Запуск бота:
-asyncio.run() - запускает асинхронную среду выполнения
-bot.start_polling() - бесконечный цикл опроса серверов Telegram
-
-Как это работает:
-1. Создаем экземпляр бота
-2. Запускаем диспетчер в режиме опроса
-3. Бот начинает получать обновления от серверов Telegram
-4. Каждое обновление обрабатывается в отдельной асинхронной задаче
-"""
-
-async def main() -> None:
-    """Точка входа в асинхронное приложение"""
-    # Инициализация бота с HTML-форматированием по умолчанию
-    bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-
-    # Запуск обработки входящих сообщений
+async def run_bot(bot_token: str, router: Router, storage=None):
+    bot = Bot(token=bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    dp = Dispatcher(storage=storage) if storage else Dispatcher()
+    dp.include_router(router)
     await dp.start_polling(bot)
 
-if __name__ == "__main__":
-    # Настройка логирования
-    logging.basicConfig(
-        level=logging.INFO,
-        stream=sys.stdout,
-        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-    )
+async def main():
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    if not os.path.exists("dbs"):
+        os.makedirs("dbs")
 
-    # Запуск асинхронного приложения
+    tasks = []
+    if BOT_TOKEN_MAIN:
+        tasks.append(run_bot(BOT_TOKEN_MAIN, router_main))
+
+    if BOT_TOKEN_DICT:
+        tasks.append(run_bot(BOT_TOKEN_DICT, router_dict, storage))
+
+    if not tasks:
+        logging.error("❌ Bot tokens not found.")
+        return
+
+    await asyncio.gather(*tasks)
+
+if __name__ == "__main__":
     asyncio.run(main())
