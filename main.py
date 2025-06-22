@@ -4,6 +4,7 @@ import sys
 import sqlite3
 import os
 from typing import List, Tuple, Optional
+from dotenv import load_dotenv
 
 # Основные компоненты aiogram для работы с Telegram API
 from aiogram import Bot, Dispatcher, F  # F - фильтры для обработки сообщений
@@ -18,10 +19,16 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 # Импорт конфигурационных данных (токен бота и сообщения)
 from messages import *
 
-# Инициализация бота и диспетчера
-TOKEN = KEY  # Секретный ключ из файла messages.py
+# Загрузка переменных окружения из .env файла
+load_dotenv()
+
+
+TOKEN = os.getenv("BOT_TOKEN")
 storage = MemoryStorage()  # Хранилище состояний (в оперативной памяти)
 dp = Dispatcher(storage=storage)  # Центральный диспетчер для обработки событий
+
+if not TOKEN:
+    sys.exit("Bot token not found")
 
 """
 Классы состояний (Finite State Machine):

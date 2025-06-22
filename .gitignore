@@ -2,3 +2,4 @@
 __pycache__/
 dictionary.db
 dbs/*.db
+.env
