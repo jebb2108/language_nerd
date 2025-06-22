@@ -11,6 +11,8 @@
 import asyncio  # Для асинхронного выполнения задач
 import logging  # Для записи логов работы бота
 import sys  # Для работы с системными функциями
+from pyexpat.errors import messages
+
 import asyncpg
 from asyncpg.pool import Pool
 import os  # Для работы с файловой системой
@@ -962,6 +964,8 @@ async def universal_message_handler(message: Message, state: FSMContext):
     # Игнорируем команды (они обрабатываются другими обработчиками)
     if message.text.startswith('/'):
         return
+
+    logging.info(f"{message.from_user.id}: new message: {message.text}")
 
     # Получаем текущее состояние пользователя
     current_state = await state.get_state()
