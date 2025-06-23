@@ -12,6 +12,7 @@ import asyncio  # Для асинхронного выполнения зада�
 import logging  # Для записи логов работы бота
 import sys  # Для работы с системными функциями
 from pyexpat.errors import messages
+from xml.dom.minidom import parse
 
 import asyncpg
 from asyncpg.pool import Pool
@@ -83,13 +84,13 @@ async def start(message: Message):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             # Кнопка перехода к боту-словарю
-            InlineKeyboardButton(text="📚 Бот-словарь", url="https://t.me/lllangbot"),
+            InlineKeyboardButton(text="📚 Бот-словарь", url="https://t.me/lllang_dictbot"),
             # Кнопка информации о боте
             InlineKeyboardButton(text="ℹ️ О боте", callback_data="about")
         ]
     ])
     # Отправляем приветственное сообщение с клавиатурой
-    await message.answer(WELCOME, reply_markup=keyboard)
+    await message.answer(f"👋 Привет, <b>{message.from_user.first_name}</b>!\n\n{WELCOME}", reply_markup=keyboard)
 
 
 @router_main.callback_query(F.data == "about")
@@ -98,10 +99,30 @@ async def about(callback: CallbackQuery):
     Обработчик нажатия кнопки "О боте"
     Показывает подробную информацию о проекте
     """
+    # Клавиатура только с кнопкой возврата
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🔙 Go Back", callback_data="go_back")]
+    ])
+
     # Редактируем текущее сообщение, заменяя его на текст "О боте"
-    await callback.message.edit_text(ABOUT)
+    await callback.message.edit_text(ABOUT, reply_markup=keyboard)
     # Подтверждаем обработку callback (убираем часики на кнопке)
     await callback.answer()
+
+@router_main.callback_query(F.data == "go_back")
+async def go_back(callback: CallbackQuery):
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            # Кнопка перехода к боту-словарю
+            InlineKeyboardButton(text="📚 Бот-словарь", url="https://t.me/lllang_dictbot"),
+            # Кнопка информации о боте
+            InlineKeyboardButton(text="ℹ️ О боте", callback_data="about")
+        ]
+    ])
+    # Отправляем приветственное сообщение с клавиатурой
+    await callback.message.edit_text(f"👋 Привет, <b>{callback.from_user.first_name}</b>!\n\n{WELCOME}", reply_markup=keyboard, parse_mode=ParseMode.HTML)
+    await callback.answer()
+
 
 
 @router_main.message()
@@ -322,7 +343,7 @@ async def show_current_word(message: Message, state: FSMContext, edit: bool = Fa
         # = РЕЖИМ ПОЛНОЙ ИНФОРМАЦИИ =
         text = (
             f"📖 <b>Full information for:</b> {word}\n"
-            f"🔢 <b>Position:</b> {current_index + 1} of {len(words)}\n"
+            f"🔢 <b>Position:</b> {current_index + 1} out of {len(words)}\n"
             f"🔤 <b>Part of speech:</b> {pos}\n"
         )
         # Если есть значение слова - добавляем его полностью
@@ -334,17 +355,18 @@ async def show_current_word(message: Message, state: FSMContext, edit: bool = Fa
             [InlineKeyboardButton(text="🔙 Go Back", callback_data="go_back")]
         ])
     else:
-        # = СТАНДАРТНЫЙ РЕЖИМ (СОКРАЩЕННАЯ ИНФОРМАЦИЯ) =
+        # === СТАНДАРТНЫЙ РЕЖИМ (СОКРАЩЕННАЯ ИНФОРМАЦИЯ) ===
         text = (
             # Заголовок с выравниванием
-            f"📖 <b>Word</b>: {word}{' ' * (70 - len(word))}{current_index + 1} out of {len(words)} 🔢\n"
+            f"📖 <b>Word</b>: {word}\n"
+            f"🔢 <b>Position:</b> {current_index + 1} out of {len(words)}\n"
             f"🔤 <b>Part of speech:</b> {pos}\n"
         )
         # Если есть значение - добавляем его (сокращаем если слишком длинное)
         if value:
             # Берем первые 50 символов или полное значение если оно короче
-            shortened_value = value[:50] + '...' if len(value) > 50 else value
-            text += f"💡 <b>Meaning:</b> {shortened_value}\n"
+            shortened_value = value[:23] + '...' if len(value) > 23 else value
+            text += f"💡 <b>Meaning:</b> {shortened_value}"
 
         # Создаем клавиатуру с кнопками действий
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -859,6 +881,54 @@ async def start_command_handler(message: Message):
     )
 
 
+# Обработка кнопки Other (ручной ввод части речи)
+@router_dict.callback_query(F.data == "pos_other", WordStates.waiting_for_pos)
+async def ask_custom_part_of_speech(callback: CallbackQuery, state: FSMContext):
+    """Запрос на ручной ввод части речи"""
+    await callback.message.edit_text("✍️ Please enter the part of speech manually:")
+    # Переводим в состояние ожидания ручного ввода
+    await state.set_state(WordStates.waiting_for_custom_pos)
+    await callback.answer()
+
+
+# Обработка ручного ввода части речи
+@router_dict.message(WordStates.waiting_for_custom_pos)
+async def handle_custom_part_of_speech(message: Message, state: FSMContext):
+    """Обработка ручного ввода части речи"""
+    # Очищаем введенный текст
+    custom_pos = message.text.strip().lower()
+    # Проверяем что ввод не пустой
+    if not custom_pos:
+        await message.answer("Please enter a valid part of speech.")
+        return
+
+    # Получаем данные из состояния
+    user_id = message.from_user.id
+    data = await state.get_data()
+    word = data["word"]
+    value = data.get("value")
+
+    # Сохраняем слово в базу
+    if await add_word_to_db(user_id, word, custom_pos, value):
+        # Формируем сообщение об успехе
+        response = f"✅ Saved: {word} ({custom_pos})"
+        if value:
+            shortened_value = value[:50] + '...' if len(value) > 50 else value
+            response += f"\nMeaning: {shortened_value}"
+        await message.answer(response)
+    else:
+        await message.answer("❌ Failed to save word")
+
+    # Сбрасываем состояние
+    await state.clear()
+
+
+""" 
+    Слова, не попавшие в регистр waiting_for_custom_pos, 
+    проходят дальше в обработчике handle_part_of_speech_text
+    
+"""
+
 @router_dict.message(WordStates.waiting_for_pos)
 async def handle_part_of_speech_text(message: Message):
     """
@@ -866,6 +936,16 @@ async def handle_part_of_speech_text(message: Message):
     Вызывается если пользователь ввел текст вместо выбора части речи
     """
     await message.answer("⚠️ Please select a part of speech from the buttons above")
+
+
+# Обработка кнопки Cancel (отмена добавления слова)
+@router_dict.callback_query(F.data == "pos_cancel", WordStates.waiting_for_pos)
+async def cancel_adding_word(callback: CallbackQuery, state: FSMContext):
+    """Отмена добавления слова"""
+    await state.clear()
+    await callback.message.edit_text("❌ Adding word canceled.")
+    await callback.answer()
+
 
 
 @router_dict.callback_query(F.data.startswith("pos_"), WordStates.waiting_for_pos)
@@ -902,58 +982,9 @@ async def save_new_word_handler(callback: CallbackQuery, state: FSMContext) -> N
         await callback.answer()
 
 
-# Обработка кнопки Cancel (отмена добавления слова)
-@router_dict.callback_query(F.data == "pos_cancel", WordStates.waiting_for_pos)
-async def cancel_adding_word(callback: CallbackQuery, state: FSMContext):
-    """Отмена добавления слова"""
-    await state.clear()
-    await callback.message.edit_text("❌ Adding word canceled.")
-    await callback.answer()
 
 
-# Обработка кнопки Other (ручной ввод части речи)
-@router_dict.callback_query(F.data == "pos_other", WordStates.waiting_for_pos)
-async def ask_custom_part_of_speech(callback: CallbackQuery, state: FSMContext):
-    """Запрос на ручной ввод части речи"""
-    await callback.message.edit_text("✍️ Please enter the part of speech manually:")
-    # Переводим в состояние ожидания ручного ввода
-    await state.set_state(WordStates.waiting_for_custom_pos)
-    await callback.answer()
-
-
-# Обработка ручного ввода части речи
-@router_dict.message(WordStates.waiting_for_custom_pos)
-async def handle_custom_part_of_speech(message: Message, state: FSMContext):
-    """Обработка ручного ввода части речи"""
-    # Очищаем введенный текст
-    custom_pos = message.text.strip()
-    # Проверяем что ввод не пустой
-    if not custom_pos:
-        await message.answer("Please enter a valid part of speech.")
-        return
-
-    # Получаем данные из состояния
-    user_id = message.from_user.id
-    data = await state.get_data()
-    word = data["word"]
-    value = data.get("value")
-
-    # Сохраняем слово в базу
-    if await add_word_to_db(user_id, word, custom_pos, value):
-        # Формируем сообщение об успехе
-        response = f"✅ Saved: {word} ({custom_pos})"
-        if value:
-            shortened_value = value[:50] + '...' if len(value) > 50 else value
-            response += f"\nMeaning: {shortened_value}"
-        await message.answer(response)
-    else:
-        await message.answer("❌ Failed to save word")
-
-    # Сбрасываем состояние
-    await state.clear()
-
-
-# = УНИВЕРСАЛЬНЫЙ ОБРАБОТЧИК СООБЩЕНИЙ =
+# ==== УНИВЕРСАЛЬНЫЙ ОБРАБОТЧИК СООБЩЕНИЙ ====
 
 @router_dict.message()
 async def universal_message_handler(message: Message, state: FSMContext):
