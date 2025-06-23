@@ -296,7 +296,7 @@ async def show_dictionary(message: Message, state: FSMContext):
 
     # Если слов нет - сообщаем об этом
     if not words:
-        await message.answer("📭 Your dictionary is empty. Add some words first!")
+        await message.answer("📭 Ваш словарь пуст. Добавьте первое слово!")
         return
 
     # Сохраняем слова в контексте состояния
@@ -330,7 +330,7 @@ async def show_current_word(message: Message, state: FSMContext, edit: bool = Fa
 
     # Проверяем что у нас есть слова и индекс в допустимых пределах
     if not words or current_index >= len(words):
-        await message.answer("❌ No words found")
+        await message.answer("❌ Слов не найдено")
         # Сбрасываем состояние
         await state.clear()
         return
@@ -342,36 +342,36 @@ async def show_current_word(message: Message, state: FSMContext, edit: bool = Fa
     if full_info:
         # = РЕЖИМ ПОЛНОЙ ИНФОРМАЦИИ =
         text = (
-            f"📖 <b>Full information for:</b> {word}\n"
-            f"🔢 <b>Position:</b> {current_index + 1} out of {len(words)}\n"
-            f"🔤 <b>Part of speech:</b> {pos}\n"
+            f"📖 <b>Полная информация:</b> {word}\n"
+            f"🔢 <b>Номер слова:</b> {current_index + 1} out of {len(words)}\n"
+            f"🔤 <b>Часть речи:</b> {pos}\n"
         )
         # Если есть значение слова - добавляем его полностью
         if value:
-            text += f"💡 <b>Full meaning:</b>\n{value}\n"
+            text += f"💡 <b>Детальное значение:</b>\n{value}\n"
 
         # Клавиатура только с кнопкой возврата
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🔙 Go Back", callback_data="go_back")]
+            [InlineKeyboardButton(text="🔙 Назад", callback_data="go_back")]
         ])
     else:
         # === СТАНДАРТНЫЙ РЕЖИМ (СОКРАЩЕННАЯ ИНФОРМАЦИЯ) ===
         text = (
             # Заголовок с выравниванием
-            f"📖 <b>Word</b>: {word}\n"
-            f"🔢 <b>Position:</b> {current_index + 1} out of {len(words)}\n"
-            f"🔤 <b>Part of speech:</b> {pos}\n"
+            f"📖 <b>Слово</b>: {word}\n"
+            f"🔢 <b>Номер слова:</b> {current_index + 1} out of {len(words)}\n"
+            f"🔤 <b>Часть речи слова:</b> {pos}\n"
         )
         # Если есть значение - добавляем его (сокращаем если слишком длинное)
         if value:
             # Берем первые 50 символов или полное значение если оно короче
             shortened_value = value[:23] + '...' if len(value) > 23 else value
-            text += f"💡 <b>Meaning:</b> {shortened_value}"
+            text += f"💡 <b>Краткое значение:</b> {shortened_value}"
 
         # Создаем клавиатуру с кнопками действий
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             # Кнопка показа полной информации
-            [InlineKeyboardButton(text="ℹ️ Info", callback_data="show_info")],
+            [InlineKeyboardButton(text="ℹ️ Инфо", callback_data="show_info")],
             # Кнопки навигации: предыдущее и следующее слово
             [
                 InlineKeyboardButton(text="⬅️", callback_data="prev_word"),
@@ -379,16 +379,16 @@ async def show_current_word(message: Message, state: FSMContext, edit: bool = Fa
             ],
             # Кнопки навигации по буквам
             [
-                InlineKeyboardButton(text="⬆️ Letter", callback_data="prev_letter"),
-                InlineKeyboardButton(text="Letter ⬇️", callback_data="next_letter")
+                InlineKeyboardButton(text="⬆️ Буква", callback_data="prev_letter"),
+                InlineKeyboardButton(text="Буква ⬇️", callback_data="next_letter")
             ],
             # Кнопки действий: редактирование и удаление
             [
-                InlineKeyboardButton(text="✏️ Edit", callback_data="edit_word"),
-                InlineKeyboardButton(text="🗑️ Delete", callback_data="delete_word")
+                InlineKeyboardButton(text="✏️ Изменить", callback_data="edit_word"),
+                InlineKeyboardButton(text="🗑️ Удалить", callback_data="delete_word")
             ],
             # Кнопка отмены/выхода
-            [InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_words")]
+            [InlineKeyboardButton(text="❌ Отменить", callback_data="cancel_words")]
         ])
 
     # Отправляем или редактируем сообщение
@@ -581,8 +581,6 @@ async def delete_word_handler(callback: CallbackQuery, state: FSMContext):
 
         # Если словарь стал пустым
         if not words:
-            # Сообщаем об успешном удалении
-            await callback.message.edit_text("✅ Word deleted\n")
             # Сбрасываем состояние
             await state.clear()
             return
@@ -602,10 +600,9 @@ async def delete_word_handler(callback: CallbackQuery, state: FSMContext):
         # Обновляем интерфейс
         await show_current_word(callback.message, state, edit=True)
         # Показываем уведомление об успешном удалении
-        await callback.answer(f"✅ {word} deleted")
     else:
         # Если удаление не удалось
-        await callback.answer(f"❌ Failed to delete {word}")
+        await callback.answer(f"❌ Что-то пошло не так {word}")
 
 
 @router_dict.callback_query(F.data == "edit_word", WordsViewState.viewing_words)
@@ -641,22 +638,22 @@ async def start_edit_word(callback: CallbackQuery, state: FSMContext):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             # Кнопки выбора что редактировать
-            InlineKeyboardButton(text="✏️ Word", callback_data="edit_word_text"),
-            InlineKeyboardButton(text="💡 Meaning", callback_data="edit_word_value")
+            InlineKeyboardButton(text="✏️ Слово", callback_data="edit_word_text"),
+            InlineKeyboardButton(text="💡 Значение", callback_data="edit_word_value")
         ],
         [
-            InlineKeyboardButton(text="🔤 Part of Speech", callback_data="edit_word_pos")
+            InlineKeyboardButton(text="🔤 Часть речи", callback_data="edit_word_pos")
         ],
         # Кнопка возврата
-        [InlineKeyboardButton(text="↩️ Back", callback_data="cancel_edit")]
+        [InlineKeyboardButton(text="↩️ Назад", callback_data="cancel_edit")]
     ])
 
     # Редактируем сообщение для показа меню редактирования
     await callback.message.edit_text(
-        f"✏️ <b>Editing:</b> {word}\n"
-        f"🔤 <b>Current POS:</b> {pos}\n"
-        f"💡 <b>Current Meaning:</b> {value or 'None'}\n\n"
-        "Select what to edit:",
+        f"✏️ <b>Редактирование:</b> {word}\n"
+        f"🔤 <b>Текущая часть речи:</b> {pos}\n"
+        f"💡 <b>Текущее значение:</b> {value or 'None'}\n\n"
+        "Выберите, что отредактировать:",
         reply_markup=keyboard,
         parse_mode=ParseMode.HTML
     )
@@ -678,12 +675,12 @@ async def handle_edit_choice(callback: CallbackQuery, state: FSMContext):
     # В зависимости от выбранного поля
     if edit_type == "text":
         # Запрашиваем новый текст слова
-        await callback.message.edit_text(f"✏️ Enter new text for <b>{word}</b>:", parse_mode=ParseMode.HTML)
+        await callback.message.edit_text(f"✏️ Введите новое слово для <b>{word}</b>:", parse_mode=ParseMode.HTML)
         # Остаемся в том же состоянии (waiting_edit_word)
         await state.set_state(EditState.waiting_edit_word)
     elif edit_type == "value":
         # Запрашиваем новое значение
-        await callback.message.edit_text(f"💡 Enter new meaning for <b>{word}</b>:", parse_mode=ParseMode.HTML)
+        await callback.message.edit_text(f"💡 Введите новое значение для <b>{word}</b>:", parse_mode=ParseMode.HTML)
         # Переводим в состояние ожидания значения
         await state.set_state(EditState.waiting_edit_value)
     elif edit_type == "pos":
@@ -693,10 +690,10 @@ async def handle_edit_choice(callback: CallbackQuery, state: FSMContext):
              InlineKeyboardButton(text="Verb", callback_data="newpos_verb")],
             [InlineKeyboardButton(text="Adjective", callback_data="newpos_adjective"),
              InlineKeyboardButton(text="Adverb", callback_data="newpos_adverb")],
-            [InlineKeyboardButton(text="↩️ Back", callback_data="cancel_edit")]
+            [InlineKeyboardButton(text="↩️ Назад", callback_data="cancel_edit")]
         ])
         await callback.message.edit_text(
-            f"🔤 Select new part of speech for <b>{word}</b>:",
+            f"🔤 Выберите новую часть речи для <b>{word}</b>:",
             reply_markup=keyboard,
             parse_mode=ParseMode.HTML
         )
@@ -763,7 +760,7 @@ async def handle_edit_word_text(message: Message, state: FSMContext):
         # Проверяем нет ли уже такого слова в словаре
         words = await get_words_from_db(user_id)
         if any(w[0].lower() == old_word.lower() for w in words):
-            await message.answer("⚠️ This word already exists in the dictionary")
+            await message.answer("⚠️ Это слово уже существует в словаре")
             return
 
     # Обновляем данные в состоянии
@@ -824,7 +821,7 @@ async def save_edited_word(message: Message, state: FSMContext, user_id: int):
             new_pos == original_pos and
             new_value == original_value):
         # Если изменений нет - сообщаем и возвращаемся к просмотру
-        await message.answer("ℹ️ No changes detected")
+        await message.answer("ℹ️ Изменений не обнаружено")
         await state.set_state(WordsViewState.viewing_words)
         await show_current_word(message, state, edit=True)
         return
@@ -861,7 +858,7 @@ async def save_edited_word(message: Message, state: FSMContext, user_id: int):
         await show_current_word(message, state, edit=True)
     else:
         # Если обновление не удалось
-        await message.answer("❌ Failed to update word")
+        await message.answer("❌ Что-то пошло не так")
         await state.set_state(WordsViewState.viewing_words)
         await show_current_word(message, state, edit=True)
 
@@ -876,7 +873,7 @@ async def start_command_handler(message: Message):
     """
     # Персонализированное приветствие
     await message.answer(
-        f"👋 Hello, {message.from_user.first_name}! {GREETING}",
+        tect=GREETING,
         parse_mode=ParseMode.HTML
     )
 
@@ -885,7 +882,7 @@ async def start_command_handler(message: Message):
 @router_dict.callback_query(F.data == "pos_other", WordStates.waiting_for_pos)
 async def ask_custom_part_of_speech(callback: CallbackQuery, state: FSMContext):
     """Запрос на ручной ввод части речи"""
-    await callback.message.edit_text("✍️ Please enter the part of speech manually:")
+    await callback.message.edit_text("✍️ Введите вашу часть речи:")
     # Переводим в состояние ожидания ручного ввода
     await state.set_state(WordStates.waiting_for_custom_pos)
     await callback.answer()
@@ -899,7 +896,7 @@ async def handle_custom_part_of_speech(message: Message, state: FSMContext):
     custom_pos = message.text.strip().lower()
     # Проверяем что ввод не пустой
     if not custom_pos:
-        await message.answer("Please enter a valid part of speech.")
+        await message.answer("Пожалуйста, введите корректное значение")
         return
 
     # Получаем данные из состояния
@@ -911,13 +908,13 @@ async def handle_custom_part_of_speech(message: Message, state: FSMContext):
     # Сохраняем слово в базу
     if await add_word_to_db(user_id, word, custom_pos, value):
         # Формируем сообщение об успехе
-        response = f"✅ Saved: {word} ({custom_pos})"
+        response = f"✅ Сохранено: {word} ({custom_pos})"
         if value:
-            shortened_value = value[:50] + '...' if len(value) > 50 else value
-            response += f"\nMeaning: {shortened_value}"
+            shortened_value = value[:23] + '...' if len(value) > 23 else value
+            response += f"\nКраткое значение: {shortened_value}"
         await message.answer(response)
     else:
-        await message.answer("❌ Failed to save word")
+        await message.answer("❌ Что-то пошло не так")
 
     # Сбрасываем состояние
     await state.clear()
@@ -935,7 +932,7 @@ async def handle_part_of_speech_text(message: Message):
     Напоминание использовать кнопки
     Вызывается если пользователь ввел текст вместо выбора части речи
     """
-    await message.answer("⚠️ Please select a part of speech from the buttons above")
+    await message.answer("⚠️ Пожалуйста, выберите часть речи, представленную выше")
 
 
 # Обработка кнопки Cancel (отмена добавления слова)
@@ -943,7 +940,7 @@ async def handle_part_of_speech_text(message: Message):
 async def cancel_adding_word(callback: CallbackQuery, state: FSMContext):
     """Отмена добавления слова"""
     await state.clear()
-    await callback.message.edit_text("❌ Adding word canceled.")
+    await callback.message.edit_text("❌ Добавление отменено")
     await callback.answer()
 
 
@@ -965,11 +962,11 @@ async def save_new_word_handler(callback: CallbackQuery, state: FSMContext) -> N
     # Сохраняем слово в базу данных
     if await add_word_to_db(user_id, word, part_of_speech, value):
         # Формируем сообщение об успехе
-        response = f"✅ Saved: {word} ({part_of_speech})"
+        response = f"✅ Сохранено: {word} ({part_of_speech})"
         # Если есть значение - добавляем его (сокращаем если длинное)
         if value:
-            shortened_value = value[:50] + '...' if len(value) > 50 else value
-            response += f"\nMeaning: {shortened_value}"
+            shortened_value = value[:23] + '...' if len(value) > 23 else value
+            response += f"\nКраткое значение: {shortened_value}"
 
         # Редактируем сообщение с результатом
         await callback.message.edit_text(response)
@@ -978,7 +975,7 @@ async def save_new_word_handler(callback: CallbackQuery, state: FSMContext) -> N
         await state.clear()
     else:
         # Если не удалось сохранить
-        await callback.message.edit_text("❌ Failed to save word")
+        await callback.message.edit_text("❌ Что-то пошло не так")
         await callback.answer()
 
 
@@ -1042,7 +1039,7 @@ async def process_word_input(message: Message, state: FSMContext):
 
     # Проверяем нет ли уже такого слова в словаре
     if await check_word_exists(user_id, word):
-        await message.answer("⚠️ Word already exists")
+        await message.answer("⚠️ Слово уже существует")
         # Сбрасываем состояние
         await state.clear()
         return
@@ -1061,13 +1058,13 @@ async def process_word_input(message: Message, state: FSMContext):
             InlineKeyboardButton(text="Adverb", callback_data="pos_adverb")
         ],
         [
-            InlineKeyboardButton(text="Other", callback_data="pos_other"),
-            InlineKeyboardButton(text="Cancel", callback_data="pos_cancel")
+            InlineKeyboardButton(text="Другое", callback_data="pos_other"),
+            InlineKeyboardButton(text="Отменить", callback_data="pos_cancel")
         ]
     ])
 
     # Спрашиваем часть речи
-    await message.answer("❓ What part of speech is it?", reply_markup=keyboard)
+    await message.answer("❓ Какая это часть речи?", reply_markup=keyboard)
     # Переводим в состояние ожидания выбора части речи
     await state.set_state(WordStates.waiting_for_pos)
 
