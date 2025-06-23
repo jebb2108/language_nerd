@@ -11,9 +11,6 @@
 import asyncio  # Для асинхронного выполнения задач
 import logging  # Для записи логов работы бота
 import sys  # Для работы с системными функциями
-from pyexpat.errors import messages
-from xml.dom.minidom import parse
-
 import asyncpg
 from asyncpg.pool import Pool
 import os  # Для работы с файловой системой
@@ -24,7 +21,7 @@ from dotenv import load_dotenv  # Для загрузки переменных �
 from aiogram import Bot, Dispatcher, Router, F  # Основные компоненты
 from aiogram.client.default import DefaultBotProperties  # Настройки бота по умолчанию
 from aiogram.enums import ParseMode  # Режимы форматирования текста (HTML, Markdown)
-from aiogram.filters import Command, CommandStart  # Фильтры для обработки команд
+from aiogram.filters import Command, CommandStart, StateFilter  # Фильтры для обработки команд
 from aiogram.fsm.context import FSMContext  # Контекст машины состояний
 from aiogram.fsm.state import State, StatesGroup  # Система состояний
 from aiogram.fsm.storage.memory import MemoryStorage  # Хранилище состояний в оперативной памяти
@@ -32,7 +29,7 @@ from aiogram.types import (  # Типы данных Telegram
     Message,
     CallbackQuery,
     InlineKeyboardMarkup,
-    InlineKeyboardButton
+    InlineKeyboardButton, ReplyKeyboardRemove
 )
 
 # Импорт текстовых сообщений из отдельного файла (mssgs.py)
@@ -40,6 +37,9 @@ from mssgs import *
 
 # Загрузка переменных окружения ДОЛЖНА БЫТЬ ВЫЗВАНА
 load_dotenv(""".env""")
+
+# Глобальный пул соединений
+db_pool: Optional[Pool] = None
 
 # Загружаем переменные окружения из файла .env (токены ботов и другие настройки)
 # Получение и проверка переменных окружения
@@ -49,18 +49,8 @@ POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
 POSTGRES_DB = os.getenv("POSTGRES_DB", "telegram_bot")
 
 # Обработка порта с проверкой
-try:
-    POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
-except ValueError:
-    POSTGRES_PORT = 5432
-    logging.warning(f"Invalid POSTGRES_PORT value, using default: {POSTGRES_PORT}")
+POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
 
-# Проверка наличия обязательных параметров
-if not POSTGRES_PASSWORD or POSTGRES_PASSWORD == "password":
-    logging.warning("Using default PostgreSQL password - not secure for production!")
-
-# Глобальный пул соединений
-db_pool: Optional[Pool] = None
 
 """ 
 =============== БОТ 1: ОСНОВНОЙ БОТ (ГЛАВНОЕ МЕНЮ) =============== 
@@ -85,9 +75,13 @@ async def start(message: Message):
         [
             # Кнопка перехода к боту-словарю
             InlineKeyboardButton(text="📚 Бот-словарь", url="https://t.me/lllang_dictbot"),
+            # Кнопка технической поддержки
+            InlineKeyboardButton(text="🛠 Поддержка", url="https://t.me/lllang_supportbot")
+        ],
+        [
             # Кнопка информации о боте
             InlineKeyboardButton(text="ℹ️ О боте", callback_data="about")
-        ]
+        ],
     ])
     # Отправляем приветственное сообщение с клавиатурой
     await message.answer(f"👋 Привет, <b>{message.from_user.first_name}</b>!\n\n{WELCOME}", reply_markup=keyboard)
@@ -115,9 +109,13 @@ async def go_back(callback: CallbackQuery):
         [
             # Кнопка перехода к боту-словарю
             InlineKeyboardButton(text="📚 Бот-словарь", url="https://t.me/lllang_dictbot"),
+            # Кнопка технической поддержки
+            InlineKeyboardButton(text="🛠 Поддержка", url="https://t.me/lllang_supportbot")
+        ],
+        [
             # Кнопка информации о боте
             InlineKeyboardButton(text="ℹ️ О боте", callback_data="about")
-        ]
+        ],
     ])
     # Отправляем приветственное сообщение с клавиатурой
     await callback.message.edit_text(f"👋 Привет, <b>{callback.from_user.first_name}</b>!\n\n{WELCOME}", reply_markup=keyboard, parse_mode=ParseMode.HTML)
@@ -873,7 +871,7 @@ async def start_command_handler(message: Message):
     """
     # Персонализированное приветствие
     await message.answer(
-        tect=GREETING,
+        text=DICT_GREETING,
         parse_mode=ParseMode.HTML
     )
 
@@ -932,7 +930,7 @@ async def handle_part_of_speech_text(message: Message):
     Напоминание использовать кнопки
     Вызывается если пользователь ввел текст вместо выбора части речи
     """
-    await message.answer("⚠️ Пожалуйста, выберите часть речи, представленную выше")
+    await message.answer("⚠️ Пожалуйста, выберите часть речи")
 
 
 # Обработка кнопки Cancel (отмена добавления слова)
@@ -1050,17 +1048,20 @@ async def process_word_input(message: Message, state: FSMContext):
     # Создаем клавиатуру выбора части речи
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="Noun", callback_data="pos_noun"),
-            InlineKeyboardButton(text="Verb", callback_data="pos_verb")
+            InlineKeyboardButton(text="Существительное", callback_data="pos_noun"),
         ],
         [
-            InlineKeyboardButton(text="Adjective", callback_data="pos_adjective"),
-            InlineKeyboardButton(text="Adverb", callback_data="pos_adverb")
+            InlineKeyboardButton(text="Глагол", callback_data="pos_verb"),
+            InlineKeyboardButton(text="Прилагательное", callback_data="pos_adjective"),
         ],
         [
+            InlineKeyboardButton(text="Наречие", callback_data="pos_adverb"),
             InlineKeyboardButton(text="Другое", callback_data="pos_other"),
+        ],
+        [
             InlineKeyboardButton(text="Отменить", callback_data="pos_cancel")
-        ]
+        ],
+
     ])
 
     # Спрашиваем часть речи
@@ -1068,6 +1069,172 @@ async def process_word_input(message: Message, state: FSMContext):
     # Переводим в состояние ожидания выбора части речи
     await state.set_state(WordStates.waiting_for_pos)
 
+"""
+=============== БОТ 3: ТЕХПОДДЕРЖКА ===============
+"""
+
+BOT_TOKEN_SUPP = os.getenv("BOT_TOKEN_SUPP")
+
+# Создаем фабрику роутера для передачи admin_id
+def create_support_router(admin_id: int):
+    router_supp = Router()
+    storage_supp = MemoryStorage()  # Отдельное хранилище для техподдержки
+
+    # Глобальный словарь для связи сообщений (временное решение)
+    support_tickets = {}
+
+    # Состояния для FSM
+    class SupportStates(StatesGroup):
+        WAITING_USER_MESSAGE = State()
+        WAITING_ADMIN_REPLY = State()
+
+    # Активация режима поддержки (для пользователей)
+    @router_supp.message(Command("support"), StateFilter("*"))
+    @router_supp.message(F.text.casefold() == "техподдержка", StateFilter("*"))
+    async def activate_support(message: Message, state: FSMContext):
+        await state.set_state(SupportStates.WAITING_USER_MESSAGE)
+        await message.answer(
+            "✉️ Режим поддержки активирован!\n"
+            "Опишите ваш вопрос, и я сразу перешлю его администратору.\n"
+            "Для выхода используйте /cancel"
+        )
+
+    # Перехват сообщений пользователя
+    @router_supp.message(
+        SupportStates.WAITING_USER_MESSAGE,
+        F.content_type.in_({"text", "photo", "document"})
+    )
+    async def forward_to_admin(message: Message, state: FSMContext):
+        user_info = (
+            f"👤 Пользователь: {message.from_user.full_name}\n"
+            f"🆔 ID: {message.from_user.id}\n"
+            f"📝 Сообщение:\n"
+        )
+
+        # Для текста
+        if message.text:
+            admin_message = await message.bot.send_message(
+                admin_id,
+                user_info + message.text
+            )
+
+        # Для фото
+        elif message.photo:
+            caption = user_info + (message.caption or "")
+            admin_message = await message.bot.send_photo(
+                admin_id,
+                message.photo[-1].file_id,
+                caption=caption
+            )
+
+        # Для документов
+        elif message.document:
+            caption = user_info + (message.caption or "")
+            admin_message = await message.bot.send_document(
+                admin_id,
+                message.document.file_id,
+                caption=caption
+            )
+        else:
+            return  # Неподдерживаемый тип контента
+
+        # Сохраняем связь
+        support_tickets[admin_message.message_id] = {
+            "user_id": message.from_user.id,
+            "admin_id": admin_id,
+            "original_message_id": message.message_id
+        }
+
+        await message.answer("✅ Ваше сообщение отправлено администратору!")
+
+    # Обработка ответов администратора
+    @router_supp.message(
+        F.reply_to_message,
+        F.from_user.id == admin_id,  # Фильтр по ID администратора
+        SupportStates.WAITING_ADMIN_REPLY,
+        F.content_type.in_({"text", "photo", "document"})
+    )
+    async def admin_reply_handler(message: Message, state: FSMContext):
+        replied_id = message.reply_to_message.message_id
+
+        if replied_id not in support_tickets:
+            return await message.answer("❌ Это сообщение не связано с активным тикетом")
+
+        ticket = support_tickets[replied_id]
+        user_id = ticket["user_id"]
+
+        # Формируем ответ
+        response_text = f"🔔 Ответ поддержки:\n\n{message.text or message.caption or ''}"
+
+        # Отправляем ответ пользователю
+        try:
+            if message.text:
+                await message.bot.send_message(user_id, response_text)
+            elif message.photo:
+                await message.bot.send_photo(
+                    user_id,
+                    message.photo[-1].file_id,
+                    caption=response_text
+                )
+            elif message.document:
+                await message.bot.send_document(
+                    user_id,
+                    message.document.file_id,
+                    caption=response_text
+                )
+
+            await message.answer("✅ Ответ отправлен пользователю!")
+        except Exception as e:
+            await message.answer(f"❌ Ошибка отправки: {str(e)}")
+
+        # Возвращаем в исходное состояние
+        await state.set_state(SupportStates.WAITING_USER_MESSAGE)
+
+    # Обработчик кнопки "Ответить"
+    @router_supp.callback_query(F.data.startswith("reply_"))
+    async def handle_reply_callback(callback: CallbackQuery, state: FSMContext):
+        user_id = int(callback.data.split("_")[1])
+
+        # Сохраняем ID пользователя для ответа
+        await state.update_data(target_user_id=user_id)
+        await state.set_state(SupportStates.WAITING_ADMIN_REPLY)
+
+        await callback.message.edit_text(
+            f"💬 Вы отвечаете пользователю ID: {user_id}\n"
+            "Просто ответьте (reply) на сообщение пользователя ниже:"
+        )
+        await callback.answer()
+
+    # Отмена диалога
+    @router_supp.message(Command("cancel"), SupportStates.WAITING_USER_MESSAGE)
+    async def cancel_support(message: Message, state: FSMContext):
+        await state.clear()
+        await message.answer("❌ Режим поддержки отключен", reply_markup=ReplyKeyboardRemove())
+
+    # Уведомление для админа о новых сообщениях
+    @router_supp.message(SupportStates.WAITING_USER_MESSAGE)
+    async def notify_admin(message: Message):
+        # Пропускаем если это команда
+        if message.text and message.text.startswith('/'):
+            return
+
+        try:
+            await message.bot.send_message(
+                admin_id,
+                f"❗ Новое сообщение в поддержку от @{message.from_user.username}",
+                reply_markup=InlineKeyboardMarkup(inline_keyboard=[
+                    [
+                        InlineKeyboardButton(
+                            text="Ответить",
+                            callback_data=f"reply_{message.from_user.id}"
+                        )
+                    ],
+                ])
+            )
+        except Exception as e:
+            logging.error(f"Ошибка уведомления админа: {e}")
+
+    return router_supp
 
 """ 
 =============== ЗАПУСК ВСЕЙ СИСТЕМЫ =============== 
@@ -1114,6 +1281,16 @@ async def main():
     if BOT_TOKEN_DICT:
         logging.info("Starting Dictionary Bot...")
         tasks.append(run_bot(BOT_TOKEN_DICT, router_dict, storage))
+
+    # Инициализация бота техподдержки
+    if BOT_TOKEN_SUPP:
+        admin_id = int(os.getenv("ADMIN_ID", 0))
+        logging.info("Starting Support Bot...")
+        # Создаем роутер с передачей ADMIN_ID
+        router_supp = create_support_router(admin_id)
+        # Создаем отдельное хранилище для этого бота
+        storage_supp = MemoryStorage()
+        tasks.append(run_bot(BOT_TOKEN_SUPP, router_supp, storage_supp))
 
     if not tasks:
         logging.error("❌ Bot tokens not found.")
