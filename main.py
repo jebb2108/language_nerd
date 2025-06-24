@@ -12,6 +12,7 @@ import asyncio  # Для асинхронного выполнения зада�
 import logging  # Для записи логов работы бота
 import sys  # Для работы с системными функциями
 import asyncpg
+from aiohttp import web
 from asyncpg.pool import Pool
 import os  # Для работы с файловой системой
 from typing import List, Tuple, Optional  # Аннотации типов для лучшей читаемости
@@ -48,6 +49,9 @@ POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
 POSTGRES_DB = os.getenv("POSTGRES_DB", "telegram_bot")
 
+WEB_SERVER_HOST = "0.0.0.0"
+WEB_SERVER_PORT = 8000
+
 # Обработка порта с проверкой
 POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
 
@@ -76,7 +80,7 @@ async def start(message: Message):
             # Кнопка перехода к боту-словарю
             InlineKeyboardButton(text="📚 Бот-словарь", url="https://t.me/lllang_dictbot"),
             # Кнопка технической поддержки
-            InlineKeyboardButton(text="🛠 Поддержка", url="https://t.me/lllang_supportbot")
+            InlineKeyboardButton(text="🛠 Поддержка", url="https://t.me/NonGrata4Life")
         ],
         [
             # Кнопка информации о боте
@@ -110,7 +114,7 @@ async def go_back(callback: CallbackQuery):
             # Кнопка перехода к боту-словарю
             InlineKeyboardButton(text="📚 Бот-словарь", url="https://t.me/lllang_dictbot"),
             # Кнопка технической поддержки
-            InlineKeyboardButton(text="🛠 Поддержка", url="https://t.me/lllang_supportbot")
+            InlineKeyboardButton(text="🛠 Поддержка", url="https://t.me/NonGrata4Life")
         ],
         [
             # Кнопка информации о боте
@@ -1070,177 +1074,51 @@ async def process_word_input(message: Message, state: FSMContext):
     await state.set_state(WordStates.waiting_for_pos)
 
 """
-=============== БОТ 3: ТЕХПОДДЕРЖКА ===============
+=============== ЗАПУСК WEB API ===============
+Функции для запуска WEB приложения, отображающее выученные слова
 """
 
-BOT_TOKEN_SUPP = os.getenv("BOT_TOKEN_SUPP")
 
-# Создаем фабрику роутера для передачи admin_id
-def create_support_router(admin_id: int):
-    router_supp = Router()
-    storage_supp = MemoryStorage()  # Отдельное хранилище для техподдержки
+# Создаем HTTP-сервер для Web App
+async def web_app_handler(request):
+    return web.FileResponse("webapp/dist/index.html")
 
-    # Глобальный словарь для связи сообщений (временное решение)
-    support_tickets = {}
 
-    # Состояния для FSM
-    class SupportStates(StatesGroup):
-        WAITING_USER_MESSAGE = State()
-        WAITING_ADMIN_REPLY = State()
+# API для получения слов пользователя
+async def api_words_handler(request):
+    user_id = int(request.query.get('user_id'))
+    words = await get_words_from_db(user_id)
 
-    # Активация режима поддержки (для пользователей)
-    @router_supp.message(Command("support"), StateFilter("*"))
-    @router_supp.message(F.text.casefold() == "техподдержка", StateFilter("*"))
-    async def activate_support(message: Message, state: FSMContext):
-        await state.set_state(SupportStates.WAITING_USER_MESSAGE)
-        await message.answer(
-            "✉️ Режим поддержки активирован!\n"
-            "Опишите ваш вопрос, и я сразу перешлю его администратору.\n"
-            "Для выхода используйте /cancel"
-        )
+    # Преобразование в JSON-совместимый формат
+    words_json = []
+    for word in words:
+        words_json.append({
+            'id': word[0],
+            'word': word[2],
+            'part_of_speech': word[3],
+            'translation': word[4]
+        })
+    logging.info(f"Example: {words_json[0]}")
 
-    # Перехват сообщений пользователя
-    @router_supp.message(
-        SupportStates.WAITING_USER_MESSAGE,
-        F.content_type.in_({"text", "photo", "document"})
-    )
-    async def forward_to_admin(message: Message, state: FSMContext):
-        user_info = (
-            f"👤 Пользователь: {message.from_user.full_name}\n"
-            f"🆔 ID: {message.from_user.id}\n"
-            f"📝 Сообщение:\n"
-        )
+    return web.json_response(words_json)
 
-        # Для текста
-        if message.text:
-            admin_message = await message.bot.send_message(
-                admin_id,
-                user_info + message.text
-            )
 
-        # Для фото
-        elif message.photo:
-            caption = user_info + (message.caption or "")
-            admin_message = await message.bot.send_photo(
-                admin_id,
-                message.photo[-1].file_id,
-                caption=caption
-            )
+# Инициализация HTTP-сервера
+async def init_http_server():
+    app = web.Application()
+    app.router.add_get('/webapp', web_app_handler)
+    app.router.add_get('/api/words', api_words_handler)
 
-        # Для документов
-        elif message.document:
-            caption = user_info + (message.caption or "")
-            admin_message = await message.bot.send_document(
-                admin_id,
-                message.document.file_id,
-                caption=caption
-            )
-        else:
-            return  # Неподдерживаемый тип контента
-
-        # Сохраняем связь
-        support_tickets[admin_message.message_id] = {
-            "user_id": message.from_user.id,
-            "admin_id": admin_id,
-            "original_message_id": message.message_id
-        }
-
-        await message.answer("✅ Ваше сообщение отправлено администратору!")
-
-    # Обработка ответов администратора
-    @router_supp.message(
-        F.reply_to_message,
-        F.from_user.id == admin_id,  # Фильтр по ID администратора
-        SupportStates.WAITING_ADMIN_REPLY,
-        F.content_type.in_({"text", "photo", "document"})
-    )
-    async def admin_reply_handler(message: Message, state: FSMContext):
-        replied_id = message.reply_to_message.message_id
-
-        if replied_id not in support_tickets:
-            return await message.answer("❌ Это сообщение не связано с активным тикетом")
-
-        ticket = support_tickets[replied_id]
-        user_id = ticket["user_id"]
-
-        # Формируем ответ
-        response_text = f"🔔 Ответ поддержки:\n\n{message.text or message.caption or ''}"
-
-        # Отправляем ответ пользователю
-        try:
-            if message.text:
-                await message.bot.send_message(user_id, response_text)
-            elif message.photo:
-                await message.bot.send_photo(
-                    user_id,
-                    message.photo[-1].file_id,
-                    caption=response_text
-                )
-            elif message.document:
-                await message.bot.send_document(
-                    user_id,
-                    message.document.file_id,
-                    caption=response_text
-                )
-
-            await message.answer("✅ Ответ отправлен пользователю!")
-        except Exception as e:
-            await message.answer(f"❌ Ошибка отправки: {str(e)}")
-
-        # Возвращаем в исходное состояние
-        await state.set_state(SupportStates.WAITING_USER_MESSAGE)
-
-    # Обработчик кнопки "Ответить"
-    @router_supp.callback_query(F.data.startswith("reply_"))
-    async def handle_reply_callback(callback: CallbackQuery, state: FSMContext):
-        user_id = int(callback.data.split("_")[1])
-
-        # Сохраняем ID пользователя для ответа
-        await state.update_data(target_user_id=user_id)
-        await state.set_state(SupportStates.WAITING_ADMIN_REPLY)
-
-        await callback.message.edit_text(
-            f"💬 Вы отвечаете пользователю ID: {user_id}\n"
-            "Просто ответьте (reply) на сообщение пользователя ниже:"
-        )
-        await callback.answer()
-
-    # Отмена диалога
-    @router_supp.message(Command("cancel"), SupportStates.WAITING_USER_MESSAGE)
-    async def cancel_support(message: Message, state: FSMContext):
-        await state.clear()
-        await message.answer("❌ Режим поддержки отключен", reply_markup=ReplyKeyboardRemove())
-
-    # Уведомление для админа о новых сообщениях
-    @router_supp.message(SupportStates.WAITING_USER_MESSAGE)
-    async def notify_admin(message: Message):
-        # Пропускаем если это команда
-        if message.text and message.text.startswith('/'):
-            return
-
-        try:
-            await message.bot.send_message(
-                admin_id,
-                f"❗ Новое сообщение в поддержку от @{message.from_user.username}",
-                reply_markup=InlineKeyboardMarkup(inline_keyboard=[
-                    [
-                        InlineKeyboardButton(
-                            text="Ответить",
-                            callback_data=f"reply_{message.from_user.id}"
-                        )
-                    ],
-                ])
-            )
-        except Exception as e:
-            logging.error(f"Ошибка уведомления админа: {e}")
-
-    return router_supp
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, WEB_SERVER_HOST, WEB_SERVER_PORT)
+    await site.start()
+    logging.info(f"HTTP server started on http://{WEB_SERVER_HOST}:{WEB_SERVER_PORT}/webapp")
 
 """ 
 =============== ЗАПУСК ВСЕЙ СИСТЕМЫ =============== 
 Функции для запуска обоих ботов параллельно
 """
-
 
 async def run_bot(bot_token: str, router: Router, storage=None):
     """
@@ -1277,20 +1155,12 @@ async def main():
     if BOT_TOKEN_MAIN:
         logging.info("Starting Main Bot...")
         tasks.append(run_bot(BOT_TOKEN_MAIN, router_main))
+        logging.info("Starting HTTP server...")
+        tasks.append(init_http_server())
 
     if BOT_TOKEN_DICT:
         logging.info("Starting Dictionary Bot...")
         tasks.append(run_bot(BOT_TOKEN_DICT, router_dict, storage))
-
-    # Инициализация бота техподдержки
-    if BOT_TOKEN_SUPP:
-        admin_id = int(os.getenv("ADMIN_ID", 0))
-        logging.info("Starting Support Bot...")
-        # Создаем роутер с передачей ADMIN_ID
-        router_supp = create_support_router(admin_id)
-        # Создаем отдельное хранилище для этого бота
-        storage_supp = MemoryStorage()
-        tasks.append(run_bot(BOT_TOKEN_SUPP, router_supp, storage_supp))
 
     if not tasks:
         logging.error("❌ Bot tokens not found.")
