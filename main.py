@@ -30,11 +30,11 @@ from aiogram.types import (  # Типы данных Telegram
     Message,
     CallbackQuery,
     InlineKeyboardMarkup,
-    InlineKeyboardButton, ReplyKeyboardRemove
+    InlineKeyboardButton, ReplyKeyboardRemove, WebAppInfo
 )
 
-# Импорт текстовых сообщений из отдельного файла (mssgs.py)
-from mssgs import *
+# Импорт текстовых сообщений из отдельного файла (config.py)
+from config import *
 
 # Загрузка переменных окружения ДОЛЖНА БЫТЬ ВЫЗВАНА
 load_dotenv(""".env""")
@@ -49,9 +49,6 @@ POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
 POSTGRES_DB = os.getenv("POSTGRES_DB", "telegram_bot")
 
-WEB_SERVER_HOST = "0.0.0.0"
-WEB_SERVER_PORT = 8000
-
 # Обработка порта с проверкой
 POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
 
@@ -64,32 +61,99 @@ POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
 # Получаем токен бота из переменных окружения
 BOT_TOKEN_MAIN = os.getenv("BOT_TOKEN_MAIN")
 
+# Создаем хранилище состояний в оперативной памяти
+storage = MemoryStorage()
+
 # Создаем маршрутизатор для обработки сообщений этого бота
 router_main = Router()
 
+class PollingStates(StatesGroup):
+    camefrom_state = State()
+    language_state = State()
+    introduction_state = State()
+
+
 
 @router_main.message(Command("start"))
-async def start(message: Message):
-    """
-    Обработчик команды /start
-    Показывает приветственное сообщение и главное меню
-    """
+async def start_with_polling(message: Message, state: FSMContext):
+    # Получаем язык пользователя
+    lang_code = message.from_user.language_code
+    # Создаем ключи для словаря опросника
+    question1, question2, question3 = QUESTIONARY[lang_code + '0'], QUESTIONARY[lang_code + '1'], QUESTIONARY[lang_code + '2']
     # Создаем клавиатуру с кнопками
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text=question1, callback_data=f"reply_{question1}"),
+            ],
+            [
+                InlineKeyboardButton(text=question2, callback_data=f"reply_{question2}"),
+            ],
+            [
+                InlineKeyboardButton(text=question3, callback_data=f"reply_{question3}"),
+            ],
+        ])
+
+    await state.update_data(
+            user_id = message.from_user.id,
+            username = message.from_user.username,
+            language = message.from_user.language_code,
+            camefrom = '',
+            about = '',
+        )
+
+    await message.bot.send_message(
+            chat_id=message.from_user.id,
+            text=START_MESSAGE[lang_code],
+            reply_markup=keyboard,
+            parse_mode=ParseMode.HTML
+        )
+
+    return state.set_state(PollingStates.camefrom_state)
+
+@router_main.callback_query(F.data.startswith("reply_"), PollingStates.camefrom_state)
+async def next_question(callback: CallbackQuery, state: FSMContext):
+    reply = str(callback.data.split("_")[1])
+    await state.update_data(
+            camefrom = reply,
+    )
+
+    await callback.message.bot.send_message(
+        chat_id=callback.from_user.id,
+        text='➪ ' + reply,
+        parse_mode=ParseMode.HTML
+    )
+
+    data = await state.get_data()
+    lang_code = data['language']
+
+    await callback.message.bot.send_message(
+        chat_id=callback.from_user.id,
+        text=GRATITUDE[lang_code],
+        parse_mode=ParseMode.HTML
+    )
+    return state.set_state(PollingStates.introduction)
+
+
+@router_main.callback_query(F.data.startswith("repply_", PollingStates.introduction))
+async def start(message: Message):
+    # URL вашего Web App
+    web_app_url = "https://jebb2108.github.io/index.html"
+
+    # Создаем клавиатуру с кнопкой Web App
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            # Кнопка перехода к боту-словарю
-            InlineKeyboardButton(text="📚 Бот-словарь", url="https://t.me/lllang_dictbot"),
-            # Кнопка технической поддержки
-            InlineKeyboardButton(text="🛠 Поддержка", url="https://t.me/NonGrata4Life")
+            InlineKeyboardButton(text="📚 Словарь", web_app=WebAppInfo(url=web_app_url)),
         ],
         [
-            # Кнопка информации о боте
-            InlineKeyboardButton(text="ℹ️ О боте", callback_data="about")
+            InlineKeyboardButton(text="🌐 Найти собеседника", url="https://t.me/lllang_dictbot"),
+        ],
+        [
+            InlineKeyboardButton(text="ℹ️ О боте", callback_data="about"),
+            InlineKeyboardButton(text="🛠 Поддержка", url="https://t.me/@NonGrata4Life"),
         ],
     ])
-    # Отправляем приветственное сообщение с клавиатурой
-    await message.answer(f"👋 Привет, <b>{message.from_user.first_name}</b>!\n\n{WELCOME}", reply_markup=keyboard)
 
+    await message.answer(f"👋 Привет, <b>{message.from_user.first_name}</b>!\n\n{WELCOME}", reply_markup=keyboard)
 
 @router_main.callback_query(F.data == "about")
 async def about(callback: CallbackQuery):
@@ -109,18 +173,23 @@ async def about(callback: CallbackQuery):
 
 @router_main.callback_query(F.data == "go_back")
 async def go_back(callback: CallbackQuery):
+    # URL вашего Web App
+    web_app_url = "https://jebb2108.github.io/index.html"
+
+    # Создаем клавиатуру с кнопкой Web App
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            # Кнопка перехода к боту-словарю
-            InlineKeyboardButton(text="📚 Бот-словарь", url="https://t.me/lllang_dictbot"),
-            # Кнопка технической поддержки
-            InlineKeyboardButton(text="🛠 Поддержка", url="https://t.me/NonGrata4Life")
+            InlineKeyboardButton(text="📚 Словарь", web_app=WebAppInfo(url=web_app_url)),
         ],
         [
-            # Кнопка информации о боте
-            InlineKeyboardButton(text="ℹ️ О боте", callback_data="about")
+            InlineKeyboardButton(text="🌐 Найти собеседника", url="https://t.me/lllang_dictbot"),
+        ],
+        [
+            InlineKeyboardButton(text="ℹ️ О боте", callback_data="about"),
+            InlineKeyboardButton(text="🛠 Поддержка", url="https://t.me/@NonGrata4Life"),
         ],
     ])
+
     # Отправляем приветственное сообщение с клавиатурой
     await callback.message.edit_text(f"👋 Привет, <b>{callback.from_user.first_name}</b>!\n\n{WELCOME}", reply_markup=keyboard, parse_mode=ParseMode.HTML)
     await callback.answer()
@@ -147,9 +216,6 @@ BOT_TOKEN_DICT = os.getenv("BOT_TOKEN_DICT")
 
 # Создаем маршрутизатор для обработки сообщений этого бота
 router_dict = Router()
-
-# Создаем хранилище состояний в оперативной памяти
-storage = MemoryStorage()
 
 
 # = СИСТЕМА СОСТОЯНИЙ (Finite State Machine) =
@@ -220,6 +286,43 @@ async def close_db():
     global db_pool
     if db_pool:
         await db_pool.close()
+
+async def create_users_table(state: FSMContext):
+
+    data = await state.get_data()
+    user_id = data.get("user_id")
+    username = data.get("username")
+    language = data.get("language")
+    camefrom = data.get("camefrom")
+    about = data.get("about")
+
+    try:
+        # Создаем таблицу users
+        async with db_pool.acquire() as conn:
+            await conn.execute("""CREATE TABLE IF NOT EXISTS users (
+            user_id BIGINT PRIMARY KEY,
+            username TEXT NOT NULL,
+            language TEXT NOT NULL,
+            camefrom TEXT NOT NULL,
+            about TEXT NULL,
+            created_at TIMESTAMP DEFAULT NOW()
+            UNIQUE (user_id)
+            );
+        """)
+
+            # Добавляем пользователя в таблицу
+            conn.execute("""INSERT INTO users (user_id, username, language, camefrom) VALUES ($1, $2, $3, $4, $5);""",
+                         user_id,
+                         username,
+                         language,
+                         camefrom,
+                         about,
+                    )
+
+            logging.info("Users table created successfully")
+    except Exception as e:
+        logging.critical(f"Users table creation failed: {e}")
+        raise
 
 # Обновленные функции работы с БД
 async def get_words_from_db(user_id: int) -> List[Tuple[str, str, str]]:
@@ -1087,33 +1190,22 @@ async def web_app_handler(request):
 # API для получения слов пользователя
 async def api_words_handler(request):
     user_id = int(request.query.get('user_id'))
+    # Используем правильную функцию для получения слов
     words = await get_words_from_db(user_id)
 
     # Преобразование в JSON-совместимый формат
     words_json = []
-    for word in words:
+    for word_tuple in words:
+        # word_tuple: (word, part_of_speech, translation)
         words_json.append({
-            'id': word[0],
-            'word': word[2],
-            'part_of_speech': word[3],
-            'translation': word[4]
+            'word': word_tuple[0],
+            'part_of_speech': word_tuple[1],
+            'translation': word_tuple[2]
         })
-    logging.info(f"Example: {words_json[0]}")
 
+    logging.info(f"Sent {len(words_json)} words for user {user_id}")
     return web.json_response(words_json)
 
-
-# Инициализация HTTP-сервера
-async def init_http_server():
-    app = web.Application()
-    app.router.add_get('/webapp', web_app_handler)
-    app.router.add_get('/api/words', api_words_handler)
-
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, WEB_SERVER_HOST, WEB_SERVER_PORT)
-    await site.start()
-    logging.info(f"HTTP server started on http://{WEB_SERVER_HOST}:{WEB_SERVER_PORT}/webapp")
 
 """ 
 =============== ЗАПУСК ВСЕЙ СИСТЕМЫ =============== 
@@ -1154,9 +1246,7 @@ async def main():
     tasks = []
     if BOT_TOKEN_MAIN:
         logging.info("Starting Main Bot...")
-        tasks.append(run_bot(BOT_TOKEN_MAIN, router_main))
-        logging.info("Starting HTTP server...")
-        tasks.append(init_http_server())
+        tasks.append(run_bot(BOT_TOKEN_MAIN, router_main, storage))
 
     if BOT_TOKEN_DICT:
         logging.info("Starting Dictionary Bot...")
