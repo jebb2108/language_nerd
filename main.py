@@ -68,66 +68,69 @@ storage = MemoryStorage()
 router_main = Router()
 
 class PollingStates(StatesGroup):
-    begining_state = State()
     camefrom_state = State()
     language_state = State()
     introduction_state = State()
 
 @router_main.message(Command("start"))
 async def start_with_polling(message: Message, state: FSMContext):
-    # Устанавливаем первое состояние
-    await state.set_state(PollingStates.begining_state)
-    # Загружаем данные в память состояний
+    user_id = message.from_user.id
+
+    async with db_pool.acquire() as conn:
+        user_exists = await conn.fetchval(
+            "SELECT 1 FROM users WHERE user_id = $1",
+            user_id
+        )
+
+    # Если пользователь уже существует - показываем главное меню
+    if user_exists:
+        await show_main_menu(message)
+        return
+
+    # Новый пользователь - начинаем опрос
     await state.update_data(
-            user_id = message.from_user.id,
-            username = message.from_user.username,
-            native_language = message.from_user.language_code,
-            chosen_language = '',
-            camefrom = '',
-            about = '',
-        )
+        user_id=user_id,
+        username=message.from_user.username,
+        native_language=message.from_user.language_code,
+        chosen_language='',
+        camefrom='',
+        about='',
+    )
 
-    # Получаем язык пользователя
-    lang_code = message.from_user.language_code
-    # Создаем ключи для словаря опросника
+    # Получаем язык пользователя (с проверкой)
+    data = await state.get_data()
+    lang_code = data['native_language'] or 'en'
+    if lang_code not in ['en', 'ru']:
+        lang_code = 'en'
+
+    # Создаем клавиатуру для первого вопроса
     key1, key2, key3 = QUESTIONARY[lang_code + '0'], QUESTIONARY[lang_code + '1'], QUESTIONARY[lang_code + '2']
-    # Создаем клавиатуру с кнопками
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text=key1, callback_data=f"reply_{key1}"),
-            ],
-            [
-                InlineKeyboardButton(text=key2, callback_data=f"reply_{key2}"),
-            ],
-            [
-                InlineKeyboardButton(text=key3, callback_data=f"reply_{key3}"),
-            ],
-        ])
+        [InlineKeyboardButton(text=key1, callback_data=f"reply_{key1}")],
+        [InlineKeyboardButton(text=key2, callback_data=f"reply_{key2}")],
+        [InlineKeyboardButton(text=key3, callback_data=f"reply_{key3}")]
+    ])
 
-    await message.bot.send_message(
-            chat_id=message.from_user.id,
-            text=START_MESSAGE[lang_code],
-            reply_markup=keyboard,
-            parse_mode=ParseMode.HTML
-        )
-
+    await message.answer(
+        text=START_MESSAGE[lang_code],
+        reply_markup=keyboard,
+        parse_mode=ParseMode.HTML
+    )
     await state.set_state(PollingStates.camefrom_state)
 
 @router_main.callback_query(F.data.startswith("reply_"), PollingStates.camefrom_state)
 async def next_question(callback: CallbackQuery, state: FSMContext):
     reply = str(callback.data.split("_")[1])
-    await state.update_data(
-            camefrom = reply,
-    )
+    await state.update_data(camefrom=reply)
 
-    await callback.message.bot.send_message(
-        chat_id=callback.from_user.id,
-        text='➪ ' + reply,
-        parse_mode=ParseMode.HTML
-    )
-
+    # Получаем язык пользователя
     data = await state.get_data()
-    lang_code = data['native_language']
+    lang_code = data['native_language'] or 'en'
+    if lang_code not in ['en', 'ru']:
+        lang_code = 'en'
+
+    await callback.message.edit_text('➪ ' + reply)
+
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
@@ -156,54 +159,67 @@ async def next_question(callback: CallbackQuery, state: FSMContext):
 
     await state.set_state(PollingStates.language_state)
 
-@router_main.callback_query(F.data.startswith("lang_"), PollingStates.language_state)
-async def next_question(callback: CallbackQuery, state: FSMContext):
 
+@router_main.callback_query(F.data.startswith("lang_"), PollingStates.language_state)
+async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
     chosen_language = str(callback.data.split("_")[1])
+    await state.update_data(chosen_language=chosen_language)
 
     data = await state.get_data()
-    lang_code = data['native_language'] if data['native_language'] in ['en', 'ru'] else 'en'
+    lang_code = data['native_language'] or 'en'
+    if lang_code not in ['en', 'ru']:
+        lang_code = 'en'
 
-    callback.data = callback.data.replace("lang_", "begin")
-    await state.update_data(
-            chosen_language = chosen_language,
-    )
-    await callback.message.bot.send_message(
-        chat_id=callback.from_user.id,
-        text='➪ You chose: ' + chosen_language,
-        parse_mode=ParseMode.HTML
-    )
-    await callback.message.bot.send_message(
-        chat_id=callback.from_user.id,
-        text=GRATITUDE[lang_code],
-        parse_mode=ParseMode.HTML
-    )
-
-
-    await create_users_table(state)
-    await state.set_state(PollingStates.introduction_state)
-
-
-@router_main.message(F.data == "begin", PollingStates.introduction_state)
-async def start(callback: CallbackQuery):
-    # URL вашего Web App
-    web_app_url = "https://jebb2108.github.io/index.html"
-
-    # Создаем клавиатуру с кнопкой Web App
+    # Создаем кнопку подтверждения
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="📚 Словарь", web_app=WebAppInfo(url=web_app_url)),
-        ],
-        [
-            InlineKeyboardButton(text="🌐 Найти собеседника", url="https://t.me/lllang_dictbot"),
-        ],
-        [
-            InlineKeyboardButton(text="ℹ️ О боте", callback_data="about"),
-            InlineKeyboardButton(text="🛠 Поддержка", url="https://t.me/@NonGrata4Life"),
-        ],
+        [InlineKeyboardButton(text=f"{CONFIRM[lang_code]}", callback_data="begin")]
     ])
 
-    await callback.message.answer(f"👋 Привет, <b>{callback.message.from_user.first_name}</b>!\n\n{WELCOME}", reply_markup=keyboard)
+    # Совмещенное сообщение с выбором языка и благодарностью
+    await callback.message.edit_text(
+        f'➪ You chose: {chosen_language}\n\n{GRATITUDE[lang_code]}',
+        reply_markup=keyboard,
+        parse_mode=ParseMode.HTML
+    )
+    await state.set_state(PollingStates.introduction_state)
+
+    # Сохраняем пользователя в БД
+    user_id = data['user_id']
+    username = data['username']
+    camefrom = data['camefrom']
+    await create_users_table(user_id, username, camefrom, chosen_language)
+
+
+@router_main.callback_query(F.data == "begin", PollingStates.introduction_state)
+async def start_main_menu(callback: CallbackQuery, state: FSMContext):
+    # Очищаем состояние опроса
+    await state.clear()
+
+    # Показываем главное меню
+    await show_main_menu(callback.message)
+
+
+async def show_main_menu(message: Message):
+    """Показывает главное меню для пользователя"""
+    # Формируем URL с user_id
+    web_app_url = f"https://jebb2108.github.io/index.html?user_id={message.from_user.id}"
+
+    # Создаем клавиатуру
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="📚 Словарь", web_app=WebAppInfo(url=web_app_url))],
+        [InlineKeyboardButton(text="🌐 Найти собеседника", url="https://t.me/lllang_dictbot")],
+        [
+            InlineKeyboardButton(text="ℹ️ О боте", callback_data="about"),
+            InlineKeyboardButton(text="🛠 Поддержка", url="https://t.me/NonGrata4Life")
+        ]
+    ])
+
+    await message.answer(
+        f"👋 Привет, <b>{message.from_user.first_name}</b>!\n\n{WELCOME}",
+        reply_markup=keyboard,
+        parse_mode=ParseMode.HTML
+    )
+
 
 @router_main.callback_query(F.data == "about")
 async def about(callback: CallbackQuery):
@@ -323,8 +339,18 @@ async def init_db():
             translation TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT NOW(),
             UNIQUE (user_id, word)
-        );
-    """)
+            ); 
+        """)
+            await conn.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT NOT NULL,
+            username TEXT NOT NULL,
+            camefrom TEXT NOT NULL,
+            language TEXT NOT NULL,
+            UNIQUE (user_id)
+            ); """)
+
         logging.info("Database initialized successfully")
     except Exception as e:
         logging.critical(f"Database initialization failed: {e}")
@@ -337,40 +363,17 @@ async def close_db():
     if db_pool:
         await db_pool.close()
 
-async def create_users_table(state: FSMContext):
-
-    data = await state.get_data()
-    user_id = data.get("user_id")
-    username = data.get("username")
-    camefrom = data.get("camefrom")
-    language = data.get("language")
-
-    try:
-        # Создаем таблицу users
-        async with db_pool.acquire() as conn:
-            await conn.execute("""CREATE TABLE IF NOT EXISTS users (
-            user_id BIGINT PRIMARY KEY,
-            username TEXT NOT NULL,
-            language TEXT NOT NULL,
-            camefrom TEXT NOT NULL,
-            about TEXT NULL,
-            created_at TIMESTAMP DEFAULT NOW()
-            UNIQUE (user_id)
-            );
-        """)
-
-            # Добавляем пользователя в таблицу
-            conn.execute("""INSERT INTO users (user_id, username, language, camefrom) VALUES ($1, $2, $3, $4, $5);""",
-                         user_id,
-                         username,
-                         language,
-                         camefrom,
-                    )
-
-            logging.info("Users table created successfully")
-    except Exception as e:
-        logging.critical(f"Users table creation failed: {e}")
-        raise
+async def create_users_table(user_id, username, camefrom, language):
+    """Создает или обновляет запись пользователя"""
+    async with db_pool.acquire() as conn:
+        await conn.execute("""
+            INSERT INTO users (user_id, username, camefrom, language) 
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (user_id) DO UPDATE 
+            SET username = EXCLUDED.username,
+                camefrom = EXCLUDED.camefrom,
+                language = EXCLUDED.language
+        """, user_id, username, camefrom, language)
 
 # Обновленные функции работы с БД
 async def get_words_from_db(user_id: int) -> List[Tuple[str, str, str]]:

@@ -88,3 +88,8 @@ GRATITUDE = dict({
     "en": "Thank you for completing the poll. Now you can use our service better",
     "ru": "Спасибо за прохождение опроса. Теперь вы можете использовать наш сервис лучше",
 })
+
+CONFIRM = dict({
+    "en": "yes, let`s begin",
+    "ru": "да, начинаем",
+})
