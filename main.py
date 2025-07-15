@@ -68,38 +68,41 @@ storage = MemoryStorage()
 router_main = Router()
 
 class PollingStates(StatesGroup):
+    begining_state = State()
     camefrom_state = State()
     language_state = State()
     introduction_state = State()
 
-
-
 @router_main.message(Command("start"))
 async def start_with_polling(message: Message, state: FSMContext):
-    # Получаем язык пользователя
-    lang_code = message.from_user.language_code
-    # Создаем ключи для словаря опросника
-    question1, question2, question3 = QUESTIONARY[lang_code + '0'], QUESTIONARY[lang_code + '1'], QUESTIONARY[lang_code + '2']
-    # Создаем клавиатуру с кнопками
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text=question1, callback_data=f"reply_{question1}"),
-            ],
-            [
-                InlineKeyboardButton(text=question2, callback_data=f"reply_{question2}"),
-            ],
-            [
-                InlineKeyboardButton(text=question3, callback_data=f"reply_{question3}"),
-            ],
-        ])
-
+    # Устанавливаем первое состояние
+    await state.set_state(PollingStates.begining_state)
+    # Загружаем данные в память состояний
     await state.update_data(
             user_id = message.from_user.id,
             username = message.from_user.username,
-            language = message.from_user.language_code,
+            native_language = message.from_user.language_code,
+            chosen_language = '',
             camefrom = '',
             about = '',
         )
+
+    # Получаем язык пользователя
+    lang_code = message.from_user.language_code
+    # Создаем ключи для словаря опросника
+    key1, key2, key3 = QUESTIONARY[lang_code + '0'], QUESTIONARY[lang_code + '1'], QUESTIONARY[lang_code + '2']
+    # Создаем клавиатуру с кнопками
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text=key1, callback_data=f"reply_{key1}"),
+            ],
+            [
+                InlineKeyboardButton(text=key2, callback_data=f"reply_{key2}"),
+            ],
+            [
+                InlineKeyboardButton(text=key3, callback_data=f"reply_{key3}"),
+            ],
+        ])
 
     await message.bot.send_message(
             chat_id=message.from_user.id,
@@ -108,7 +111,7 @@ async def start_with_polling(message: Message, state: FSMContext):
             parse_mode=ParseMode.HTML
         )
 
-    return state.set_state(PollingStates.camefrom_state)
+    await state.set_state(PollingStates.camefrom_state)
 
 @router_main.callback_query(F.data.startswith("reply_"), PollingStates.camefrom_state)
 async def next_question(callback: CallbackQuery, state: FSMContext):
@@ -124,18 +127,65 @@ async def next_question(callback: CallbackQuery, state: FSMContext):
     )
 
     data = await state.get_data()
-    lang_code = data['language']
+    lang_code = data['native_language']
 
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text=f"🇷🇺 {LANGS[lang_code + '0']}", callback_data="lang_russian"),
+        ],
+        [
+            InlineKeyboardButton(text=f"🇺🇸 {LANGS[lang_code + '1']}", callback_data="lang_english"),
+        ],
+        [
+            InlineKeyboardButton(text=f"🇩🇪 {LANGS[lang_code + '2']}", callback_data="lang_german"),
+        ],
+        [
+            InlineKeyboardButton(text=f"🇪🇸 {LANGS[lang_code + '3']}", callback_data="lang_spanish"),
+        ],
+        [
+            InlineKeyboardButton(text=f"🇨🇳 {LANGS[lang_code + '4']}", callback_data="lang_chinese"),
+        ],
+    ])
+
+    await callback.message.bot.send_message(
+        chat_id=callback.from_user.id,
+        text=LANG_PICK[lang_code],
+        reply_markup=keyboard,
+        parse_mode=ParseMode.HTML
+    )
+
+    await state.set_state(PollingStates.language_state)
+
+@router_main.callback_query(F.data.startswith("lang_"), PollingStates.language_state)
+async def next_question(callback: CallbackQuery, state: FSMContext):
+
+    chosen_language = str(callback.data.split("_")[1])
+
+    data = await state.get_data()
+    lang_code = data['native_language'] if data['native_language'] in ['en', 'ru'] else 'en'
+
+    callback.data = callback.data.replace("lang_", "begin")
+    await state.update_data(
+            chosen_language = chosen_language,
+    )
+    await callback.message.bot.send_message(
+        chat_id=callback.from_user.id,
+        text='➪ You chose: ' + chosen_language,
+        parse_mode=ParseMode.HTML
+    )
     await callback.message.bot.send_message(
         chat_id=callback.from_user.id,
         text=GRATITUDE[lang_code],
         parse_mode=ParseMode.HTML
     )
-    return state.set_state(PollingStates.introduction)
 
 
-@router_main.callback_query(F.data.startswith("repply_", PollingStates.introduction))
-async def start(message: Message):
+    await create_users_table(state)
+    await state.set_state(PollingStates.introduction_state)
+
+
+@router_main.message(F.data == "begin", PollingStates.introduction_state)
+async def start(callback: CallbackQuery):
     # URL вашего Web App
     web_app_url = "https://jebb2108.github.io/index.html"
 
@@ -153,7 +203,7 @@ async def start(message: Message):
         ],
     ])
 
-    await message.answer(f"👋 Привет, <b>{message.from_user.first_name}</b>!\n\n{WELCOME}", reply_markup=keyboard)
+    await callback.message.answer(f"👋 Привет, <b>{callback.message.from_user.first_name}</b>!\n\n{WELCOME}", reply_markup=keyboard)
 
 @router_main.callback_query(F.data == "about")
 async def about(callback: CallbackQuery):
@@ -292,9 +342,8 @@ async def create_users_table(state: FSMContext):
     data = await state.get_data()
     user_id = data.get("user_id")
     username = data.get("username")
-    language = data.get("language")
     camefrom = data.get("camefrom")
-    about = data.get("about")
+    language = data.get("language")
 
     try:
         # Создаем таблицу users
@@ -316,7 +365,6 @@ async def create_users_table(state: FSMContext):
                          username,
                          language,
                          camefrom,
-                         about,
                     )
 
             logging.info("Users table created successfully")
@@ -1246,11 +1294,11 @@ async def main():
     tasks = []
     if BOT_TOKEN_MAIN:
         logging.info("Starting Main Bot...")
-        tasks.append(run_bot(BOT_TOKEN_MAIN, router_main, storage))
+        tasks.append(asyncio.create_task(run_bot(BOT_TOKEN_MAIN, router_main, storage)))
 
     if BOT_TOKEN_DICT:
         logging.info("Starting Dictionary Bot...")
-        tasks.append(run_bot(BOT_TOKEN_DICT, router_dict, storage))
+        tasks.append(asyncio.create_task(run_bot(BOT_TOKEN_DICT, router_dict, storage)))
 
     if not tasks:
         logging.error("❌ Bot tokens not found.")

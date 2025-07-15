@@ -1,24 +1,24 @@
-FIRST_QUESTION_RU = ("Отлично! Вот, какие дальнейшие шаги тебя ждут:"
+FIRST_QUESTION_RU = ("Отлично! Вот, какие дальнейшие шаги тебя ждут:\n\n"
 
-    "1️⃣ Пара общих вопросов — ты находишься здесь"
-    "2️⃣ Заполнение анкеты о себе"
-    "3️⃣ По желанию Предвыбор интересных собеседников"
+    "1️⃣ Пара общих вопросов — ты находишься здесь\n"
+    "2️⃣ Заполнение анкеты о себе\n"
+    "3️⃣ По желанию Предвыбор интересных собеседников\n\n"
     
-    "А в ближайший понедельник бот подберет тебе задания на закрепрение новых слов"
+    "А в ближайший понедельник бот подберет тебе задания на закрепрение новых слов\n\n"
     
     
-    "👀 Подскажи, откуда ты о нас узнал?")
+    "👀 Подскажи, откуда ты о нас узнал?\n")
 
-FIRST_QUESTION_EN = ("Great! Here are the next steps for you:"
+FIRST_QUESTION_EN = ("Great! Here are the next steps for you:\n\n"
 
-    "1️⃣ A few general questions — you're here"
-    "2️⃣ Filling out a questionnaire about yourself"
-    "3️⃣ By choice Preselection of interesting interviewees"
+    "1️⃣ A few general questions — you're here\n"
+    "2️⃣ Filling out a questionnaire about yourself\n"
+    "3️⃣ By choice Preselection of interesting interviewees\n\n"
     
-    "And in the next Monday, the bot will choose tasks to reinforce new words"
+    "And in the next Monday, the bot will choose tasks to reinforce new words\n\n"
     
     
-    "👀 Tell me where you heard about us?")
+    "👀 Tell me where you heard about us?\n")
 
 WELCOME = (
     "Очень рад видеть тебя здесь!\n"
@@ -65,7 +65,26 @@ QUESTIONARY = dict({
     "ru2": "Через рекламу",
 })
 
+LANG_PICK = dict({
+    "en": "What language would you like to learn?",
+    "ru": "Какой язык вы хотите изучить?",
+})
+
+LANGS = dict({
+    "en0": "Russian",
+    "en1": "English",
+    "en2": "German",
+    "en3": "Spanish",
+    "en4": "Chineese",
+
+    "ru0": "Русский",
+    "ru1": "Английский",
+    "ru2": "Немецкий",
+    "ru3": "Испанский",
+    "ru4": "Китайский",
+})
+
 GRATITUDE = dict({
-    "en": "Thank you for completing the poll. We will use your feedback to improve our service.",
-    "ru": "Спасибо за прохождение опроса. Мы будем использовать ваш отзыв для улучшения нашего сервиса.",
+    "en": "Thank you for completing the poll. Now you can use our service better",
+    "ru": "Спасибо за прохождение опроса. Теперь вы можете использовать наш сервис лучше",
 })
