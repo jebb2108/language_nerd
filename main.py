@@ -88,11 +88,12 @@ async def start_with_polling(message: Message, state: FSMContext):
     # Если пользователь уже существует - показываем главное меню
     if user_exists:
         user_id = message.from_user.id
-        username, language, lang_code = await get_user_info(user_id)
+        username, first_name, language, lang_code = await get_user_info(user_id)
 
         await state.update_data(
             user_id = user_id,
             username = username,
+            first_name = first_name,
             language = language,
             lang_code = lang_code,
         )
@@ -102,12 +103,13 @@ async def start_with_polling(message: Message, state: FSMContext):
 
     # Новый пользователь - начинаем опрос
     await state.update_data(
-        user_id=user_id,
-        username=message.from_user.username,
-        native_language=message.from_user.language_code,
-        chosen_language='',
-        camefrom='',
-        about='',
+        user_id = user_id,
+        username = message.from_user.username,
+        first_name = message.from_user.first_name,
+        native_language = message.from_user.language_code,
+        chosen_language = '',
+        camefrom = '',
+        about = '',
     )
 
     # Получаем язык пользователя (с проверкой)
@@ -187,11 +189,12 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
     await state.set_state(PollingStates.introduction_state)
 
     # Сохраняем пользователя в БД
-    user_id = data['user_id']
-    username = data['username']
-    camefrom = data['camefrom']
+    user_id = data["user_id"]
+    username = data["username"]
+    first_name = data["first_name"]
+    camefrom = data["camefrom"]
 
-    await create_users_table(user_id, username, camefrom, chosen_language, lang_code)
+    await create_users_table(user_id, username, first_name, camefrom, chosen_language, lang_code)
 
 
 @router_main.callback_query(F.data == "begin", PollingStates.introduction_state)
@@ -204,10 +207,11 @@ async def start_main_menu(callback: CallbackQuery, state: FSMContext):
     await state.clear()
 
     # Заполняем память актуальной информацией о пользователе
-    username, language, lang_code = await get_user_info(user_id)
+    username, first_name, language, lang_code = await get_user_info(user_id)
     await state.update_data(
         user_id = user_id,
         username = username,
+        first_name = first_name,
         language = language,
         lang_code = lang_code,
     )
@@ -219,7 +223,7 @@ async def start_main_menu(callback: CallbackQuery, state: FSMContext):
 async def show_main_menu(message: Message, state: FSMContext):
     """Показывает главное меню для пользователя"""
     data = await state.get_data()
-    username = data["username"]
+    first_name = data["first_name"]
     lang_code = data["lang_code"]
 
     # Формируем URL с user_id
@@ -240,7 +244,7 @@ async def show_main_menu(message: Message, state: FSMContext):
     ])
 
     await message.answer(
-        f"{BUTTONS["hello"][lang_code]}<b>{username}</b>!\n\n{QUESTIONARY["welcome"][lang_code]}",
+        f"{BUTTONS["hello"][lang_code]}<b>{first_name}</b>!\n\n{QUESTIONARY["welcome"][lang_code]}",
         reply_markup=keyboard,
         parse_mode=ParseMode.HTML
     )
@@ -270,7 +274,7 @@ async def about(callback: CallbackQuery, state: FSMContext):
 async def go_back(callback: CallbackQuery, state: FSMContext):
 
     data = await state.get_data()
-    username = data["username"]
+    first_name = data["first_name"]
     lang_code = data["lang_code"]
     # URL вашего Web App
     web_app_url = "https://jebb2108.github.io/index.html"
@@ -290,7 +294,7 @@ async def go_back(callback: CallbackQuery, state: FSMContext):
     ])
 
     # Отправляем приветственное сообщение с клавиатурой
-    await callback.message.edit_text(f"{BUTTONS["hello"][lang_code]}<b>{username}</b>!\n\n{QUESTIONARY["welcome"][lang_code]}", reply_markup=keyboard, parse_mode=ParseMode.HTML)
+    await callback.message.edit_text(f"{BUTTONS["hello"][lang_code]}<b>{first_name}</b>!\n\n{QUESTIONARY["welcome"][lang_code]}", reply_markup=keyboard, parse_mode=ParseMode.HTML)
     await callback.answer()
 
 
@@ -409,6 +413,7 @@ async def init_db():
             id SERIAL PRIMARY KEY,
             user_id BIGINT NOT NULL,
             username TEXT NOT NULL,
+            first_name TEXT NOT NULL,
             camefrom TEXT NOT NULL,
             language TEXT NOT NULL,
             lang_code TEXT NOT NULL,
@@ -428,29 +433,30 @@ async def close_db():
     if db_pool:
         await db_pool.close()
 
-async def create_users_table(user_id, username, camefrom, language, lang_code):
+async def create_users_table(user_id, username, first_name, camefrom, language, lang_code):
     """Создает или обновляет запись пользователя"""
     async with db_pool.acquire() as conn:
         await conn.execute("""
-            INSERT INTO users (user_id, username, camefrom, language, lang_code) 
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO users (user_id, username, first_name, camefrom, language, lang_code) 
+            VALUES ($1, $2, $3, $4, $5, $6)
             ON CONFLICT (user_id) DO UPDATE 
             SET username = EXCLUDED.username,
+                first_name = EXCLUDED.first_name,
                 camefrom = EXCLUDED.camefrom,
                 language = EXCLUDED.language,
                 lang_code = EXCLUDED.lang_code
-        """, user_id, username, camefrom, language, lang_code)
+        """, user_id, username, first_name, camefrom, language, lang_code)
 
 
 async def get_user_info(user_id):
     async with db_pool.acquire() as conn:
         row = await conn.fetchrow("""
-        SELECT username, language, lang_code FROM users 
+        SELECT username, first_name, language, lang_code FROM users 
         WHERE user_id = $1
         """, user_id)
         if row:
-            return row["username"], row["language"], row["lang_code"]
-        return None, None, None
+            return row["username"], row["first_name"], row["language"], row["lang_code"]
+        return None, None, None, None
 
 # Обновленные функции работы с БД
 async def get_words_from_db(user_id: int) -> List[Tuple[str, str, str]]:
