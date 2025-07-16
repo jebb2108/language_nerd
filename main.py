@@ -75,129 +75,144 @@ class PollingStates(StatesGroup):
     language_state = State()
     introduction_state = State()
 
+
 @router_main.message(Command("start"))
 async def start_with_polling(message: Message, state: FSMContext):
+
     user_id = message.from_user.id
+    try:
+        # Проверяем существование пользователя в БД
+        async with db_pool.acquire() as conn:
+            user_exists = await conn.fetchval(
+                "SELECT 1 FROM users WHERE user_id = $1",
+                user_id
+            )
 
-    async with db_pool.acquire() as conn:
-        user_exists = await conn.fetchval(
-            "SELECT 1 FROM users WHERE user_id = $1",
-            user_id
-        )
-
-    # Если пользователь уже существует - показываем главное меню
-    if user_exists:
-        user_id = message.from_user.id
-        username, first_name, language, lang_code = await get_user_info(user_id)
-
+        # Новый пользователь - начинаем опрос
         await state.update_data(
-            user_id = user_id,
-            username = username,
-            first_name = first_name,
-            language = language,
-            lang_code = lang_code,
+            user_id=user_id,
+            username=message.from_user.username or "",
+            first_name=message.from_user.first_name or "",
+            lang_code=message.from_user.language_code or "en",
+            chosen_language="",
+            camefrom="",
+            about="",
         )
 
+    except Exception as e:
+        logging.error(f"Error in start handler: {e}")
+
+    # Если пользователь существует - показываем главное меню
+    if user_exists:
         await show_main_menu(message, state)
         return
 
-    # Новый пользователь - начинаем опрос
-    await state.update_data(
-        user_id = user_id,
-        username = message.from_user.username,
-        first_name = message.from_user.first_name,
-        native_language = message.from_user.language_code,
-        chosen_language = '',
-        camefrom = '',
-        about = '',
-    )
-
-    # Получаем язык пользователя (с проверкой)
+    # Получаем данные из состояния
     data = await state.get_data()
-    lang_code = data['native_language'] or 'en'
+    lang_code = data['lang_code']
     if lang_code not in ['en', 'ru']:
         lang_code = 'en'
 
-    # Создаем клавиатуру для первого вопроса
-    key1, key2, key3 = (QUESTIONARY["where_youcamefrom"][f"{lang_code}{i}"] for i in range(3))
+    # Создаем безопасные callback-данные
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=key1, callback_data=f"reply_{key1}")],
-        [InlineKeyboardButton(text=key2, callback_data=f"reply_{key2}")],
-        [InlineKeyboardButton(text=key3, callback_data=f"reply_{key3}")]
+        [
+            InlineKeyboardButton(
+                    text=QUESTIONARY["where_youcamefrom"][f"{lang_code}0"],
+                    callback_data="camefrom_friends"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text=QUESTIONARY["where_youcamefrom"][f"{lang_code}1"],
+                callback_data="camefrom_search"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text=QUESTIONARY["where_youcamefrom"][f"{lang_code}2"],
+                callback_data="camefrom_other"
+            )
+        ]
     ])
-    # Отправляю через функцию с сохранением ID сообщения
+        # Отправляю через функцию с сохранением ID сообщения
     await send_message_with_save(message, QUESTIONARY["intro"][lang_code], state, True, keyboard )
     await state.set_state(PollingStates.camefrom_state)
 
-@router_main.callback_query(F.data.startswith("reply_"), PollingStates.camefrom_state)
-async def next_question(callback: CallbackQuery, state: FSMContext):
-    reply = str(callback.data.split("_")[1])
-    await state.update_data(camefrom=reply)
 
-    # Получаем язык пользователя
-    data = await state.get_data()
-    lang_code = data['native_language'] or 'en'
-    if lang_code not in ['en', 'ru']:
-        lang_code = 'en'
+@router_main.callback_query(F.data.startswith("camefrom_"), PollingStates.camefrom_state)
+async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
+    try:
+        camefrom = callback.data.split("_")[1]
+        await state.update_data(camefrom=camefrom)
 
-    await callback.message.edit_text('➪ ' + reply)
+        data = await state.get_data()
+        lang_code = data.get('lang_code', 'en')
 
+        # Кнопки выбора языка с простыми callback-данными
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(text="🇷🇺 Русский", callback_data="lang_russian"),
+            ],
+            [
+                InlineKeyboardButton(text="🇺🇸 English", callback_data="lang_english")
+            ],
+            [
+                InlineKeyboardButton(text="🇩🇪 Deutsch", callback_data="lang_german"),
+            ],
+            [
+                InlineKeyboardButton(text="🇪🇸 Español", callback_data="lang_spanish")
+            ],
+            [
+                InlineKeyboardButton(text="🇨🇳 中文", callback_data="lang_chineese")
+            ]
+        ])
 
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text=f"🇷🇺 {QUESTIONARY["languages"][lang_code+'0']}", callback_data="lang_russian"),
-        ],
-        [
-            InlineKeyboardButton(text=f"🇺🇸 {QUESTIONARY["languages"][lang_code+'1']}", callback_data="lang_english"),
-        ],
-        [
-            InlineKeyboardButton(text=f"🇩🇪 {QUESTIONARY["languages"][lang_code+'2']}", callback_data="lang_german"),
-        ],
-        [
-            InlineKeyboardButton(text=f"🇪🇸 {QUESTIONARY["languages"][lang_code+'3']}", callback_data="lang_spanish"),
-        ],
-        [
-            InlineKeyboardButton(text=f"🇨🇳 {QUESTIONARY["languages"][lang_code+'4']}", callback_data="lang_chinese"),
-        ],
-    ])
+        await send_message_with_save(callback, QUESTIONARY["lang_pick"][lang_code], state, True, keyboard)
+        await state.set_state(PollingStates.language_state)
+        await callback.answer()
 
-    await send_message_with_save(callback.message, QUESTIONARY["lang_pick"][lang_code], state, True, keyboard)
-    await state.set_state(PollingStates.language_state)
+    except Exception as e:
+        logging.error(f"Error in camefrom handler: {e}")
 
 
 @router_main.callback_query(F.data.startswith("lang_"), PollingStates.language_state)
 async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
-    chosen_language = str(callback.data.split("_")[1])
-    await state.update_data(chosen_language=chosen_language)
+    try:
 
-    data = await state.get_data()
-    lang_code = data['native_language'] or 'en'
-    if lang_code not in ['en', 'ru']:
-        lang_code = 'en'
+        data = await state.get_data()
+        lang_code = data.get('lang_code', 'en')
 
-    # Создаем кнопку подтверждения
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=f"{QUESTIONARY["confirm"][lang_code]}", callback_data="begin")]
-    ])
+        # Кнопка подтверждения
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(
+                text=QUESTIONARY["confirm"][lang_code],
+                callback_data="action_confirm"
+            )]
+        ])
 
-    # Совмещенное сообщение с выбором языка и благодарностью
-    await callback.message.edit_text(
-        f'➪ You chose: {chosen_language}\n\n{QUESTIONARY["gratitude"][lang_code]}',
-        reply_markup=keyboard,
-        parse_mode=ParseMode.HTML
-    )
-    await state.set_state(PollingStates.introduction_state)
+        users_choice = callback.data.split("_")[1]
 
-    # Сохраняем пользователя в БД
-    user_id = data["user_id"]
-    username = data["username"]
-    first_name = data["first_name"]
-    camefrom = data["camefrom"]
+        await callback.message.edit_text(
+            text=f"➪ Вы выбрали: {users_choice}\n\n{QUESTIONARY['gratitude'][lang_code]}",
+            reply_markup=keyboard
+        )
+        await state.set_state(PollingStates.introduction_state)
+        await callback.answer()
 
-    await create_users_table(user_id, username, first_name, camefrom, chosen_language, lang_code)
+        # Сохраняем пользователя в БД
+        user_id = data['user_id']
+        username = data.get('username', 'None')
+        first_name = data.get('first_name', 'None')
+        camefrom = data.get('camefrom', 'None')
+        await create_users_table(user_id, username, first_name, camefrom, users_choice, lang_code)
+
+    except Exception as e:
+        logging.error(f"Error in language choice: {e}")
 
 
-@router_main.callback_query(F.data == "begin", PollingStates.introduction_state)
+
+
+@router_main.callback_query(F.data == "action_confirm", PollingStates.introduction_state)
 async def start_main_menu(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     user_id = data["user_id"]
@@ -223,11 +238,12 @@ async def start_main_menu(callback: CallbackQuery, state: FSMContext):
 async def show_main_menu(message: Message, state: FSMContext):
     """Показывает главное меню для пользователя"""
     data = await state.get_data()
+    user_id = data["user_id"]
     first_name = data["first_name"]
     lang_code = data["lang_code"]
 
     # Формируем URL с user_id
-    web_app_url = f"https://jebb2108.github.io/index.html?user_id={message.from_user.id}"
+    web_app_url = f"https://jebb2108.github.io/index.html?user_id={user_id}"
 
     # Создаем клавиатуру с кнопкой Web App
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -435,28 +451,37 @@ async def close_db():
 
 async def create_users_table(user_id, username, first_name, camefrom, language, lang_code):
     """Создает или обновляет запись пользователя"""
-    async with db_pool.acquire() as conn:
-        await conn.execute("""
-            INSERT INTO users (user_id, username, first_name, camefrom, language, lang_code) 
-            VALUES ($1, $2, $3, $4, $5, $6)
-            ON CONFLICT (user_id) DO UPDATE 
-            SET username = EXCLUDED.username,
-                first_name = EXCLUDED.first_name,
-                camefrom = EXCLUDED.camefrom,
-                language = EXCLUDED.language,
-                lang_code = EXCLUDED.lang_code
-        """, user_id, username, first_name, camefrom, language, lang_code)
+    try:
+        async with db_pool.acquire() as conn:
+            result = await conn.execute("""
+                INSERT INTO users (user_id, username, first_name, camefrom, language, lang_code) 
+                VALUES ($1, $2, $3, $4, $5, $6)
+                ON CONFLICT (user_id) DO UPDATE 
+                SET username = EXCLUDED.username,
+                    camefrom = EXCLUDED.camefrom,
+                    first_name = EXCLUDED.first_name,
+                    language = EXCLUDED.language,
+                    lang_code = EXCLUDED.lang_code
+            """, user_id, username, first_name, camefrom, language, lang_code)
+            logging.info(f"User {user_id} created/updated: {result}")
+            return True
+    except Exception as e:
+        logging.error(f"Error creating/updating user {user_id}: {e}")
+        return False
 
 
 async def get_user_info(user_id):
+    """Получает информацию о пользователе из базы данных"""
+
     async with db_pool.acquire() as conn:
-        row = await conn.fetchrow("""
-        SELECT username, first_name, language, lang_code FROM users 
-        WHERE user_id = $1
-        """, user_id)
+        row = await conn.fetchrow(
+            "SELECT username, first_name, language, lang_code FROM users WHERE user_id = $1",
+            user_id
+        )
         if row:
             return row["username"], row["first_name"], row["language"], row["lang_code"]
         return None, None, None, None
+
 
 # Обновленные функции работы с БД
 async def get_words_from_db(user_id: int) -> List[Tuple[str, str, str]]:
