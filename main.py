@@ -11,18 +11,21 @@
 import asyncio  # Для асинхронного выполнения задач
 import logging  # Для записи логов работы бота
 import sys  # Для работы с системными функциями
+from pyexpat.errors import messages
+from webbrowser import Error
+
 import asyncpg
 from aiohttp import web
 from asyncpg.pool import Pool
 import os  # Для работы с файловой системой
-from typing import List, Tuple, Optional  # Аннотации типов для лучшей читаемости
+from typing import List, Tuple, Optional, Union  # Аннотации типов для лучшей читаемости
 from dotenv import load_dotenv  # Для загрузки переменных окружения из .env файла
 
 # Импорт компонентов из библиотеки aiogram для работы с Telegram API
 from aiogram import Bot, Dispatcher, Router, F  # Основные компоненты
 from aiogram.client.default import DefaultBotProperties  # Настройки бота по умолчанию
 from aiogram.enums import ParseMode  # Режимы форматирования текста (HTML, Markdown)
-from aiogram.filters import Command, CommandStart, StateFilter  # Фильтры для обработки команд
+from aiogram.filters import Command, CommandStart  # Фильтры для обработки команд
 from aiogram.fsm.context import FSMContext  # Контекст машины состояний
 from aiogram.fsm.state import State, StatesGroup  # Система состояний
 from aiogram.fsm.storage.memory import MemoryStorage  # Хранилище состояний в оперативной памяти
@@ -84,7 +87,7 @@ async def start_with_polling(message: Message, state: FSMContext):
 
     # Если пользователь уже существует - показываем главное меню
     if user_exists:
-        await show_main_menu(message)
+        await show_main_menu(message, message.from_user.id, state)
         return
 
     # Новый пользователь - начинаем опрос
@@ -104,18 +107,14 @@ async def start_with_polling(message: Message, state: FSMContext):
         lang_code = 'en'
 
     # Создаем клавиатуру для первого вопроса
-    key1, key2, key3 = QUESTIONARY[lang_code + '0'], QUESTIONARY[lang_code + '1'], QUESTIONARY[lang_code + '2']
+    key1, key2, key3 = (QUESTIONARY["where_youcamefrom"][f"{lang_code}{i}"] for i in range(3))
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=key1, callback_data=f"reply_{key1}")],
         [InlineKeyboardButton(text=key2, callback_data=f"reply_{key2}")],
         [InlineKeyboardButton(text=key3, callback_data=f"reply_{key3}")]
     ])
-
-    await message.answer(
-        text=START_MESSAGE[lang_code],
-        reply_markup=keyboard,
-        parse_mode=ParseMode.HTML
-    )
+    # Отправляю через функцию с сохранением ID сообщения
+    await send_message_with_save(message, QUESTIONARY["intro"][lang_code], state, True, keyboard )
     await state.set_state(PollingStates.camefrom_state)
 
 @router_main.callback_query(F.data.startswith("reply_"), PollingStates.camefrom_state)
@@ -134,29 +133,23 @@ async def next_question(callback: CallbackQuery, state: FSMContext):
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text=f"🇷🇺 {LANGS[lang_code + '0']}", callback_data="lang_russian"),
+            InlineKeyboardButton(text=f"🇷🇺 {QUESTIONARY["languages"][lang_code+'0']}", callback_data="lang_russian"),
         ],
         [
-            InlineKeyboardButton(text=f"🇺🇸 {LANGS[lang_code + '1']}", callback_data="lang_english"),
+            InlineKeyboardButton(text=f"🇺🇸 {QUESTIONARY["languages"][lang_code+'1']}", callback_data="lang_english"),
         ],
         [
-            InlineKeyboardButton(text=f"🇩🇪 {LANGS[lang_code + '2']}", callback_data="lang_german"),
+            InlineKeyboardButton(text=f"🇩🇪 {QUESTIONARY["languages"][lang_code+'2']}", callback_data="lang_german"),
         ],
         [
-            InlineKeyboardButton(text=f"🇪🇸 {LANGS[lang_code + '3']}", callback_data="lang_spanish"),
+            InlineKeyboardButton(text=f"🇪🇸 {QUESTIONARY["languages"][lang_code+'3']}", callback_data="lang_spanish"),
         ],
         [
-            InlineKeyboardButton(text=f"🇨🇳 {LANGS[lang_code + '4']}", callback_data="lang_chinese"),
+            InlineKeyboardButton(text=f"🇨🇳 {QUESTIONARY["languages"][lang_code+'4']}", callback_data="lang_chinese"),
         ],
     ])
 
-    await callback.message.bot.send_message(
-        chat_id=callback.from_user.id,
-        text=LANG_PICK[lang_code],
-        reply_markup=keyboard,
-        parse_mode=ParseMode.HTML
-    )
-
+    await send_message_with_save(callback.message, QUESTIONARY["lang_pick"][lang_code], state, True, keyboard)
     await state.set_state(PollingStates.language_state)
 
 
@@ -172,12 +165,12 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
 
     # Создаем кнопку подтверждения
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=f"{CONFIRM[lang_code]}", callback_data="begin")]
+        [InlineKeyboardButton(text=f"{QUESTIONARY["confirm"][lang_code]}", callback_data="begin")]
     ])
 
     # Совмещенное сообщение с выбором языка и благодарностью
     await callback.message.edit_text(
-        f'➪ You chose: {chosen_language}\n\n{GRATITUDE[lang_code]}',
+        f'➪ You chose: {chosen_language}\n\n{QUESTIONARY["gratitude"][lang_code]}',
         reply_markup=keyboard,
         parse_mode=ParseMode.HTML
     )
@@ -187,79 +180,139 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
     user_id = data['user_id']
     username = data['username']
     camefrom = data['camefrom']
-    await create_users_table(user_id, username, camefrom, chosen_language)
+
+    await create_users_table(user_id, username, camefrom, chosen_language, lang_code)
 
 
 @router_main.callback_query(F.data == "begin", PollingStates.introduction_state)
 async def start_main_menu(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    user_id = data["user_id"]
+    # Удаляем все предыдущие сообщения
+    await delete_previous_messages(callback.bot, callback.message.chat.id, state)
     # Очищаем состояние опроса
     await state.clear()
 
+    # Заполняем память актуальной информацией о пользователе
+    username, language, lang_code = await get_user_info(user_id)
+    await state.update_data(
+        user_id = user_id,
+        username = username,
+        language = language,
+        lang_code = lang_code,
+    )
+
     # Показываем главное меню
-    await show_main_menu(callback.message)
+    await show_main_menu(callback.message, user_id, state)
 
 
-async def show_main_menu(message: Message):
+async def show_main_menu(message: Message, user_id, state: FSMContext):
     """Показывает главное меню для пользователя"""
+    data = await state.get_data()
+    username = data["username"]
+    lang_code = data["lang_code"]
+
     # Формируем URL с user_id
     web_app_url = f"https://jebb2108.github.io/index.html?user_id={message.from_user.id}"
 
-    # Создаем клавиатуру
+    # Создаем клавиатуру с кнопкой Web App
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="📚 Словарь", web_app=WebAppInfo(url=web_app_url))],
-        [InlineKeyboardButton(text="🌐 Найти собеседника", url="https://t.me/lllang_dictbot")],
         [
-            InlineKeyboardButton(text="ℹ️ О боте", callback_data="about"),
-            InlineKeyboardButton(text="🛠 Поддержка", url="https://t.me/NonGrata4Life")
-        ]
+            InlineKeyboardButton(text=BUTTONS["dictionary"][lang_code], web_app=WebAppInfo(url=web_app_url)),
+        ],
+        [
+            InlineKeyboardButton(text=BUTTONS["find_partner"][lang_code], url="https://t.me/lllang_dictbot"),
+        ],
+        [
+            InlineKeyboardButton(text=BUTTONS["about_bot"][lang_code], callback_data="about"),
+            InlineKeyboardButton(text=BUTTONS["support"][lang_code], url="https://t.me/@NonGrata4Life"),
+        ],
     ])
 
     await message.answer(
-        f"👋 Привет, <b>{message.from_user.first_name}</b>!\n\n{WELCOME}",
+        f"{BUTTONS["hello"][lang_code]}<b>{username}</b>!\n\n{QUESTIONARY["welcome"][lang_code]}",
         reply_markup=keyboard,
         parse_mode=ParseMode.HTML
     )
 
 
 @router_main.callback_query(F.data == "about")
-async def about(callback: CallbackQuery):
+async def about(callback: CallbackQuery, state: FSMContext):
     """
     Обработчик нажатия кнопки "О боте"
     Показывает подробную информацию о проекте
     """
+
+    data = await state.get_data()
+    lang_code = data["lang_code"]
     # Клавиатура только с кнопкой возврата
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🔙 Go Back", callback_data="go_back")]
     ])
 
     # Редактируем текущее сообщение, заменяя его на текст "О боте"
-    await callback.message.edit_text(ABOUT, reply_markup=keyboard)
+    await callback.message.edit_text(QUESTIONARY["about"][lang_code], reply_markup=keyboard)
     # Подтверждаем обработку callback (убираем часики на кнопке)
     await callback.answer()
 
+
 @router_main.callback_query(F.data == "go_back")
-async def go_back(callback: CallbackQuery):
+async def go_back(callback: CallbackQuery, state: FSMContext):
+
+    data = await state.get_data()
+    username = data["username"]
+    lang_code = data["lang_code"]
     # URL вашего Web App
     web_app_url = "https://jebb2108.github.io/index.html"
 
     # Создаем клавиатуру с кнопкой Web App
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="📚 Словарь", web_app=WebAppInfo(url=web_app_url)),
+            InlineKeyboardButton(text=BUTTONS["dictionary"][lang_code], web_app=WebAppInfo(url=web_app_url)),
         ],
         [
-            InlineKeyboardButton(text="🌐 Найти собеседника", url="https://t.me/lllang_dictbot"),
+            InlineKeyboardButton(text=BUTTONS["find_partner"][lang_code], url="https://t.me/lllang_dictbot"),
         ],
         [
-            InlineKeyboardButton(text="ℹ️ О боте", callback_data="about"),
-            InlineKeyboardButton(text="🛠 Поддержка", url="https://t.me/@NonGrata4Life"),
+            InlineKeyboardButton(text=BUTTONS["about_bot"][lang_code], callback_data="about"),
+            InlineKeyboardButton(text=BUTTONS["support"][lang_code], url="https://t.me/@NonGrata4Life"),
         ],
     ])
 
     # Отправляем приветственное сообщение с клавиатурой
-    await callback.message.edit_text(f"👋 Привет, <b>{callback.from_user.first_name}</b>!\n\n{WELCOME}", reply_markup=keyboard, parse_mode=ParseMode.HTML)
+    await callback.message.edit_text(f"{BUTTONS["hello"][lang_code]}<b>{username}</b>!\n\n{QUESTIONARY["welcome"][lang_code]}", reply_markup=keyboard, parse_mode=ParseMode.HTML)
     await callback.answer()
 
+
+async def send_message_with_save(message: Union[Message, CallbackQuery], text: str, state: FSMContext, markup=False, keyboard=None):
+    if isinstance(message, CallbackQuery):
+        message = message.message
+    if markup:
+        sent_message = await message.answer(
+            text=text,
+            reply_markup=keyboard,
+            parse_mode=ParseMode.HTML,
+        )
+    else:
+        sent_message = await message.answer(text)
+
+    data = await state.get_data()
+    curr_messages = data.get("messages_to_delete", [])
+    curr_messages.append(sent_message.message_id)
+
+    await state.update_data(messages_to_delete=curr_messages)
+    return sent_message
+
+
+async def delete_previous_messages(bot: Bot, chat_id: int, state: FSMContext):
+    data = await state.get_data()
+    if "messages_to_delete" in data:
+        for msg_id in data["messages_to_delete"]:
+            try:
+                await bot.delete_message(chat_id, msg_id)
+            except:
+                pass
+        await state.update_data(messages_to_delete=[])
 
 
 @router_main.message()
@@ -348,6 +401,8 @@ async def init_db():
             username TEXT NOT NULL,
             camefrom TEXT NOT NULL,
             language TEXT NOT NULL,
+            lang_code TEXT NOT NULL,
+            about TEXT NULL,
             UNIQUE (user_id)
             ); """)
 
@@ -363,17 +418,29 @@ async def close_db():
     if db_pool:
         await db_pool.close()
 
-async def create_users_table(user_id, username, camefrom, language):
+async def create_users_table(user_id, username, camefrom, language, lang_code):
     """Создает или обновляет запись пользователя"""
     async with db_pool.acquire() as conn:
         await conn.execute("""
-            INSERT INTO users (user_id, username, camefrom, language) 
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO users (user_id, username, camefrom, language, lang_code) 
+            VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (user_id) DO UPDATE 
             SET username = EXCLUDED.username,
                 camefrom = EXCLUDED.camefrom,
-                language = EXCLUDED.language
-        """, user_id, username, camefrom, language)
+                language = EXCLUDED.language,
+                lang_code = EXCLUDED.lang_code
+        """, user_id, username, camefrom, language, lang_code)
+
+
+async def get_user_info(user_id):
+    async with db_pool.acquire() as conn:
+        row = await conn.fetchrow("""
+        SELECT username, language, lang_code FROM users 
+        WHERE user_id = $1
+        """, user_id)
+        if row:
+            return row["username"], row["language"], row["lang_code"]
+        return None, None, None
 
 # Обновленные функции работы с БД
 async def get_words_from_db(user_id: int) -> List[Tuple[str, str, str]]:
