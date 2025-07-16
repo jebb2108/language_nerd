@@ -305,7 +305,7 @@ async def go_back(callback: CallbackQuery, state: FSMContext):
         ],
         [
             InlineKeyboardButton(text=BUTTONS["about_bot"][lang_code], callback_data="about"),
-            InlineKeyboardButton(text=BUTTONS["support"][lang_code], url="https://t.me/@NonGrata4Life"),
+            InlineKeyboardButton(text=BUTTONS["support"][lang_code], url="https://t.me/user_bot6426"),
         ],
     ])
 
