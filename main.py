@@ -87,7 +87,17 @@ async def start_with_polling(message: Message, state: FSMContext):
 
     # Если пользователь уже существует - показываем главное меню
     if user_exists:
-        await show_main_menu(message, message.from_user.id, state)
+        user_id = message.from_user.id
+        username, language, lang_code = await get_user_info(user_id)
+
+        await state.update_data(
+            user_id = user_id,
+            username = username,
+            language = language,
+            lang_code = lang_code,
+        )
+
+        await show_main_menu(message, state)
         return
 
     # Новый пользователь - начинаем опрос
@@ -203,10 +213,10 @@ async def start_main_menu(callback: CallbackQuery, state: FSMContext):
     )
 
     # Показываем главное меню
-    await show_main_menu(callback.message, user_id, state)
+    await show_main_menu(callback.message, state)
 
 
-async def show_main_menu(message: Message, user_id, state: FSMContext):
+async def show_main_menu(message: Message, state: FSMContext):
     """Показывает главное меню для пользователя"""
     data = await state.get_data()
     username = data["username"]
