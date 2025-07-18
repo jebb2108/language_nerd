@@ -592,6 +592,13 @@ async def run_bot(bot_token: str, router: Router, storage=None):
 
 
 async def run():
+
+    logging.basicConfig(
+        level=logging.INFO,
+        stream=sys.stdout,
+        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+    )
+
     await init_db()
     bot = Bot(token=BOT_TOKEN_MAIN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher(storage=storage)
@@ -602,5 +609,4 @@ async def run():
     await close_db()
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     asyncio.run(run())

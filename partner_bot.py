@@ -1061,9 +1061,13 @@ async def run_bot(bot_token: str, router: Router, storage=None):
     dp.include_router(router)
     # Запускаем бота в режиме опроса сервера Telegram
     await dp.start_polling(bot)
+    # Закрываем соединение с БД при завершении
+    await close_db()
+    logging.info("Database connection closed")
 
 
-async def main():
+async def run():
+
     # Настройка логирования
     logging.basicConfig(
         level=logging.INFO,
@@ -1071,33 +1075,17 @@ async def main():
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
     )
 
-    # Инициализация базы данных
     await init_db()
-    logging.info("Database connection established")
+    bot = Bot(token=BOT_TOKEN_DICT, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    dp = Dispatcher(storage=storage)
+    dp.include_router(router_dict)
 
-    # Создаем задачи для ботов
-    tasks = []
-    # if BOT_TOKEN_MAIN:
-    #     logging.info("Starting Main Bot...")
-    #     tasks.append(asyncio.create_task(run_bot(BOT_TOKEN_MAIN, router_main, storage)))
-
-    if BOT_TOKEN_DICT:
-        logging.info("Starting Dictionary Bot...")
-        tasks.append(asyncio.create_task(run_bot(BOT_TOKEN_DICT, router_dict, storage)))
-
-    if not tasks:
-        logging.error("❌ Bot tokens not found.")
-        return
-
-    # Запускаем всех ботов параллельно
-    await asyncio.gather(*tasks)
-
-    # Закрываем соединение с БД при завершении
+    logging.info("Starting dictionary bot (polling)…")
+    await dp.start_polling(bot)
     await close_db()
-    logging.info("Database connection closed")
 
 
 # Точка входа в программу
 if __name__ == "__main__":
     # Запускаем основную асинхронную функцию
-    asyncio.run(main())
+    asyncio.run(run())
