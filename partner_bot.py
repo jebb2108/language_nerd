@@ -7,13 +7,13 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from dotenv import load_dotenv
 
+# Загрузка переменных окружения ДОЛЖНА БЫТЬ ВЫЗВАНА
+load_dotenv("""/root/telegram_bot/.env""")
+
 
 # Импорт текстовых сообщений из отдельного файла (config.py)
 from db_cmds import *
 from routers import router as main_router
-
-# Загрузка переменных окружения ДОЛЖНА БЫТЬ ВЫЗВАНА
-load_dotenv(""".env""")
 
 bot_token = os.getenv("BOT_TOKEN_PARTNER")
 
