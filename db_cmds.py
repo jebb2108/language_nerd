@@ -3,19 +3,7 @@ from typing import *
 
 import logging
 import asyncpg
-
-import datetime
-import logging
-import uuid
-import random
-
-import asyncio
 from asyncpg.pool import Pool
-
-# Конфигурация замка
-LOCK_NAME = "telegram_bot_lock"
-LOCK_TIMEOUT = 30  # Секунд
-CHECK_INTERVAL = LOCK_TIMEOUT // 3  # 5 секунд
 
 # Глобальный пул соединений
 db_pool: Optional[Pool] = None
@@ -98,9 +86,6 @@ async def close_db():
 
 async def create_users_table(user_id, username, first_name, camefrom, language, lang_code):
     """Создает или обновляет запись пользователя с проверкой блокировки"""
-    if not lock_manager.has_lock:
-        logging.warning("Attempted DB write without lock! Aborting.")
-        return False
     try:
         async with db_pool.acquire() as conn:
             result = await conn.execute("""
@@ -193,63 +178,3 @@ async def check_word_exists(user_id: int, word: str) -> bool:
             user_id, word
         )
         return row is not None
-
-
-class LockManager:
-    def __init__(self):
-        self.owner_id = str(uuid.uuid4())
-        self._has_lock = False
-        self.last_check = datetime.datetime.min
-        self.cache_time = datetime.timedelta(seconds=2)
-
-    @property
-    def has_lock(self):
-        if datetime.datetime.now() - self.last_check < self.cache_time:
-            return self._has_lock
-        return False
-
-    async def acquire_lock(self) -> bool:
-        try:
-            # Проверяем инициализацию пула соединений
-            if db_pool is None:
-                logging.error("Database pool not initialized! Cannot acquire lock.")
-                self._has_lock = False
-                return False
-
-            async with db_pool.acquire() as conn:
-                # Удаляем просроченные блокировки
-                await conn.execute("DELETE FROM locks WHERE expires_at < NOW()")
-
-                expires_at = datetime.datetime.now() + datetime.timedelta(seconds=LOCK_TIMEOUT)
-
-                result = await conn.fetchval("""
-                    INSERT INTO locks (lock_name, owner_id, expires_at)
-                    VALUES ($1, $2, $3)
-                    ON CONFLICT (lock_name) DO UPDATE SET
-                        owner_id = EXCLUDED.owner_id,
-                        expires_at = EXCLUDED.expires_at
-                    WHERE locks.expires_at <= NOW()
-                    RETURNING owner_id;
-                """, LOCK_NAME, self.owner_id, expires_at)
-
-                acquired = result == self.owner_id
-                self._has_lock = acquired
-                self.last_check = datetime.datetime.now()
-                return acquired
-
-        except Exception as e:
-            logging.error(f"Lock acquisition error: {e}")
-            self._has_lock = False
-            return False
-
-    async def maintain(self):
-        """Периодически обновляет блокировку"""
-        while True:
-            acquired = await self.acquire_lock()
-            status = "✅" if acquired else "❌"
-            logging.info(f"{status} Lock status: {'Acquired' if acquired else 'Not acquired'}")
-            await asyncio.sleep(LOCK_TIMEOUT // 2)
-
-
-# Создаем экземпляр менеджера блокировок
-lock_manager = LockManager()

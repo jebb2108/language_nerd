@@ -1,6 +1,3 @@
-import logging
-from typing import Union
-
 from aiogram import Router, F, Bot
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
@@ -9,7 +6,7 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, WebAppInfo
 
 from config import QUESTIONARY, BUTTONS
-from db_cmds import lock_manager, db_pool, create_users_table, get_user_info
+from db_cmds import *
 
 router = Router(name=__name__)
 
@@ -22,11 +19,6 @@ class PollingStates(StatesGroup):
 
 @router.message(Command("start"))
 async def start_with_polling(message: Message, state: FSMContext):
-    # Проверяем наличие блокировки
-    if not lock_manager.has_lock:
-        logging.warning("Skipping message processing - no lock")
-        return
-
     user_id = message.from_user.id
     try:
         # Проверяем существование пользователя в БД
@@ -89,10 +81,6 @@ async def start_with_polling(message: Message, state: FSMContext):
 
 @router.callback_query(F.data.startswith("camefrom_"), PollingStates.camefrom_state)
 async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
-    if not lock_manager.has_lock:
-        await callback.answer("⏳ Please try again later...")
-        return
-
     try:
         camefrom = callback.data.split("_")[1]
         await state.update_data(camefrom=camefrom)

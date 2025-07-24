@@ -1,7 +1,6 @@
-import asyncio
 import sys
-import os
-from aiogram import Bot, Dispatcher, Router
+import asyncio
+from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -10,7 +9,6 @@ from dotenv import load_dotenv
 
 
 # Импорт текстовых сообщений из отдельного файла (config.py)
-from config import *
 from db_cmds import *
 from routers import router as main_router
 

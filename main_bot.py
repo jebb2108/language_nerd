@@ -8,11 +8,8 @@
 Оба бота запускаются параллельно друг другу из разных файлов
 """
 
-import logging
 import sys
 import asyncio
-import os
-
 from aiohttp import web
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher
@@ -20,18 +17,13 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
-# Импорт функций БД и менеджера блокировок
-from db_cmds import (
-    init_db,
-    close_db,
-    get_words_from_db,
-    lock_manager,
-)
+# Загрузка переменных окружения ДОЛЖНА БЫТЬ ВЫЗВАНА
+load_dotenv("""/root/telegram_bot/.env""")
+
+# Импорт функций БД
+from db_cmds import *
 
 from routers import router as main_router
-
-# Загрузка переменных окружения ДОЛЖНА БЫТЬ ВЫЗВАНА
-load_dotenv(""".env""")
 
 # Получаем токен бота из переменных окружения
 BOT_TOKEN_MAIN = os.getenv("BOT_TOKEN_MAIN")
@@ -121,9 +113,6 @@ async def run():
 
     # Инициализация БД в первую очередь
     await init_db()
-
-    # Запуск поддержки блокировки
-    asyncio.create_task(lock_manager.maintain())
 
     # Небольшая задержка для инициализации блокировки
     await asyncio.sleep(1)
