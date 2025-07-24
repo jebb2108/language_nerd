@@ -20,6 +20,7 @@ class PollingStates(StatesGroup):
 @router.message(Command("start"))
 async def start_with_polling(message: Message, state: FSMContext):
     user_id = message.from_user.id
+    user_exists = False
     try:
         # Проверяем существование пользователя в БД
         async with db_pool.acquire() as conn:
