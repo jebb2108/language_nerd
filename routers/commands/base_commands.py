@@ -21,6 +21,12 @@ class PollingStates(StatesGroup):
 async def start_with_polling(message: Message, state: FSMContext):
     user_id = message.from_user.id
     user_exists = False
+
+    # Инициализируем lang_code до блока try
+    lang_code = message.from_user.language_code or "en"
+    if lang_code not in ['en', 'ru']:
+        lang_code = 'en'
+
     try:
         # Проверяем существование пользователя в БД
         async with db_pool.acquire() as conn:
@@ -29,12 +35,12 @@ async def start_with_polling(message: Message, state: FSMContext):
                 user_id
             )
 
-        # Новый пользователь - начинаем опрос
+        # Обновляем состояние с инициализированным lang_code
         await state.update_data(
             user_id=user_id,
             username=message.from_user.username or "",
             first_name=message.from_user.first_name or "",
-            lang_code=message.from_user.language_code or "en",
+            lang_code=lang_code,  # Используем уже инициализированное значение
             chosen_language="",
             camefrom="",
             about="",
@@ -47,12 +53,6 @@ async def start_with_polling(message: Message, state: FSMContext):
     if user_exists:
         await show_main_menu(message, state)
         return
-
-    # Получаем данные из состояния
-    data = await state.get_data()
-    lang_code = data['lang_code']
-    if lang_code not in ['en', 'ru']:
-        lang_code = 'en'
 
     # Создаем безопасные callback-данные
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -153,21 +153,26 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "action_confirm", PollingStates.introduction_state)
 async def start_main_menu(callback: CallbackQuery, state: FSMContext):
+    # Получаем данные ДО очистки состояния
     data = await state.get_data()
-    user_id = data["user_id"]
+    user_id = data.get("user_id", callback.from_user.id)  # Используем ID из колбэка как резерв
+
     # Удаляем все предыдущие сообщения
     await delete_previous_messages(callback.bot, callback.message.chat.id, state)
+
     # Очищаем состояние опроса
     await state.clear()
 
     # Заполняем память актуальной информацией о пользователе
     username, first_name, language, lang_code = await get_user_info(user_id)
+
+    # Обновляем состояние с проверкой на None
     await state.update_data(
         user_id=user_id,
-        username=username,
-        first_name=first_name,
-        language=language,
-        lang_code=lang_code,
+        username=username or "",
+        first_name=first_name or "",
+        language=language or "english",  # Значение по умолчанию
+        lang_code=lang_code or "en",  # Значение по умолчанию
     )
 
     # Показываем главное меню

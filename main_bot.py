@@ -18,7 +18,7 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
 # Загрузка переменных окружения ДОЛЖНА БЫТЬ ВЫЗВАНА
-load_dotenv("""/root/telegram_bot/.env""")
+load_dotenv(""".env""")
 
 # Импорт функций БД
 from db_cmds import *
