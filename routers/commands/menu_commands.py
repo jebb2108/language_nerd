@@ -1,11 +1,18 @@
+import os
+
 from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo, CallbackQuery
 
 from config import BUTTONS, QUESTIONARY
+from filters import IsBotFilter
 
 router = Router(name=__name__)
+# Фильтрация по токену
+BOT_TOKEN_MAIN = os.getenv("BOT_TOKEN_MAIN")
+router.message.filter(IsBotFilter(BOT_TOKEN_MAIN))
+router.callback_query.filter(IsBotFilter(BOT_TOKEN_MAIN))
 
 async def show_main_menu(message: Message, state: FSMContext):
     """Показывает главное меню для пользователя"""

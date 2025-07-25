@@ -7,9 +7,14 @@ from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, C
 
 from config import QUESTIONARY
 from db_cmds import *
+from filters import IsBotFilter
 from routers.commands.menu_commands import show_main_menu
 
 router = Router(name=__name__)
+# Фильтрация по токену
+BOT_TOKEN_MAIN = os.getenv("BOT_TOKEN_MAIN")
+router.message.filter(IsBotFilter(BOT_TOKEN_MAIN))
+router.callback_query.filter(IsBotFilter(BOT_TOKEN_MAIN))
 
 
 class PollingStates(StatesGroup):
@@ -18,7 +23,7 @@ class PollingStates(StatesGroup):
     introduction_state = State()
 
 
-@router.message(Command("start"))
+@router.message(Command("start"), IsBotFilter(BOT_TOKEN_MAIN))
 async def start_with_polling(message: Message, state: FSMContext):
     user_id = message.from_user.id
     user_exists = False

@@ -64,7 +64,7 @@ class Database:
             logging.critical(f"Database initialization failed: {e}")
             raise
 
-    async def close_db(self):
+    async def close(self):
         """Закрытие пула соединений"""
         if self.pool:
             await self.pool.close()
