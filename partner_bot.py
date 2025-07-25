@@ -37,7 +37,7 @@ async def run():
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
     )
 
-    await init_db()
+    await db_pool.init_db()
 
     bot = Bot(token=bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher(storage=storage) if storage else Dispatcher()
@@ -47,7 +47,7 @@ async def run():
     await dp.start_polling(bot)
 
     # Закрываем соединение с БД при завершении
-    await close_db()
+    await db_pool.close_db()
     logging.info("Database connection closed")
 
 

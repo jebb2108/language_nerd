@@ -3,10 +3,11 @@ from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, WebAppInfo
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
-from config import QUESTIONARY, BUTTONS
+from config import QUESTIONARY
 from db_cmds import *
+from routers.commands.menu_commands import show_main_menu
 
 router = Router(name=__name__)
 
@@ -145,7 +146,7 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
         username = data.get('username', 'None')
         first_name = data.get('first_name', 'None')
         camefrom = data.get('camefrom', 'None')
-        await create_users_table(user_id, username, first_name, camefrom, users_choice, lang_code)
+        await db_pool.create_users_table(user_id, username, first_name, camefrom, users_choice, lang_code)
 
     except Exception as e:
         logging.error(f"Error in language choice: {e}")
@@ -164,7 +165,7 @@ async def start_main_menu(callback: CallbackQuery, state: FSMContext):
     await state.clear()
 
     # Заполняем память актуальной информацией о пользователе
-    username, first_name, language, lang_code = await get_user_info(user_id)
+    username, first_name, language, lang_code = await db_pool.get_user_info(user_id)
 
     # Обновляем состояние с проверкой на None
     await state.update_data(
@@ -177,86 +178,6 @@ async def start_main_menu(callback: CallbackQuery, state: FSMContext):
 
     # Показываем главное меню
     await show_main_menu(callback.message, state)
-
-
-async def show_main_menu(message: Message, state: FSMContext):
-    """Показывает главное меню для пользователя"""
-    data = await state.get_data()
-    user_id = data["user_id"]
-    first_name = data["first_name"]
-    lang_code = data["lang_code"]
-
-    # Формируем URL с user_id
-    web_app_url = f"https://jebb2108.github.io/index.html?user_id={user_id}"
-
-    # Создаем клавиатуру с кнопкой Web App
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text=BUTTONS["dictionary"][lang_code], web_app=WebAppInfo(url=web_app_url)),
-        ],
-        [
-            InlineKeyboardButton(text=BUTTONS["find_partner"][lang_code], url="https://t.me/lllang_onlinebot"),
-        ],
-        [
-            InlineKeyboardButton(text=BUTTONS["about_bot"][lang_code], callback_data="about"),
-            InlineKeyboardButton(text=BUTTONS["support"][lang_code], url="https://t.me/user_bot6426"),
-        ],
-    ])
-
-    await message.answer(
-        f"{BUTTONS["hello"][lang_code]}<b>{first_name}</b>!\n\n{QUESTIONARY["welcome"][lang_code]}",
-        reply_markup=keyboard,
-        parse_mode=ParseMode.HTML
-    )
-
-
-@router.callback_query(F.data == "about")
-async def about(callback: CallbackQuery, state: FSMContext):
-    """
-    Обработчик нажатия кнопки "О боте"
-    Показывает подробную информацию о проекте
-    """
-
-    data = await state.get_data()
-    lang_code = data["lang_code"]
-    # Клавиатура только с кнопкой возврата
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🔙 Go Back", callback_data="go_back")]
-    ])
-
-    # Редактируем текущее сообщение, заменяя его на текст "О боте"
-    await callback.message.edit_text(QUESTIONARY["about"][lang_code], reply_markup=keyboard)
-    # Подтверждаем обработку callback (убираем часики на кнопке)
-    await callback.answer()
-
-
-@router.callback_query(F.data == "go_back")
-async def go_back(callback: CallbackQuery, state: FSMContext):
-    data = await state.get_data()
-    first_name = data["first_name"]
-    lang_code = data["lang_code"]
-    # URL вашего Web App
-    web_app_url = "https://jebb2108.github.io/index.html"
-
-    # Создаем клавиатуру с кнопкой Web App
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text=BUTTONS["dictionary"][lang_code], web_app=WebAppInfo(url=web_app_url)),
-        ],
-        [
-            InlineKeyboardButton(text=BUTTONS["find_partner"][lang_code], url="https://t.me/lllang_onlinebot"),
-        ],
-        [
-            InlineKeyboardButton(text=BUTTONS["about_bot"][lang_code], callback_data="about"),
-            InlineKeyboardButton(text=BUTTONS["support"][lang_code], url="https://t.me/user_bot6426"),
-        ],
-    ])
-
-    # Отправляем приветственное сообщение с клавиатурой
-    await callback.message.edit_text(
-        f"{BUTTONS["hello"][lang_code]}<b>{first_name}</b>!\n\n{QUESTIONARY["welcome"][lang_code]}",
-        reply_markup=keyboard, parse_mode=ParseMode.HTML)
-    await callback.answer()
 
 
 async def send_message_with_save(message: Union[Message, CallbackQuery], text: str, state: FSMContext, markup=False,

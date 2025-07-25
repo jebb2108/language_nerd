@@ -46,7 +46,7 @@ async def web_app_handler(request):
 async def api_words_handler(request):
     user_id = int(request.query.get('user_id'))
     # Используем правильную функцию для получения слов
-    words = await get_words_from_db(user_id)
+    words = await db_pool.get_words_from_db(user_id)
 
     # Преобразование в JSON-совместимый формат
     words_json = []
@@ -76,7 +76,7 @@ async def web_app_handler(request):
 async def api_words_handler(request):
     user_id = int(request.query.get('user_id'))
     # Используем правильную функцию для получения слов
-    words = await get_words_from_db(user_id)
+    words = await db_pool.get_words_from_db(user_id)
 
     # Преобразование в JSON-совместимый формат
     words_json = []
@@ -112,7 +112,7 @@ async def run():
     )
 
     # Инициализация БД в первую очередь
-    await init_db()
+    await db_pool.init()
 
     # Небольшая задержка для инициализации блокировки
     await asyncio.sleep(1)
@@ -127,7 +127,7 @@ async def run():
     # await bot.delete_webhook(drop_pending_updates=True)
 
     await dp.start_polling(bot)
-    await close_db()
+    await db_pool.close_db()
 
 if __name__ == "__main__":
     asyncio.run(run())
