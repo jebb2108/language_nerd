@@ -1,8 +1,9 @@
-../.idea/
+.idea/
 __pycache__/
-dictionary.db
+.DS_Store
 bot/dbs/
 .env
-tests/*
-.DS_Store
-.idea/
+*env/
+bot_manager.sh
+main_bot.log
+partner_bot.log
