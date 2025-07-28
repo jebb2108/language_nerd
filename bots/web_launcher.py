@@ -2,7 +2,7 @@ import os
 import logging
 from aiohttp import web
 
-from bot.db_cmds import db_pool
+from bots.db_cmds import db_pool
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)

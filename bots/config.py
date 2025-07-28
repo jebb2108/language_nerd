@@ -19,7 +19,7 @@ QUESTIONARY = dict(
                    "2️⃣ Filling out a questionnaire about yourself\n"
                    "3️⃣ By choice Preselection of interesting interviewees\n\n"
 
-                   "And in the next Monday, the bot will choose tasks to reinforce new words\n\n"
+                   "And in the next Monday, the bots will choose tasks to reinforce new words\n\n"
 
 
                    "👀 Tell me where you heard about us?\n"),
@@ -131,7 +131,7 @@ BUTTONS = dict({
     },
 
     "about_bot": {
-        "en": "ℹ️ About bot",
+        "en": "ℹ️ About bots",
         "ru": "ℹ️ О боте",
     },
 

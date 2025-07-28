@@ -1,7 +1,7 @@
 .idea/
 __pycache__/
 .DS_Store
-bot/dbs/
+bots/dbs/
 .env
 *env/
 bot_manager.sh

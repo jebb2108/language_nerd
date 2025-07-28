@@ -5,8 +5,8 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo, CallbackQuery
 
-from bot.config import BUTTONS, QUESTIONARY
-from bot.filters import IsBotFilter
+from bots.config import BUTTONS, QUESTIONARY
+from bots.filters import IsBotFilter
 
 router = Router(name=__name__)
 # Фильтрация по токену

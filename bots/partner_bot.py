@@ -12,8 +12,8 @@ load_dotenv(""".env""")
 
 
 # Импорт текстовых сообщений из отдельного файла (config.py)
-from bot.db_cmds import *
-from bot.routers import router as main_router
+from bots.db_cmds import *
+from bots.routers import router as main_router
 
 bot_token = os.getenv("BOT_TOKEN_PARTNER")
 
@@ -43,7 +43,7 @@ async def run():
     dp = Dispatcher(storage=storage) if storage else Dispatcher()
     dp.include_router(main_router)
 
-    logging.info("Starting partner bot (polling)…")
+    logging.info("Starting partner bots (polling)…")
     await dp.start_polling(bot)
 
     # Закрываем соединение с БД при завершении
