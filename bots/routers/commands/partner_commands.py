@@ -2,7 +2,7 @@ import os
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
-from bots.filters import IsBotFilter
+from filters import IsBotFilter # noqa
 
 router = Router(name=__name__)
 # Фильтрация по токену

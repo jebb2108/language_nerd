@@ -5,8 +5,8 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo, CallbackQuery
 
-from bots.config import BUTTONS, QUESTIONARY
-from bots.filters import IsBotFilter
+from config import BUTTONS, QUESTIONARY # noqa
+from filters import IsBotFilter # noqa
 
 router = Router(name=__name__)
 # Фильтрация по токену
@@ -22,7 +22,7 @@ async def show_main_menu(message: Message, state: FSMContext):
     lang_code = data["lang_code"]
 
     # Формируем URL с user_id
-    web_app_url = f"https://lllang.site:8080?user_id={user_id}"
+    web_app_url = f"https://lllang.site/index.html?user_id={user_id}"
 
     # Создаем клавиатуру с кнопкой Web App
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -74,7 +74,7 @@ async def go_back(callback: CallbackQuery, state: FSMContext):
     lang_code = data["lang_code"]
 
     # URL вашего Web App
-    web_app_url = f"https://lllang.site:8080?user_id={user_id}"
+    web_app_url = f"https://lllang.site/index.html?user_id={user_id}"
 
     # Создаем клавиатуру с кнопкой Web App
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
