@@ -9,31 +9,54 @@ const bookmarksHint = document.querySelector('.bookmarks-hint');
 // Переменные состояния
 let currentUserId = null;
 
+// Базовый URL API (ЗАМЕНИТЕ НА ВАШ СЕРВЕР)
+const API_BASE_URL = 'https://lllang.site';
+
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', function() {
-    // Получаем параметры URL
-    const urlParams = new URLSearchParams(window.location.search);
-    currentUserId = urlParams.get('user_id');
+    // 1. Проверка инициализации Telegram WebApp
+    if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
 
-    if (currentUserId) {
-        userIdElement.textContent = currentUserId;
-    } else {
+        const initData = Telegram.WebApp.initDataUnsafe;
+        if (initData && initData.user && initData.user.id) {
+            currentUserId = initData.user.id.toString();
+            userIdElement.textContent = currentUserId;
+        }
+    }
+
+    // 2. Получаем параметры URL (резервный способ)
+    if (!currentUserId) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlUserId = urlParams.get('user_id');
+        if (urlUserId) {
+            currentUserId = urlUserId;
+            userIdElement.textContent = currentUserId;
+        }
+    }
+
+    // 3. Обработка отсутствия user_id
+    if (!currentUserId) {
         showNotification('Ошибка: Не указан ID пользователя', 'error');
         userIdElement.textContent = 'не определен';
+        return;
     }
 
     // Настройка закладок
     setupBookmarks();
 
     // Назначаем обработчики кнопок
-    document.getElementById('addWordBtn').addEventListener('click', addWord);
-    document.getElementById('searchBtn').addEventListener('click', findTranslation);
-    document.getElementById('refreshWordsBtn').addEventListener('click', loadWords);
+    document.getElementById('addWordBtn')?.addEventListener('click', addWord);
+    document.getElementById('searchBtn')?.addEventListener('click', findTranslation);
+    document.getElementById('refreshWordsBtn')?.addEventListener('click', loadWords);
 
     // Обработчик для подсказки закладок
-    bookmarksHint.addEventListener('click', function() {
-        this.style.display = 'none';
-    });
+    if (bookmarksHint) {
+        bookmarksHint.addEventListener('click', function() {
+            this.style.display = 'none';
+        });
+    }
 
     // Загружаем слова при открытии страницы
     loadWords();
@@ -52,7 +75,10 @@ function setupBookmarks() {
             });
 
             const pageId = this.getAttribute('data-page');
-            document.getElementById(pageId).classList.add('active');
+            const pageElement = document.getElementById(pageId);
+            if (pageElement) {
+                pageElement.classList.add('active');
+            }
 
             if (pageId === 'all-words') {
                 loadWords();
@@ -66,19 +92,34 @@ function setupBookmarks() {
 
 // Загрузка слов пользователя
 async function loadWords() {
-    if (!currentUserId) return;
+    if (!currentUserId) {
+        showNotification('ID пользователя не определен', 'error');
+        return;
+    }
 
     try {
-        wordsLoading.style.display = 'flex';
-        wordsListElement.innerHTML = '';
+        // Показываем индикатор загрузки
+        if (wordsLoading) wordsLoading.style.display = 'flex';
+        if (wordsListElement) wordsListElement.innerHTML = '';
 
-        const response = await fetch(`/api/words?user_id=${currentUserId}`);
+        // Добавляем timestamp для избежания кэширования
+        const timestamp = new Date().getTime();
+        const response = await fetch(`${API_BASE_URL}/api/words?user_id=${currentUserId}&_=${timestamp}`, {
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include' // Для передачи кук, если нужно
+        });
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP: ${response.status}`);
         }
 
-        const words = await response.json();
+        const data = await response.json();
+        const words = Array.isArray(data) ? data : [];
+
+        if (!wordsListElement) return;
 
         if (words.length === 0) {
             wordsListElement.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px;">Словарь пуст. Начните добавлять слова!</td></tr>';
@@ -86,11 +127,11 @@ async function loadWords() {
             words.forEach(word => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${word.word}</td>
-                    <td>${getPartOfSpeechName(word.part_of_speech)}</td>
-                    <td>${word.translation}</td>
+                    <td>${escapeHTML(word.word)}</td>
+                    <td>${escapeHTML(getPartOfSpeechName(word.part_of_speech))}</td>
+                    <td>${escapeHTML(word.translation)}</td>
                     <td class="actions">
-                        <button class="delete-btn" data-id="${word.id}">
+                        <button class="delete-btn" data-id="${escapeHTML(word.id.toString())}">
                             <i class="fas fa-trash"></i> Удалить
                         </button>
                     </td>
@@ -98,18 +139,20 @@ async function loadWords() {
                 wordsListElement.appendChild(row);
             });
 
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const wordId = this.getAttribute('data-id');
+            // Делегирование событий для кнопок удаления
+            wordsListElement.addEventListener('click', function(event) {
+                if (event.target.closest('.delete-btn')) {
+                    const button = event.target.closest('.delete-btn');
+                    const wordId = button.getAttribute('data-id');
                     deleteWord(wordId);
-                });
+                }
             });
         }
     } catch (error) {
         console.error('Ошибка загрузки слов:', error);
-        showNotification('Ошибка загрузки слов из словаря', 'error');
+        showNotification('Ошибка загрузки слов. Проверьте консоль для подробностей.', 'error');
     } finally {
-        wordsLoading.style.display = 'none';
+        if (wordsLoading) wordsLoading.style.display = 'none';
     }
 }
 
@@ -117,41 +160,53 @@ async function loadWords() {
 async function loadStatistics() {
     if (!currentUserId) return;
 
+    const statsContent = document.getElementById('statsContent');
+    if (!statsContent) return;
+
     try {
-        const response = await fetch(`/api/stats?user_id=${currentUserId}`);
+        const response = await fetch(`${API_BASE_URL}/api/stats?user_id=${currentUserId}`, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP: ${response.status}`);
         }
 
         const stats = await response.json();
-        document.getElementById('statsContent').innerHTML = `
+        statsContent.innerHTML = `
             <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px; margin-top: 20px;">
                 <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; min-width: 120px;">
-                    <div style="font-size: 2rem; color: #2e7d32; font-weight: bold;">${stats.total_words || 0}</div>
+                    <div style="font-size: 2rem; color: #2e7d32; font-weight: bold;">${escapeHTML(String(stats.total_words || 0))}</div>
                     <div>Всего слов</div>
                 </div>
                 <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; min-width: 120px;">
-                    <div style="font-size: 2rem; color: #2e7d32; font-weight: bold;">${stats.nouns || 0}</div>
+                    <div style="font-size: 2rem; color: #2e7d32; font-weight: bold;">${escapeHTML(String(stats.nouns || 0))}</div>
                     <div>Существительных</div>
                 </div>
                 <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; min-width: 120px;">
-                    <div style="font-size: 2rem; color: #2e7d32; font-weight: bold;">${stats.verbs || 0}</div>
+                    <div style="font-size: 2rem; color: #2e7d32; font-weight: bold;">${escapeHTML(String(stats.verbs || 0))}</div>
                     <div>Глаголов</div>
                 </div>
             </div>
         `;
     } catch (error) {
         console.error('Ошибка загрузки статистики:', error);
-        document.getElementById('statsContent').innerHTML = 'Ошибка загрузки статистики';
+        statsContent.innerHTML = '<div style="color: red;">Ошибка загрузки статистики</div>';
     }
 }
 
 // Добавление нового слова
 async function addWord() {
-    const word = document.getElementById('newWord').value.trim().toLowerCase();
+    const wordInput = document.getElementById('newWord');
+    const translationInput = document.getElementById('translation');
+
+    if (!wordInput || !translationInput) return;
+
+    const word = wordInput.value.trim().toLowerCase();
     const partOfSpeech = document.getElementById('partOfSpeech').value;
-    const translation = document.getElementById('translation').value.trim();
+    const translation = translationInput.value.trim();
 
     if (!word || !translation) {
         showNotification('Пожалуйста, заполните все поля', 'error');
@@ -164,11 +219,14 @@ async function addWord() {
     }
 
     try {
-        loadingOverlay.style.display = 'flex';
+        if (loadingOverlay) loadingOverlay.style.display = 'flex';
 
-        const response = await fetch(`/api/words`, {
+        const response = await fetch(`${API_BASE_URL}/api/words`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
             body: JSON.stringify({
                 user_id: currentUserId,
                 word: word,
@@ -178,31 +236,35 @@ async function addWord() {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Ошибка сервера');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Ошибка сервера');
         }
 
-        document.getElementById('newWord').value = '';
-        document.getElementById('translation').value = '';
-        showNotification(`Слово "${word}" добавлено в словарь!`, 'success');
+        wordInput.value = '';
+        translationInput.value = '';
+        showNotification(`Слово "${escapeHTML(word)}" добавлено в словарь!`, 'success');
 
-        if (document.getElementById('all-words').classList.contains('active')) {
-            loadWords();
+        // Обновляем данные, если соответствующие страницы активны
+        if (document.getElementById('all-words')?.classList.contains('active')) {
+            await loadWords();
         }
-        if (document.getElementById('statistics').classList.contains('active')) {
-            loadStatistics();
+        if (document.getElementById('statistics')?.classList.contains('active')) {
+            await loadStatistics();
         }
     } catch (error) {
         console.error('Ошибка добавления слова:', error);
         showNotification(`Ошибка: ${error.message}`, 'error');
     } finally {
-        loadingOverlay.style.display = 'none';
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
     }
 }
 
 // Поиск перевода
 async function findTranslation() {
-    const word = document.getElementById('searchWord').value.trim().toLowerCase();
+    const searchWordInput = document.getElementById('searchWord');
+    if (!searchWordInput) return;
+
+    const word = searchWordInput.value.trim().toLowerCase();
     if (!word) {
         showNotification('Введите слово для поиска', 'error');
         return;
@@ -214,31 +276,42 @@ async function findTranslation() {
     }
 
     try {
-        loadingOverlay.style.display = 'flex';
-        const response = await fetch(`/api/words/search?user_id=${currentUserId}&word=${encodeURIComponent(word)}`);
+        if (loadingOverlay) loadingOverlay.style.display = 'flex';
+
+        const response = await fetch(
+            `${API_BASE_URL}/api/words/search?user_id=${currentUserId}&word=${encodeURIComponent(word)}`,
+            {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            }
+        );
 
         if (!response.ok) {
             throw new Error(`Ошибка HTTP: ${response.status}`);
         }
 
         const result = await response.json();
+        const searchResult = document.getElementById('searchResult');
+
+        if (!searchResult) return;
 
         if (result && result.word) {
             document.getElementById('resultWord').textContent = result.word;
             document.getElementById('resultPos').textContent = getPartOfSpeechName(result.part_of_speech);
             document.getElementById('resultTranslation').textContent = result.translation;
-            document.getElementById('searchResult').style.display = 'block';
+            searchResult.style.display = 'block';
         } else {
             document.getElementById('resultWord').textContent = word;
             document.getElementById('resultPos').textContent = 'не найдено';
             document.getElementById('resultTranslation').textContent = 'Слово не найдено в словаре';
-            document.getElementById('searchResult').style.display = 'block';
+            searchResult.style.display = 'block';
         }
     } catch (error) {
         console.error('Ошибка поиска слова:', error);
         showNotification('Ошибка при поиске слова', 'error');
     } finally {
-        loadingOverlay.style.display = 'none';
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
     }
 }
 
@@ -246,15 +319,19 @@ async function findTranslation() {
 async function deleteWord(wordId) {
     if (!confirm('Вы уверены, что хотите удалить это слово?')) return;
 
-    if (!currentUserId) {
-        showNotification('Ошибка: Не указан ID пользователя', 'error');
+    if (!currentUserId || !wordId) {
+        showNotification('Ошибка: Не указан ID пользователя или слова', 'error');
         return;
     }
 
     try {
-        loadingOverlay.style.display = 'flex';
-        const response = await fetch(`/api/words/${wordId}?user_id=${currentUserId}`, {
-            method: 'DELETE'
+        if (loadingOverlay) loadingOverlay.style.display = 'flex';
+
+        const response = await fetch(`${API_BASE_URL}/api/words/${wordId}?user_id=${currentUserId}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json'
+            }
         });
 
         if (!response.ok) {
@@ -262,15 +339,16 @@ async function deleteWord(wordId) {
         }
 
         showNotification('Слово успешно удалено', 'success');
-        loadWords();
-        if (document.getElementById('statistics').classList.contains('active')) {
-            loadStatistics();
+        await loadWords();
+
+        if (document.getElementById('statistics')?.classList.contains('active')) {
+            await loadStatistics();
         }
     } catch (error) {
         console.error('Ошибка удаления слова:', error);
         showNotification('Ошибка при удалении слова', 'error');
     } finally {
-        loadingOverlay.style.display = 'none';
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
     }
 }
 
@@ -287,9 +365,21 @@ function getPartOfSpeechName(code) {
 }
 
 function showNotification(message, type) {
+    if (!notificationElement) return;
+
     notificationElement.textContent = message;
     notificationElement.className = `notification ${type} show`;
     setTimeout(() => {
         notificationElement.classList.remove('show');
     }, 3000);
+}
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
