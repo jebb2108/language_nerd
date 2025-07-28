@@ -1,0 +1,70 @@
+"""
+ТЕЛЕГРАМ-БОТЫ: ГЛАВНЫЙ БОТ И БОТ-ПАРТНЕР
+
+Этот проект содержит двух Telegram-ботов, работающих одновременно:
+1. Основной бот (Main Bot) - предоставляет меню и информацию
+2. Бот-партнер (Partner Bot) - позволяет общаться с другими пользователем
+
+Оба бота запускаются параллельно друг другу из разных файлов
+"""
+
+import sys
+import asyncio
+import logging
+from dotenv import load_dotenv
+from aiogram import Bot, Dispatcher
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
+from aiogram.fsm.storage.memory import MemoryStorage
+
+# Загрузка переменных окружения ДОЛЖНА БЫТЬ ВЫЗВАНА
+load_dotenv(""".env""")
+
+# Импорт функций БД
+from db_cmds import *
+from web_launcher import start_web_app
+from routers import router as main_router
+
+# Получаем токен бота из переменных окружения
+BOT_TOKEN_MAIN = os.getenv("BOT_TOKEN_MAIN")
+
+# Создаем хранилище состояний в оперативной памяти
+storage = MemoryStorage()
+
+"""
+===== ЗАПУСК ВСЕЙ СИСТЕМЫ =====
+"""
+
+
+async def run():
+    """Запуск бота и веб-сервера в одном event loop"""
+    # Настройка логирования
+    logging.basicConfig(
+        level=logging.INFO,
+        stream=sys.stdout,
+        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
+    )
+    # Инициализация БД
+    await db_pool.init()
+
+    # Запуск веб-сервера
+    web_runner = await start_web_app()
+
+    # Инициализация бота
+    bot = Bot(token=BOT_TOKEN_MAIN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    dp = Dispatcher(storage=storage)
+    dp.include_router(main_router)
+
+    try:
+        # Основной цикл работы
+        await dp.start_polling(bot)
+
+    finally:
+        # Корректное завершение
+        await bot.session.close()
+        await web_runner.cleanup()
+        await db_pool.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(run())

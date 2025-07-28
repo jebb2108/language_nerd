@@ -5,10 +5,10 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
-from config import QUESTIONARY
-from db_cmds import *
-from filters import IsBotFilter
-from routers.commands.menu_commands import show_main_menu
+from bot.config import QUESTIONARY
+from bot.db_cmds import *
+from bot.filters import IsBotFilter
+from bot.routers.commands.menu_commands import show_main_menu
 
 router = Router(name=__name__)
 # Фильтрация по токену
