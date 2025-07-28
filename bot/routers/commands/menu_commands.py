@@ -22,7 +22,7 @@ async def show_main_menu(message: Message, state: FSMContext):
     lang_code = data["lang_code"]
 
     # Формируем URL с user_id
-    web_app_url = f"https://lllang.site:80?user_id={user_id}"
+    web_app_url = f"https://lllang.site:8080?user_id={user_id}"
 
     # Создаем клавиатуру с кнопкой Web App
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -69,10 +69,12 @@ async def about(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "go_back")
 async def go_back(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
+    user_id = data["user_id"]
     first_name = data["first_name"]
     lang_code = data["lang_code"]
+
     # URL вашего Web App
-    web_app_url = "https://jebb2108.github.io/index.html"
+    web_app_url = f"https://lllang.site:8080?user_id={user_id}"
 
     # Создаем клавиатуру с кнопкой Web App
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
