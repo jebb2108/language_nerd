@@ -21,9 +21,9 @@ from aiogram.fsm.storage.memory import MemoryStorage
 load_dotenv(""".env""")
 
 # Импорт функций БД
-from db_cmds import *
-from web_launcher import start_web_app
-from routers import router as main_router
+from bot.db_cmds import *
+from bot.web_launcher import start_web_app
+from bot.routers import router as main_router
 
 # Получаем токен бота из переменных окружения
 BOT_TOKEN_MAIN = os.getenv("BOT_TOKEN_MAIN")

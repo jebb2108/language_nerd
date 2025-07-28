@@ -12,8 +12,8 @@ load_dotenv(""".env""")
 
 
 # Импорт текстовых сообщений из отдельного файла (config.py)
-from db_cmds import *
-from routers import router as main_router
+from bot.db_cmds import *
+from bot.routers import router as main_router
 
 bot_token = os.getenv("BOT_TOKEN_PARTNER")
 
