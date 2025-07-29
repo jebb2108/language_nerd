@@ -131,7 +131,7 @@ BUTTONS = dict({
     },
 
     "about_bot": {
-        "en": "ℹ️ About bots",
+        "en": "ℹ️ About bot",
         "ru": "ℹ️ О боте",
     },
 
