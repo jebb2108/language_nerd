@@ -102,19 +102,27 @@ class Database:
             return None, None, None, None
 
     # Обновленные функции работы с БД
-    async def get_words_from_db(self, user_id: int) -> List[Tuple[str, str, str]]:
+    async def get_words_from_db(self, user_id: int) -> List[Tuple[str, str, str, str]]:
         async with self.pool.acquire() as conn:
             rows = await conn.fetch(
-                "SELECT word, part_of_speech, translation FROM words WHERE user_id = $1 ORDER BY word",
+                "SELECT id, word, part_of_speech, translation FROM words WHERE user_id = $1 ORDER BY word",
                 user_id
             )
-            return [(row['word'], row['part_of_speech'], row['translation']) for row in rows]
+            return [(row['id'], row['word'], row['part_of_speech'], row['translation']) for row in rows]
 
-    async def delete_word_from_db(self, user_id: int, word: str) -> bool:
+    async def search_word_in_db(self, user_id: int, word: str) -> List[Tuple[str, str, str, str]]:
+        async with self.pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT id, word, part_of_speech, translation FROM words WHERE user_id = $1 AND word = $2",
+                user_id, word
+            )
+            return [(row['id'], row['word'], row['part_of_speech'], row['translation'])]
+
+    async def delete_word_by_id(self, user_id: int, word_id: int) -> bool:
         async with self.pool.acquire() as conn:
             result = await conn.execute(
                 "DELETE FROM words WHERE user_id = $1 AND word = $2",
-                user_id, word
+                user_id, word_id
             )
             return "DELETE" in result
 
@@ -153,6 +161,11 @@ class Database:
             except Exception as e:
                 logging.error(f"Database error: {e}")
                 return False
+
+    # Temperorary solution
+    async def get_user_stats(self, user_id: int):
+        if user_id and self.pool:
+            return 0, 0, 0
 
     async def check_word_exists(self, user_id: int, word: str) -> bool:
         async with self.pool.acquire() as conn:

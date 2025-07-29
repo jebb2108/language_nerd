@@ -70,6 +70,7 @@ async def api_search_word_handler(request):
             return web.json_response({"error": "Missing parameters"}, status=400)
 
         result = await db_pool.search_word_in_db(int(user_id), word)
+        logging.DEBUG(f"Search result: [{result[0], result[1], result[2], result[3]}]")
         if result:
             return web.json_response({
                 'id': result[0],
@@ -86,12 +87,12 @@ async def api_search_word_handler(request):
 async def api_delete_word_handler(request):
     """API для удаления слова"""
     try:
-        word_id = int(request.match_info['word_id'])
         user_id = request.query.get('user_id')
+        word_id = int(request.match_info['word_id'])
         if not user_id:
             return web.json_response({"error": "User ID is required"}, status=400)
 
-        await db_pool.delete_word_from_db(word_id, int(user_id))
+        await db_pool.delete_word_by_id(int(user_id), int(word_id))
         return web.json_response({"status": "deleted"})
     except Exception as e:
         logger.error(f"Error in api_delete_word_handler: {str(e)}")
@@ -134,7 +135,7 @@ async def start_web_app():
 
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', 8080)
+    site = web.TCPSite(runner, '0.0.0.0', 2222)
     await site.start()
     logger.info("Web server started on port 8080")
     return runner

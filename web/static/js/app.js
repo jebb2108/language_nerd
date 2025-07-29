@@ -279,7 +279,7 @@ async function findTranslation() {
         if (loadingOverlay) loadingOverlay.style.display = 'flex';
 
         const response = await fetch(
-            `${API_BASE_URL}/api/words/search?user_id=${currentUserId}&word=${encodeURIComponent(word)}`,
+             `${API_BASE_URL}/api/words/search?user_id=${currentUserId}&word=${encodeURIComponent(word)}`,
             {
                 headers: {
                     'Accept': 'application/json'
