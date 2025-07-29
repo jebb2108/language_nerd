@@ -22,7 +22,7 @@ async def show_main_menu(message: Message, state: FSMContext):
     lang_code = data["lang_code"]
 
     # Формируем URL с user_id
-    web_app_url = f"https://lllang.site/index.html?user_id={user_id}"
+    web_app_url = f"https://lllang.site/?user_id={user_id}"
 
     # Создаем клавиатуру с кнопкой Web App
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -74,7 +74,7 @@ async def go_back(callback: CallbackQuery, state: FSMContext):
     lang_code = data["lang_code"]
 
     # URL вашего Web App
-    web_app_url = f"https://lllang.site/index.html?user_id={user_id}"
+    web_app_url = f"https://lllang.site/?user_id={user_id}"
 
     # Создаем клавиатуру с кнопкой Web App
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
