@@ -1,19 +1,27 @@
-// Элементы DOM
-const userIdElement = document.getElementById('userId');
-const wordsListElement = document.getElementById('wordsList');
-const notificationElement = document.getElementById('notification');
-const loadingOverlay = document.getElementById('loadingOverlay');
-const wordsLoading = document.getElementById('wordsLoading');
-const bookmarksHint = document.querySelector('.bookmarks-hint');
+// Объявляем переменные для DOM-элементов (без инициализации)
+let userIdElement;
+let wordsListElement;
+let notificationElement;
+let loadingOverlay;
+let wordsLoading;
+let bookmarksHint;
 
 // Переменные состояния
 let currentUserId = null;
 
-// Базовый URL API (ЗАМЕНИТЕ НА ВАШ СЕРВЕР)
+// Базовый URL API
 const API_BASE_URL = 'https://lllang.site';
 
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', function() {
+    // Инициализируем DOM-элементы после загрузки страницы
+    userIdElement = document.getElementById('userId');
+    wordsListElement = document.getElementById('wordsList');
+    notificationElement = document.getElementById('notification');
+    loadingOverlay = document.getElementById('loadingOverlay');
+    wordsLoading = document.getElementById('wordsLoading');
+    bookmarksHint = document.querySelector('.bookmarks-hint');
+
     // 1. Проверка инициализации Telegram WebApp
     if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
         Telegram.WebApp.ready();
@@ -22,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const initData = Telegram.WebApp.initDataUnsafe;
         if (initData && initData.user && initData.user.id) {
             currentUserId = initData.user.id.toString();
-            userIdElement.textContent = currentUserId;
+            if (userIdElement) userIdElement.textContent = currentUserId;
         }
     }
 
@@ -32,25 +40,26 @@ document.addEventListener('DOMContentLoaded', function() {
         const urlUserId = urlParams.get('user_id');
         if (urlUserId) {
             currentUserId = urlUserId;
-            userIdElement.textContent = currentUserId;
+            if (userIdElement) userIdElement.textContent = currentUserId;
         }
     }
 
     // 3. Обработка отсутствия user_id
     if (!currentUserId) {
         showNotification('Ошибка: Не указан ID пользователя', 'error');
-        userIdElement.textContent = 'не определен';
+        if (userIdElement) userIdElement.textContent = 'не определен';
         return;
     }
 
-    // Делегирование для удаления – только один раз
-    const wordsListElement = document.getElementById('wordsList');
-    wordsListElement.addEventListener('click', function(event) {
-        const btn = event.target.closest('.delete-btn');
-        if (!btn) return;
-        const wordId = btn.getAttribute('data-id');
-        deleteWord(wordId);
-    });
+    // Делегирование для удаления
+    if (wordsListElement) {
+        wordsListElement.addEventListener('click', function(event) {
+            const btn = event.target.closest('.delete-btn');
+            if (!btn) return;
+            const wordId = btn.getAttribute('data-id');
+            deleteWord(wordId);
+        });
+    }
 
     // Настройка закладок
     setupBookmarks();
@@ -118,7 +127,7 @@ async function loadWords() {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             },
-            credentials: 'include' // Для передачи кук, если нужно
+            credentials: 'include'
         });
 
         if (!response.ok) {
@@ -245,8 +254,9 @@ async function addWord() {
         translationInput.value = '';
         showNotification(`Слово "${escapeHTML(word)}" добавлено в словарь!`, 'success');
 
-        // Обновляем данные, если соответствующие страницы активны
-        if (document.getElementById('all-words')?.classList.contains('active')) {
+        // Обновляем данные на активных страницах
+        const activePage = document.querySelector('.page.active');
+        if (activePage && activePage.id === 'all-words') {
             await loadWords();
         }
         if (document.getElementById('statistics')?.classList.contains('active')) {
@@ -340,8 +350,12 @@ async function deleteWord(wordId) {
         }
 
         showNotification('Слово успешно удалено', 'success');
-        await loadWords();
 
+        // Обновляем только активные страницы
+        const activePage = document.querySelector('.page.active');
+        if (activePage && activePage.id === 'all-words') {
+            await loadWords();
+        }
         if (document.getElementById('statistics')?.classList.contains('active')) {
             await loadStatistics();
         }
