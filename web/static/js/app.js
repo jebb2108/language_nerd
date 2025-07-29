@@ -43,6 +43,15 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+    // Делегирование для удаления – только один раз
+    const wordsListElement = document.getElementById('wordsList');
+    wordsListElement.addEventListener('click', function(event) {
+        const btn = event.target.closest('.delete-btn');
+        if (!btn) return;
+        const wordId = btn.getAttribute('data-id');
+        deleteWord(wordId);
+    });
+
     // Настройка закладок
     setupBookmarks();
 
@@ -138,16 +147,8 @@ async function loadWords() {
                 `;
                 wordsListElement.appendChild(row);
             });
-
-            // Делегирование событий для кнопок удаления
-            wordsListElement.addEventListener('click', function(event) {
-                if (event.target.closest('.delete-btn')) {
-                    const button = event.target.closest('.delete-btn');
-                    const wordId = button.getAttribute('data-id');
-                    deleteWord(wordId);
-                }
-            });
         }
+
     } catch (error) {
         console.error('Ошибка загрузки слов:', error);
         showNotification('Ошибка загрузки слов. Проверьте консоль для подробностей.', 'error');
