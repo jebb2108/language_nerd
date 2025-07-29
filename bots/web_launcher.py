@@ -53,8 +53,7 @@ async def api_add_word_handler(request):
 
         if not all([user_id, word, part_of_speech, translation]):
             return web.json_response({"error": "Missing fields"}, status=400)
-
-        await db_pool.add_word_to_db(user_id, word, part_of_speech, translation)
+        await db_pool.add_word_to_db(int(user_id), word, part_of_speech, translation)
         return web.json_response({"status": "success"})
     except Exception as e:
         logger.error(f"Error in api_add_word_handler: {str(e)}")
