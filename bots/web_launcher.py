@@ -87,7 +87,7 @@ async def api_delete_word_handler(request):
     """API для удаления слова"""
     try:
         user_id = request.query.get('user_id')
-        word = request.match_info['word_id']
+        word = int(request.match_info['word_id'])
         if not user_id:
             return web.json_response({"error": "User ID is required"}, status=400)
 

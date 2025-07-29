@@ -118,11 +118,11 @@ class Database:
             )
             return [(row['id'], row['word'], row['part_of_speech'], row['translation'])]
 
-    async def delete_word_from_db(self, user_id: int, word: str) -> bool:
+    async def delete_word_from_db(self, user_id: int, word_id: int) -> bool:
         async with self.pool.acquire() as conn:
             result = await conn.execute(
-                "DELETE FROM words WHERE user_id = $1 AND word = $2",
-                user_id, word
+                "DELETE FROM words WHERE user_id = $1 AND id = $2",
+                user_id, word_id
             )
             return "DELETE" in result
 
