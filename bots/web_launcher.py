@@ -87,11 +87,11 @@ async def api_delete_word_handler(request):
     """API для удаления слова"""
     try:
         user_id = request.query.get('user_id')
-        word_id = int(request.match_info['word_id'])
+        word = request.match_info['word_id']
         if not user_id:
             return web.json_response({"error": "User ID is required"}, status=400)
 
-        await db_pool.delete_word_by_id(int(user_id), int(word_id))
+        await db_pool.delete_word_from_db(int(user_id), word)
         return web.json_response({"status": "deleted"})
     except Exception as e:
         logger.error(f"Error in api_delete_word_handler: {str(e)}")

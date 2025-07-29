@@ -118,11 +118,11 @@ class Database:
             )
             return [(row['id'], row['word'], row['part_of_speech'], row['translation'])]
 
-    async def delete_word_by_id(self, user_id: int, word_id: int) -> bool:
+    async def delete_word_from_db(self, user_id: int, word: str) -> bool:
         async with self.pool.acquire() as conn:
             result = await conn.execute(
                 "DELETE FROM words WHERE user_id = $1 AND word = $2",
-                user_id, word_id
+                user_id, word
             )
             return "DELETE" in result
 
@@ -164,8 +164,30 @@ class Database:
 
     # Temperorary solution
     async def get_user_stats(self, user_id: int):
-        if user_id and self.pool:
-            return 0, 0, 0
+        async with self.pool.acquire() as conn:
+            try:
+                row = await conn.fetchrow(
+                    """
+                    SELECT
+                      COUNT(*) FILTER (WHERE part_of_speech = 'noun')      AS nouns,
+                      COUNT(*) FILTER (WHERE part_of_speech = 'verb')      AS verbs,
+                      COUNT(*) FILTER (WHERE part_of_speech = 'adjective') AS adjectives,
+                      COUNT(*) FILTER (WHERE part_of_speech = 'adverb')    AS adverbs
+                    FROM words
+                    WHERE user_id = $1
+                    """,
+                    user_id
+                )
+                if row:
+                    total_words = row['nouns'] + row['verbs']
+                    # row — Record, можно обращаться как row['nouns'], row.nouns и т.д.
+                    return total_words, row['nouns'], row['verbs']
+                else:
+                    return 0, 0, 0
+            except Exception as e:
+                logging.error(f"Database error: {e}")
+                return None
+
 
     async def check_word_exists(self, user_id: int, word: str) -> bool:
         async with self.pool.acquire() as conn:
