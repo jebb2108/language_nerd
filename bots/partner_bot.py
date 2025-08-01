@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv(""".env""")
 
 
-# Импорт текстовых сообщений из отдельного файла (config.py)
+# Импорт текстовых сообщений из отдельного файла (translations.py)
 from db_cmds import *
 from routers import router as main_router
 

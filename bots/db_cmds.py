@@ -60,6 +60,24 @@ class Database:
                 UNIQUE (user_id)
                 ); """)
 
+                await conn.execute("""
+                CREATE TABLE weekly_reports (
+                report_id SERIAL PRIMARY KEY,
+                user_id INT NOT NULL,
+                generation_date TIMESTAMP DEFAULT NOW(),
+                sent BOOLEAN DEFAULT FALSE
+                ); """)
+
+                await conn.execute("""
+                CREATE TABLE report_words (
+                word_id SERIAL PRIMARY KEY,
+                report_id INT REFERENCES weekly_reports(report_id) ON DELETE CASCADE,
+                word TEXT NOT NULL,
+                sentence TEXT NOT NULL,
+                options TEXT[] NOT NULL,
+                correct_index INT NOT NULL
+                ); """)
+
         except Exception as e:
             logging.critical(f"Database initialization failed: {e}")
             raise

@@ -5,7 +5,7 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo, CallbackQuery
 
-from config import BUTTONS, QUESTIONARY # noqa
+from translations import BUTTONS, QUESTIONARY # noqa
 from filters import IsBotFilter # noqa
 
 router = Router(name=__name__)

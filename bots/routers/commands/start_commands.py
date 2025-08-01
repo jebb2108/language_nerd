@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
-from config import QUESTIONARY # noqa
+from translations import QUESTIONARY # noqa
 from db_cmds import * # noqa
 from filters import IsBotFilter # noqa
 from routers.commands.menu_commands import show_main_menu # noqa
@@ -35,7 +35,7 @@ async def start_with_polling(message: Message, state: FSMContext):
 
     try:
         # Проверяем существование пользователя в БД
-        async with db_pool.acquire() as conn:
+        async with db_pool.acquire() as conn: # noqa
             user_exists = await conn.fetchval(
                 "SELECT 1 FROM users WHERE user_id = $1",
                 user_id
@@ -53,7 +53,7 @@ async def start_with_polling(message: Message, state: FSMContext):
         )
 
     except Exception as e:
-        logging.error(f"Error in start handler: {e}")
+        logging.error(f"Error in start handler: {e}") # noqa
 
     # Если пользователь существует - показываем главное меню
     if user_exists:
@@ -119,7 +119,7 @@ async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
         await callback.answer()
 
     except Exception as e:
-        logging.error(f"Error in camefrom handler: {e}")
+        logging.error(f"Error in camefrom handler: {e}") # noqa
 
 
 @router.callback_query(F.data.startswith("lang_"), PollingStates.language_state)
@@ -151,10 +151,10 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
         username = data.get('username', 'None')
         first_name = data.get('first_name', 'None')
         camefrom = data.get('camefrom', 'None')
-        await db_pool.create_users_table(user_id, username, first_name, camefrom, users_choice, lang_code)
+        await db_pool.create_users_table(user_id, username, first_name, camefrom, users_choice, lang_code)  # noqa
 
     except Exception as e:
-        logging.error(f"Error in language choice: {e}")
+        logging.error(f"Error in language choice: {e}") # noqa
 
 
 @router.callback_query(F.data == "action_confirm", PollingStates.introduction_state)
@@ -170,7 +170,7 @@ async def start_main_menu(callback: CallbackQuery, state: FSMContext):
     await state.clear()
 
     # Заполняем память актуальной информацией о пользователе
-    username, first_name, language, lang_code = await db_pool.get_user_info(user_id)
+    username, first_name, language, lang_code = await db_pool.get_user_info(user_id)  # noqa
 
     # Обновляем состояние с проверкой на None
     await state.update_data(
@@ -185,7 +185,7 @@ async def start_main_menu(callback: CallbackQuery, state: FSMContext):
     await show_main_menu(callback.message, state)
 
 
-async def send_message_with_save(message: Union[Message, CallbackQuery], text: str, state: FSMContext, markup=False,
+async def send_message_with_save(message: Union[Message, CallbackQuery], text: str, state: FSMContext, markup=False, # noqa
                                  keyboard=None):
     if isinstance(message, CallbackQuery):
         message = message.message

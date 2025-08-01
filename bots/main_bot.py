@@ -23,6 +23,7 @@ load_dotenv(""".env""")
 from db_cmds import *
 from web_launcher import start_web_app
 from routers import router as main_router
+from config import init_global_resources, close_global_resources
 
 # Получаем токен бота из переменных окружения
 BOT_TOKEN_MAIN = os.getenv("BOT_TOKEN_MAIN")
@@ -35,6 +36,13 @@ storage = MemoryStorage()
 """
 
 
+async def on_startup():
+    await init_global_resources()
+
+async def on_shutdown():
+    await close_global_resources()
+
+
 async def run():
     """Запуск бота и веб-сервера в одном event loop"""
     # Настройка логирования
@@ -43,8 +51,8 @@ async def run():
         stream=sys.stdout,
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
     )
-    # Инициализация БД
-    await db_pool.init()
+
+    await on_startup()
 
     # Запуск веб-сервера
     web_runner = await start_web_app()
@@ -62,7 +70,7 @@ async def run():
         # Корректное завершение
         await bot.session.close()
         await web_runner.cleanup()
-        await db_pool.close()
+        await on_shutdown()
 
 
 if __name__ == "__main__":
