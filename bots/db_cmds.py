@@ -1,7 +1,4 @@
-import os
 from typing import *
-
-import logging
 import asyncpg
 
 # Потокобезопасный доступ к БД
@@ -12,7 +9,8 @@ from config import (
     POSTGRES_PORT,
     POSTGRES_USER,
     POSTGRES_PASSWORD,
-    POSTGRES_DB
+    POSTGRES_DB,
+    logger,
 )
 
 
@@ -77,7 +75,7 @@ class Database:
                 ); """)
 
         except Exception as e:
-            logging.critical(f"Database initialization failed: {e}")
+            logger.critical(f"Database initialization failed: {e}")
             raise
 
     async def close(self):
@@ -99,10 +97,10 @@ class Database:
                         language = EXCLUDED.language,
                         lang_code = EXCLUDED.lang_code
                 """, user_id, username, first_name, camefrom, language, lang_code)
-                logging.info(f"User {user_id} created/updated: {result}")
+                logger.info(f"User {user_id} created/updated: {result}")
                 return True
         except Exception as e:
-            logging.error(f"Error creating/updating user {user_id}: {e}")
+            logger.error(f"Error creating/updating user {user_id}: {e}")
             return False
 
     async def get_user_info(self, user_id):
@@ -175,7 +173,7 @@ class Database:
                 )
                 return True
             except Exception as e:
-                logging.error(f"Database error: {e}")
+                logger.error(f"Database error: {e}")
                 return False
 
     # Temperorary solution
@@ -201,7 +199,7 @@ class Database:
                 else:
                     return 0, 0, 0
             except Exception as e:
-                logging.error(f"Database error: {e}")
+                logger.error(f"Database error: {e}")
                 return None
 
     async def check_word_exists(self, user_id: int, word: str) -> bool:

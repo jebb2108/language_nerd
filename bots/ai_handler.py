@@ -3,12 +3,16 @@ import sys
 import logging
 import random
 from datetime import datetime, timedelta
-from config import db_pool, session, init_global_resources, close_global_resources
-from routers.commands.weekly_message import send_user_report
 
-
-
-logger = logging.getLogger(__name__)
+from routers.commands.weekly_message_commands import send_user_report
+from config import (
+    db_pool, session,
+    init_global_resources,
+    close_global_resources,
+    AI_API_KEY,
+    AI_API_URL,
+    logger
+)
 
 async def get_weekly_words_by_user():
     """Получает слова за неделю, сгруппированные по пользователям"""
@@ -50,7 +54,7 @@ async def generate_question_for_word(word):
             content = data['choices'][0]['message']['content'].strip()
             return parse_ai_response(content)
     except Exception as e:
-        logging.error(f"AI error for '{word}': {e}")
+        logger.error(f"AI error for '{word}': {e}")
         return None
 
 
@@ -120,7 +124,7 @@ async def process_user_report(user_id, words):
                         item["correct_index"]
                     )
 
-    logging.info(f"Generated report for user {user_id} with {len(report_data)} words")
+    logger.info(f"Generated report for user {user_id} with {len(report_data)} words")
     return len(report_data)
 
 
@@ -128,7 +132,7 @@ async def generate_weekly_reports():
     """Генерирует недельные отчеты"""
     user_words = await get_weekly_words_by_user()
     if not user_words:
-        logging.info("No users with enough words")
+        logger.info("No users with enough words")
         return
 
     # Ограничиваем количество слов на пользователя
@@ -145,7 +149,7 @@ async def generate_weekly_reports():
 
     results = await asyncio.gather(*tasks)
     total_words = sum(results)
-    logging.info(f"Generated reports with total {total_words} words")
+    logger.info(f"Generated reports with total {total_words} words")
 
 
 async def send_pending_reports():
@@ -180,6 +184,48 @@ async def process_report_delivery(report_id, user_id):
         )
     return success
 
+async def cleanup_old_reports(days: int = 30):
+    """Очищает старые отчеты и связанные с ними данные"""
+    try:
+        cutoff_date = datetime.now() - timedelta(days=days)
+        logger.info(f"Starting cleanup for reports older than {cutoff_date}")
+
+        async with db_pool.acquire() as conn:
+            # Получаем список отчетов для удаления
+            old_reports = await conn.fetch(
+                "SELECT report_id FROM weekly_reports WHERE generation_date < $1",
+                cutoff_date
+            )
+
+            if not old_reports:
+                logger.info("No old reports found for cleanup")
+                return 0
+
+            report_ids = [r["report_id"] for r in old_reports]
+            logger.info(f"Found {len(report_ids)} old reports to delete")
+
+            # Удаляем связанные слова отчетов
+            words_deleted = await conn.execute(
+                "DELETE FROM report_words WHERE report_id = ANY($1::int[])",
+                report_ids
+            )
+
+            # Удаляем сами отчеты
+            reports_deleted = await conn.execute(
+                "DELETE FROM weekly_reports WHERE report_id = ANY($1::int[])",
+                report_ids
+            )
+
+            logger.info(
+                f"Cleaned up {reports_deleted} reports and "
+                f"{words_deleted} words older than {days} days"
+            )
+            return reports_deleted
+
+    except Exception as e:
+        logger.error(f"Error cleaning old reports: {e}")
+        return False
+
 
 async def main():
     """Основная асинхронная точка входа"""
@@ -202,9 +248,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        stream=sys.stdout,
-        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-    )
     asyncio.run(main())
