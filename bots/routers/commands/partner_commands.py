@@ -4,9 +4,10 @@ from aiogram.types import Message
 from aiogram.filters import Command
 from filters import IsBotFilter # noqa
 
+from config import BOT_TOKEN_PARTNER # noqa
+
 router = Router(name=__name__)
 # Фильтрация по токену
-BOT_TOKEN_PARTNER = os.getenv("BOT_TOKEN_PARTNER")
 router.message.filter(IsBotFilter(BOT_TOKEN_PARTNER))
 router.callback_query.filter(IsBotFilter(BOT_TOKEN_PARTNER))
 

@@ -6,7 +6,7 @@
 
 Оба бота запускаются параллельно друг другу из разных файлов
 """
-
+import os
 import sys
 import asyncio
 import logging
@@ -19,14 +19,13 @@ from aiogram.fsm.storage.memory import MemoryStorage
 # Загрузка переменных окружения ДОЛЖНА БЫТЬ ВЫЗВАНА
 load_dotenv(""".env""")
 
-# Импорт функций БД
-from db_cmds import *
 from web_launcher import start_web_app
 from routers import router as main_router
-from config import init_global_resources, close_global_resources
-
-# Получаем токен бота из переменных окружения
-BOT_TOKEN_MAIN = os.getenv("BOT_TOKEN_MAIN")
+from config import (
+    init_global_resources,
+    close_global_resources,
+    logger,
+)
 
 # Создаем хранилище состояний в оперативной памяти
 storage = MemoryStorage()
@@ -35,28 +34,15 @@ storage = MemoryStorage()
 ===== ЗАПУСК ВСЕЙ СИСТЕМЫ =====
 """
 
-
-async def on_startup():
-    await init_global_resources()
-
-async def on_shutdown():
-    await close_global_resources()
-
-
 async def run():
     """Запуск бота и веб-сервера в одном event loop"""
-    # Настройка логирования
-    logging.basicConfig(
-        level=logging.INFO,
-        stream=sys.stdout,
-        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
-    )
 
-    await on_startup()
-
+    # Инициализация глобальных ресурсов
+    await init_global_resources()
     # Запуск веб-сервера
     web_runner = await start_web_app()
-
+    # Получение токена бота
+    from config import BOT_TOKEN_MAIN
     # Инициализация бота
     bot = Bot(token=BOT_TOKEN_MAIN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher(storage=storage)
@@ -65,12 +51,13 @@ async def run():
     try:
         # Основной цикл работы
         await dp.start_polling(bot)
+        logger.info("Starting main bot (polling)…")
 
     finally:
         # Корректное завершение
         await bot.session.close()
         await web_runner.cleanup()
-        await on_shutdown()
+        await close_global_resources()
 
 
 if __name__ == "__main__":

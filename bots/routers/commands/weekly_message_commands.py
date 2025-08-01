@@ -1,11 +1,9 @@
 import json
 import asyncio
-import logging
 from aiogram import Router, types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from config import db_pool, TELEGRAM_TOKEN, session # noqa
+from config import db_pool, BOT_TOKEN_MAIN, session, logger # noqa
 
-logger = logging.getLogger(__name__)
 router = Router(name=__name__)
 
 
@@ -16,7 +14,7 @@ async def send_telegram_message(
         parse_mode: str = "Markdown"
 ):
     """Универсальная функция отправки сообщений в Telegram"""
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    url = f"https://api.telegram.org/bot{BOT_TOKEN_MAIN}/sendMessage"
     payload = {
         "chat_id": chat_id,
         "text": text,

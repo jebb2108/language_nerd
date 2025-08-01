@@ -7,10 +7,10 @@ from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, W
 
 from translations import BUTTONS, QUESTIONARY # noqa
 from filters import IsBotFilter # noqa
+from config import BOT_TOKEN_MAIN # noqa
 
 router = Router(name=__name__)
 # Фильтрация по токену
-BOT_TOKEN_MAIN = os.getenv("BOT_TOKEN_MAIN")
 router.message.filter(IsBotFilter(BOT_TOKEN_MAIN))
 router.callback_query.filter(IsBotFilter(BOT_TOKEN_MAIN))
 

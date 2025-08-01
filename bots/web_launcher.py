@@ -1,12 +1,7 @@
 import os
-import logging
 from aiohttp import web
 
-from db_cmds import db_pool
-
-# Настройка логирования
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from config import db_pool, logger
 
 
 def get_base_path():
@@ -69,7 +64,7 @@ async def api_search_word_handler(request):
             return web.json_response({"error": "Missing parameters"}, status=400)
 
         result = await db_pool.search_word_in_db(int(user_id), word)
-        logging.DEBUG(f"Search result: [{result[0], result[1], result[2], result[3]}]")
+        logger.DEBUG(f"Search result: [{result[0], result[1], result[2], result[3]}]")
         if result:
             return web.json_response({
                 'id': result[0],

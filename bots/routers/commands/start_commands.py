@@ -9,13 +9,13 @@ from translations import QUESTIONARY # noqa
 from db_cmds import * # noqa
 from filters import IsBotFilter # noqa
 from routers.commands.menu_commands import show_main_menu # noqa
+from config import BOT_TOKEN_MAIN, logger # noqa
 
 router = Router(name=__name__)
 # Фильтрация по токену
-BOT_TOKEN_MAIN = os.getenv("BOT_TOKEN_MAIN")
+
 router.message.filter(IsBotFilter(BOT_TOKEN_MAIN))
 router.callback_query.filter(IsBotFilter(BOT_TOKEN_MAIN))
-
 
 class PollingStates(StatesGroup):
     camefrom_state = State()
@@ -53,7 +53,7 @@ async def start_with_polling(message: Message, state: FSMContext):
         )
 
     except Exception as e:
-        logging.error(f"Error in start handler: {e}") # noqa
+        logger.error(f"Error in start handler: {e}") # noqa
 
     # Если пользователь существует - показываем главное меню
     if user_exists:
@@ -119,7 +119,7 @@ async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
         await callback.answer()
 
     except Exception as e:
-        logging.error(f"Error in camefrom handler: {e}") # noqa
+        logger.error(f"Error in camefrom handler: {e}") # noqa
 
 
 @router.callback_query(F.data.startswith("lang_"), PollingStates.language_state)
@@ -154,7 +154,7 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
         await db_pool.create_users_table(user_id, username, first_name, camefrom, users_choice, lang_code)  # noqa
 
     except Exception as e:
-        logging.error(f"Error in language choice: {e}") # noqa
+        logger.error(f"Error in language choice: {e}") # noqa
 
 
 @router.callback_query(F.data == "action_confirm", PollingStates.introduction_state)

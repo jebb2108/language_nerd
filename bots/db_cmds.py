@@ -7,15 +7,13 @@ import asyncpg
 # Потокобезопасный доступ к БД
 from contextlib import asynccontextmanager
 
-# Загружаем переменные окружения из файла .env (токены ботов и другие настройки)
-# Получение и проверка переменных окружения
-POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
-POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
-POSTGRES_DB = os.getenv("POSTGRES_DB", "telegram_bot")
-
-# Обработка порта с проверкой
-POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
+from config import (
+    POSTGRES_HOST,
+    POSTGRES_PORT,
+    POSTGRES_USER,
+    POSTGRES_PASSWORD,
+    POSTGRES_DB
+)
 
 
 # = КЛАСС ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ =
@@ -206,7 +204,6 @@ class Database:
                 logging.error(f"Database error: {e}")
                 return None
 
-
     async def check_word_exists(self, user_id: int, word: str) -> bool:
         async with self.pool.acquire() as conn:
             row = await conn.fetchrow(
@@ -221,7 +218,6 @@ class Database:
             await self.init()
         async with self.pool.acquire() as conn:
             yield conn
-
 
 
 db_pool = Database()
