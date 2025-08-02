@@ -16,7 +16,7 @@ class Database:
 
     async def init(self):
         try:
-            async with db_pool.acquire() as conn:
+            async with self.pool.acquire() as conn:
                 await conn.execute("""
                 CREATE TABLE IF NOT EXISTS words (
                 id SERIAL PRIMARY KEY,
