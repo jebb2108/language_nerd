@@ -16,9 +16,6 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
-# Загрузка переменных окружения ДОЛЖНА БЫТЬ ВЫЗВАНА
-load_dotenv(""".env""")
-
 from web_launcher import start_web_app
 from routers import router as main_router
 from config import (

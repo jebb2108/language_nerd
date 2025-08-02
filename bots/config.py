@@ -4,15 +4,18 @@ import asyncpg
 import logging
 from aiohttp import ClientSession
 
-from db_cmds import db_pool as pool
+from dotenv import load_dotenv
+
+load_dotenv(""".env""")
 
 # Настройка логирования
-logger = logging.getLogger(name=__name__)
-logger.basicConfig(
+logging.basicConfig(
     level=logging.INFO,
     stream=sys.stdout,
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 )
+
+logger = logging.getLogger(name=__name__)
 
 # Конфигурация ботов
 BOT_TOKEN_MAIN = os.getenv('BOT_TOKEN_MAIN')
@@ -27,22 +30,31 @@ POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
 POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "password")
 POSTGRES_DB = os.getenv("POSTGRES_DB", "telegram_bot")
-POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
+POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", "5433"))
 
-# Глобальные ресурсы
 db_pool = None
 session = None
 
 async def init_global_resources():
-    global session, db_pool
-    # Инициализация HTTP сессии
-    db_pool = await pool.init()
-    logger.info("Database connection initialized")
+    global db_pool, session
+    pool = await asyncpg.create_pool(
+        host=POSTGRES_HOST,
+        port=POSTGRES_PORT,
+        user=POSTGRES_USER,
+        password=POSTGRES_PASSWORD,
+        database=POSTGRES_DB,
+        min_size=5,
+        max_size=20
+    )
+
+    from db_cmds import Database
+    db_pool = Database(pool)
+
     session = ClientSession()
+    return db_pool, session
 
 
 async def close_global_resources():
-    global db_pool, session
     if db_pool:
         await db_pool.close()
     if session:

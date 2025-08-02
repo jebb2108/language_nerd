@@ -1,33 +1,35 @@
-import asyncio
 import sys
-import logging
+import asyncio
 import random
 from datetime import datetime, timedelta
 
+from dotenv import load_dotenv
+
+load_dotenv(""".env""")
+
 from routers.commands.weekly_message_commands import send_user_report
 from config import (
-    db_pool, session,
-    init_global_resources,
-    close_global_resources,
     AI_API_KEY,
     AI_API_URL,
+    init_global_resources,
+    close_global_resources,
     logger
 )
 
-async def get_weekly_words_by_user():
+async def get_weekly_words_by_user(db_pool):
     """Получает слова за неделю, сгруппированные по пользователям"""
     query = """
         SELECT user_id, ARRAY_AGG(DISTINCT word) as words
         FROM words
-        WHERE created_at >= $1
+        WHERE created_at <= $1
         GROUP BY user_id
-        HAVING COUNT(word) > 5
+        HAVING COUNT(word) > 1
     """
     week_ago = datetime.now() - timedelta(days=7)
     async with db_pool.acquire() as conn:
         return await conn.fetch(query, week_ago)
 
-async def generate_question_for_word(word):
+async def generate_question_for_word(word, session):
     """Генерирует вопрос с вариантами ответов для слова"""
     prompt = (
         f"Дай пример предложения, где нужно подобрать верное слово '{word}', "
@@ -83,13 +85,13 @@ def parse_ai_response(content):
         return None
 
 
-async def process_user_report(user_id, words):
+async def process_user_report(user_id, words, db_pool, session):
     """Обрабатывает отчет для одного пользователя"""
     report_data = []
 
     for word in words:
         # Генерируем вопрос для слова
-        question_data = await generate_question_for_word(word)
+        question_data = await generate_question_for_word(word, session)
         if not question_data:
             continue
 
@@ -128,9 +130,9 @@ async def process_user_report(user_id, words):
     return len(report_data)
 
 
-async def generate_weekly_reports():
+async def generate_weekly_reports(db_pool, session):
     """Генерирует недельные отчеты"""
-    user_words = await get_weekly_words_by_user()
+    user_words = await get_weekly_words_by_user(db_pool)
     if not user_words:
         logger.info("No users with enough words")
         return
@@ -145,14 +147,14 @@ async def generate_weekly_reports():
 
         # Выбираем случайные слова (но не более max_words_per_user)
         selected_words = random.sample(words, min(len(words), max_words_per_user))
-        tasks.append(process_user_report(user_id, selected_words))
+        tasks.append(process_user_report(user_id, selected_words, db_pool, session))
 
     results = await asyncio.gather(*tasks)
     total_words = sum(results)
     logger.info(f"Generated reports with total {total_words} words")
 
 
-async def send_pending_reports():
+async def send_pending_reports(db_pool, session):
     """Отправляет все непотправленные отчеты"""
     # Получаем непотправленные отчеты
     reports = await db_pool.fetch(
@@ -166,7 +168,7 @@ async def send_pending_reports():
     tasks = []
     for report in reports:
         tasks.append(
-            process_report_delivery(report["report_id"], report["user_id"])
+            process_report_delivery(db_pool, session,report["report_id"], report["user_id"])
         )
 
     results = await asyncio.gather(*tasks)
@@ -174,9 +176,9 @@ async def send_pending_reports():
     logger.info(f"Sent {success_count}/{len(reports)} reports")
 
 
-async def process_report_delivery(report_id, user_id):
+async def process_report_delivery(db_pool, session, report_id, user_id):
     """Обрабатывает доставку одного отчета"""
-    success = await send_user_report(user_id, report_id)
+    success = await send_user_report(db_pool, session, user_id, report_id)
     if success:
         await db_pool.execute(
             "UPDATE weekly_reports SET sent = TRUE WHERE report_id = $1",
@@ -184,7 +186,7 @@ async def process_report_delivery(report_id, user_id):
         )
     return success
 
-async def cleanup_old_reports(days: int = 30):
+async def cleanup_old_reports(db_pool, days: int = 30):
     """Очищает старые отчеты и связанные с ними данные"""
     try:
         cutoff_date = datetime.now() - timedelta(days=days)
@@ -229,18 +231,19 @@ async def cleanup_old_reports(days: int = 30):
 
 async def main():
     """Основная асинхронная точка входа"""
-    await init_global_resources()
+    # Инициализация глобальных ресурсов
+    db_pool, session = await init_global_resources()
 
     try:
         if '--generate' in sys.argv:
             logger.info("Generating weekly reports...")
-            await generate_weekly_reports()
+            await generate_weekly_reports(db_pool, session)
         elif '--cleanup' in sys.argv:
             logger.info("Cleaning up old reports...")
-            await cleanup_old_reports()
+            await cleanup_old_reports(db_pool, days=14)
         else:
             logger.info("Sending pending reports...")
-            await send_pending_reports()
+            await send_pending_reports(db_pool, session)
     except Exception as e:
         logger.critical(f"Critical error: {e}")
     finally:

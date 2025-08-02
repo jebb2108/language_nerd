@@ -2,12 +2,13 @@ import json
 import asyncio
 from aiogram import Router, types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from config import db_pool, BOT_TOKEN_MAIN, session, logger # noqa
+from config import BOT_TOKEN_MAIN, logger # noqa
 
 router = Router(name=__name__)
 
 
 async def send_telegram_message(
+        session,
         chat_id: int,
         text: str,
         reply_markup: InlineKeyboardMarkup = None,
@@ -36,7 +37,7 @@ async def send_telegram_message(
         return False
 
 
-async def send_user_report(user_id, report_id):
+async def send_user_report(db_pool, session, user_id, report_id):
     """Отправляет отчет пользователю с интерактивными кнопками"""
     try:
         # Получаем слова отчета
@@ -57,7 +58,7 @@ async def send_user_report(user_id, report_id):
             "Выберите правильный вариант для каждого предложения. "
             "Буду отправлять вопросы по одному."
         )
-        await send_telegram_message(user_id, intro_message)
+        await send_telegram_message(session, user_id, intro_message)
 
         # Отправляем каждое слово отдельным сообщением с кнопками
         for i, record in enumerate(words, 1):
@@ -86,6 +87,7 @@ async def send_user_report(user_id, report_id):
 
             # Отправляем сообщение
             await send_telegram_message(
+                session,
                 user_id,
                 message,
                 reply_markup=reply_markup

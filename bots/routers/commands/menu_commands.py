@@ -1,5 +1,3 @@
-import os
-
 from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext

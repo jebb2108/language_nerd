@@ -1,36 +1,21 @@
+import asyncio
 from typing import *
 import asyncpg
 
 # Потокобезопасный доступ к БД
 from contextlib import asynccontextmanager
 
-from config import (
-    POSTGRES_HOST,
-    POSTGRES_PORT,
-    POSTGRES_USER,
-    POSTGRES_PASSWORD,
-    POSTGRES_DB,
-    logger,
-)
+from config import logger
 
 
 # = КЛАСС ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ =
 
 class Database:
-    def __init__(self):
-        self.pool = None
+    def __init__(self, pool=None):
+        self.pool = pool
 
     async def init(self):
         try:
-            self.pool = await asyncpg.create_pool(
-                host=POSTGRES_HOST,
-                port=POSTGRES_PORT,
-                user=POSTGRES_USER,
-                password=POSTGRES_PASSWORD,
-                database=POSTGRES_DB,
-                min_size=5,
-                max_size=20
-            )
             async with db_pool.acquire() as conn:
                 await conn.execute("""
                 CREATE TABLE IF NOT EXISTS words (
@@ -57,7 +42,7 @@ class Database:
                 ); """)
 
                 await conn.execute("""
-                CREATE TABLE weekly_reports (
+                CREATE TABLE IF NOT EXISTS weekly_reports (
                 report_id SERIAL PRIMARY KEY,
                 user_id INT NOT NULL,
                 generation_date TIMESTAMP DEFAULT NOW(),
@@ -65,7 +50,7 @@ class Database:
                 ); """)
 
                 await conn.execute("""
-                CREATE TABLE report_words (
+                CREATE TABLE IF NOT EXISTS report_words (
                 word_id SERIAL PRIMARY KEY,
                 report_id INT REFERENCES weekly_reports(report_id) ON DELETE CASCADE,
                 word TEXT NOT NULL,
@@ -216,6 +201,3 @@ class Database:
             await self.init()
         async with self.pool.acquire() as conn:
             yield conn
-
-
-db_pool = Database()

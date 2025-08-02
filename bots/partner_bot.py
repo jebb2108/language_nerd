@@ -6,11 +6,6 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
-from dotenv import load_dotenv
-
-# Загрузка переменных окружения ДОЛЖНА БЫТЬ ВЫЗВАНА
-load_dotenv(""".env""")
-
 # Импорт текстовых сообщений из отдельного файла (translations.py)
 from routers import router as main_router
 
