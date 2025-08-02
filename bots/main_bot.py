@@ -35,9 +35,9 @@ async def run():
     """Запуск бота и веб-сервера в одном event loop"""
 
     # Инициализация глобальных ресурсов
-    await init_global_resources()
+    db_pool, session = await init_global_resources()
     # Запуск веб-сервера
-    web_runner = await start_web_app()
+    web_runner = await start_web_app(db_pool)
     # Получение токена бота
     from config import BOT_TOKEN_MAIN
     # Инициализация бота

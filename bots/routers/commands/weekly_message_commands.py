@@ -2,6 +2,7 @@ import json
 import asyncio
 from aiogram import Router, types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.fsm.context import FSMContext
 from config import BOT_TOKEN_MAIN, logger # noqa
 
 router = Router(name=__name__)
@@ -72,7 +73,7 @@ async def send_user_report(db_pool, session, user_id, report_id):
                     "selected": idx,
                     "correct": record["correct_index"],
                     "total": len(words),
-                    "current": i
+                    "current": i,
                 })
                 keyboard.append([InlineKeyboardButton(
                     text=option,
@@ -104,7 +105,7 @@ async def send_user_report(db_pool, session, user_id, report_id):
 
 
 @router.callback_query(lambda c: json.loads(c.data)["type"] == "word_quiz")
-async def handle_word_quiz(callback: types.CallbackQuery):
+async def handle_word_quiz(callback: types.CallbackQuery, state: FSMContext):
     """Обрабатывает ответы на вопросы со словами"""
     try:
         data = json.loads(callback.data)

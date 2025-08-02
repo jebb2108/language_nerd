@@ -168,7 +168,7 @@ async def send_pending_reports(db_pool, session):
     tasks = []
     for report in reports:
         tasks.append(
-            process_report_delivery(db_pool, session,report["report_id"], report["user_id"])
+            process_report_delivery(db_pool, session, report["report_id"], report["user_id"])
         )
 
     results = await asyncio.gather(*tasks)

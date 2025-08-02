@@ -1,8 +1,8 @@
 import os
 from aiohttp import web
+from config import logger
 
-from config import db_pool, logger
-
+db_pool = None
 
 def get_base_path():
     return os.path.dirname(os.path.abspath(__file__))
@@ -111,10 +111,11 @@ async def api_stats_handler(request):
         return web.json_response({"error": "Internal server error"}, status=500)
 
 
-async def start_web_app():
+async def start_web_app(pool):
+    global db_pool
     """Запуск веб-сервера"""
     app = web.Application()
-
+    db_pool = pool
     # Основные роутеры
     app.router.add_get('/', index_handler)
     app.router.add_get('/api/words', api_words_handler)
