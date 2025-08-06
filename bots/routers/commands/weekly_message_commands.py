@@ -1,9 +1,9 @@
 import asyncio
-from aiogram import Router, types
+from aiogram import Router, types, Bot  # Добавлен импорт Bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
-from aiogram.utils.formatting import Text, Bold, Italic  # Для безопасного форматирования
-from aiogram.utils.markdown import html_decoration as hd  # Для HTML-экранирования
+from aiogram.utils.formatting import Text, Bold
+from aiogram.utils.markdown import html_decoration as hd
 
 from config import db_pool, BOT_TOKEN_MAIN, logger # noqa
 
@@ -13,7 +13,6 @@ router = Router(name=__name__)
 async def send_user_report(db_pool, bot, user_id, report_id):
     """Отправляет пользователю его отчет"""
     try:
-        # Получаем данные отчета
         async with db_pool.acquire() as conn:
             report = await conn.fetchrow(
                 "SELECT * FROM weekly_reports WHERE report_id = $1",
@@ -28,14 +27,12 @@ async def send_user_report(db_pool, bot, user_id, report_id):
             logger.warning(f"No report data found for report_id: {report_id}")
             return False
 
-        # Формируем сообщение
         message_text = (
             f"📊 Ваш еженедельный отчет по изученным словам:\n\n"
             f"Всего слов: {len(words)}\n\n"
             "Для начала проверки нажмите кнопку ниже 👇"
         )
 
-        # Создаем клавиатуру
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(
                 text="Начать проверку знаний",
@@ -43,7 +40,6 @@ async def send_user_report(db_pool, bot, user_id, report_id):
             )]
         ])
 
-        # Отправляем сообщение
         await bot.send_message(
             chat_id=user_id,
             text=message_text,
@@ -63,7 +59,6 @@ async def start_report_handler(callback: types.CallbackQuery, state: FSMContext)
     try:
         report_id = int(callback.data.split(":")[1])
 
-        # Получаем список слов в отчете
         async with db_pool.acquire() as conn:
             words = await conn.fetch(
                 "SELECT word_id FROM report_words WHERE report_id = $1",
@@ -74,7 +69,6 @@ async def start_report_handler(callback: types.CallbackQuery, state: FSMContext)
             await callback.answer("Отчет не содержит слов для проверки.", show_alert=True)
             return
 
-        # Сохраняем состояние в виде словаря
         await state.clear()
         await state.update_data({
             "report_id": report_id,
@@ -83,7 +77,7 @@ async def start_report_handler(callback: types.CallbackQuery, state: FSMContext)
             "chat_id": callback.message.chat.id
         })
 
-        # Отправляем первый вопрос
+        # Передаем callback.bot вместо types.Bot
         await send_question(state, callback.bot)
         await callback.answer()
 
@@ -92,7 +86,8 @@ async def start_report_handler(callback: types.CallbackQuery, state: FSMContext)
         await callback.answer("Произошла ошибка при запуске отчета.", show_alert=True)
 
 
-async def send_question(state: FSMContext, bot: types.Bot):
+# Изменен тип параметра bot: Bot вместо types.Bot
+async def send_question(state: FSMContext, bot: Bot):
     """Отправляет текущий вопрос пользователю"""
     try:
         data = await state.get_data()
@@ -101,7 +96,6 @@ async def send_question(state: FSMContext, bot: types.Bot):
         chat_id = data["chat_id"]
 
         if current_index >= len(word_ids):
-            # Все вопросы пройдены
             await bot.send_message(
                 chat_id=chat_id,
                 text="🎉 Поздравляем! Вы завершили проверку знаний по всем словам."
@@ -111,7 +105,6 @@ async def send_question(state: FSMContext, bot: types.Bot):
 
         word_id = word_ids[current_index]
 
-        # Получаем данные слова
         async with db_pool.acquire() as conn:
             word_data = await conn.fetchrow(
                 "SELECT * FROM report_words WHERE word_id = $1",
@@ -125,33 +118,27 @@ async def send_question(state: FSMContext, bot: types.Bot):
             )
             return
 
-        # Формируем сообщение с вопросом
         question_text = (
             f"❓ Вопрос {current_index + 1}/{len(word_ids)}\n\n"
             f"{word_data['sentence']}\n\n"
             "Выберите правильный вариант:"
         )
 
-        # Создаем клавиатуру с вариантами ответов
         keyboard = InlineKeyboardMarkup(inline_keyboard=[])
         row = []
         for idx, option in enumerate(word_data["options"]):
-            # Используем компактный формат для экономии места
             callback_data = f"quiz:{word_id}:{idx}"
             row.append(InlineKeyboardButton(
                 text=option,
                 callback_data=callback_data
             ))
-            # Добавляем новую строку после каждых 2 кнопок
             if len(row) >= 2:
                 keyboard.inline_keyboard.append(row)
                 row = []
 
-        # Добавляем последнюю неполную строку
         if row:
             keyboard.inline_keyboard.append(row)
 
-        # Отправляем вопрос
         await bot.send_message(
             chat_id=chat_id,
             text=question_text,
@@ -169,7 +156,6 @@ async def send_question(state: FSMContext, bot: types.Bot):
 
 
 def quiz_callback_filter(callback: types.CallbackQuery):
-    """Фильтр для обработки ответов на вопросы"""
     return callback.data.startswith("quiz:")
 
 
@@ -177,7 +163,6 @@ def quiz_callback_filter(callback: types.CallbackQuery):
 async def handle_word_quiz(callback: types.CallbackQuery, state: FSMContext):
     """Обрабатывает ответы на вопросы со словами"""
     try:
-        # Разбираем callback_data
         parts = callback.data.split(":")
         if len(parts) != 3:
             await callback.answer("Некорректные данные вопроса.", show_alert=True)
@@ -186,7 +171,6 @@ async def handle_word_quiz(callback: types.CallbackQuery, state: FSMContext):
         word_id = int(parts[1])
         selected_idx = int(parts[2])
 
-        # Получаем данные слова
         async with db_pool.acquire() as conn:
             record = await conn.fetchrow(
                 "SELECT word, options, correct_index FROM report_words WHERE word_id = $1",
@@ -197,12 +181,10 @@ async def handle_word_quiz(callback: types.CallbackQuery, state: FSMContext):
             await callback.answer("Ошибка: данные вопроса не найдены.", show_alert=True)
             return
 
-        # Проверяем ответ
         is_correct = selected_idx == record["correct_index"]
         correct_word = record["options"][record["correct_index"]]
         selected_word = record["options"][selected_idx]
 
-        # Формируем ответ с безопасным форматированием
         if is_correct:
             message = Text(
                 "✅ Правильно! Отличная работа!\n\n",
@@ -216,24 +198,20 @@ async def handle_word_quiz(callback: types.CallbackQuery, state: FSMContext):
                 Bold("Слово: "), hd.quote(record['word'])
             ).as_markdown()
 
-        # Отправляем результат
         await callback.answer()
         await callback.message.reply(
             text=message,
             parse_mode="MarkdownV2"
         )
 
-        # Пытаемся убрать клавиатуру с вопросом
         try:
             await callback.message.edit_reply_markup(reply_markup=None)
         except Exception:
-            pass  # Не критично, если не получилось
+            pass
 
-        # Обновляем состояние и отправляем следующий вопрос
         data = await state.get_data()
         current_index = data.get("current_index", 0) + 1
 
-        # Проверяем, не закончились ли вопросы
         if current_index >= len(data.get("word_ids", [])):
             await callback.bot.send_message(
                 chat_id=data["chat_id"],
