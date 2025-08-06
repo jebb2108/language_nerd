@@ -5,6 +5,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
+from typing import Union
+
 from translations import QUESTIONARY # noqa
 from filters import IsBotFilter # noqa
 from routers.commands.menu_commands import show_main_menu # noqa
