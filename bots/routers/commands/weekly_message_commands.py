@@ -56,12 +56,13 @@ async def send_user_report(resources, bot: Bot, user_id: int, report_id: int) ->
 @router.callback_query(lambda c: c.data.startswith("start_report:"))
 async def start_report_handler(
         callback: types.CallbackQuery,
-        state: FSMContext
+        state: FSMContext,
+        data: dict  # Добавлен параметр data
 ):
-    """Обработчик начала прохождения отчета"""
     try:
-        # Получаем resources из data (добавлено middleware)
-        resources = callback.conf["resources"]
+        # Получаем resources из data
+        resources = data["resources"]
+
         report_id = int(callback.data.split(":")[1])
 
         async with resources.db_pool.acquire() as conn:
@@ -79,8 +80,7 @@ async def start_report_handler(
             "report_id": report_id,
             "word_ids": [word["word_id"] for word in words],
             "current_index": 0,
-            "chat_id": callback.message.chat.id,
-            "resources": resources  # Сохраняем в состоянии
+            "chat_id": callback.message.chat.id
         })
 
         await send_question(state, callback.bot, resources)
@@ -89,7 +89,6 @@ async def start_report_handler(
     except Exception as e:
         logger.error(f"Error starting report: {e}", exc_info=True)
         await callback.answer("Произошла ошибка при запуске отчета.", show_alert=True)
-
 
 async def send_question(state: FSMContext, bot: Bot, resources):
     """Отправляет текущий вопрос пользователю"""
@@ -165,14 +164,13 @@ def quiz_callback_filter(callback: types.CallbackQuery):
 
 @router.callback_query(quiz_callback_filter)
 async def handle_word_quiz(
-        callback: types.CallbackQuery,
-        state: FSMContext
+    callback: types.CallbackQuery,
+    state: FSMContext,
+    data: dict  # Добавлен параметр data
 ):
-    """Обрабатывает ответы на вопросы со словами"""
     try:
-        # Получаем resources из состояния
-        data = await state.get_data()
-        resources = data.get("resources")
+        # Получаем resources из data
+        resources = data["resources"]
 
         if not resources:
             logger.error("Resources not found in state!")
