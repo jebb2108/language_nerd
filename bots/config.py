@@ -48,7 +48,7 @@ async def init_global_resources():
     )
 
     from db_cmds import Database
-    db_pool = Database(pool)
+    db_pool = Database(pool).init()
 
     session = ClientSession()
     return db_pool, session
