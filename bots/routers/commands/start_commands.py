@@ -27,8 +27,9 @@ class PollingStates(StatesGroup):
 
 @router.message(Command("start"), IsBotFilter(BOT_TOKEN_MAIN))
 async def start_with_polling(message: Message, state: FSMContext):
-    # Получаем resources из контекста
-    resources = message.bot.get('resources')
+    # Получаем resources из диспетчера
+    dp = message.bot.dispatcher
+    resources = dp["resources"]
 
     if not resources:
         logger.error("Resources not found in start handler")
@@ -37,6 +38,7 @@ async def start_with_polling(message: Message, state: FSMContext):
     user_id = message.from_user.id
     user_exists = False
     lang_code = message.from_user.language_code or "en"
+
     try:
         # Проверяем существование пользователя в БД
         async with resources.db_pool.acquire() as conn:  # noqa
@@ -127,11 +129,16 @@ async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith("lang_"), PollingStates.language_state)
-async def handle_language_choice(callback: CallbackQuery, state: FSMContext, data: dict):  # Добавлен параметр data
-    try:
-        # Получаем resources из data (добавлено middleware)
-        resources = data["resources"]
+async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
+    # Получаем resources из диспетчера
+    dp = callback.bot.dispatcher
+    resources = dp["resources"]
 
+    if not resources:
+        logger.error("Resources not found in language choice handler")
+        return
+
+    try:
         state_data = await state.get_data()
         lang_code = state_data.get('lang_code', 'en')
 

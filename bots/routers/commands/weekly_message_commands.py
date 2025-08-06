@@ -9,7 +9,6 @@ from config import logger # noqa
 
 router = Router(name=__name__)
 
-
 async def send_user_report(resources, bot: Bot, user_id: int, report_id: int) -> bool:
     """Отправляет пользователю его отчет"""
     try:
@@ -56,12 +55,15 @@ async def send_user_report(resources, bot: Bot, user_id: int, report_id: int) ->
 @router.callback_query(lambda c: c.data.startswith("start_report:"))
 async def start_report_handler(
         callback: types.CallbackQuery,
-        state: FSMContext,
-        data: dict  # Добавлен параметр data
+        state: FSMContext
 ):
     try:
-        # Получаем resources из data
-        resources = data["resources"]
+        # Получаем resources из диспетчера
+        resources = callback.bot.dispatcher["resources"]
+        if not resources:
+            logger.error("Resources not found in start_report_handler")
+            await callback.answer("Внутренняя ошибка: ресурсы недоступны", show_alert=True)
+            return
 
         report_id = int(callback.data.split(":")[1])
 
@@ -165,16 +167,14 @@ def quiz_callback_filter(callback: types.CallbackQuery):
 @router.callback_query(quiz_callback_filter)
 async def handle_word_quiz(
     callback: types.CallbackQuery,
-    state: FSMContext,
-    data: dict  # Добавлен параметр data
+    state: FSMContext
 ):
     try:
-        # Получаем resources из data
-        resources = data["resources"]
-
+        # Получаем resources из диспетчера
+        resources = callback.bot.dispatcher["resources"]
         if not resources:
-            logger.error("Resources not found in state!")
-            await callback.answer("Внутренняя ошибка: ресурсы не найдены", show_alert=True)
+            logger.error("Resources not found in handle_word_quiz")
+            await callback.answer("Внутренняя ошибка: ресурсы недоступны", show_alert=True)
             return
 
         parts = callback.data.split(":")
@@ -234,8 +234,7 @@ async def handle_word_quiz(
             await state.clear()
         else:
             await state.update_data(current_index=current_index)
-            # Получаем resources из состояния
-            await send_question(state, callback.bot, data["resources"])
+            await send_question(state, callback.bot, resources)
 
     except Exception as e:
         logger.error(f"Error handling quiz callback: {e}", exc_info=True)
