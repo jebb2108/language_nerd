@@ -12,11 +12,11 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
+
 from web_launcher import start_web_app
-from config import (
-    Resources,
-    logger,
-)
+from config import logger, Resources, BOT_TOKEN_MAIN
+from di import ResourcesMiddleware
+from routers import router as main_router
 
 # Создаем хранилище состояний в оперативной памяти
 storage = MemoryStorage()
@@ -32,12 +32,17 @@ async def run():
     resources = Resources()
     # Запуск веб-сервера
     web_runner = await start_web_app(resources.db_pool)
-    # Получение токена бота и роутеров
-    from config import BOT_TOKEN_MAIN
-    from routers import router as main_router
+
+    dp = Dispatcher(storage=storage)
+
+    # Регистрируем middleware
+    resource_middleware = ResourcesMiddleware(resources)
+    dp.message.middleware.register(resource_middleware)
+    dp.callback_query.middleware.register(resource_middleware)
+
     # Инициализация бота
     bot = Bot(token=BOT_TOKEN_MAIN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-    dp = Dispatcher(storage=storage)
+
     dp.include_router(main_router)
 
     try:
