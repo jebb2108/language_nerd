@@ -3,6 +3,7 @@ import asyncio
 import random
 import aiohttp
 import time
+import logging
 import re
 from datetime import datetime, timedelta
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, retry_if_result
@@ -174,62 +175,59 @@ def parse_deepseek_response(content, original_word):
     """Парсит ответ от DeepSeek в нужный формат"""
     try:
         # Удаляем лишние символы форматирования
-        cleaned_content = re.sub(r'\*|\#|\(.*?\)|\[.*?\]', '', content)
+        cleaned_content = re.sub(r'\*|\(.*?\)|\[.*?\]', '', content)
 
         # Ищем предложение и варианты с более гибким распознаванием
         sentence = None
         options = []
 
-        # Пытаемся найти предложение в разных форматах
-        for line in cleaned_content.split('\n'):
-            line = line.strip()
-            if not line:
-                continue
+        # Разбиваем содержимое на строки и очищаем
+        lines = [line.strip() for line in cleaned_content.split('\n') if line.strip()]
 
-            # Распознаем предложение по ключевым словам или структуре
-            if line.lower().startswith("предложение:") or "..." in line:
-                # Удаляем метку "Предложение:" если есть
+        # Ищем предложение по наличию троеточия
+        for i, line in enumerate(lines):
+            if "..." in line:
+                # Удаляем метки "Предложение:" если есть
                 sentence = re.sub(r'^(предложение|sentence):\s*', '', line, flags=re.IGNORECASE).strip()
-            # Распознаем варианты по ключевым словам или формату списка
-            elif line.lower().startswith("варианты:") or line.lower().startswith("options:") or re.match(
-                    r'^[\-\*]?\s*\w', line):
-                # Удаляем метку "Варианты:" если есть
-                options_line = re.sub(r'^(варианты|options):\s*', '', line, flags=re.IGNORECASE).strip()
+                # Удаляем лишние пробелы и кавычки
+                sentence = sentence.strip().strip('"').strip("'")
+                break
 
-                # Извлекаем варианты из строки
-                if options_line.startswith('[') and options_line.endswith(']'):
-                    options_str = options_line[1:-1]
-                    options = [opt.strip() for opt in options_str.split(',')]
-                else:
-                    # Пытаемся извлечь варианты как элементы списка
-                    options = re.findall(r'[\-\*]?\s*([^,\n]+)', options_line)
-                    # Очищаем каждый вариант
-                    options = [opt.strip().strip('*').strip('-').strip() for opt in options]
+        # Если не нашли предложение с троеточием, используем первую строку
+        if not sentence and lines:
+            sentence = lines[0]
 
-        # Если не нашли предложение в метке, используем первую значимую строку
-        if not sentence:
-            for line in cleaned_content.split('\n'):
-                line = line.strip()
-                if line and "..." in line:
-                    sentence = line
-                    break
+        # Ищем варианты ответов
+        for i, line in enumerate(lines):
+            if re.match(r'^(варианты|options):', line, re.IGNORECASE):
+                # Собираем следующие строки как варианты
+                for j in range(i + 1, min(i + 5, len(lines))):
+                    option_line = lines[j].strip()
+                    if option_line:
+                        # Удаляем маркеры списка и номера
+                        clean_option = re.sub(r'^[-\*]?\s*\d?\.?\s*', '', option_line)
+                        # Удаляем пометки в скобках
+                        clean_option = re.sub(r'\(.*?\)', '', clean_option).strip()
+                        options.append(clean_option)
+                break
 
-        # Если не нашли варианты в метке, ищем в следующих строках после предложения
+        # Если не нашли метку вариантов, ищем список из 4 элементов
         if not options:
-            lines = cleaned_content.split('\n')
-            for i, line in enumerate(lines):
-                if sentence and line.strip() == sentence:
-                    # Берем следующие 4 строки как варианты
-                    options = []
-                    for j in range(i + 1, min(i + 5, len(lines))):
-                        opt_line = lines[j].strip()
-                        if opt_line:
-                            # Удаляем маркеры списка и номера
-                            clean_opt = re.sub(r'^[\-\*]?\s*\d?\.?\s*', '', opt_line)
-                            options.append(clean_opt.strip())
-                    if len(options) >= 4:
-                        options = options[:4]
-                    break
+            candidate_options = []
+            for line in lines:
+                # Пропускаем строку с предложением
+                if line == sentence:
+                    continue
+                # Удаляем маркеры списка и номера
+                clean_option = re.sub(r'^[-\*]?\s*\d?\.?\s*', '', line).strip()
+                # Удаляем пометки в скобках
+                clean_option = re.sub(r'\(.*?\)', '', clean_option).strip()
+                if clean_option:
+                    candidate_options.append(clean_option)
+
+            # Если нашли ровно 4 варианта, используем их
+            if len(candidate_options) >= 4:
+                options = candidate_options[:4]
 
         # Проверяем наличие всех необходимых элементов
         if not sentence:
@@ -237,12 +235,11 @@ def parse_deepseek_response(content, original_word):
             return None
 
         if not options or len(options) < 4:
-            logger.warning(f"Недостаточно вариантов в ответе: {content}")
+            logger.warning(f"Недостаточно вариантов в ответе (найдено {len(options)}): {content}")
             return None
 
-        # Удаляем лишние пробелы и кавычки
-        sentence = sentence.strip().strip('"').strip("'")
-        options = [opt.strip().strip('"').strip("'") for opt in options[:4]]
+        # Берем только первые 4 варианта
+        options = options[:4]
 
         # Проверяем наличие оригинального слова в вариантах (без учета регистра)
         original_lower = original_word.lower()
@@ -321,7 +318,15 @@ async def process_user_report(user_id, words, db_pool, session):
 
 async def generate_weekly_reports(db_pool, session):
     """Генерирует недельные отчеты с ограничением скорости"""
-    user_words = await get_weekly_words_by_user(db_pool)
+    async with db_pool.acquire() as conn:
+        user_words = await conn.fetch("""
+            SELECT user_id, ARRAY_AGG(DISTINCT word) as words
+            FROM words
+            WHERE created_at <= $1 AND word IS NOT NULL
+            GROUP BY user_id
+            HAVING COUNT(word) > 1
+        """, datetime.now() - timedelta(days=7))
+
     if not user_words:
         logger.info("No users with enough words")
         return
@@ -361,9 +366,10 @@ async def generate_weekly_reports(db_pool, session):
 
 async def send_pending_reports(db_pool, session):
     """Отправляет все непотправленные отчеты"""
-    reports = await db_pool.fetch(
-        "SELECT report_id, user_id FROM weekly_reports WHERE sent = FALSE"
-    )
+    async with db_pool.acquire() as conn:
+        reports = await conn.fetch(
+            "SELECT report_id, user_id FROM weekly_reports WHERE sent = FALSE"
+        )
 
     if not reports:
         logger.info("No pending reports")
@@ -384,10 +390,11 @@ async def process_report_delivery(db_pool, session, report_id, user_id):
     """Обрабатывает доставку одного отчета"""
     success = await send_user_report(db_pool, session, user_id, report_id)
     if success:
-        await db_pool.execute(
-            "UPDATE weekly_reports SET sent = TRUE WHERE report_id = $1",
-            report_id
-        )
+        async with db_pool.acquire() as conn:
+            await conn.execute(
+                "UPDATE weekly_reports SET sent = TRUE WHERE report_id = $1",
+                report_id
+            )
     return success
 
 
@@ -398,6 +405,7 @@ async def cleanup_old_reports(db_pool, days: int = 30):
         logger.info(f"Starting cleanup for reports older than {cutoff_date}")
 
         async with db_pool.acquire() as conn:
+            # Получаем список отчетов для удаления
             old_reports = await conn.fetch(
                 "SELECT report_id FROM weekly_reports WHERE generation_date < $1",
                 cutoff_date
@@ -410,11 +418,13 @@ async def cleanup_old_reports(db_pool, days: int = 30):
             report_ids = [r["report_id"] for r in old_reports]
             logger.info(f"Found {len(report_ids)} old reports to delete")
 
+            # Удаляем связанные слова отчетов
             words_deleted = await conn.execute(
                 "DELETE FROM report_words WHERE report_id = ANY($1::int[])",
                 report_ids
             )
 
+            # Удаляем сами отчеты
             reports_deleted = await conn.execute(
                 "DELETE FROM weekly_reports WHERE report_id = ANY($1::int[])",
                 report_ids
