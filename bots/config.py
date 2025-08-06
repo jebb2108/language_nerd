@@ -50,7 +50,8 @@ async def init_global_resources():
     from db_cmds import Database
 
     # Создаю пул и тут же его инициализирую
-    db_pool = await Database(pool).init()
+    db_pool = Database(pool)
+    await db_pool.init()
 
     session = ClientSession()
     return db_pool, session

@@ -59,7 +59,6 @@ class Database:
                 correct_index INT NOT NULL
                 ); """)
 
-            return self.pool
 
         except Exception as e:
             logger.critical(f"Database initialization failed: {e}")
