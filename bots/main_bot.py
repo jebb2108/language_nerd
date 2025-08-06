@@ -29,8 +29,9 @@ async def run():
     resources_middleware = ResourcesMiddleware(resources)
     dp.message.middleware(resources_middleware)
     dp.callback_query.middleware(resources_middleware)
-    dp.update.middleware(resources_middleware)
+
     dp.include_router(main_router)
+    dp.update.middleware(resources_middleware)
 
     try:
         logger.info("Starting main bot (polling)…")
