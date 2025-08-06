@@ -1,10 +1,18 @@
 from aiogram import Router
 from aiogram.types import Message
 
+from your_project.middlewares import ResourcesMiddleware
+from your_project.resources import Resources
+
+# Инициализируем ресурсы и роутер
+resources = Resources()
 router = Router(name=__name__)
 
+# Регистрируем middleware на самом роутере
+router.message.middleware(ResourcesMiddleware(resources))
+
 @router.message()
-async def handle_other_messages(message: Message):
+async def handle_other_messages(message: Message, resources: Resources):
     """
     Обработчик всех остальных сообщений (не команд)
     Напоминает пользователю использовать /start

@@ -366,33 +366,29 @@ async def generate_weekly_reports(db_pool, session):
     logger.info(f"Generated reports for {processed_users} users")
 
 
-async def send_pending_reports(db_pool, bot):  # Изменён параметр session -> bot
-    """Отправляет все непотправленные отчеты"""
-    async with db_pool.acquire() as conn:
+async def send_pending_reports(bot: Bot, resources: Resources):
+    async with resources.db_pool.acquire() as conn:
         reports = await conn.fetch(
             "SELECT report_id, user_id FROM weekly_reports WHERE sent = FALSE"
         )
-
     if not reports:
         logger.info("No pending reports")
         return
 
-    tasks = []
-    for report in reports:
-        tasks.append(
-            process_report_delivery(db_pool, bot, report["report_id"], report["user_id"])  # Передаём bot
-        )
-
+    tasks = [
+        process_report_delivery(bot, rec["report_id"], rec["user_id"], resources)
+        for rec in reports
+    ]
     results = await asyncio.gather(*tasks)
     success_count = sum(1 for r in results if r)
     logger.info(f"Sent {success_count}/{len(reports)} reports")
 
 
-async def process_report_delivery(db_pool, bot, report_id, user_id):  # Изменён параметр session -> bot
-    """Обрабатывает доставку одного отчета"""
-    success = await send_user_report(db_pool, bot, user_id, report_id)  # Передаём bot вместо session
+async def process_report_delivery(bot: Bot, report_id: int, user_id: int, resources: Resources) -> bool:
+
+    success = await send_user_report(bot, user_id, report_id, resources)
     if success:
-        async with db_pool.acquire() as conn:
+        async with resources.db_pool.acquire() as conn:
             await conn.execute(
                 "UPDATE weekly_reports SET sent = TRUE WHERE report_id = $1",
                 report_id

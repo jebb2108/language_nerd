@@ -1,22 +1,30 @@
-from aiogram import Router, F, Bot
+from aiogram import Router, F
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-
-from typing import Union
+from aiogram.types import (
+    Message,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+    CallbackQuery,
+)
 
 from translations import QUESTIONARY  # noqa
 from filters import IsBotFilter  # noqa
-from routers.commands.menu_commands import show_main_menu  # noqa
-from config import BOT_TOKEN_MAIN, logger, Resources  # Импортируем Resources здесь! # noqa
+from config import BOT_TOKEN_MAIN, logger  # noqa
+from de_injection import ResourcesMiddleware, Resources  # noqa
+from routers.commands.menu_commands import show_main_menu  # переиспользуемый метод # noqa
 
+# Инициализируем DI-контейнер и роутер
+resources = Resources()
 router = Router(name=__name__)
-# Фильтрация по токену
 
+# Фильтрация и middleware
 router.message.filter(IsBotFilter(BOT_TOKEN_MAIN))
 router.callback_query.filter(IsBotFilter(BOT_TOKEN_MAIN))
+router.message.middleware(ResourcesMiddleware(resources))
+router.callback_query.middleware(ResourcesMiddleware(resources))
 
 
 class PollingStates(StatesGroup):
@@ -25,48 +33,48 @@ class PollingStates(StatesGroup):
     introduction_state = State()
 
 
-@router.message(Command("start"), IsBotFilter(BOT_TOKEN_MAIN))
-async def start_with_polling(message: Message, state: FSMContext, data: dict):
-    # Получаем resources из диспетчера
-    resources: Resources = data["resources"]
+@router.message(Command("start"))
+async def start_with_polling(
+        message: Message,
+        state: FSMContext,
+        resources: Resources,
+):
+    """
+    Стартовая команда: проверяем в БД существование пользователя,
+    сохраняем основные поля в state и либо идём в show_main_menu, либо стартуем опрос.
+    """
     db_pool = resources.db_pool
-
-    if not resources:
-        logger.error("Resources not found in start handler")
-        return
-
     user_id = message.from_user.id
-    user_exists = False
     lang_code = message.from_user.language_code or "en"
 
+    # Проверяем, есть ли запись в users
     try:
-        # Проверяем существование пользователя в БД
-        async with db_pool.acquire() as conn:  # noqa
+        async with db_pool.acquire() as conn:
             user_exists = await conn.fetchval(
-                "SELECT 1 FROM users WHERE user_id = $1",
-                user_id
+                "SELECT 1 FROM users WHERE user_id = $1", user_id
             )
-
-        # Обновляем состояние с инициализированным lang_code
-        await state.update_data(
-            user_id=user_id,
-            username=message.from_user.username or "",
-            first_name=message.from_user.first_name or "",
-            lang_code=lang_code,  # Используем уже инициализированное значение
-            chosen_language="",
-            camefrom="",
-            about=""
-        )
-
     except Exception as e:
-        logger.error(f"Error in start handler: {e}")  # noqa
+        logger.error(f"Error checking user existence: {e}")
+        user_exists = False
 
-    # Если пользователь существует - показываем главное меню
+    # Обновляем данные в state
+    await state.update_data(
+        user_id=user_id,
+        username=message.from_user.username or "",
+        first_name=message.from_user.first_name or "",
+        lang_code=lang_code,
+        chosen_language="",
+        camefrom="",
+        about="",
+        messages_to_delete=[],
+    )
+
     if user_exists:
-        await show_main_menu(message, state)
+        # если пользователь есть — сразу меню
+        await show_main_menu(message, state, resources)
         return
 
-    # Создаем безопасные callback-данные
+    # иначе запускаем опрос «откуда вы о нас узнали»
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
@@ -85,65 +93,78 @@ async def start_with_polling(message: Message, state: FSMContext, data: dict):
                 text=QUESTIONARY["where_youcamefrom"][f"{lang_code}2"],
                 callback_data="camefrom_other"
             )
-        ]
+        ],
     ])
-    # Отправляю через функцию с сохранением ID сообщения
-    await send_message_with_save(message, QUESTIONARY["intro"][lang_code], state, True, keyboard)
+
+    await send_message_with_save(
+        message=message,
+        text=QUESTIONARY["intro"][lang_code],
+        state=state,
+        markup=True,
+        keyboard=keyboard
+    )
     await state.set_state(PollingStates.camefrom_state)
 
 
 @router.callback_query(F.data.startswith("camefrom_"), PollingStates.camefrom_state)
-async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
+async def handle_camefrom(
+        callback: CallbackQuery,
+        state: FSMContext,
+        resources: Resources,
+):
+    """
+    После вопроса «откуда узнали» переходим к выбору языка.
+    """
     try:
-        camefrom = callback.data.split("_")[1]
+        camefrom = callback.data.split("_", 1)[1]
         await state.update_data(camefrom=camefrom)
 
         data = await state.get_data()
-        lang_code = data.get('lang_code', 'en')
+        lang_code = data.get("lang_code", "en")
 
-        # Кнопки выбора языка с простыми callback-данными
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [
-                InlineKeyboardButton(text="🇷🇺 Русский", callback_data="lang_russian"),
-            ],
-            [
-                InlineKeyboardButton(text="🇺🇸 English", callback_data="lang_english")
-            ],
-            [
-                InlineKeyboardButton(text="🇩🇪 Deutsch", callback_data="lang_german"),
-            ],
-            [
-                InlineKeyboardButton(text="🇪🇸 Español", callback_data="lang_spanish")
-            ],
-            [
-                InlineKeyboardButton(text="🇨🇳 中文", callback_data="lang_chineese")
-            ]
+            [InlineKeyboardButton(text="🇷🇺 Русский", callback_data="lang_russian")],
+            [InlineKeyboardButton(text="🇺🇸 English", callback_data="lang_english")],
+            [InlineKeyboardButton(text="🇩🇪 Deutsch", callback_data="lang_german")],
+            [InlineKeyboardButton(text="🇪🇸 Español", callback_data="lang_spanish")],
+            [InlineKeyboardButton(text="🇨🇳 中文", callback_data="lang_chinese")],
         ])
 
-        await send_message_with_save(callback, QUESTIONARY["lang_pick"][lang_code], state, True, keyboard)
+        await send_message_with_save(
+            message=callback,
+            text=QUESTIONARY["lang_pick"][lang_code],
+            state=state,
+            markup=True,
+            keyboard=keyboard
+        )
         await state.set_state(PollingStates.language_state)
         await callback.answer()
 
     except Exception as e:
-        logger.error(f"Error in camefrom handler: {e}")  # noqa
+        logger.error(f"Error in handle_camefrom: {e}")
 
 
 @router.callback_query(F.data.startswith("lang_"), PollingStates.language_state)
-async def handle_language_choice(callback: CallbackQuery, state: FSMContext, data: dict):
-
-    # Получаем resources из диспетчера
-    resources: Resources = data["resources"]
+async def handle_language_choice(
+        callback: CallbackQuery,
+        state: FSMContext,
+        resources: Resources,
+):
+    """
+    Сохраняем выбор языка, создаём запись в БД и идём в главное меню.
+    """
     db_pool = resources.db_pool
-
-    if not resources:
-        logger.error("Resources not found in language choice handler")
-        return
-
     try:
-        state_data = await state.get_data()
-        lang_code = state_data.get('lang_code', 'en')
+        data = await state.get_data()
+        lang_code = data.get("lang_code", "en")
+        user_id = data["user_id"]
+        username = data.get("username", "")
+        first_name = data.get("first_name", "")
+        camefrom = data.get("camefrom", "")
 
-        # Кнопка подтверждения
+        users_choice = callback.data.split("_", 1)[1]
+
+        # Обновляем текст с подтверждением выбора
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(
                 text=QUESTIONARY["confirm"][lang_code],
@@ -151,55 +172,71 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext, dat
             )]
         ])
 
-        users_choice = callback.data.split("_")[1]
-
         await callback.message.edit_text(
-            text=f"➪ Вы выбрали: {users_choice}\n\n{QUESTIONARY['gratitude'][lang_code]}",
-            reply_markup=keyboard
+            f"➪ Вы выбрали: {users_choice}\n\n{QUESTIONARY['gratitude'][lang_code]}",
+            reply_markup=keyboard,
+            parse_mode=ParseMode.HTML,
         )
         await state.set_state(PollingStates.introduction_state)
         await callback.answer()
 
-        # Сохраняем пользователя в БД
-        user_id = state_data['user_id']
-        username = state_data.get('username', 'None')
-        first_name = state_data.get('first_name', 'None')
-        camefrom = state_data.get('camefrom', 'None')
+        # Сохраняем нового пользователя в БД
+        async with db_pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO users (user_id, username, first_name, camefrom, chosen_language, lang_code)
+                VALUES ($1,$2,$3,$4,$5,$6)
+                """,
+                user_id, username, first_name, camefrom, users_choice, lang_code
+            )
 
-        # Используем ресурсы для доступа к БД
-        await db_pool.create_users_table(user_id, username, first_name, camefrom, users_choice,
-                                                   lang_code)  # noqa
+        # После сохранения сразу показываем главное меню
+        await show_main_menu(callback.message, state, resources)
 
     except Exception as e:
-        logger.error(f"Error in language choice: {e}")  # noqa
+        logger.error(f"Error in handle_language_choice: {e}")
 
-async def send_message_with_save(message: Union[Message, CallbackQuery], text: str, state: FSMContext, markup=False, # noqa
-                                 keyboard=None):
+
+async def send_message_with_save(
+        message: Union[Message, CallbackQuery],
+        text: str,
+        state: FSMContext,
+        markup: bool = False,
+        keyboard: InlineKeyboardMarkup = None,
+):
+    """
+    Отправляет (или редактирует) сообщение, сохраняет его ID в state для последующего удаления.
+    """
     if isinstance(message, CallbackQuery):
-        message = message.message
-    if markup:
-        sent_message = await message.answer(
+        chat_msg = message.message
+    else:
+        chat_msg = message
+
+    if markup and keyboard:
+        sent = await chat_msg.answer(
             text=text,
             reply_markup=keyboard,
-            parse_mode=ParseMode.HTML,
+            parse_mode=ParseMode.HTML
         )
     else:
-        sent_message = await message.answer(text)
+        sent = await chat_msg.answer(text=text)
 
     data = await state.get_data()
-    curr_messages = data.get("messages_to_delete", [])
-    curr_messages.append(sent_message.message_id)
+    msgs = data.get("messages_to_delete", [])
+    msgs.append(sent.message_id)
+    await state.update_data(messages_to_delete=msgs)
+    return sent
 
-    await state.update_data(messages_to_delete=curr_messages)
-    return sent_message
 
-
-async def delete_previous_messages(bot: Bot, chat_id: int, state: FSMContext):
+async def delete_previous_messages(
+        bot: Bot,
+        chat_id: int,
+        state: FSMContext
+):
     data = await state.get_data()
-    if "messages_to_delete" in data:
-        for msg_id in data["messages_to_delete"]:
-            try:
-                await bot.delete_message(chat_id, msg_id)
-            except:
-                pass
-        await state.update_data(messages_to_delete=[])
+    for msg_id in data.get("messages_to_delete", []):
+        try:
+            await bot.delete_message(chat_id, msg_id)
+        except Exception:
+            pass
+    await state.update_data(messages_to_delete=[])
