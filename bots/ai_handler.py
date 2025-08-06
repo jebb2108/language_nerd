@@ -1,9 +1,17 @@
 import sys
 import asyncio
-import aiohttp
+import json
 from datetime import datetime, timedelta
+
+import openai
 from aiolimiter import AsyncLimiter
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type
+)
+from openai import RateLimitError
 from routers.commands.weekly_message_commands import send_user_report
 from config import (
     AI_API_KEY,
@@ -13,10 +21,16 @@ from config import (
     logger
 )
 
-# Бесплатный тариф OpenAI: не более 15 запросов в минуту
+# Настройка OpenAI SDK
+openai.api_key = AI_API_KEY
+openai.api_base = AI_API_URL
+
+# Лимит бесплатного тарифа: до 15 запросов в минуту
 RATE_LIMITER = AsyncLimiter(max_rate=15, time_period=60)
-# Один запрос за раз
-REQUEST_SEMAPHORE = asyncio.Semaphore(1)
+# Размер батча слов
+BATCH_SIZE = 3
+# Максимальное количество попыток при 429
+MAX_RETRIES = 5
 
 async def get_weekly_words_by_user(db_pool):
     query = """
@@ -31,86 +45,82 @@ async def get_weekly_words_by_user(db_pool):
         return await conn.fetch(query, week_ago)
 
 @retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(min=1, max=30),
-    retry=retry_if_exception(lambda exc: isinstance(exc, aiohttp.ClientResponseError) and exc.status == 429)
+    retry=retry_if_exception_type(RateLimitError),
+    wait=wait_exponential(multiplier=1, max=60),
+    stop=stop_after_attempt(MAX_RETRIES),
+    reraise=True
 )
-async def generate_questions_for_words(words, session):
+async def generate_questions_for_words(words: list) -> dict:
     """
-    Сгенерировать вопросы для списка слов. Повтор при 429.
-    Возвращает dict: слово -> {sentence, options}.
+    Генерирует вопросы для списка слов (размер списка <= BATCH_SIZE).
+    При RateLimitError автоматически выполняет ретрай с backoff.
+    Возвращает словарь: слово -> {sentence, options}.
     """
-    # Снижаем размер батча до 5 слов для стабильности
-    batch = words[:5]
-    words_list = '\n'.join(f"- '{w}'" for w in batch)
-    prompt = (
-        f"Для каждого слова из списка ниже сгенерируй предложение с пропуском слова и варианты ответов:\n"
-        f"{words_list}\n"
-        "Формат (JSON): [{ 'word': ..., 'sentence': ..., 'options': [...] }, ...]"
+    prompt_items = '\n'.join(f"- '{w}'" for w in words)
+    system_prompt = (
+        "Для каждого слова из списка ниже сгенерируй предложение с пропуском слова и варианты"
+        " ответов. Формат (JSON): [{ 'word': ..., 'sentence': ..., 'options': [...] }, ...]"
     )
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": prompt_items}
+    ]
 
     async with RATE_LIMITER:
-        async with REQUEST_SEMAPHORE:
-            async with session.post(
-                AI_API_URL,
-                headers={
-                    "Authorization": f"Bearer {AI_API_KEY}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": "gpt-3.5-turbo",
-                    "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.7,
-                    "max_tokens": 400
-                },
-                timeout=60
-            ) as resp:
-                if resp.status == 429:
-                    retry_after = int(resp.headers.get("Retry-After", "1"))
-                    logger.warning(f"429 received, retry after {retry_after}s")
-                    await asyncio.sleep(retry_after)
-                    # инициируем retry
-                    raise aiohttp.ClientResponseError(
-                        request_info=resp.request_info,
-                        history=resp.history,
-                        status=429,
-                        message="Too Many Requests",
-                        headers=resp.headers
-                    )
-                resp.raise_for_status()
-                data = await resp.json()
+        try:
+            response = await openai.ChatCompletion.acreate(
+                model="gpt-3.5-turbo",
+                messages=messages,
+                temperature=0.7,
+                max_tokens=200
+            )
+        except RateLimitError as e:
+            # пауза по Retry-After если указан
+            headers = getattr(e, 'headers', {}) or {}
+            retry_after = headers.get('Retry-After') or headers.get('retry-after')
+            if retry_after:
+                await asyncio.sleep(int(retry_after))
+            logger.warning(f"Rate limit hit, retrying batch {words}")
+            raise
 
-    import json
     try:
-        parsed = json.loads(data['choices'][0]['message']['content'])
+        content = response.choices[0].message.content
+        parsed = json.loads(content)
         return {item['word']: item for item in parsed}
     except Exception as e:
-        logger.error(f"JSON parse error: {e}", exc_info=True)
+        logger.error(f"Failed to parse AI response: {e}\nContent: {content}")
         return {}
 
-async def process_user_report(user_id, words, db_pool, session):
+async def process_user_report(user_id: int, words: list, db_pool, session=None):
+    """Обрабатывает одного пользователя: генерирует вопросы и сохраняет отчет"""
     selected = words[:7]
-    # разделяем на батчи по 5 слов
-    chunks = [selected[i:i+5] for i in range(0, len(selected), 5)]
-    all_questions = {}
-    for chunk in chunks:
-        qs = await generate_questions_for_words(chunk, session)
-        all_questions.update(qs)
-        await asyncio.sleep(4)  # гарантируем не более 15 req/min
-
     report_data = []
-    for w in selected:
-        q = all_questions.get(w)
-        if not q or w not in q.get('options', []):
-            logger.warning(f"Skipping '{w}' — нет корректного ответа")
-            continue
-        report_data.append({
-            'word': w,
-            'sentence': q['sentence'],
-            'options': q['options'],
-            'correct_index': q['options'].index(w)
-        })
 
+    # разбиваем на батчи по BATCH_SIZE
+    for i in range(0, len(selected), BATCH_SIZE):
+        batch = selected[i:i + BATCH_SIZE]
+        try:
+            questions = await generate_questions_for_words(batch)
+        except RateLimitError:
+            logger.error(f"Skipping batch {batch} after max retries")
+            continue
+
+        for w in batch:
+            q = questions.get(w)
+            if not q or w not in q.get('options', []):
+                logger.warning(f"Skipping '{w}' — нет корректного ответа")
+                continue
+            report_data.append({
+                'word': w,
+                'sentence': q['sentence'],
+                'options': q['options'],
+                'correct_index': q['options'].index(w)
+            })
+
+        # небольшая задержка, чтобы не перегрузить лимитер
+        await asyncio.sleep(1)
+
+    # сохраняем отчет
     if report_data:
         async with db_pool.acquire() as conn:
             async with conn.transaction():
@@ -119,7 +129,8 @@ async def process_user_report(user_id, words, db_pool, session):
                 )
                 for item in report_data:
                     await conn.execute(
-                        "INSERT INTO report_words(report_id, word, sentence, options, correct_index) VALUES($1,$2,$3,$4,$5)",
+                        "INSERT INTO report_words(report_id, word, sentence, options, correct_index)"
+                        " VALUES($1,$2,$3,$4,$5)",
                         report_id,
                         item['word'],
                         item['sentence'],
@@ -129,19 +140,20 @@ async def process_user_report(user_id, words, db_pool, session):
     logger.info(f"User {user_id}: processed {len(report_data)} words")
     return len(report_data)
 
-async def send_pending_reports(db_pool, session):
+async def send_pending_reports(db_pool, session=None):
+    """Отправляет отчеты и помечает их как отправленные"""
     reports = await db_pool.fetch(
-        "SELECT report_id, user_id FROM weekly_reports WHERE sent=FALSE"
+        "SELECT report_id, user_id FROM weekly_reports WHERE sent = FALSE"
     )
     for rep in reports:
         ok = await send_user_report(db_pool, session, rep['user_id'], rep['report_id'])
         if ok:
             await db_pool.execute(
-                "UPDATE weekly_reports SET sent=TRUE WHERE report_id=$1", rep['report_id']
+                "UPDATE weekly_reports SET sent = TRUE WHERE report_id = $1", rep['report_id']
             )
-        await asyncio.sleep(4)  # выдерживаем лимит
+        await asyncio.sleep(1)
 
-async def cleanup_old_reports(db_pool, days=30):
+async def cleanup_old_reports(db_pool, days: int = 30):
     cutoff = datetime.now() - timedelta(days=days)
     async with db_pool.acquire() as conn:
         old = await conn.fetch(
@@ -156,14 +168,14 @@ async def cleanup_old_reports(db_pool, days=30):
         deleted = await conn.execute(
             "DELETE FROM weekly_reports WHERE report_id = ANY($1::int[])", ids
         )
-        logger.info(f"Cleaned {deleted} old reports")
+        logger.info(f"Cleaned up {deleted} old reports")
         return deleted
 
-async def generate_weekly_reports(db_pool, session):
+async def generate_weekly_reports(db_pool, session=None):
     users = await get_weekly_words_by_user(db_pool)
     for rec in users:
-        await process_user_report(rec['user_id'], rec['words'], db_pool, session)
-        await asyncio.sleep(4)
+        await process_user_report(rec['user_id'], rec['words'], db_pool)
+        await asyncio.sleep(2)
 
 async def main():
     db_pool, session = await init_global_resources()
