@@ -3,10 +3,6 @@ import asyncio
 import random
 from datetime import datetime, timedelta
 
-from dotenv import load_dotenv
-
-load_dotenv(""".env""")
-
 from routers.commands.weekly_message_commands import send_user_report
 from config import (
     AI_API_KEY,
@@ -21,7 +17,7 @@ async def get_weekly_words_by_user(db_pool):
     query = """
         SELECT user_id, ARRAY_AGG(DISTINCT word) as words
         FROM words
-        WHERE created_at <= $1
+        WHERE created_at <= $1 AND word IS NOT NULL  -- Исключаем NULL значения
         GROUP BY user_id
         HAVING COUNT(word) > 1
     """
@@ -31,8 +27,15 @@ async def get_weekly_words_by_user(db_pool):
 
 async def generate_question_for_word(word, session):
     """Генерирует вопрос с вариантами ответов для слова"""
+    # Преобразуем слово в строку и очищаем
+    word_str = str(word).strip()
+    if not word_str:
+        return None
+
+    # Экранируем кавычки в слове
+    safe_word = word_str.replace("'", "\\'").replace('"', '\\"')
     prompt = (
-        f"Дай пример предложения, где нужно подобрать верное слово '{word}', "
+        f"Дай пример предложения, где нужно подобрать верное слово '{safe_word}', "
         "чтобы оценить знание ученика. На месте этого слова должно быть троеточие. "
         "В ответе должно быть одно верное и три неверных варианта в рандомном порядке "
         "с похожим значением. Строго следуй формату: предложение, ответы "
@@ -54,13 +57,13 @@ async def generate_question_for_word(word, session):
             response.raise_for_status()
             data = await response.json()
             content = data['choices'][0]['message']['content'].strip()
-            return parse_ai_response(content)
+            return parse_ai_response(content, safe_word)  # Передаем безопасное слово
     except Exception as e:
-        logger.error(f"AI error for '{word}': {e}")
+        logger.error(f"AI error for '{safe_word}': {e}", exc_info=True)
         return None
 
 
-def parse_ai_response(content):
+def parse_ai_response(content, original_word):
     """Парсит ответ от AI в нужный формат"""
     try:
         # Разделяем предложение и варианты ответов
@@ -71,17 +74,23 @@ def parse_ai_response(content):
         options_line = lines[1].strip() if len(lines) > 1 else ""
         if options_line.startswith('[') and options_line.endswith(']'):
             options = [opt.strip() for opt in options_line[1:-1].split(',')]
-            return {"sentence": sentence, "options": options}
+        else:
+            # Альтернативный парсинг, если формат не идеальный
+            if '[' in content and ']' in content:
+                start_idx = content.index('[') + 1
+                end_idx = content.index(']')
+                options = [opt.strip() for opt in content[start_idx:end_idx].split(',')]
+            else:
+                return None
 
-        # Альтернативный парсинг, если формат не идеальный
-        if '[' in content and ']' in content:
-            start_idx = content.index('[') + 1
-            end_idx = content.index(']')
-            options = [opt.strip() for opt in content[start_idx:end_idx].split(',')]
-            return {"sentence": sentence, "options": options}
+        # Проверяем наличие оригинального слова в вариантах
+        if original_word not in options:
+            logger.warning(f"Original word '{original_word}' not found in options: {options}")
+            return None
 
-        return None
-    except Exception:
+        return {"sentence": sentence, "options": options}
+    except Exception as e:
+        logger.error(f"Parse error for '{original_word}': {e}", exc_info=True)
         return None
 
 
@@ -90,18 +99,29 @@ async def process_user_report(user_id, words, db_pool, session):
     report_data = []
 
     for word in words:
+        # Преобразуем слово в строку и проверяем
+        word_str = str(word).strip()
+        if not word_str:
+            continue
+
         # Генерируем вопрос для слова
-        question_data = await generate_question_for_word(word, session)
+        question_data = await generate_question_for_word(word_str, session)
         if not question_data:
             continue
 
         # Форматируем данные для сохранения
-        report_data.append({
-            "word": word,
-            "sentence": question_data["sentence"],
-            "options": question_data["options"],
-            "correct_index": question_data["options"].index(word)
-        })
+        try:
+            # Находим индекс правильного ответа
+            correct_index = question_data["options"].index(word_str)
+            report_data.append({
+                "word": word_str,
+                "sentence": question_data["sentence"],
+                "options": question_data["options"],
+                "correct_index": correct_index
+            })
+        except ValueError:
+            logger.warning(f"Correct word '{word_str}' not found in options")
+
         await asyncio.sleep(0.5)  # Защита от rate limits
 
     # Сохраняем отчет в БД
@@ -245,7 +265,7 @@ async def main():
             logger.info("Sending pending reports...")
             await send_pending_reports(db_pool, session)
     except Exception as e:
-        logger.critical(f"Critical error: {e}")
+        logger.critical(f"Critical error: {e}", exc_info=True)
     finally:
         await close_global_resources()
 
