@@ -178,7 +178,7 @@ async def send_pending_reports(db_pool, session):
 
 async def process_report_delivery(db_pool, session, report_id, user_id):
     """Обрабатывает доставку одного отчета"""
-    success = await send_user_report(db_pool, session, user_id, report_id)
+    success = await send_user _report(db_pool, session, user_id, report_id)
     if success:
         await db_pool.execute(
             "UPDATE weekly_reports SET sent = TRUE WHERE report_id = $1",

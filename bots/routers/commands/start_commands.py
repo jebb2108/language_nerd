@@ -6,10 +6,9 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
 from translations import QUESTIONARY # noqa
-from db_cmds import * # noqa
 from filters import IsBotFilter # noqa
 from routers.commands.menu_commands import show_main_menu # noqa
-from config import BOT_TOKEN_MAIN, logger # noqa
+from config import BOT_TOKEN_MAIN, db_pool, logger # noqa
 
 router = Router(name=__name__)
 # Фильтрация по токену
