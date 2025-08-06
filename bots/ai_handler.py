@@ -3,6 +3,7 @@ import asyncio
 import random
 import aiohttp
 import time
+import re
 from datetime import datetime, timedelta
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, retry_if_result
 
@@ -20,6 +21,9 @@ from config import (
 REQUEST_SEMAPHORE = asyncio.Semaphore(3)
 REQUEST_RATE_LIMITER = asyncio.Semaphore(50)
 last_request_time = 0
+
+# Значение по умолчанию для DeepSeek API
+DEFAULT_DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
 
 
 async def get_weekly_words_by_user(db_pool):
@@ -41,11 +45,20 @@ def should_retry_api_error(result):
     return result is None
 
 
+def is_payment_required_error(exception):
+    """Проверяет, является ли ошибка Payment Required (402)"""
+    if isinstance(exception, aiohttp.ClientResponseError):
+        return exception.status == 402
+    return False
+
+
 @retry(
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=2, min=10, max=120),
-    retry=(retry_if_exception_type(aiohttp.ClientResponseError) |
-           retry_if_result(should_retry_api_error)),
+    retry=(
+                  retry_if_exception_type(aiohttp.ClientResponseError) &
+                  retry_if_result(lambda e: not is_payment_required_error(e))
+          ) | retry_if_result(should_retry_api_error),
     reraise=True
 )
 async def generate_question_for_word(word, session):
@@ -65,7 +78,8 @@ async def generate_question_for_word(word, session):
         "но похожих по значению. Варианты должны быть в случайном порядке.\n\n"
         "Формат ответа:\n"
         "Предложение: [предложение с ...]\n"
-        "Варианты: [правильный, неправильный1, неправильный2, неправильный3]"
+        "Варианты: [правильный, неправильный1, неправильный2, неправильный3]\n\n"
+        "ВАЖНО: Не добавляй дополнительные пояснения, комментарии или разметку!"
     )
 
     async with REQUEST_SEMAPHORE:
@@ -76,11 +90,15 @@ async def generate_question_for_word(word, session):
                 await asyncio.sleep(wait_time)
 
             try:
-                if not isinstance(AI_API_URL, str):
-                    logger.error(f"AI_API_URL is not a string! Type: {type(AI_API_URL)}, Value: {AI_API_URL}")
-                    return None
-
-                api_url = str(AI_API_URL).strip()
+                # Обработка случая, когда AI_API_URL не задан
+                if AI_API_URL is None:
+                    logger.warning("AI_API_URL is None, using default DeepSeek URL")
+                    api_url = DEFAULT_DEEPSEEK_URL
+                elif not isinstance(AI_API_URL, str):
+                    logger.warning(f"AI_API_URL is not a string! Type: {type(AI_API_URL)}, Value: {AI_API_URL}")
+                    api_url = DEFAULT_DEEPSEEK_URL
+                else:
+                    api_url = AI_API_URL.strip()
 
                 # Формируем запрос для DeepSeek API
                 async with session.post(
@@ -94,7 +112,7 @@ async def generate_question_for_word(word, session):
                             "messages": [
                                 {
                                     "role": "system",
-                                    "content": "Ты полезный помощник для изучения английского языка."
+                                    "content": "Ты полезный помощник для изучения английского языка. Отвечай строго в указанном формате без дополнительных пояснений."
                                 },
                                 {
                                     "role": "user",
@@ -129,6 +147,11 @@ async def generate_question_for_word(word, session):
                             headers=response.headers
                         )
 
+                    # Обработка ошибки оплаты
+                    if response.status == 402:
+                        logger.critical("DeepSeek API requires payment. Please upgrade your account.")
+                        return None
+
                     response.raise_for_status()
                     data = await response.json()
 
@@ -136,7 +159,10 @@ async def generate_question_for_word(word, session):
                     content = data['choices'][0]['message']['content'].strip()
                     return parse_deepseek_response(content, safe_word)
             except aiohttp.ClientResponseError as e:
-                if e.status == 429:
+                if e.status == 402:
+                    logger.critical("DeepSeek API requires payment. Please upgrade your account.")
+                    return None
+                elif e.status == 429:
                     logger.error(f"Rate limit exceeded for '{safe_word}'. Headers: {e.headers}")
                 raise
             except Exception as e:
@@ -147,29 +173,86 @@ async def generate_question_for_word(word, session):
 def parse_deepseek_response(content, original_word):
     """Парсит ответ от DeepSeek в нужный формат"""
     try:
+        # Удаляем лишние символы форматирования
+        cleaned_content = re.sub(r'\*|\#|\(.*?\)|\[.*?\]', '', content)
+
+        # Ищем предложение и варианты с более гибким распознаванием
         sentence = None
         options = []
 
-        # Ищем строку с предложением
-        for line in content.split('\n'):
-            if line.startswith("Предложение:"):
-                sentence = line.split(":", 1)[1].strip()
-            elif line.startswith("Варианты:"):
-                options_str = line.split(":", 1)[1].strip()
-                if options_str.startswith('[') and options_str.endswith(']'):
-                    options_str = options_str[1:-1]
-                options = [opt.strip() for opt in options_str.split(',')]
+        # Пытаемся найти предложение в разных форматах
+        for line in cleaned_content.split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+
+            # Распознаем предложение по ключевым словам или структуре
+            if line.lower().startswith("предложение:") or "..." in line:
+                # Удаляем метку "Предложение:" если есть
+                sentence = re.sub(r'^(предложение|sentence):\s*', '', line, flags=re.IGNORECASE).strip()
+            # Распознаем варианты по ключевым словам или формату списка
+            elif line.lower().startswith("варианты:") or line.lower().startswith("options:") or re.match(
+                    r'^[\-\*]?\s*\w', line):
+                # Удаляем метку "Варианты:" если есть
+                options_line = re.sub(r'^(варианты|options):\s*', '', line, flags=re.IGNORECASE).strip()
+
+                # Извлекаем варианты из строки
+                if options_line.startswith('[') and options_line.endswith(']'):
+                    options_str = options_line[1:-1]
+                    options = [opt.strip() for opt in options_str.split(',')]
+                else:
+                    # Пытаемся извлечь варианты как элементы списка
+                    options = re.findall(r'[\-\*]?\s*([^,\n]+)', options_line)
+                    # Очищаем каждый вариант
+                    options = [opt.strip().strip('*').strip('-').strip() for opt in options]
+
+        # Если не нашли предложение в метке, используем первую значимую строку
+        if not sentence:
+            for line in cleaned_content.split('\n'):
+                line = line.strip()
+                if line and "..." in line:
+                    sentence = line
+                    break
+
+        # Если не нашли варианты в метке, ищем в следующих строках после предложения
+        if not options:
+            lines = cleaned_content.split('\n')
+            for i, line in enumerate(lines):
+                if sentence and line.strip() == sentence:
+                    # Берем следующие 4 строки как варианты
+                    options = []
+                    for j in range(i + 1, min(i + 5, len(lines))):
+                        opt_line = lines[j].strip()
+                        if opt_line:
+                            # Удаляем маркеры списка и номера
+                            clean_opt = re.sub(r'^[\-\*]?\s*\d?\.?\s*', '', opt_line)
+                            options.append(clean_opt.strip())
+                    if len(options) >= 4:
+                        options = options[:4]
+                    break
 
         # Проверяем наличие всех необходимых элементов
-        if not sentence or not options or len(options) != 4:
-            logger.warning(f"Неверный формат ответа DeepSeek: {content}")
+        if not sentence:
+            logger.warning(f"Не найдено предложение в ответе: {content}")
             return None
 
-        # Проверяем наличие оригинального слова в вариантах
-        if original_word not in options:
+        if not options or len(options) < 4:
+            logger.warning(f"Недостаточно вариантов в ответе: {content}")
+            return None
+
+        # Удаляем лишние пробелы и кавычки
+        sentence = sentence.strip().strip('"').strip("'")
+        options = [opt.strip().strip('"').strip("'") for opt in options[:4]]
+
+        # Проверяем наличие оригинального слова в вариантах (без учета регистра)
+        original_lower = original_word.lower()
+        options_lower = [opt.lower() for opt in options]
+
+        if original_lower not in options_lower:
             logger.warning(f"Original word '{original_word}' not found in options: {options}")
             return None
 
+        # Возвращаем варианты в оригинальном регистре
         return {"sentence": sentence, "options": options}
     except Exception as e:
         logger.error(f"Parse error for '{original_word}': {e}", exc_info=True)
@@ -195,15 +278,18 @@ async def process_user_report(user_id, words, db_pool, session):
             continue
 
         try:
-            correct_index = question_data["options"].index(word_str)
+            # Поиск правильного ответа без учета регистра
+            correct_index = next(i for i, opt in enumerate(question_data["options"])
+                                 if opt.lower() == word_str.lower())
+
             report_data.append({
                 "word": word_str,
                 "sentence": question_data["sentence"],
                 "options": question_data["options"],
                 "correct_index": correct_index
             })
-        except ValueError:
-            logger.warning(f"Correct word '{word_str}' not found in options")
+        except (ValueError, StopIteration):
+            logger.warning(f"Correct word '{word_str}' not found in options: {question_data['options']}")
 
         # Задержка для соблюдения rate limit
         delay = 2.0 + random.random() * 3.0
@@ -251,7 +337,12 @@ async def generate_weekly_reports(db_pool, session):
         user_id = record["user_id"]
 
         selected_words = random.sample(words, min(len(words), max_words_per_user))
-        await process_user_report(user_id, selected_words, db_pool, session)
+        words_processed = await process_user_report(user_id, selected_words, db_pool, session)
+
+        # Если не удалось обработать ни одного слова, пропускаем пользователя
+        if words_processed == 0:
+            logger.warning(f"Skipping user {user_id} - no questions generated")
+            continue
 
         processed_users += 1
 
@@ -344,7 +435,11 @@ async def main():
     """Основная асинхронная точка входа"""
     db_pool, session = await init_global_resources()
 
-    logger.info(f"Using DeepSeek API at: {AI_API_URL}")
+    # Проверка и логирование конфигурации API
+    if AI_API_URL is None:
+        logger.warning(f"AI_API_URL is None, using default: {DEFAULT_DEEPSEEK_URL}")
+    else:
+        logger.info(f"Using DeepSeek API at: {AI_API_URL}")
 
     try:
         if '--generate' in sys.argv:
