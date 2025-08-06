@@ -26,10 +26,10 @@ class PollingStates(StatesGroup):
 
 
 @router.message(Command("start"), IsBotFilter(BOT_TOKEN_MAIN))
-async def start_with_polling(message: Message, state: FSMContext):
+async def start_with_polling(message: Message, state: FSMContext, data: dict):
     # Получаем resources из диспетчера
-    dp = message.bot.dispatcher
-    resources = dp["resources"]
+    resources: Resources = data["resources"]
+    db_pool = resources.db_pool
 
     if not resources:
         logger.error("Resources not found in start handler")
@@ -41,7 +41,7 @@ async def start_with_polling(message: Message, state: FSMContext):
 
     try:
         # Проверяем существование пользователя в БД
-        async with resources.db_pool.acquire() as conn:  # noqa
+        async with db_pool.acquire() as conn:  # noqa
             user_exists = await conn.fetchval(
                 "SELECT 1 FROM users WHERE user_id = $1",
                 user_id
@@ -129,10 +129,11 @@ async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith("lang_"), PollingStates.language_state)
-async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
+async def handle_language_choice(callback: CallbackQuery, state: FSMContext, data: dict):
+
     # Получаем resources из диспетчера
-    dp = callback.bot.dispatcher
-    resources = dp["resources"]
+    resources: Resources = data["resources"]
+    db_pool = resources.db_pool
 
     if not resources:
         logger.error("Resources not found in language choice handler")
@@ -166,7 +167,7 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
         camefrom = state_data.get('camefrom', 'None')
 
         # Используем ресурсы для доступа к БД
-        await resources.db_pool.create_users_table(user_id, username, first_name, camefrom, users_choice,
+        await db_pool.create_users_table(user_id, username, first_name, camefrom, users_choice,
                                                    lang_code)  # noqa
 
     except Exception as e:

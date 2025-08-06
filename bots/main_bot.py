@@ -24,15 +24,17 @@ async def run():
     dp = Dispatcher(storage=storage)
 
     # Регистрируем middleware и передаем ресурсы
-    resource_middleware = ResourcesMiddleware(resources)
-    dp.message.middleware.register(resource_middleware)
-    dp.callback_query.middleware.register(resource_middleware)
+    resources_middleware = ResourcesMiddleware(resources)
+    dp.message.middleware(resources_middleware)
+    dp.callback_query.middleware(resources_middleware)
+
+    # Сохраняем resources в диспетчере
+    dp["resources"] = resources
+
+    dp.update.middleware(resources_middleware)  # <-- важно!
 
     # Инициализация бота
     bot = Bot(token=BOT_TOKEN_MAIN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-
-    # Сохраняем resources в диспетчере (правильный способ)
-    dp["resources"] = resources
 
     dp.include_router(main_router)
 
