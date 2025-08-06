@@ -26,18 +26,17 @@ class PollingStates(StatesGroup):
 
 
 @router.message(Command("start"), IsBotFilter(BOT_TOKEN_MAIN))
-async def start_with_polling(message: Message, state: FSMContext, data: dict):  # Добавлен параметр data
-    # Получаем resources из data (добавлено middleware)
-    resources = data["resources"]
+async def start_with_polling(message: Message, state: FSMContext):
+    # Получаем resources из контекста
+    resources = message.bot.get('resources')
+
+    if not resources:
+        logger.error("Resources not found in start handler")
+        return
 
     user_id = message.from_user.id
     user_exists = False
-
-    # Инициализируем lang_code до блока try
     lang_code = message.from_user.language_code or "en"
-    if lang_code not in ['en', 'ru']:
-        lang_code = 'en'
-
     try:
         # Проверяем существование пользователя в БД
         async with resources.db_pool.acquire() as conn:  # noqa

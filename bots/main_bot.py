@@ -25,11 +25,13 @@ storage = MemoryStorage()
 ===== ЗАПУСК ВСЕЙ СИСТЕМЫ =====
 """
 
+
 async def run():
     """Запуск бота и веб-сервера в одном event loop"""
-
     # Инициализация глобальных ресурсов
     resources = Resources()
+    await resources.init()
+
     # Запуск веб-сервера
     web_runner = await start_web_app(resources.db_pool)
 
@@ -43,19 +45,19 @@ async def run():
     # Инициализация бота
     bot = Bot(token=BOT_TOKEN_MAIN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
+    # Сохраняем resources в боте для доступа из обработчиков
+    bot['resources'] = resources # noqa
+
     dp.include_router(main_router)
 
     try:
-        # Основной цикл работы
-        await dp.start_polling(bot)
         logger.info("Starting main bot (polling)…")
-
+        await dp.start_polling(bot)
     finally:
         # Корректное завершение
         await bot.session.close()
         await web_runner.cleanup()
         await resources.close()
-
 
 if __name__ == "__main__":
     asyncio.run(run())
