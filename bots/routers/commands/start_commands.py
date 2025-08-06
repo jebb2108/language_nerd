@@ -10,7 +10,7 @@ from typing import Union
 from translations import QUESTIONARY  # noqa
 from filters import IsBotFilter  # noqa
 from routers.commands.menu_commands import show_main_menu  # noqa
-from config import BOT_TOKEN_MAIN, logger  # noqa
+from config import BOT_TOKEN_MAIN, Resources, logger  # noqa
 
 router = Router(name=__name__)
 # Фильтрация по токену
