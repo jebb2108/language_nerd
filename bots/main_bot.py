@@ -14,8 +14,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from web_launcher import start_web_app
 from config import (
-    init_global_resources,
-    close_global_resources,
+    Resources,
     logger,
 )
 
@@ -30,9 +29,9 @@ async def run():
     """Запуск бота и веб-сервера в одном event loop"""
 
     # Инициализация глобальных ресурсов
-    db_pool, session = await init_global_resources()
+    resources = Resources()
     # Запуск веб-сервера
-    web_runner = await start_web_app(db_pool)
+    web_runner = await start_web_app(resources.db_pool)
     # Получение токена бота и роутеров
     from config import BOT_TOKEN_MAIN
     from routers import router as main_router
@@ -50,7 +49,7 @@ async def run():
         # Корректное завершение
         await bot.session.close()
         await web_runner.cleanup()
-        await close_global_resources()
+        await resources.close()
 
 
 if __name__ == "__main__":

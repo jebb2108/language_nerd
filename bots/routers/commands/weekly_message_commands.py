@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.utils.formatting import Text, Bold
 from aiogram.utils.markdown import html_decoration as hd
 
-from config import db_pool, BOT_TOKEN_MAIN, logger # noqa
+from config import BOT_TOKEN_MAIN, logger # noqa
 
 router = Router(name=__name__)
 
@@ -59,7 +59,7 @@ async def start_report_handler(callback: types.CallbackQuery, state: FSMContext)
     try:
         report_id = int(callback.data.split(":")[1])
 
-        async with db_pool.acquire() as conn:
+        async with resources.db_pool.acquire() as conn: # noqa
             words = await conn.fetch(
                 "SELECT word_id FROM report_words WHERE report_id = $1",
                 report_id
@@ -105,7 +105,7 @@ async def send_question(state: FSMContext, bot: Bot):
 
         word_id = word_ids[current_index]
 
-        async with db_pool.acquire() as conn:
+        async with resources.db_pool.acquire() as conn: # noqa
             word_data = await conn.fetchrow(
                 "SELECT * FROM report_words WHERE word_id = $1",
                 word_id
@@ -171,7 +171,7 @@ async def handle_word_quiz(callback: types.CallbackQuery, state: FSMContext):
         word_id = int(parts[1])
         selected_idx = int(parts[2])
 
-        async with db_pool.acquire() as conn:
+        async with resources.db_pool.acquire() as conn: # noqa
             record = await conn.fetchrow(
                 "SELECT word, options, correct_index FROM report_words WHERE word_id = $1",
                 word_id

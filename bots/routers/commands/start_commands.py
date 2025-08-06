@@ -10,7 +10,7 @@ from typing import Union
 from translations import QUESTIONARY # noqa
 from filters import IsBotFilter # noqa
 from routers.commands.menu_commands import show_main_menu # noqa
-from config import BOT_TOKEN_MAIN, db_pool, logger # noqa
+from config import BOT_TOKEN_MAIN, logger # noqa
 
 router = Router(name=__name__)
 # Фильтрация по токену
@@ -36,7 +36,7 @@ async def start_with_polling(message: Message, state: FSMContext):
 
     try:
         # Проверяем существование пользователя в БД
-        async with db_pool.acquire() as conn: # noqa
+        async with resources.db_pool.acquire() as conn: # noqa
             user_exists = await conn.fetchval(
                 "SELECT 1 FROM users WHERE user_id = $1",
                 user_id
@@ -152,7 +152,7 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
         username = data.get('username', 'None')
         first_name = data.get('first_name', 'None')
         camefrom = data.get('camefrom', 'None')
-        await db_pool.create_users_table(user_id, username, first_name, camefrom, users_choice, lang_code)  # noqa
+        await resources.db_pool.create_users_table(user_id, username, first_name, camefrom, users_choice, lang_code)  # noqa
 
     except Exception as e:
         logger.error(f"Error in language choice: {e}") # noqa
@@ -171,7 +171,7 @@ async def start_main_menu(callback: CallbackQuery, state: FSMContext):
     await state.clear()
 
     # Заполняем память актуальной информацией о пользователе
-    username, first_name, language, lang_code = await db_pool.get_user_info(user_id)  # noqa
+    username, first_name, language, lang_code = await resources.db_pool.get_user_info(user_id)  # noqa
 
     # Обновляем состояние с проверкой на None
     await state.update_data(
