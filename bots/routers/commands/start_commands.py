@@ -7,16 +7,17 @@ from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, C
 
 from typing import Union
 
-from translations import QUESTIONARY # noqa
-from filters import IsBotFilter # noqa
-from routers.commands.menu_commands import show_main_menu # noqa
-from config import BOT_TOKEN_MAIN, Resources, logger # noqa
+from translations import QUESTIONARY  # noqa
+from filters import IsBotFilter  # noqa
+from routers.commands.menu_commands import show_main_menu  # noqa
+from config import BOT_TOKEN_MAIN, logger  # noqa
 
 router = Router(name=__name__)
 # Фильтрация по токену
 
 router.message.filter(IsBotFilter(BOT_TOKEN_MAIN))
 router.callback_query.filter(IsBotFilter(BOT_TOKEN_MAIN))
+
 
 class PollingStates(StatesGroup):
     camefrom_state = State()
@@ -25,7 +26,10 @@ class PollingStates(StatesGroup):
 
 
 @router.message(Command("start"), IsBotFilter(BOT_TOKEN_MAIN))
-async def start_with_polling(resources: Resources, message: Message, state: FSMContext):
+async def start_with_polling(message: Message, state: FSMContext):
+    # Получаем resources из контекста сообщения
+    resources = message.conf["resources"]
+
     user_id = message.from_user.id
     user_exists = False
 
@@ -36,7 +40,7 @@ async def start_with_polling(resources: Resources, message: Message, state: FSMC
 
     try:
         # Проверяем существование пользователя в БД
-        async with resources.db_pool.acquire() as conn: # noqa
+        async with resources.db_pool.acquire() as conn:  # noqa
             user_exists = await conn.fetchval(
                 "SELECT 1 FROM users WHERE user_id = $1",
                 user_id
@@ -51,10 +55,11 @@ async def start_with_polling(resources: Resources, message: Message, state: FSMC
             chosen_language="",
             camefrom="",
             about="",
+            resources=resources,  # Сохраняем ресурсы в состоянии
         )
 
     except Exception as e:
-        logger.error(f"Error in start handler: {e}") # noqa
+        logger.error(f"Error in start handler: {e}")  # noqa
 
     # Если пользователь существует - показываем главное меню
     if user_exists:
@@ -120,14 +125,20 @@ async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
         await callback.answer()
 
     except Exception as e:
-        logger.error(f"Error in camefrom handler: {e}") # noqa
+        logger.error(f"Error in camefrom handler: {e}")  # noqa
 
 
 @router.callback_query(F.data.startswith("lang_"), PollingStates.language_state)
-async def handle_language_choice(resources: Resources, callback: CallbackQuery, state: FSMContext):
+async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
     try:
-
+        # Получаем resources из состояния
         data = await state.get_data()
+        resources = data.get("resources")
+        if not resources:
+            logger.error("Resources not found in state for handle_language_choice")
+            await callback.answer("Internal error: resources missing", show_alert=True)
+            return
+
         lang_code = data.get('lang_code', 'en')
 
         # Кнопка подтверждения
@@ -152,11 +163,13 @@ async def handle_language_choice(resources: Resources, callback: CallbackQuery, 
         username = data.get('username', 'None')
         first_name = data.get('first_name', 'None')
         camefrom = data.get('camefrom', 'None')
-        await resources.db_pool.create_users_table(user_id, username, first_name, camefrom, users_choice, lang_code)  # noqa
+
+        # Используем ресурсы для доступа к БД
+        await resources.db_pool.create_users_table(user_id, username, first_name, camefrom, users_choice,
+                                                   lang_code)  # noqa
 
     except Exception as e:
-        logger.error(f"Error in language choice: {e}") # noqa
-
+        logger.error(f"Error in language choice: {e}")  # noqa
 
 @router.callback_query(F.data == "action_confirm", PollingStates.introduction_state)
 async def start_main_menu(resources: Resources, callback: CallbackQuery, state: FSMContext):
