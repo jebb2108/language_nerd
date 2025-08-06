@@ -10,7 +10,7 @@ from typing import Union
 from translations import QUESTIONARY # noqa
 from filters import IsBotFilter # noqa
 from routers.commands.menu_commands import show_main_menu # noqa
-from config import BOT_TOKEN_MAIN, logger # noqa
+from config import BOT_TOKEN_MAIN, Resources, logger # noqa
 
 router = Router(name=__name__)
 # Фильтрация по токену
@@ -25,7 +25,7 @@ class PollingStates(StatesGroup):
 
 
 @router.message(Command("start"), IsBotFilter(BOT_TOKEN_MAIN))
-async def start_with_polling(message: Message, state: FSMContext):
+async def start_with_polling(resources: Resources, message: Message, state: FSMContext):
     user_id = message.from_user.id
     user_exists = False
 
@@ -124,7 +124,7 @@ async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith("lang_"), PollingStates.language_state)
-async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
+async def handle_language_choice(resources: Resources, callback: CallbackQuery, state: FSMContext):
     try:
 
         data = await state.get_data()
@@ -159,7 +159,7 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data == "action_confirm", PollingStates.introduction_state)
-async def start_main_menu(callback: CallbackQuery, state: FSMContext):
+async def start_main_menu(resources: Resources, callback: CallbackQuery, state: FSMContext):
     # Получаем данные ДО очистки состояния
     data = await state.get_data()
     user_id = data.get("user_id", callback.from_user.id)  # Используем ID из колбэка как резерв
