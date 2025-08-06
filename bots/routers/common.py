@@ -1,8 +1,8 @@
 from aiogram import Router
 from aiogram.types import Message
 
-from your_project.middlewares import ResourcesMiddleware
-from your_project.resources import Resources
+from de_injection import ResourcesMiddleware, Resources # noqa
+
 
 # Инициализируем ресурсы и роутер
 resources = Resources()
