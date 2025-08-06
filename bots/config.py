@@ -22,8 +22,8 @@ BOT_TOKEN_MAIN = os.getenv('BOT_TOKEN_MAIN')
 BOT_TOKEN_PARTNER = os.getenv("BOT_TOKEN_PARTNER")
 
 # Конфигурация API
-AI_API_URL = os.getenv('OPENAI_API_URL')
-AI_API_KEY = os.getenv('OPENAI_API_KEY')
+AI_API_URL = os.getenv('AI_API_URL')
+AI_API_KEY = os.getenv('AI_API_KEY')
 
 # Конфигурация БД
 POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
