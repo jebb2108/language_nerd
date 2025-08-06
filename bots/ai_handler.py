@@ -8,11 +8,14 @@ import re
 from datetime import datetime, timedelta
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, retry_if_result
 
+from aiogram import Bot
+
 # Предполагается, что эти импорты доступны в вашем проекте
 from routers.commands.weekly_message_commands import send_user_report
 from config import (
     AI_API_KEY,
     AI_API_URL,
+    BOT_TOKEN_MAIN,
     init_global_resources,
     close_global_resources,
     logger
@@ -364,7 +367,7 @@ async def generate_weekly_reports(db_pool, session):
     logger.info(f"Generated reports for {processed_users} users")
 
 
-async def send_pending_reports(db_pool, session):
+async def send_pending_reports(db_pool, bot):  # Изменён параметр session -> bot
     """Отправляет все непотправленные отчеты"""
     async with db_pool.acquire() as conn:
         reports = await conn.fetch(
@@ -378,7 +381,7 @@ async def send_pending_reports(db_pool, session):
     tasks = []
     for report in reports:
         tasks.append(
-            process_report_delivery(db_pool, session, report["report_id"], report["user_id"])
+            process_report_delivery(db_pool, bot, report["report_id"], report["user_id"])  # Передаём bot
         )
 
     results = await asyncio.gather(*tasks)
@@ -386,9 +389,9 @@ async def send_pending_reports(db_pool, session):
     logger.info(f"Sent {success_count}/{len(reports)} reports")
 
 
-async def process_report_delivery(db_pool, session, report_id, user_id):
+async def process_report_delivery(db_pool, bot, report_id, user_id):  # Изменён параметр session -> bot
     """Обрабатывает доставку одного отчета"""
-    success = await send_user_report(db_pool, session, user_id, report_id)
+    success = await send_user_report(db_pool, bot, user_id, report_id)  # Передаём bot вместо session
     if success:
         async with db_pool.acquire() as conn:
             await conn.execute(
@@ -444,6 +447,7 @@ async def cleanup_old_reports(db_pool, days: int = 30):
 async def main():
     """Основная асинхронная точка входа"""
     db_pool, session = await init_global_resources()
+    bot = None  # Инициализируем переменную бота
 
     # Проверка и логирование конфигурации API
     if AI_API_URL is None:
@@ -460,10 +464,15 @@ async def main():
             await cleanup_old_reports(db_pool, days=14)
         else:
             logger.info("Sending pending reports...")
-            await send_pending_reports(db_pool, session)
+            # Создаём экземпляр бота для отправки сообщений
+            bot = Bot(token=BOT_TOKEN_MAIN)
+            await send_pending_reports(db_pool, bot)  # Передаём bot вместо session
     except Exception as e:
         logger.critical(f"Critical error: {e}", exc_info=True)
     finally:
+        # Закрываем бота, если он был создан
+        if bot:
+            await bot.close()
         await close_global_resources()
 
 

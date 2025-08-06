@@ -10,7 +10,7 @@ from config import db_pool, BOT_TOKEN_MAIN, logger # noqa
 router = Router(name=__name__)
 
 
-async def send_user_report(db_pool, bot, user_id, report_id):
+async def send_user_report(db_pool, bot, user_id, report_id):  # Тип bot: Bot (aiogram)
     """Отправляет пользователю его отчет"""
     try:
         async with db_pool.acquire() as conn:
@@ -40,6 +40,7 @@ async def send_user_report(db_pool, bot, user_id, report_id):
             )]
         ])
 
+        # Используем bot.send_message для отправки
         await bot.send_message(
             chat_id=user_id,
             text=message_text,
@@ -51,7 +52,6 @@ async def send_user_report(db_pool, bot, user_id, report_id):
     except Exception as e:
         logger.error(f"Error sending interactive report to {user_id}: {e}")
         return False
-
 
 @router.callback_query(lambda c: c.data.startswith("start_report:"))
 async def start_report_handler(callback: types.CallbackQuery, state: FSMContext):
