@@ -1,4 +1,4 @@
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -9,7 +9,7 @@ from aiogram.types import (
     InlineKeyboardButton,
     CallbackQuery,
 )
-
+from typing import Union
 from translations import QUESTIONARY  # noqa
 from filters import IsBotFilter  # noqa
 from config import BOT_TOKEN_MAIN, logger  # noqa
