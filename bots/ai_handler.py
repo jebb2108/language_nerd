@@ -1,7 +1,9 @@
 import sys
 import asyncio
 import random
+import aiohttp
 from datetime import datetime, timedelta
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from routers.commands.weekly_message_commands import send_user_report
 from config import (
@@ -12,12 +14,16 @@ from config import (
     logger
 )
 
+# Глобальный семафор для ограничения одновременных запросов
+REQUEST_SEMAPHORE = asyncio.Semaphore(5)  # Максимум 5 одновременных запросов
+
+
 async def get_weekly_words_by_user(db_pool):
     """Получает слова за неделю, сгруппированные по пользователям"""
     query = """
         SELECT user_id, ARRAY_AGG(DISTINCT word) as words
         FROM words
-        WHERE created_at <= $1 AND word IS NOT NULL  -- Исключаем NULL значения
+        WHERE created_at <= $1 AND word IS NOT NULL
         GROUP BY user_id
         HAVING COUNT(word) > 1
     """
@@ -25,8 +31,18 @@ async def get_weekly_words_by_user(db_pool):
     async with db_pool.acquire() as conn:
         return await conn.fetch(query, week_ago)
 
+
+@retry(
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=4, max=60),
+    retry=retry_if_exception_type(aiohttp.ClientResponseError),
+    before_sleep=lambda retry_state: logger.warning(
+        f"Retrying ({retry_state.attempt_number}/5) for '{retry_state.args[0]}' "
+        f"after {retry_state.outcome.exception().status} error"
+    ) if retry_state.outcome and hasattr(retry_state.outcome.exception(), 'status') else None
+)
 async def generate_question_for_word(word, session):
-    """Генерирует вопрос с вариантами ответов для слова"""
+    """Генерирует вопрос с вариантами ответов для слова с повторными попытками"""
     # Преобразуем слово в строку и очищаем
     word_str = str(word).strip()
     if not word_str:
@@ -42,25 +58,41 @@ async def generate_question_for_word(word, session):
         "(через запятую на следующей строке в квадратных скобках)"
     )
 
-    try:
-        async with session.post(
-                AI_API_URL,
-                headers={"Authorization": f"Bearer {AI_API_KEY}"},
-                json={
-                    "model": "gpt-3.5-turbo",
-                    "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.7,
-                    "max_tokens": 150
-                },
-                timeout=30
-        ) as response:
-            response.raise_for_status()
-            data = await response.json()
-            content = data['choices'][0]['message']['content'].strip()
-            return parse_ai_response(content, safe_word)  # Передаем безопасное слово
-    except Exception as e:
-        logger.error(f"AI error for '{safe_word}': {e}", exc_info=True)
-        return None
+    async with REQUEST_SEMAPHORE:  # Ограничиваем одновременные запросы
+        try:
+            # Убедимся, что AI_API_URL - строка
+            if not isinstance(AI_API_URL, str):
+                logger.error(f"AI_API_URL is not a string! Type: {type(AI_API_URL)}, Value: {AI_API_URL}")
+                return None
+
+            api_url = str(AI_API_URL).strip()
+
+            async with session.post(
+                    api_url,
+                    headers={
+                        "Authorization": f"Bearer {AI_API_KEY}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": "gpt-3.5-turbo",
+                        "messages": [{"role": "user", "content": prompt}],
+                        "temperature": 0.7,
+                        "max_tokens": 150
+                    },
+                    timeout=60  # Увеличили таймаут
+            ) as response:
+                response.raise_for_status()
+                data = await response.json()
+                content = data['choices'][0]['message']['content'].strip()
+                return parse_ai_response(content, safe_word)
+        except aiohttp.ClientResponseError as e:
+            # Для ошибки 429 добавляем дополнительную информацию
+            if e.status == 429:
+                logger.error(f"Rate limit exceeded for '{safe_word}'. Headers: {e.headers}")
+            raise  # Повторная попытка будет обработана декоратором retry
+        except Exception as e:
+            logger.error(f"Non-retryable AI error for '{safe_word}': {e}", exc_info=True)
+            return None
 
 
 def parse_ai_response(content, original_word):
@@ -122,7 +154,8 @@ async def process_user_report(user_id, words, db_pool, session):
         except ValueError:
             logger.warning(f"Correct word '{word_str}' not found in options")
 
-        await asyncio.sleep(0.5)  # Защита от rate limits
+        # Случайная задержка для снижения нагрузки
+        await asyncio.sleep(0.5 + random.random() * 1.0)
 
     # Сохраняем отчет в БД
     if report_data:
@@ -151,7 +184,7 @@ async def process_user_report(user_id, words, db_pool, session):
 
 
 async def generate_weekly_reports(db_pool, session):
-    """Генерирует недельные отчеты"""
+    """Генерирует недельные отчеты с ограничением скорости"""
     user_words = await get_weekly_words_by_user(db_pool)
     if not user_words:
         logger.info("No users with enough words")
@@ -159,19 +192,32 @@ async def generate_weekly_reports(db_pool, session):
 
     # Ограничиваем количество слов на пользователя
     max_words_per_user = 7
+    max_users_per_minute = 10  # Ограничиваем количество пользователей в минуту
 
-    tasks = []
+    processed_users = 0
+    start_time = datetime.now()
+
     for record in user_words:
         words = record["words"]
         user_id = record["user_id"]
 
         # Выбираем случайные слова (но не более max_words_per_user)
         selected_words = random.sample(words, min(len(words), max_words_per_user))
-        tasks.append(process_user_report(user_id, selected_words, db_pool, session))
+        await process_user_report(user_id, selected_words, db_pool, session)
 
-    results = await asyncio.gather(*tasks)
-    total_words = sum(results)
-    logger.info(f"Generated reports with total {total_words} words")
+        processed_users += 1
+
+        # Контроль скорости: не более max_users_per_minute пользователей в минуту
+        elapsed = (datetime.now() - start_time).total_seconds()
+        required_delay = max(0, (60 / max_users_per_minute) - elapsed)
+        if required_delay > 0:
+            logger.info(f"Rate limiting: waiting {required_delay:.1f}s before next user")
+            await asyncio.sleep(required_delay)
+            start_time = datetime.now()
+        else:
+            start_time = datetime.now()
+
+    logger.info(f"Generated reports for {processed_users} users")
 
 
 async def send_pending_reports(db_pool, session):
@@ -205,6 +251,7 @@ async def process_report_delivery(db_pool, session, report_id, user_id):
             report_id
         )
     return success
+
 
 async def cleanup_old_reports(db_pool, days: int = 30):
     """Очищает старые отчеты и связанные с ними данные"""
@@ -254,9 +301,12 @@ async def main():
     # Инициализация глобальных ресурсов
     db_pool, session = await init_global_resources()
 
+    # Проверяем URL перед выполнением
+    logger.info(f"AI_API_URL type: {type(AI_API_URL)}, value: {AI_API_URL}")
+
     try:
         if '--generate' in sys.argv:
-            logger.info("Generating weekly reports...")
+            logger.info("Generating weekly reports with rate limiting...")
             await generate_weekly_reports(db_pool, session)
         elif '--cleanup' in sys.argv:
             logger.info("Cleaning up old reports...")
