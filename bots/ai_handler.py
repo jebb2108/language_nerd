@@ -3,7 +3,7 @@ import asyncio
 import json
 from datetime import datetime, timedelta
 
-import openai
+import aiohttp
 from aiolimiter import AsyncLimiter
 from tenacity import (
     retry,
@@ -11,7 +11,7 @@ from tenacity import (
     wait_exponential,
     retry_if_exception_type
 )
-from openai import RateLimitError
+from aiohttp import ClientResponseError
 from routers.commands.weekly_message_commands import send_user_report
 from config import (
     AI_API_KEY,
@@ -20,10 +20,6 @@ from config import (
     close_global_resources,
     logger
 )
-
-# Настройка OpenAI SDK
-openai.api_key = AI_API_KEY
-openai.api_base = AI_API_URL
 
 # Лимит бесплатного тарифа: до 15 запросов в минуту
 RATE_LIMITER = AsyncLimiter(max_rate=15, time_period=60)
@@ -45,15 +41,15 @@ async def get_weekly_words_by_user(db_pool):
         return await conn.fetch(query, week_ago)
 
 @retry(
-    retry=retry_if_exception_type(RateLimitError),
+    retry=retry_if_exception_type(ClientResponseError),
     wait=wait_exponential(multiplier=1, max=60),
     stop=stop_after_attempt(MAX_RETRIES),
     reraise=True
 )
-async def generate_questions_for_words(words: list) -> dict:
+async def generate_questions_for_words(words: list, session: aiohttp.ClientSession) -> dict:
     """
     Генерирует вопросы для списка слов (размер списка <= BATCH_SIZE).
-    При RateLimitError автоматически выполняет ретрай с backoff.
+    При 429 автоматически выполняет ретрай с backoff.
     Возвращает словарь: слово -> {sentence, options}.
     """
     prompt_items = '\n'.join(f"- '{w}'" for w in words)
@@ -61,37 +57,50 @@ async def generate_questions_for_words(words: list) -> dict:
         "Для каждого слова из списка ниже сгенерируй предложение с пропуском слова и варианты"
         " ответов. Формат (JSON): [{ 'word': ..., 'sentence': ..., 'options': [...] }, ...]"
     )
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": prompt_items}
-    ]
+    payload = {
+        "model": "gpt-3.5-turbo",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt_items}
+        ],
+        "temperature": 0.7,
+        "max_tokens": 200
+    }
+    url = AI_API_URL.rstrip('/') + '/v1/chat/completions'
 
     async with RATE_LIMITER:
-        try:
-            response = await openai.ChatCompletion.acreate(
-                model="gpt-3.5-turbo",
-                messages=messages,
-                temperature=0.7,
-                max_tokens=200
-            )
-        except RateLimitError as e:
-            # пауза по Retry-After если указан
-            headers = getattr(e, 'headers', {}) or {}
-            retry_after = headers.get('Retry-After') or headers.get('retry-after')
-            if retry_after:
-                await asyncio.sleep(int(retry_after))
-            logger.warning(f"Rate limit hit, retrying batch {words}")
-            raise
+        async with session.post(
+            url,
+            headers={
+                "Authorization": f"Bearer {AI_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json=payload,
+            timeout=60
+        ) as resp:
+            if resp.status == 429:
+                retry_after = int(resp.headers.get('Retry-After', '1'))
+                logger.warning(f"429 received, retry after {retry_after}s for batch {words}")
+                await asyncio.sleep(retry_after)
+                raise ClientResponseError(
+                    request_info=resp.request_info,
+                    history=resp.history,
+                    status=429,
+                    message='Too Many Requests',
+                    headers=resp.headers
+                )
+            resp.raise_for_status()
+            data = await resp.json()
 
     try:
-        content = response.choices[0].message.content
+        content = data['choices'][0]['message']['content']
         parsed = json.loads(content)
         return {item['word']: item for item in parsed}
     except Exception as e:
         logger.error(f"Failed to parse AI response: {e}\nContent: {content}")
         return {}
 
-async def process_user_report(user_id: int, words: list, db_pool, session=None):
+async def process_user_report(user_id: int, words: list, db_pool, session: aiohttp.ClientSession):
     """Обрабатывает одного пользователя: генерирует вопросы и сохраняет отчет"""
     selected = words[:7]
     report_data = []
@@ -100,8 +109,8 @@ async def process_user_report(user_id: int, words: list, db_pool, session=None):
     for i in range(0, len(selected), BATCH_SIZE):
         batch = selected[i:i + BATCH_SIZE]
         try:
-            questions = await generate_questions_for_words(batch)
-        except RateLimitError:
+            questions = await generate_questions_for_words(batch, session)
+        except ClientResponseError:
             logger.error(f"Skipping batch {batch} after max retries")
             continue
 
@@ -117,7 +126,6 @@ async def process_user_report(user_id: int, words: list, db_pool, session=None):
                 'correct_index': q['options'].index(w)
             })
 
-        # небольшая задержка, чтобы не перегрузить лимитер
         await asyncio.sleep(1)
 
     # сохраняем отчет
@@ -140,8 +148,7 @@ async def process_user_report(user_id: int, words: list, db_pool, session=None):
     logger.info(f"User {user_id}: processed {len(report_data)} words")
     return len(report_data)
 
-async def send_pending_reports(db_pool, session=None):
-    """Отправляет отчеты и помечает их как отправленные"""
+async def send_pending_reports(db_pool, session: aiohttp.ClientSession):
     reports = await db_pool.fetch(
         "SELECT report_id, user_id FROM weekly_reports WHERE sent = FALSE"
     )
@@ -171,10 +178,10 @@ async def cleanup_old_reports(db_pool, days: int = 30):
         logger.info(f"Cleaned up {deleted} old reports")
         return deleted
 
-async def generate_weekly_reports(db_pool, session=None):
+async def generate_weekly_reports(db_pool, session: aiohttp.ClientSession):
     users = await get_weekly_words_by_user(db_pool)
     for rec in users:
-        await process_user_report(rec['user_id'], rec['words'], db_pool)
+        await process_user_report(rec['user_id'], rec['words'], db_pool, session)
         await asyncio.sleep(2)
 
 async def main():
