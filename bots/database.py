@@ -9,70 +9,76 @@ from config import logger
 
 
 # = КЛАСС ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ =
-
 class Database:
-    def __init__(self, pool=None):
-        self.pool = pool
 
-    async def init(self):
+    def __init__(self, db_pool=None):
+        self.db_pool = db_pool
         try:
-            async with self.pool.acquire() as conn:
-                await conn.execute("""
-                CREATE TABLE IF NOT EXISTS words (
-                id SERIAL PRIMARY KEY,
-                user_id BIGINT NOT NULL,
-                word TEXT NOT NULL,
-                part_of_speech TEXT NOT NULL,
-                translation TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT NOW(),
-                UNIQUE (user_id, word)
-                ); 
-            """)
-                await conn.execute("""
-                CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                user_id BIGINT NOT NULL,
-                username TEXT NOT NULL,
-                first_name TEXT NOT NULL,
-                camefrom TEXT NOT NULL,
-                language TEXT NOT NULL,
-                lang_code TEXT NOT NULL,
-                about TEXT NULL,
-                UNIQUE (user_id)
-                ); """)
-
-                await conn.execute("""
-                CREATE TABLE IF NOT EXISTS weekly_reports (
-                report_id SERIAL PRIMARY KEY,
-                user_id INT NOT NULL,
-                generation_date TIMESTAMP DEFAULT NOW(),
-                sent BOOLEAN DEFAULT FALSE
-                ); """)
-
-                await conn.execute("""
-                CREATE TABLE IF NOT EXISTS report_words (
-                word_id SERIAL PRIMARY KEY,
-                report_id INT REFERENCES weekly_reports(report_id) ON DELETE CASCADE,
-                word TEXT NOT NULL,
-                sentence TEXT NOT NULL,
-                options TEXT[] NOT NULL,
-                correct_index INT NOT NULL
-                ); """)
-
+            self._create_words()
+            self._create_users()
+            self._create_weekly_reports()
+            self._create_report_words()
 
         except Exception as e:
-            logger.critical(f"Database initialization failed: {e}")
-            raise
+            logger.error(f"Database initialization failed: {e}")
 
-    async def close(self):
-        """Закрытие пула соединений"""
-        if self.pool:
-            await self.pool.close()
+
+    async def _create_words(self):
+        async with self.db_pool.acquire() as conn:
+            await conn.execute("""
+                            CREATE TABLE IF NOT EXISTS words (
+                            id SERIAL PRIMARY KEY,
+                            user_id BIGINT NOT NULL,
+                            word TEXT NOT NULL,
+                            part_of_speech TEXT NOT NULL,
+                            translation TEXT NOT NULL,
+                            created_at TIMESTAMP DEFAULT NOW(),
+                            UNIQUE (user_id, word)
+                            ); 
+                        """)
+
+    async def _create_users(self):
+        async with self.db_pool.acquire() as conn:
+            await conn.execute("""
+                            CREATE TABLE IF NOT EXISTS users (
+                            id SERIAL PRIMARY KEY,
+                            user_id BIGINT NOT NULL,
+                            username TEXT NOT NULL,
+                            first_name TEXT NOT NULL,
+                            camefrom TEXT NOT NULL,
+                            language TEXT NOT NULL,
+                            lang_code TEXT NOT NULL,
+                            about TEXT NULL,
+                            UNIQUE (user_id)
+                            ); """)
+
+    async def _create_weekly_reports(self):
+        async with self.db_pool.acquire() as conn:
+            await conn.execute("""
+                            CREATE TABLE IF NOT EXISTS weekly_reports (
+                            report_id SERIAL PRIMARY KEY,
+                            user_id INT NOT NULL,
+                            generation_date TIMESTAMP DEFAULT NOW(),
+                            sent BOOLEAN DEFAULT FALSE
+                            ); """)
+
+    async def _create_report_words(self):
+        async with self.db_pool.acquire() as conn:
+            await conn.execute("""
+                            CREATE TABLE IF NOT EXISTS report_words (
+                            word_id SERIAL PRIMARY KEY,
+                            report_id INT REFERENCES weekly_reports(report_id) ON DELETE CASCADE,
+                            word TEXT NOT NULL,
+                            sentence TEXT NOT NULL,
+                            options TEXT[] NOT NULL,
+                            correct_index INT NOT NULL
+                            ); """)
+
 
     async def create_users_table(self, user_id, username, first_name, camefrom, language, lang_code):
         """Создает или обновляет запись пользователя с проверкой блокировки"""
         try:
-            async with self.pool.acquire() as conn:
+            async with self.db_pool.acquire() as conn:
                 result = await conn.execute("""
                     INSERT INTO users (user_id, username, first_name, camefrom, language, lang_code) 
                     VALUES ($1, $2, $3, $4, $5, $6)
@@ -92,7 +98,7 @@ class Database:
     async def get_user_info(self, user_id):
         """Получает информацию о пользователе из базы данных"""
 
-        async with self.pool.acquire() as conn:
+        async with self.db_pool.acquire() as conn:
             row = await conn.fetchrow(
                 "SELECT username, first_name, language, lang_code FROM users WHERE user_id = $1",
                 user_id
@@ -103,7 +109,7 @@ class Database:
 
     # Обновленные функции работы с БД
     async def get_words_from_db(self, user_id: int) -> List[Tuple[str, str, str, str]]:
-        async with self.pool.acquire() as conn:
+        async with self.db_pool.acquire() as conn:
             rows = await conn.fetch(
                 "SELECT id, word, part_of_speech, translation FROM words WHERE user_id = $1 ORDER BY word",
                 user_id
@@ -111,7 +117,7 @@ class Database:
             return [(row['id'], row['word'], row['part_of_speech'], row['translation']) for row in rows]
 
     async def search_word_in_db(self, user_id: int, word: str) -> List[Tuple[str, str, str, str]]:
-        async with self.pool.acquire() as conn:
+        async with self.db_pool.acquire() as conn:
             row = await conn.fetchrow(
                 "SELECT id, word, part_of_speech, translation FROM words WHERE user_id = $1 AND word = $2",
                 user_id, word
@@ -119,7 +125,7 @@ class Database:
             return [(row['id'], row['word'], row['part_of_speech'], row['translation'])]
 
     async def delete_word_from_db(self, user_id: int, word_id: int) -> bool:
-        async with self.pool.acquire() as conn:
+        async with self.db_pool.acquire() as conn:
             result = await conn.execute(
                 "DELETE FROM words WHERE user_id = $1 AND id = $2",
                 user_id, word_id
@@ -127,7 +133,7 @@ class Database:
             return "DELETE" in result
 
     async def update_word_in_db(self, user_id: int, old_word: str, new_word: str, pos: str, value: str) -> bool:
-        async with self.pool.acquire() as conn:
+        async with self.db_pool.acquire() as conn:
             # Если слово изменилось
             if old_word != new_word:
                 await conn.execute(
@@ -151,7 +157,7 @@ class Database:
     async def add_word_to_db(self, user_id: int, word: str, pos: str, value: str) -> bool:
         if value is None:
             value = ""
-        async with self.pool.acquire() as conn:
+        async with self.db_pool.acquire() as conn:
             try:
                 await conn.execute(
                     "INSERT INTO words (user_id, word, part_of_speech, translation) VALUES ($1, $2, $3, $4)",
@@ -164,7 +170,7 @@ class Database:
 
     # Temperorary solution
     async def get_user_stats(self, user_id: int):
-        async with self.pool.acquire() as conn:
+        async with self.db_pool.acquire() as conn:
             try:
                 row = await conn.fetchrow(
                     """
@@ -189,7 +195,7 @@ class Database:
                 return None
 
     async def check_word_exists(self, user_id: int, word: str) -> bool:
-        async with self.pool.acquire() as conn:
+        async with self.db_pool.acquire() as conn:
             row = await conn.fetchrow(
                 "SELECT 1 FROM words WHERE user_id = $1 AND word = $2 LIMIT 1",
                 user_id, word
@@ -198,7 +204,7 @@ class Database:
 
     @asynccontextmanager
     async def acquire(self):
-        if self.pool is None or self.pool._closed:
-            await self.init()
-        async with self.pool.acquire() as conn:
+        if self.db_pool is None:
+            raise RuntimeError("Database pool is not initialized")
+        async with self.db_pool.acquire() as conn:
             yield conn
