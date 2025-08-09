@@ -23,7 +23,7 @@ async def start(message: Message):
     )
 
 @router.message(IsBotFilter(BOT_TOKEN_PARTNER))
-async def echo(message: Message, rate_limit_info: RateLimitInfo):
+async def echo(message: Message, rate_limit_info: RateLimitMiddleware):
     if message.text:
         await message.copy_to(message.chat.id)
     count = rate_limit_info.message_count
