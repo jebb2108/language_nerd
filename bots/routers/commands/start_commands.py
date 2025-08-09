@@ -63,7 +63,7 @@ async def start_with_polling(
         camefrom="",
         about="",
         messages_to_delete=[],
-        db_pool=db_pool,
+        db=database,
     )
 
     if user_exists:
