@@ -1,6 +1,9 @@
+import sys
 from typing import *
+from pathlib import Path
 
-from bots.config import logger
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from config import logger
 
 
 # = КЛАСС ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ =

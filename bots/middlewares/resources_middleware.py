@@ -1,3 +1,4 @@
+import sys
 import asyncio
 from dataclasses import dataclass
 
@@ -7,8 +8,10 @@ from typing import Callable, Dict, Any, Awaitable
 from aiogram.types import TelegramObject
 from aiohttp import ClientSession
 
-from bots.config import db_config, logger
-from bots.utils.database import Database  # Импортируем ваш класс DB
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from config import db_config, logger
+from utils.database import Database  # Импортируем ваш класс DB
 
 @dataclass(frozen=True)
 class DBConfig:

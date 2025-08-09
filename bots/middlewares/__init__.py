@@ -1,8 +1,8 @@
 __all__ = ['router', 'db_pool']
 
 from aiogram import Router
-from bots.middlewares.rate_limit_middleware import RateLimitMiddleware
-from bots.middlewares.resources_middleware import ResourcesMiddleware
+from .rate_limit_middleware import RateLimitMiddleware
+from .resources_middleware import ResourcesMiddleware
 
 db_pool = None
 

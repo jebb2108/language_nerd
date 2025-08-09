@@ -1,6 +1,6 @@
 import os
 from aiohttp import web
-from bots.config import logger
+from config import logger
 
 db_pool = None
 

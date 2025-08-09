@@ -1,3 +1,4 @@
+import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
@@ -7,9 +8,11 @@ from aiogram import BaseMiddleware
 from aiogram.types import Message
 from asyncpg.pgproto.pgproto import timedelta
 
-from bots.utils.async_timed_queue import AsyncTimedQueue
-from bots.config import logger
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from utils.async_timed_queue import AsyncTimedQueue
+from config import logger
 
 @dataclass(frozen=False)
 class RateLimitInfo:
