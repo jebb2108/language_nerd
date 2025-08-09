@@ -225,8 +225,7 @@ class Database:
             return row is not None
 
     async def acquire(self):
-        async with self.db_pool.acquire() as conn:
-            yield conn
+        return await self.db_pool.acquire()
 
     def clean_locks(self):
         """Периодически очищаем неиспользуемые блокировки"""
