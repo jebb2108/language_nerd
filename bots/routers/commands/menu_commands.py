@@ -27,10 +27,10 @@ router.callback_query.filter(IsBotFilter(BOT_TOKEN_MAIN))
 async def show_main_menu(
         message: Message,
         state: FSMContext,
-        db_pool
+        database: ResourcesMiddleware,
 ):
     await state.update_data(
-        db_pool=db_pool,
+        db_pool=database,
         user_id=message.from_user.id,
         username=message.from_user.username or "",
         first_name=message.from_user.first_name or "",
@@ -45,7 +45,7 @@ async def show_main_menu(
     first_name = user.first_name or ""
 
     # Получаем язык из БД
-    user_info = await db_pool.get_user_info(user_id)
+    user_info = await database.get_user_info(user_id)
     lang_code = user_info[-1]
 
     # Формируем URL с user_id для Web App
@@ -85,13 +85,11 @@ async def show_main_menu(
 
 
 @router.callback_query(F.data == "about", IsBotFilter(BOT_TOKEN_MAIN))
-async def about(callback: CallbackQuery, state: FSMContext, database: ResourcesMiddleware):
+async def about(callback: CallbackQuery, database: ResourcesMiddleware):
     """
     Обработчик нажатия кнопки "О боте".
     Берём текст из QUESTIONARY, ничего не храним в state.
     """
-    data = await state.get_data()
-    db_pool = data.get("db_pool")
 
     # Получаем язык прямо из БД
     user_info = await database.get_user_info(callback.from_user.id)

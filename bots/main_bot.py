@@ -27,6 +27,7 @@ async def run():
 
     resources = ResourcesMiddleware()
     db = await resources.on_startup()
+    await db.initialize()
 
     # Запуск веб-сервера
     web_runner = await start_web_app(db)

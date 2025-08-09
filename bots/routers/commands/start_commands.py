@@ -39,13 +39,13 @@ async def start_with_polling(
     Стартовая команда: проверяем в БД существование пользователя,
     сохраняем основные поля в state и либо идём в show_main_menu, либо стартуем опрос.
     """
-    db_pool = database.db_pool
+    db = database
     user_id = message.from_user.id
     lang_code = message.from_user.language_code or "en"
 
     # Проверяем, есть ли запись в users
     try:
-        async with db_pool.acquire() as conn:
+        async with db.acquire_connection() as conn:
             user_exists = await conn.fetchval(
                 "SELECT 1 FROM users WHERE user_id = $1", user_id
             )
@@ -158,7 +158,7 @@ async def handle_language_choice(
         username = data.get("username", "")
         first_name = data.get("first_name", "")
         camefrom = data.get("camefrom", "")
-        db_pool = data.get("db_pool")
+        db = data.get("db_pool")
 
         users_choice = callback.data.split("_", 1)[1]
 
@@ -179,7 +179,7 @@ async def handle_language_choice(
         await callback.answer()
 
         # Сохраняем нового пользователя в БД
-        async with db_pool.acquire() as conn:
+        async with db.acquire_connection() as conn:
             await conn.execute(
                 """
                 INSERT INTO users (user_id, username, first_name, camefrom, chosen_language, lang_code)
