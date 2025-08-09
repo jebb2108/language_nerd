@@ -27,8 +27,15 @@ router.callback_query.filter(IsBotFilter(BOT_TOKEN_MAIN))
 async def show_main_menu(
         message: Message,
         state: FSMContext,
-        database: ResourcesMiddleware,
+        db_pool
 ):
+    await state.update_data(
+        db_pool=db_pool,
+        user_id=message.from_user.id,
+        username=message.from_user.username or "",
+        first_name=message.from_user.first_name or "",
+        lang_code=message.from_user.language_code or "en",
+    )
     """
     Показывает главное меню для пользователя.
     Язык пользователя берём из БД, а не из state.
@@ -38,7 +45,7 @@ async def show_main_menu(
     first_name = user.first_name or ""
 
     # Получаем язык из БД
-    user_info = await database.db_pool.get_user_info(user_id)
+    user_info = await db_pool.get_user_info(user_id)
     lang_code = user_info[-1]
 
     # Формируем URL с user_id для Web App
@@ -78,16 +85,13 @@ async def show_main_menu(
 
 
 @router.callback_query(F.data == "about", IsBotFilter(BOT_TOKEN_MAIN))
-async def about(
-        callback: CallbackQuery,
-        database: ResourcesMiddleware,
-):
+async def about(callback: CallbackQuery):
     """
     Обработчик нажатия кнопки "О боте".
     Берём текст из QUESTIONARY, ничего не храним в state.
     """
     # Получаем язык прямо из БД
-    user_info = await database.db_pool.get_user_info(callback.from_user.id)
+    user_info = await db_pool.get_user_info(callback.from_user.id)
     lang_code = user_info[-1]
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
@@ -106,17 +110,15 @@ async def about(
 @router.callback_query(F.data == "go_back", IsBotFilter(BOT_TOKEN_MAIN))
 async def go_back(
         callback: CallbackQuery,
-        database: ResourcesMiddleware,
+        state: FSMContext,
 ):
     """
     Возвращает пользователя назад в главное меню, повторно вызывая те же кнопки.
     """
-    user = callback.from_user
-    user_id = user.id
-    first_name = user.first_name or ""
-
-    user_info = await database.db_pool.get_user_info(user_id)
-    lang_code = user_info[-1]
+    data = await state.get_data()
+    user_id = data.get("user_id")
+    first_name = data.get("first_name")
+    lang_code = data.get("lang_code")
 
     web_app_url = f"https://lllang.site/?user_id={user_id}"
 
