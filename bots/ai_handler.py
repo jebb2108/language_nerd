@@ -387,7 +387,7 @@ async def main():
 
     try:
         # Инициализируем базу данных для отчетов
-        db = ReportDatabase(resources.db_pool)
+        db = ReportDatabase(resources.db)
         session = resources.session
 
         if '--generate' in sys.argv:

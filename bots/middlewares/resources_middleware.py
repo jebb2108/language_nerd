@@ -95,7 +95,7 @@ class ResourcesMiddleware(BaseMiddleware):
                 await self.session.close()
                 logger.info("HTTP session closed")
 
-            if not self.db.dp_pool.closed:
+            if not self.db.db_pool._closed:
                 await self.db.close()
                 logger.info("Database closed")
 
