@@ -68,7 +68,7 @@ async def start_with_polling(
 
     if user_exists:
         # если пользователь есть — сразу меню
-        await show_main_menu(message, state)
+        await show_main_menu(message, state, database)
         return
 
     # иначе запускаем опрос «откуда вы о нас узнали»
@@ -145,6 +145,9 @@ async def handle_language_choice(
         callback: CallbackQuery,
         state: FSMContext,
 ):
+    data = await state.get_data()
+    database = data.get("db_pool")
+
     """
     Сохраняем выбор языка, создаём запись в БД и идём в главное меню.
     """
@@ -186,7 +189,7 @@ async def handle_language_choice(
             )
 
         # После сохранения сразу показываем главное меню
-        await show_main_menu(callback.message, state)
+        await show_main_menu(callback.message, state, database)
 
     except Exception as e:
         logger.error(f"Error in handle_language_choice: {e}")
