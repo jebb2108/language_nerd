@@ -64,24 +64,26 @@ class RateLimitMiddleware(BaseMiddleware):
         processed_messages = self.processed_messages[user_id]
         count: int = await processed_messages.get_len()
         if count > self.rate_limit:
-            logger.info(f"Rate limit exceeded for user {user_id}")
+            logger.info("Skip user %s message", user_id)
             return
+
         await processed_messages.push(current_dt)
         count = await processed_messages.get_len()
         if count > self.rate_limit:
-            logger.info(f"Rate limit exceeded for user {user_id}")
+            logger.info("Skip user %s message (new)", user_id)
             return
         if count == self.rate_limit:
-            logger.info("Sending last message to user %s before rate limit exceeded", user_id)
+            logger.info("Sending last message to user %s before rate limit", user_id)
             await event.reply(
-                text="You`re sending too many messages. Please, cool down for a while."
+                text="You're sending too many messages. Please cool down for a while",
             )
+            return
 
-        # Обновляем middlewares данные, присваивая ключ rate_limit_info
         data.update(
             rate_limit_info=RateLimitInfo(
                 message_count=count,
-                last_message_time=processed_messages.peek(),
-            )
+                last_message_time=await processed_messages.peek(),
+            ),
         )
+
         return await handler(event, data)
