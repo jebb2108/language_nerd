@@ -16,13 +16,13 @@ async def send_user_report(
         bot: Bot,
         user_id: int,
         report_id: int,
-        resources: ResourcesMiddleware,
+        database: ResourcesMiddleware,
 ) -> bool:
     """
     Отправляет пользователю его еженедельный отчет.
     """
     try:
-        async with resources.db_pool.acquire() as conn:
+        async with database.db_pool.acquire() as conn:
             report = await conn.fetchrow(
                 "SELECT * FROM weekly_reports WHERE report_id = $1",
                 report_id
@@ -65,14 +65,14 @@ async def send_user_report(
 async def start_report_handler(
         callback: types.CallbackQuery,
         state: FSMContext,
-        resources: ResourcesMiddleware,
+        database: ResourcesMiddleware,
 ):
     """
     Начинает интерактивный отчет-опрос по weekly_reports.
     """
     report_id = int(callback.data.split(":", 1)[1])
 
-    async with resources.db_pool.acquire() as conn:
+    async with database.db_pool.acquire() as conn:
         words = await conn.fetch(
             "SELECT word_id FROM report_words WHERE report_id = $1",
             report_id
@@ -89,7 +89,7 @@ async def start_report_handler(
         word_ids=[row["word_id"] for row in words],
         current_index=0,
         chat_id=callback.message.chat.id,
-        db_pool=resources.db_pool,
+        db_pool=database.db_pool,
     )
 
     await send_question(state, callback.bot)

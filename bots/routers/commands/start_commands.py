@@ -33,13 +33,13 @@ router.callback_query.filter(IsBotFilter(BOT_TOKEN_MAIN))
 async def start_with_polling(
         message: Message,
         state: FSMContext,
-        resources: ResourcesMiddleware,
+        database: ResourcesMiddleware,
 ):
     """
     Стартовая команда: проверяем в БД существование пользователя,
     сохраняем основные поля в state и либо идём в show_main_menu, либо стартуем опрос.
     """
-    db_pool = resources.db_pool
+    db_pool = database.db_pool
     user_id = message.from_user.id
     lang_code = message.from_user.language_code or "en"
 

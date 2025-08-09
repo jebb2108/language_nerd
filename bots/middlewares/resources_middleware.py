@@ -50,7 +50,7 @@ class ResourcesMiddleware(BaseMiddleware):
                         raise
 
         data.update(
-            db=self.db_pool,
+            database=self.db_pool,
             http_session=self.session,
         )
 
