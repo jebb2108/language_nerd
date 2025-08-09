@@ -134,5 +134,5 @@ async def start_web_app(pool):
     await runner.setup()
     site = web.TCPSite(runner, '0.0.0.0', 2222)
     await site.start()
-    logger.info("Web server started on port 8080")
+    logger.info("Web server started on port 2222")
     return runner

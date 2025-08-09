@@ -5,14 +5,22 @@ import aiohttp
 import time
 import re
 from datetime import datetime, timedelta
+from typing import List
 
 import asyncpg
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, retry_if_result
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+    retry_if_result
+)
 
 from aiogram import Bot
 
-# Предполагается, что эти импорты доступны в вашем проекте
+from bots.middlewares.resources_middleware import ResourcesMiddleware
 from routers.commands.weekly_message_commands import send_user_report
+from utils.database import ReportDatabase
 from config import (
     AI_API_KEY,
     AI_API_URL,
@@ -29,20 +37,7 @@ last_request_time = 0
 DEFAULT_DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
 
 
-async def get_weekly_words_by_user(db_pool):
-    """Получает слова за неделю, сгруппированные по пользователям"""
-    query = """
-        SELECT user_id, ARRAY_AGG(DISTINCT word) as words
-        FROM words
-        WHERE created_at <= $1 AND word IS NOT NULL
-        GROUP BY user_id
-        HAVING COUNT(word) > 1
-    """
-    week_ago = datetime.now() - timedelta(days=7)
-    async with db_pool.acquire() as conn:
-        return await conn.fetch(query, week_ago)
-
-
+# ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 def should_retry_api_error(result):
     """Определяет, нужно ли повторять запрос при ошибке API"""
     return result is None
@@ -258,7 +253,8 @@ def parse_deepseek_response(content, original_word):
         return None
 
 
-async def process_user_report(user_id, words, db_pool, session):
+# ========== ОСНОВНЫЕ ФУНКЦИИ ОБРАБОТКИ ==========
+async def process_user_report(user_id: int, words: List[str], session, db: ReportDatabase) -> int:
     """Обрабатывает отчет для одного пользователя"""
     report_data = []
 
@@ -296,38 +292,18 @@ async def process_user_report(user_id, words, db_pool, session):
 
     # Сохраняем отчет в БД
     if report_data:
-        async with db_pool.acquire() as conn:
+        async with db.db_pool.acquire() as conn:
             async with conn.transaction():
-                report_id = await conn.fetchval(
-                    "INSERT INTO weekly_reports (user_id) VALUES ($1) RETURNING report_id",
-                    user_id
-                )
-
-                for item in report_data:
-                    await conn.execute(
-                        "INSERT INTO report_words (report_id, word, sentence, options, correct_index) "
-                        "VALUES ($1, $2, $3, $4, $5)",
-                        report_id,
-                        item["word"],
-                        item["sentence"],
-                        item["options"],
-                        item["correct_index"]
-                    )
+                report_id = await db.create_report(user_id)
+                await db.add_words_to_report(report_id, report_data)
 
     logger.info(f"Generated report for user {user_id} with {len(report_data)} words")
     return len(report_data)
 
 
-async def generate_weekly_reports(db_pool, session):
+async def generate_weekly_reports(db: ReportDatabase, session):
     """Генерирует недельные отчеты с ограничением скорости"""
-    async with db_pool.acquire() as conn:
-        user_words = await conn.fetch("""
-            SELECT user_id, ARRAY_AGG(DISTINCT word) as words
-            FROM words
-            WHERE created_at <= $1 AND word IS NOT NULL
-            GROUP BY user_id
-            HAVING COUNT(word) > 1
-        """, datetime.now() - timedelta(days=7))
+    user_words = await db.get_weekly_words_by_user()
 
     if not user_words:
         logger.info("No users with enough words")
@@ -335,7 +311,6 @@ async def generate_weekly_reports(db_pool, session):
 
     max_words_per_user = 5
     max_users_per_minute = 3
-
     processed_users = 0
     start_time = datetime.now()
 
@@ -344,7 +319,7 @@ async def generate_weekly_reports(db_pool, session):
         user_id = record["user_id"]
 
         selected_words = random.sample(words, min(len(words), max_words_per_user))
-        words_processed = await process_user_report(user_id, selected_words, db_pool, session)
+        words_processed = await process_user_report(user_id, selected_words, session, db)
 
         # Если не удалось обработать ни одного слова, пропускаем пользователя
         if words_processed == 0:
@@ -366,17 +341,14 @@ async def generate_weekly_reports(db_pool, session):
     logger.info(f"Generated reports for {processed_users} users")
 
 
-async def send_pending_reports(bot: Bot, resources: Resources):
-    async with resources.db_pool.acquire() as conn:
-        reports = await conn.fetch(
-            "SELECT report_id, user_id FROM weekly_reports WHERE sent = FALSE"
-        )
+async def send_pending_reports(bot: Bot, db: ReportDatabase):
+    reports = await db.get_pending_reports()
     if not reports:
         logger.info("No pending reports")
         return
 
     tasks = [
-        process_report_delivery(bot, rec["report_id"], rec["user_id"], resources)
+        process_report_delivery(bot, rec["report_id"], rec["user_id"], db)
         for rec in reports
     ]
     results = await asyncio.gather(*tasks)
@@ -384,90 +356,56 @@ async def send_pending_reports(bot: Bot, resources: Resources):
     logger.info(f"Sent {success_count}/{len(reports)} reports")
 
 
-async def process_report_delivery(bot: Bot, report_id: int, user_id: int, resources: Resources) -> bool:
-
-    success = await send_user_report(bot, user_id, report_id, resources)
+async def process_report_delivery(bot: Bot, report_id: int, user_id: int, db: ReportDatabase) -> bool:
+    success = await send_user_report(bot, user_id, report_id)
     if success:
-        async with resources.db_pool.acquire() as conn:
-            await conn.execute(
-                "UPDATE weekly_reports SET sent = TRUE WHERE report_id = $1",
-                report_id
-            )
+        await db.mark_report_as_sent(report_id)
     return success
 
 
-async def cleanup_old_reports(db_pool, days: int = 30):
+async def cleanup_old_reports(db: ReportDatabase, days: int = 30) -> bool:
     """Очищает старые отчеты и связанные с ними данные"""
     try:
-        cutoff_date = datetime.now() - timedelta(days=days)
-        logger.info(f"Starting cleanup for reports older than {cutoff_date}")
+        logger.info(f"Starting cleanup for reports older than {days} days")
+        reports_deleted, words_deleted = await db.cleanup_old_reports(days)
 
-        async with db_pool.acquire() as conn:
-            # Получаем список отчетов для удаления
-            old_reports = await conn.fetch(
-                "SELECT report_id FROM weekly_reports WHERE generation_date < $1",
-                cutoff_date
-            )
-
-            if not old_reports:
-                logger.info("No old reports found for cleanup")
-                return 0
-
-            report_ids = [r["report_id"] for r in old_reports]
-            logger.info(f"Found {len(report_ids)} old reports to delete")
-
-            # Удаляем связанные слова отчетов
-            words_deleted = await conn.execute(
-                "DELETE FROM report_words WHERE report_id = ANY($1::int[])",
-                report_ids
-            )
-
-            # Удаляем сами отчеты
-            reports_deleted = await conn.execute(
-                "DELETE FROM weekly_reports WHERE report_id = ANY($1::int[])",
-                report_ids
-            )
-
-            logger.info(
-                f"Cleaned up {reports_deleted} reports and "
-                f"{words_deleted} words older than {days} days"
-            )
-            return reports_deleted
-
+        logger.info(
+            f"Cleaned up {reports_deleted} reports and "
+            f"{words_deleted} words older than {days} days"
+        )
+        return True
     except Exception as e:
         logger.error(f"Error cleaning old reports: {e}")
         return False
 
 
+# ========== ТОЧКА ВХОДА ==========
 async def main():
     """Основная асинхронная точка входа"""
-    from utils.database import Database
-    from config import db_config
-
-    # Инициализация ресурсов
-    pool = asyncpg.create_pool(
-        **db_config.__dict__
-    )
-    db_pool = Database(pool)
-    session = aiohttp.ClientSession()
-
+    resources = ResourcesMiddleware()
+    await resources.on_startup()
 
     try:
+        # Инициализируем базу данных для отчетов
+        db = ReportDatabase(resources.db_pool)
+        session = resources.session
 
         if '--generate' in sys.argv:
             logger.info("Generating weekly reports with DeepSeek...")
-            await generate_weekly_reports(db_pool, session)
+            await generate_weekly_reports(db, session)
         elif '--cleanup' in sys.argv:
             logger.info("Cleaning up old reports...")
-            await cleanup_old_reports(db_pool, days=14)
+            await cleanup_old_reports(db, days=14)
         else:
             logger.info("Sending pending reports...")
             bot = Bot(token=BOT_TOKEN_MAIN)
-            await send_pending_reports(db_pool, bot)
+            await send_pending_reports(bot, db)
 
     except Exception as e:
         logger.critical(f"Critical error: {e}", exc_info=True)
 
+    finally:
+        await resources.on_shutdown()
 
 
 if __name__ == "__main__":

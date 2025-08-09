@@ -14,9 +14,11 @@ from routers import router as main_router
 # Создаем хранилище состояний в оперативной памяти
 storage = MemoryStorage()
 
+resources = None
+
 async def run():
     """Запуск бота и веб-сервера в одном event loop"""
-
+    global resources
     # Инициализация диспетчера
     disp = Dispatcher(storage=storage)
     # Инициализация бота
@@ -44,6 +46,7 @@ async def run():
         # Корректное завершение
         await bot.session.close()
         await web_runner.cleanup()
+        await resources.on_shutdown()
 
 if __name__ == "__main__":
     asyncio.run(run())
