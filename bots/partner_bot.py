@@ -8,7 +8,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from routers import router as main_router
 
 # Импорт функций БД
-from bots.config import BOT_TOKEN_PARTNER, logger
+from config import BOT_TOKEN_PARTNER, logger
 
 storage = MemoryStorage()
 
