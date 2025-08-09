@@ -10,34 +10,30 @@ from aiogram.types import (
     CallbackQuery,
 )
 from typing import Union
-from translations import QUESTIONARY  # noqa
-from filters import IsBotFilter  # noqa
-from config import BOT_TOKEN_MAIN, logger  # noqa
-from de_injection import ResourcesMiddleware, Resources  # noqa
-from routers.commands.menu_commands import show_main_menu  # переиспользуемый метод # noqa
+from bots.translations import QUESTIONARY
+from bots.utils.filters import IsBotFilter
+from bots.config import BOT_TOKEN_MAIN, logger
+from bots.routers.commands.menu_commands import show_main_menu  # переиспользуемый метод # noqa
 
-# Инициализируем DI-контейнер и роутер
-resources = Resources()
+from bots.middlewares.resources_middleware import ResourcesMiddleware
+
+# Инициализируем роутер
 router = Router(name=__name__)
-
-# Фильтрация и middleware
-router.message.filter(IsBotFilter(BOT_TOKEN_MAIN))
-router.callback_query.filter(IsBotFilter(BOT_TOKEN_MAIN))
-router.message.middleware(ResourcesMiddleware(resources))
-router.callback_query.middleware(ResourcesMiddleware(resources))
-
 
 class PollingStates(StatesGroup):
     camefrom_state = State()
     language_state = State()
     introduction_state = State()
 
+# Фильтрация по токену
+router.message.filter(IsBotFilter(BOT_TOKEN_MAIN))
+router.callback_query.filter(IsBotFilter(BOT_TOKEN_MAIN))
 
-@router.message(Command("start"))
+@router.message(Command("start"), IsBotFilter(BOT_TOKEN_MAIN))
 async def start_with_polling(
         message: Message,
         state: FSMContext,
-        resources: Resources,
+        resources: ResourcesMiddleware,
 ):
     """
     Стартовая команда: проверяем в БД существование пользователя,
@@ -67,11 +63,12 @@ async def start_with_polling(
         camefrom="",
         about="",
         messages_to_delete=[],
+        db_pool=db_pool,
     )
 
     if user_exists:
         # если пользователь есть — сразу меню
-        await show_main_menu(message, state, resources)
+        await show_main_menu(message, state)
         return
 
     # иначе запускаем опрос «откуда вы о нас узнали»
@@ -110,7 +107,6 @@ async def start_with_polling(
 async def handle_camefrom(
         callback: CallbackQuery,
         state: FSMContext,
-        resources: Resources,
 ):
     """
     После вопроса «откуда узнали» переходим к выбору языка.
@@ -148,12 +144,10 @@ async def handle_camefrom(
 async def handle_language_choice(
         callback: CallbackQuery,
         state: FSMContext,
-        resources: Resources,
 ):
     """
     Сохраняем выбор языка, создаём запись в БД и идём в главное меню.
     """
-    db_pool = resources.db_pool
     try:
         data = await state.get_data()
         lang_code = data.get("lang_code", "en")
@@ -161,6 +155,7 @@ async def handle_language_choice(
         username = data.get("username", "")
         first_name = data.get("first_name", "")
         camefrom = data.get("camefrom", "")
+        db_pool = data.get("db_pool")
 
         users_choice = callback.data.split("_", 1)[1]
 
@@ -191,7 +186,7 @@ async def handle_language_choice(
             )
 
         # После сохранения сразу показываем главное меню
-        await show_main_menu(callback.message, state, resources)
+        await show_main_menu(callback.message, state)
 
     except Exception as e:
         logger.error(f"Error in handle_language_choice: {e}")

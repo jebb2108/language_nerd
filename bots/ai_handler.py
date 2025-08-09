@@ -3,9 +3,10 @@ import asyncio
 import random
 import aiohttp
 import time
-import logging
 import re
 from datetime import datetime, timedelta
+
+import asyncpg
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, retry_if_result
 
 from aiogram import Bot
@@ -16,7 +17,6 @@ from config import (
     AI_API_KEY,
     AI_API_URL,
     BOT_TOKEN_MAIN,
-    Resources,
     logger,
 )
 
@@ -441,46 +441,33 @@ async def cleanup_old_reports(db_pool, days: int = 30):
 
 async def main():
     """Основная асинхронная точка входа"""
-    resources = Resources()
-    bot = None
+    from utils.database import Database
+    from config import db_config
+
+    # Инициализация ресурсов
+    pool = asyncpg.create_pool(
+        **db_config.__dict__
+    )
+    db_pool = Database(pool)
+    session = aiohttp.ClientSession()
+
 
     try:
-        # Инициализируем ресурсы
-        await resources.init()
-
-        # Проверка конфигурации API
-        if AI_API_URL is None:
-            logger.warning(f"AI_API_URL is None, using default: {DEFAULT_DEEPSEEK_URL}")
-        else:
-            logger.info(f"Using DeepSeek API at: {AI_API_URL}")
 
         if '--generate' in sys.argv:
             logger.info("Generating weekly reports with DeepSeek...")
-            await generate_weekly_reports(resources.db_pool, resources.session)
+            await generate_weekly_reports(db_pool, session)
         elif '--cleanup' in sys.argv:
             logger.info("Cleaning up old reports...")
-            await cleanup_old_reports(resources.db_pool, days=14)
+            await cleanup_old_reports(db_pool, days=14)
         else:
             logger.info("Sending pending reports...")
             bot = Bot(token=BOT_TOKEN_MAIN)
-            await send_pending_reports(resources.db_pool, bot)
+            await send_pending_reports(db_pool, bot)
 
     except Exception as e:
         logger.critical(f"Critical error: {e}", exc_info=True)
 
-    finally:
-        # Закрываем ресурсы
-        try:
-            if bot:
-                await bot.close()
-                logger.info("Telegram bot closed")
-        except Exception as e:
-            logger.error(f"Error closing bot: {e}")
-
-        try:
-            await resources.close()
-        except Exception as e:
-            logger.error(f"Error closing resources: {e}")
 
 
 if __name__ == "__main__":

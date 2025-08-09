@@ -10,29 +10,24 @@ from aiogram.types import (
     CallbackQuery,
 )
 
-from translations import BUTTONS, QUESTIONARY  # noqa
-from filters import IsBotFilter  # noqa
-from config import BOT_TOKEN_MAIN  # noqa
-from de_injection import ResourcesMiddleware, Resources  # noqa
+from bots.translations import BUTTONS, QUESTIONARY
+from bots.utils.filters import IsBotFilter
+from bots.config import BOT_TOKEN_MAIN
+from bots.middlewares.resources_middleware import ResourcesMiddleware
 
-# Инициализируем DI-контейнер и роутер
-resources = Resources()
+# Инициализируем роутер
 router = Router(name=__name__)
 
 # Фильтрация по токену основного бота
 router.message.filter(IsBotFilter(BOT_TOKEN_MAIN))
 router.callback_query.filter(IsBotFilter(BOT_TOKEN_MAIN))
 
-# Привязываем middleware к роутеру
-router.message.middleware(ResourcesMiddleware(resources))
-router.callback_query.middleware(ResourcesMiddleware(resources))
 
-
-@router.message(Command("menu"))
+@router.message(Command("menu"), IsBotFilter(BOT_TOKEN_MAIN))
 async def show_main_menu(
         message: Message,
         state: FSMContext,
-        resources: Resources,
+        resources: ResourcesMiddleware,
 ):
     """
     Показывает главное меню для пользователя.
@@ -41,8 +36,10 @@ async def show_main_menu(
     user = message.from_user
     user_id = user.id
     first_name = user.first_name or ""
+
     # Получаем язык из БД
-    lang_code = await resources.db.get_user_language(user_id)
+    user_info = await resources.db_pool.get_user_info(user_id)
+    lang_code = user_info[-1]
 
     # Формируем URL с user_id для Web App
     web_app_url = f"https://lllang.site/?user_id={user_id}"
@@ -80,17 +77,18 @@ async def show_main_menu(
     )
 
 
-@router.callback_query(F.data == "about")
+@router.callback_query(F.data == "about", IsBotFilter(BOT_TOKEN_MAIN))
 async def about(
         callback: CallbackQuery,
-        resources: Resources,
+        resources: ResourcesMiddleware,
 ):
     """
     Обработчик нажатия кнопки "О боте".
     Берём текст из QUESTIONARY, ничего не храним в state.
     """
     # Получаем язык прямо из БД
-    lang_code = await resources.db.get_user_language(callback.from_user.id)
+    user_info = await resources.db_pool.get_user_info(callback.from_user.id)
+    lang_code = user_info[-1]
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🔙 Go Back", callback_data="go_back")]
@@ -105,10 +103,10 @@ async def about(
     await callback.answer()  # убираем "часики" на кнопке
 
 
-@router.callback_query(F.data == "go_back")
+@router.callback_query(F.data == "go_back", IsBotFilter(BOT_TOKEN_MAIN))
 async def go_back(
         callback: CallbackQuery,
-        resources: Resources,
+        resources: ResourcesMiddleware,
 ):
     """
     Возвращает пользователя назад в главное меню, повторно вызывая те же кнопки.
@@ -116,7 +114,9 @@ async def go_back(
     user = callback.from_user
     user_id = user.id
     first_name = user.first_name or ""
-    lang_code = await resources.db.get_user_language(user_id)
+
+    user_info = await resources.db_pool.get_user_info(user_id)
+    lang_code = user_info[-1]
 
     web_app_url = f"https://lllang.site/?user_id={user_id}"
 

@@ -22,9 +22,9 @@ AI_API_URL = os.getenv('AI_API_URL')
 AI_API_KEY = os.getenv('AI_API_KEY')
 
 db_config = {
+    "host": os.getenv("POSTGRES_HOST", "localhost"),
+    "port": int(os.getenv("POSTGRES_PORT", "5433")),
     "user": os.getenv("POSTGRES_USER", "postgres"),
     "password": os.getenv("POSTGRES_PASSWORD", "password"),
     "database": os.getenv("POSTGRES_DB", "telegram_bot"),
-    "host": os.getenv("POSTGRES_HOST", "localhost"),
-    "port": int(os.getenv("POSTGRES_PORT", "5433"))
 }

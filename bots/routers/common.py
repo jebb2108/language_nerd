@@ -1,20 +1,16 @@
 from aiogram import Router
 from aiogram.types import Message
 
-from de_injection import ResourcesMiddleware, Resources # noqa
+from bots.middlewares.rate_limit_middleware import RateLimitMiddleware
 
-
-# Инициализируем ресурсы и роутер
-resources = Resources()
+# Инициализируем роутер
 router = Router(name=__name__)
 
-# Регистрируем middleware на самом роутере
-router.message.middleware(ResourcesMiddleware(resources))
-
 @router.message()
-async def handle_other_messages(message: Message, resources: Resources):
+async def handle_other_messages(message: Message):
     """
     Обработчик всех остальных сообщений (не команд)
     Напоминает пользователю использовать /start
     """
+
     await message.answer("Используйте /start для получения меню")

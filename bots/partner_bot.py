@@ -8,10 +8,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from routers import router as main_router
 
 # Импорт функций БД
-from config import (
-    BOT_TOKEN_PARTNER,
-    logger
-)
+from bots.config import BOT_TOKEN_PARTNER, logger
 
 storage = MemoryStorage()
 
@@ -30,11 +27,11 @@ async def run():
     """
 
     bot = Bot(token=BOT_TOKEN_PARTNER, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
-    dp = Dispatcher(storage=storage) if storage else Dispatcher()
-    dp.include_router(main_router)
+    disp = Dispatcher(storage=storage) if storage else Dispatcher()
+    disp.include_router(main_router)
 
     logger.info("Starting partner bots (polling)…")
-    await dp.start_polling(bot)
+    await disp.start_polling(bot)
 
 
 # Точка входа в программу

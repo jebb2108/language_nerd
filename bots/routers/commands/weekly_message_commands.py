@@ -7,21 +7,19 @@ from aiogram.fsm.context import FSMContext
 from aiogram.utils.formatting import Text, Bold
 from aiogram.utils.markdown import html_decoration as hd
 
-from config import logger  # noqa
-from de_injection import ResourcesMiddleware, Resources  # noqa
+from bots.config import logger
+from bots.middlewares.resources_middleware import ResourcesMiddleware
 
-# Инициализация DI и роутера
-resources = Resources()
+# Инициализация роутера
 router = Router(name=__name__)
-router.message.middleware(ResourcesMiddleware(resources))
-router.callback_query.middleware(ResourcesMiddleware(resources))
+
 
 
 async def send_user_report(
         bot: Bot,
         user_id: int,
         report_id: int,
-        resources: Resources,
+        resources: ResourcesMiddleware,
 ) -> bool:
     """
     Отправляет пользователю его еженедельный отчет.
@@ -70,7 +68,7 @@ async def send_user_report(
 async def start_report_handler(
         callback: types.CallbackQuery,
         state: FSMContext,
-        resources: Resources,
+        resources: ResourcesMiddleware,
 ):
     """
     Начинает интерактивный отчет-опрос по weekly_reports.
@@ -94,24 +92,25 @@ async def start_report_handler(
         word_ids=[row["word_id"] for row in words],
         current_index=0,
         chat_id=callback.message.chat.id,
+        db_pool=resources.db_pool,
     )
 
-    await send_question(state, callback.bot, resources)
+    await send_question(state, callback.bot)
     await callback.answer()
 
 
 async def send_question(
         state: FSMContext,
         bot: Bot,
-        resources: Resources,
 ):
     """
     Отправляет пользователю текущий вопрос из отчета.
     """
     data = await state.get_data()
-    idx = data["current_index"]
-    word_ids = data["word_ids"]
-    chat_id = data["chat_id"]
+    idx = data.get("current_index")
+    word_ids = data.get("word_ids")
+    chat_id = data.get("chat_id")
+    db_pool = data.get("db_pool")
 
     if idx >= len(word_ids):
         await bot.send_message(
@@ -122,7 +121,7 @@ async def send_question(
         return
 
     word_id = word_ids[idx]
-    async with resources.db_pool.acquire() as conn:
+    async with db_pool.acquire() as conn:
         word_data = await conn.fetchrow(
             "SELECT * FROM report_words WHERE word_id = $1",
             word_id
@@ -158,16 +157,13 @@ async def send_question(
     )
 
 
-def quiz_callback_filter(callback: types.CallbackQuery) -> bool:
-    return callback.data.startswith("quiz:")
-
-
-@router.callback_query(quiz_callback_filter)
+@router.callback_query(lambda callback: callback.data.startswith("quiz:"))
 async def handle_word_quiz(
         callback: types.CallbackQuery,
         state: FSMContext,
-        resources: Resources,
 ):
+    data = await state.get_data()
+    db_pool = data.get("db_pool")
     """
     Обработка ответа на вопрос викторины.
     """
@@ -179,7 +175,7 @@ async def handle_word_quiz(
     word_id = int(parts[1])
     selected_idx = int(parts[2])
 
-    async with resources.db_pool.acquire() as conn:
+    async with db_pool.acquire() as conn:
         record = await conn.fetchrow(
             "SELECT word, options, correct_index FROM report_words WHERE word_id = $1",
             word_id
@@ -226,4 +222,4 @@ async def handle_word_quiz(
         await state.clear()
     else:
         await state.update_data(current_index=next_idx)
-        await send_question(state, callback.bot, resources)
+        await send_question(state, callback.bot)

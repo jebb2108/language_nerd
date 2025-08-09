@@ -1,11 +1,6 @@
-import asyncio
 from typing import *
-import asyncpg
 
-# Потокобезопасный доступ к БД
-from contextlib import asynccontextmanager
-
-from config import logger
+from bots.config import logger
 
 
 # = КЛАСС ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ =
@@ -201,10 +196,3 @@ class Database:
                 user_id, word
             )
             return row is not None
-
-    @asynccontextmanager
-    async def acquire(self):
-        if self.db_pool is None:
-            raise RuntimeError("Database pool is not initialized")
-        async with self.db_pool.acquire() as conn:
-            yield conn

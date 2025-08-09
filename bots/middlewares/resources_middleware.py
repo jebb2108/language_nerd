@@ -1,26 +1,29 @@
-# middlewares.py
 import asyncio
+from dataclasses import dataclass
+
+import asyncpg
 from aiogram import BaseMiddleware
 from typing import Callable, Dict, Any, Awaitable
 from aiogram.types import TelegramObject
 from aiohttp import ClientSession
-import asyncpg
 
-from config import db_config, logger
-from database import Database  # Импортируем ваш класс DB
+from bots.config import db_config, logger
+from bots.utils.database import Database  # Импортируем ваш класс DB
 
+@dataclass(frozen=True)
+class DBConfig:
+    host: str
+    port: int
+    user: str
+    password: str
+    database: str
 
 class ResourcesMiddleware(BaseMiddleware):
     """Middleware для управления ресурсами"""
 
     def __init__(self):
         super().__init__()
-        self.db_config = db_config
-        self.resources = {
-            "db": None,  # Здесь будет экземпляр Database
-            "http_session": None,
-            "translation": None
-        }
+        self.db_config = DBConfig(**db_config)
         self._lock = asyncio.Lock()
         self._initialized = False
         self._initialization_failed = False
@@ -31,6 +34,7 @@ class ResourcesMiddleware(BaseMiddleware):
             event: TelegramObject,
             data: Dict[str, Any]
     ) -> Any:
+
         if not self._initialized and not self._initialization_failed:
             async with self._lock:
                 if not self._initialized and not self._initialization_failed:
@@ -42,22 +46,26 @@ class ResourcesMiddleware(BaseMiddleware):
                         logger.critical(f"Resource init failed: {e}")
                         raise
 
-        data["resources"] = self.resources
+        data.update(
+            db=self.db_pool,
+            http_session=self.session,
+        )
+
         return await handler(event, data)
 
     async def initialize_resources(self):
         """Инициализация ресурсов с созданием экземпляра Database"""
         try:
             # Создаем пул подключений
-            db_pool = await asyncpg.create_pool(**self.db_config)
+            pool = await asyncpg.create_pool(**self.db_config.__dict__)
             logger.info("Database pool created")
 
             # Создаем экземпляр класса Database
-            self.resources["db"] = Database(db_pool)
+            self.db_pool = Database(pool)
             logger.info("Database instance initialized")
 
             # Инициализация других ресурсов
-            self.resources["http_session"] = ClientSession()
+            self.session = ClientSession()
             logger.info("HTTP session initialized")
 
         except Exception as e:
@@ -72,47 +80,50 @@ class ResourcesMiddleware(BaseMiddleware):
             self._initialized = False
             logger.info("All resources closed")
 
+
     async def _safe_close(self):
         """Безопасное закрытие с обработкой ошибок"""
         errors = []
 
-        # Закрываем HTTP-сессию
-        if session := self.resources.get("http_session"):
-            try:
-                if not session.closed:
-                    await session.close()
-                    logger.info("HTTP session closed")
-            except Exception as e:
-                errors.append(f"HTTP close error: {e}")
-            finally:
-                self.resources["http_session"] = None
+        # Закрываем HTTP-сессию и пул подключений
+        try:
+            if not self.session.closed:
+                await self.session.close()
+                logger.info("HTTP session closed")
 
-        # Закрываем Database (вызываем его метод close)
-        if db := self.resources.get("db"):
-            try:
-                await db.close()
+            if not self.db_pool.closed:
+                await self.db_pool.close()
                 logger.info("Database closed")
-            except Exception as e:
-                errors.append(f"Database close error: {e}")
-            finally:
-                self.resources["db"] = None
+
+        except Exception as e:
+            errors.append(f"HTTP or Database close error: {e}")
+        finally:
+            self.session = None
+            self.db_pool = None
 
         if errors:
             logger.error(" | ".join(errors))
 
     # Методы для интеграции с жизненным циклом aiogram
-    async def on_startup(self, dispatcher):
-        """Предварительная инициализация при старте"""
+    async def on_startup(self):
+        """Предварительная инициализация при старте приложения"""
         try:
             async with self._lock:
+                # Проверяем, не была ли уже выполнена инициализация
                 if not self._initialized and not self._initialization_failed:
+                    logger.info("Starting resource initialization...")
                     await self.initialize_resources()
                     self._initialized = True
+                    logger.info("Resource initialization completed successfully")
+
         except Exception as e:
             self._initialization_failed = True
-            logger.critical(f"Startup initialization failed: {e}")
-            raise
+            logger.critical(f"Resource initialization failed: {e}", exc_info=True)
 
-    async def on_shutdown(self, dispatcher):
+            # Закрываем ресурсы, если была частичная инициализация
+            await self._safe_close()
+            raise  # Пробрасываем исключение дальше, чтобы остановить приложение
+
+    async def on_shutdown(self):
         """Очистка ресурсов при остановке"""
         await self.close()
