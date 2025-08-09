@@ -145,8 +145,6 @@ async def handle_language_choice(
         callback: CallbackQuery,
         state: FSMContext,
 ):
-    data = await state.get_data()
-    database = data.get("db_pool")
 
     """
     Сохраняем выбор языка, создаём запись в БД и идём в главное меню.
@@ -189,7 +187,7 @@ async def handle_language_choice(
             )
 
         # После сохранения сразу показываем главное меню
-        await show_main_menu(callback.message, state, database)
+        await show_main_menu(callback.message, state, db)
 
     except Exception as e:
         logger.error(f"Error in handle_language_choice: {e}")
