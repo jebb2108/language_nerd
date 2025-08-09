@@ -15,7 +15,7 @@ from utils.filters import IsBotFilter # noqa
 from config import BOT_TOKEN_MAIN, logger # noqa
 from routers.commands.menu_commands import show_main_menu  # переиспользуемый метод # noqa
 
-from bots.middlewares.resources_middleware import ResourcesMiddleware
+from middlewares.resources_middleware import ResourcesMiddleware # noqa
 
 # Инициализируем роутер
 router = Router(name=__name__)
