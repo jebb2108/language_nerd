@@ -10,8 +10,8 @@ from aiohttp import ClientSession
 
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import db_config, logger
-from utils.database import Database  # Импортируем ваш класс DB
+from config import db_config, logger # noqa
+from utils.database import Database  # Импортируем ваш класс DB # noqa
 
 @dataclass(frozen=True)
 class DBConfig:

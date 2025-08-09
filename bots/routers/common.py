@@ -1,8 +1,6 @@
 from aiogram import Router
 from aiogram.types import Message
 
-from bots.middlewares.rate_limit_middleware import RateLimitMiddleware
-
 # Инициализируем роутер
 router = Router(name=__name__)
 

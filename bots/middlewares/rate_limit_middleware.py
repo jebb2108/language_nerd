@@ -11,8 +11,8 @@ from asyncpg.pgproto.pgproto import timedelta
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from utils.async_timed_queue import AsyncTimedQueue
-from config import logger
+from utils.async_timed_queue import AsyncTimedQueue # noqa
+from config import logger # noqa
 
 @dataclass(frozen=False)
 class RateLimitInfo:

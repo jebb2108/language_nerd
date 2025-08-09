@@ -10,10 +10,10 @@ from aiogram.types import (
     CallbackQuery,
 )
 
-from bots.translations import BUTTONS, QUESTIONARY
-from bots.utils.filters import IsBotFilter
-from bots.config import BOT_TOKEN_MAIN
-from bots.middlewares.resources_middleware import ResourcesMiddleware
+from translations import BUTTONS, QUESTIONARY # noqa
+from utils.filters import IsBotFilter # noqa
+from config import BOT_TOKEN_MAIN # noqa
+from middlewares.resources_middleware import ResourcesMiddleware # noqa
 
 # Инициализируем роутер
 router = Router(name=__name__)

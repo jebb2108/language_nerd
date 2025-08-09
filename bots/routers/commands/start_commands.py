@@ -10,10 +10,10 @@ from aiogram.types import (
     CallbackQuery,
 )
 from typing import Union
-from bots.translations import QUESTIONARY
-from bots.utils.filters import IsBotFilter
-from bots.config import BOT_TOKEN_MAIN, logger
-from bots.routers.commands.menu_commands import show_main_menu  # переиспользуемый метод # noqa
+from translations import QUESTIONARY # noqa
+from utils.filters import IsBotFilter # noqa
+from config import BOT_TOKEN_MAIN, logger # noqa
+from routers.commands.menu_commands import show_main_menu  # переиспользуемый метод # noqa
 
 from bots.middlewares.resources_middleware import ResourcesMiddleware
 

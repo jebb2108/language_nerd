@@ -1,14 +1,11 @@
-import asyncio
-from typing import Union
-
 from aiogram import Router, types, Bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.formatting import Text, Bold
 from aiogram.utils.markdown import html_decoration as hd
 
-from bots.config import logger
-from bots.middlewares.resources_middleware import ResourcesMiddleware
+from config import logger # noqa
+from middlewares.resources_middleware import ResourcesMiddleware # noqa
 
 # Инициализация роутера
 router = Router(name=__name__)
