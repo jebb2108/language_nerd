@@ -7,6 +7,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from web_launcher import start_web_app
 from config import logger, BOT_TOKEN_MAIN
 from middlewares import router as middlewares
+from middlewares import db_pool as pool
 from routers import router as main_router
 
 # Создаем хранилище состояний в оперативной памяти
@@ -24,7 +25,7 @@ async def run():
     disp.include_routers(middlewares, main_router)
 
     # Запуск веб-сервера
-    web_runner = await start_web_app(disp["db"])
+    web_runner = await start_web_app(pool)
 
     try:
         logger.info("Starting main bot (polling)…")
@@ -33,7 +34,6 @@ async def run():
         # Корректное завершение
         await bot.session.close()
         await web_runner.cleanup()
-
 
 if __name__ == "__main__":
     asyncio.run(run())

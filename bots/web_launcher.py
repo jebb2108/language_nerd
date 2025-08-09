@@ -111,6 +111,8 @@ async def api_stats_handler(request):
         return web.json_response({"error": "Internal server error"}, status=500)
 
 
+
+
 async def start_web_app(pool):
     global db_pool
     """Запуск веб-сервера"""

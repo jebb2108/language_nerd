@@ -124,6 +124,8 @@ class ResourcesMiddleware(BaseMiddleware):
             await self._safe_close()
             raise  # Пробрасываем исключение дальше, чтобы остановить приложение
 
+        return self.db_pool
+
     async def on_shutdown(self):
         """Очистка ресурсов при остановке"""
         await self.close()

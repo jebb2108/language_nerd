@@ -1,8 +1,10 @@
-__all__ = ['router']
+__all__ = ['router', 'db_pool']
 
 from aiogram import Router
-from rate_limit_middleware import RateLimitMiddleware
-from resources_middleware import ResourcesMiddleware
+from bots.middlewares.rate_limit_middleware import RateLimitMiddleware
+from bots.middlewares.resources_middleware import ResourcesMiddleware
+
+db_pool = None
 
 router = Router(name=__name__)
 
@@ -12,7 +14,9 @@ resources_middleware = ResourcesMiddleware()
 # Обработчики жизненного цикла
 @router.startup()
 async def on_startup_handler():
-    await resources_middleware.on_startup()
+    global db_pool
+    # Запуск веб-сервера
+    db_pool = await resources_middleware.on_startup()
 
 @router.shutdown()
 async def on_shutdown_handler():
