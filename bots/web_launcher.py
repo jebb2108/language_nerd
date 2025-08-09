@@ -2,7 +2,7 @@ import os
 from aiohttp import web
 from config import logger
 
-db_pool = None
+db = None
 
 def get_base_path():
     return os.path.dirname(os.path.abspath(__file__))
@@ -22,7 +22,7 @@ async def api_words_handler(request):
         if not user_id:
             return web.json_response({"error": "User ID is required"}, status=400)
 
-        words = await db_pool.get_words_from_db(int(user_id))
+        words = await db.get_words(int(user_id))
         words_json = [
             {
                 'id': word[0],
@@ -48,7 +48,7 @@ async def api_add_word_handler(request):
 
         if not all([user_id, word, part_of_speech, translation]):
             return web.json_response({"error": "Missing fields"}, status=400)
-        await db_pool.add_word_to_db(int(user_id), word, part_of_speech, translation)
+        await db.add_word(int(user_id), word, part_of_speech, translation)
         return web.json_response({"status": "success"})
     except Exception as e:
         logger.error(f"Error in api_add_word_handler: {str(e)}")
@@ -63,7 +63,7 @@ async def api_search_word_handler(request):
         if not user_id or not word:
             return web.json_response({"error": "Missing parameters"}, status=400)
 
-        result = await db_pool.search_word_in_db(int(user_id), word)
+        result = await db.search_word(int(user_id), word)
         logger.DEBUG(f"Search result: [{result[0], result[1], result[2], result[3]}]")
         if result:
             return web.json_response({
@@ -86,7 +86,7 @@ async def api_delete_word_handler(request):
         if not user_id:
             return web.json_response({"error": "User ID is required"}, status=400)
 
-        await db_pool.delete_word_from_db(int(user_id), word)
+        await db.delete_word(int(user_id), word)
         return web.json_response({"status": "deleted"})
     except Exception as e:
         logger.error(f"Error in api_delete_word_handler: {str(e)}")
@@ -100,7 +100,7 @@ async def api_stats_handler(request):
         if not user_id:
             return web.json_response({"error": "User ID is required"}, status=400)
 
-        stats = await db_pool.get_user_stats(int(user_id))
+        stats = await db.get_user_stats(int(user_id))
         return web.json_response({
             'total_words': stats[0],
             'nouns': stats[1],
@@ -113,11 +113,11 @@ async def api_stats_handler(request):
 
 
 
-async def start_web_app(pool):
-    global db_pool
+async def start_web_app(database):
+    global db
     """Запуск веб-сервера"""
     app = web.Application()
-    db_pool = pool
+    db = database
     # Основные роутеры
     app.router.add_get('/', index_handler)
     app.router.add_get('/api/words', api_words_handler)

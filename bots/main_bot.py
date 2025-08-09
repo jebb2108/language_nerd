@@ -26,10 +26,10 @@ async def run():
     bot = Bot(token=BOT_TOKEN_MAIN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
     resources = ResourcesMiddleware()
-    pool = await resources.on_startup()
+    db = await resources.on_startup()
 
     # Запуск веб-сервера
-    web_runner = await start_web_app(pool)
+    web_runner = await start_web_app(db)
 
     disp.message.middleware(resources)
     disp.callback_query.middleware(resources)

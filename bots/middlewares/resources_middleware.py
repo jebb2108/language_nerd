@@ -50,7 +50,7 @@ class ResourcesMiddleware(BaseMiddleware):
                         raise
 
         data.update(
-            database=self.db_pool,
+            database=self.db,
             http_session=self.session,
         )
 
@@ -65,7 +65,7 @@ class ResourcesMiddleware(BaseMiddleware):
             logger.info("Database pool created")
 
             # Создаем экземпляр класса Database
-            self.db_pool = Database(pool)
+            self.db = Database(pool)
             logger.info("Database instance initialized")
 
             # Инициализация других ресурсов
@@ -95,8 +95,8 @@ class ResourcesMiddleware(BaseMiddleware):
                 await self.session.close()
                 logger.info("HTTP session closed")
 
-            if not self.db_pool.closed:
-                await self.db_pool.close()
+            if not self.db.dp_pool.closed:
+                await self.db.close()
                 logger.info("Database closed")
 
         except Exception as e:
@@ -125,7 +125,7 @@ class ResourcesMiddleware(BaseMiddleware):
             await self._safe_close()
             raise  # Пробрасываем исключение дальше, чтобы остановить приложение
 
-        return self.db_pool
+        return self.db
 
     async def on_shutdown(self):
         """Очистка ресурсов при остановке"""

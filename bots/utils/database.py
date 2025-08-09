@@ -116,7 +116,7 @@ class Database:
             return None, None, None, None
 
     # Обновленные функции работы с БД
-    async def get_words_from_db(self, user_id: int) -> List[Tuple[str, str, str, str]]:
+    async def get_words(self, user_id: int) -> List[Tuple[str, str, str, str]]:
         async with self.db_pool.acquire() as conn:
             rows = await conn.fetch(
                 "SELECT id, word, part_of_speech, translation FROM words WHERE user_id = $1 ORDER BY word",
@@ -124,7 +124,7 @@ class Database:
             )
             return [(row['id'], row['word'], row['part_of_speech'], row['translation']) for row in rows]
 
-    async def search_word_in_db(self, user_id: int, word: str) -> List[Tuple[str, str, str, str]]:
+    async def search_word(self, user_id: int, word: str) -> List[Tuple[str, str, str, str]]:
         async with self.db_pool.acquire() as conn:
             row = await conn.fetchrow(
                 "SELECT id, word, part_of_speech, translation FROM words WHERE user_id = $1 AND word = $2",
@@ -132,7 +132,7 @@ class Database:
             )
             return [(row['id'], row['word'], row['part_of_speech'], row['translation'])]
 
-    async def delete_word_from_db(self, user_id: int, word_id: int) -> bool:
+    async def delete_word(self, user_id: int, word_id: int) -> bool:
         async with self.db_pool.acquire() as conn:
             result = await conn.execute(
                 "DELETE FROM words WHERE user_id = $1 AND id = $2",
@@ -140,7 +140,7 @@ class Database:
             )
             return "DELETE" in result
 
-    async def update_word_in_db(
+    async def update_word(
             self,
             user_id: int,
             old_word: str,
@@ -175,7 +175,7 @@ class Database:
                         )
                         return "UPDATE" in result
 
-    async def add_word_to_db(self, user_id: int, word: str, pos: str, value: str) -> bool:
+    async def add_word(self, user_id: int, word: str, pos: str, value: str) -> bool:
         if value is None:
             value = ""
         async with self.db_pool.acquire() as conn:
