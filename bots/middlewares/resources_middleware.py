@@ -24,10 +24,8 @@ class DBConfig:
 class ResourcesMiddleware(BaseMiddleware):
     """Middleware для управления ресурсами"""
 
-    def __init__(self, db_pool=None, session=None):
+    def __init__(self):
         super().__init__()
-        self.db_pool = db_pool
-        self.session = session
         self.db_config = DBConfig(**db_config)
         self._lock = asyncio.Lock()
         self._initialized = False
@@ -58,29 +56,6 @@ class ResourcesMiddleware(BaseMiddleware):
 
         return await handler(event, data)
 
-    @property
-    def db_pool(self):
-        return self.__db_pool
-
-    @property
-    def session(self):
-        return self.__session
-
-    @db_pool.setter
-    def db_pool(self, pool):
-        if not self._initialized:
-            self.__db_pool = pool
-
-    @session.setter
-    def session(self, new_session):
-        if not self._initialized:
-            self.__session = new_session
-
-    def get_db_pool(self):
-        return self.db_pool
-
-    def get_session(self):
-        return self.session
 
     async def initialize_resources(self):
         """Инициализация ресурсов с созданием экземпляра Database"""
@@ -126,9 +101,6 @@ class ResourcesMiddleware(BaseMiddleware):
 
         except Exception as e:
             errors.append(f"HTTP or Database close error: {e}")
-        finally:
-            self.session = None
-            self.db_pool = None
 
         if errors:
             logger.error(" | ".join(errors))
@@ -153,7 +125,7 @@ class ResourcesMiddleware(BaseMiddleware):
             await self._safe_close()
             raise  # Пробрасываем исключение дальше, чтобы остановить приложение
 
-        return self.get_db_pool()
+        return self.db_pool
 
     async def on_shutdown(self):
         """Очистка ресурсов при остановке"""

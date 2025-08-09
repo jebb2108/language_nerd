@@ -18,7 +18,7 @@ from tenacity import (
 
 from aiogram import Bot
 
-from bots.middlewares.resources_middleware import ResourcesMiddleware
+from middlewares.resources_middleware import ResourcesMiddleware
 from routers.commands.weekly_message_commands import send_user_report
 from utils.database import ReportDatabase
 from config import (
