@@ -85,11 +85,14 @@ async def show_main_menu(
 
 
 @router.callback_query(F.data == "about", IsBotFilter(BOT_TOKEN_MAIN))
-async def about(callback: CallbackQuery):
+async def about(callback: CallbackQuery, state: FSMContext):
     """
     Обработчик нажатия кнопки "О боте".
     Берём текст из QUESTIONARY, ничего не храним в state.
     """
+    data = await state.get_data()
+    db_pool = data.get("db_pool")
+
     # Получаем язык прямо из БД
     user_info = await db_pool.get_user_info(callback.from_user.id)
     lang_code = user_info[-1]
