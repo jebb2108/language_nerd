@@ -6,6 +6,7 @@ from typing import Dict, Tuple, List
 from pathlib import Path
 from collections import defaultdict
 import asyncpg  # Важно добавить импорт
+from contextlib import asynccontextmanager
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import logger  # noqa
@@ -27,7 +28,7 @@ class Database:
             logger.error(f"Database initialization failed: {e}")
 
     async def __create_words(self):
-        async with self.acquire_connection() as conn: 
+        async with self.acquire_connection() as conn:
             await conn.execute("""
                 CREATE TABLE IF NOT EXISTS words (
                 id SERIAL PRIMARY KEY,
@@ -82,6 +83,7 @@ class Database:
         return await self._pool.acquire()
 
     # Контекстный менеджер для работы с соединениями
+    @asynccontextmanager
     async def connection_context(self):
         """Асинхронный контекстный менеджер для работы с соединениями"""
         conn = await self._pool.acquire()
