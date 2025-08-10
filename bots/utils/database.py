@@ -61,7 +61,7 @@ class Database:
             await conn.execute("""
                             CREATE TABLE IF NOT EXISTS weekly_reports (
                             report_id SERIAL PRIMARY KEY,
-                            user_id INT NOT NULL,
+                            user_id BIGINT NOT NULL,
                             generation_date TIMESTAMP DEFAULT NOW(),
                             sent BOOLEAN DEFAULT FALSE
                             ); """)
