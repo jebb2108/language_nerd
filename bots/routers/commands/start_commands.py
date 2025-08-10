@@ -179,7 +179,7 @@ async def handle_language_choice(
         async with database.connection_context() as conn:
             await conn.execute(
                 """
-                INSERT INTO users (user_id, username, first_name, camefrom, chosen_language, lang_code)
+                INSERT INTO users (user_id, username, first_name, camefrom, language, lang_code)
                 VALUES ($1,$2,$3,$4,$5,$6)
                 """,
                 user_id, username, first_name, camefrom, users_choice, lang_code
