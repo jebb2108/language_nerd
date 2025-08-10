@@ -126,3 +126,4 @@ class ResourcesMiddleware(BaseMiddleware):
     async def on_shutdown(self):
         """Очистка ресурсов при остановке"""
         await self.close()
+        await self.session.close()
