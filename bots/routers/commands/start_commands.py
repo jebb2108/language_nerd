@@ -144,6 +144,7 @@ async def handle_camefrom(
 async def handle_language_choice(
         callback: CallbackQuery,
         state: FSMContext,
+        database: ResourcesMiddleware,
 ):
 
     """
@@ -156,7 +157,6 @@ async def handle_language_choice(
         username = data.get("username", "")
         first_name = data.get("first_name", "")
         camefrom = data.get("camefrom", "")
-        db = data.get("db")
 
         users_choice = callback.data.split("_", 1)[1]
 
@@ -177,7 +177,7 @@ async def handle_language_choice(
         await callback.answer()
 
         # Сохраняем нового пользователя в БД
-        async with db.connection_context() as conn:
+        async with database.connection_context() as conn:
             await conn.execute(
                 """
                 INSERT INTO users (user_id, username, first_name, camefrom, chosen_language, lang_code)
@@ -187,7 +187,7 @@ async def handle_language_choice(
             )
 
         # После сохранения сразу показываем главное меню
-        await show_main_menu(callback.message, state, db)
+        await show_main_menu(callback.message, state, database)
 
     except Exception as e:
         logger.error(f"Error in handle_language_choice: {e}")
