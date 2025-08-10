@@ -45,7 +45,7 @@ async def start_with_polling(
 
     # Проверяем, есть ли запись в users
     try:
-        async with db.connection_context() as conn:
+        async with db.acquire_connection() as conn:
             user_exists = await conn.fetchval(
                 "SELECT 1 FROM users WHERE user_id = $1", user_id
             )
@@ -176,7 +176,7 @@ async def handle_language_choice(
     try:
 
         # Сохраняем нового пользователя в БД
-        async with database.connection_context() as conn:
+        async with database.acquire_connection() as conn:
             await conn.execute(
                 """
                 INSERT INTO users (user_id, username, first_name, camefrom, language, lang_code)

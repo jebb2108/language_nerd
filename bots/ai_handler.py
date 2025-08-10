@@ -292,7 +292,7 @@ async def process_user_report(user_id: int, words: List[str], session, db: Repor
 
     # Сохраняем отчет в БД
     if report_data:
-        async with db.db_pool.acquire() as conn:
+        async with db.acquire_connection() as conn:
             async with conn.transaction():
                 report_id = await db.create_report(user_id)
                 await db.add_words_to_report(report_id, report_data)

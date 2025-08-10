@@ -78,13 +78,9 @@ class Database:
                             correct_index INT NOT NULL
                             ); """)
 
-    async def acquire_connection(self):
-        """Корутина для получения соединения с правильным контекстом"""
-        return await self._pool.acquire()
-
     # Контекстный менеджер для работы с соединениями
     @asynccontextmanager
-    async def connection_context(self):
+    async def acquire_connection(self):
         """Асинхронный контекстный менеджер для работы с соединениями"""
         conn = await self._pool.acquire()
         try:
@@ -94,7 +90,7 @@ class Database:
 
     async def create_users_table(self, user_id, username, first_name, camefrom, language, lang_code):
         try:
-            async with self.connection_context() as conn:
+            async with self.acquire_connection() as conn:
                 result = await conn.execute("""
                     INSERT INTO users (user_id, username, first_name, camefrom, language, lang_code) 
                     VALUES ($1, $2, $3, $4, $5, $6)
@@ -112,7 +108,7 @@ class Database:
             return False
 
     async def get_user_info(self, user_id: int) -> dict:
-        async with self.connection_context() as conn:
+        async with self.acquire_connection() as conn:
             row = await conn.fetchrow(
                 "SELECT * FROM users WHERE user_id = $1",
                 user_id
@@ -121,7 +117,7 @@ class Database:
             return dict(row) if row else None
 
     async def get_words(self, user_id: int) -> List[Tuple[str, str, str, str]]:
-        async with self.connection_context() as conn:
+        async with self.acquire_connection() as conn:
             rows = await conn.fetch(
                 "SELECT id, word, part_of_speech, translation FROM words WHERE user_id = $1 ORDER BY word",
                 user_id
@@ -132,7 +128,7 @@ class Database:
     async def add_word(self, user_id: int, word: str, pos: str, value: str) -> bool:
         if value is None:
             value = ""
-        async with self.connection_context() as conn:
+        async with self.acquire_connection() as conn:
             try:
                 await conn.execute(
                     "INSERT INTO words (user_id, word, part_of_speech, translation) VALUES ($1, $2, $3, $4)",
@@ -144,7 +140,7 @@ class Database:
                 return False
 
     async def search_word(self, user_id: int, word: str) -> List[Tuple[str, str, str, str]]:
-        async with self.connection_context() as conn:
+        async with self.acquire_connection() as conn:
             row = await conn.fetchrow(
                 "SELECT id, word, part_of_speech, translation FROM words WHERE user_id = $1 AND word = $2",
                 user_id, word
@@ -152,7 +148,7 @@ class Database:
             return [(row['id'], row['word'], row['part_of_speech'], row['translation'])]
 
     async def delete_word(self, user_id: int, word_id: int) -> bool:
-        async with self.connection_context() as conn:
+        async with self.acquire_connection() as conn:
             result = await conn.execute(
                 "DELETE FROM words WHERE user_id = $1 AND id = $2",
                 user_id, word_id
@@ -169,7 +165,7 @@ class Database:
             value: str
     ) -> bool:
         async with self.user_locks[user_id]:
-            async with self.connection_context() as conn:
+            async with self.acquire_connection() as conn:
                 async with conn.transaction():
                     if old_word != new_word:
                         await conn.execute(
@@ -193,7 +189,7 @@ class Database:
     # Temperorary solution
     async def get_user_stats(self, user_id: int):
         async with self.stats_lock:
-            async with self.connection_context() as conn:
+            async with self.acquire_connection() as conn:
                 try:
                     row = await conn.fetchrow(
                         """
@@ -231,7 +227,7 @@ class ReportDatabase(Database):
 
     async def get_weekly_words_by_user(self) -> List[Dict]:
         week_ago = datetime.now() - timedelta(days=7)
-        async with self.connection_context() as conn:
+        async with self.acquire_connection() as conn:
             return await conn.fetch(
                 "SELECT user_id, ARRAY_AGG(DISTINCT word) as words "
                 "FROM words "
@@ -242,14 +238,14 @@ class ReportDatabase(Database):
             )
 
     async def create_report(self, user_id: int) -> int:
-        async with self.connection_context() as conn:
+        async with self.acquire_connection() as conn:
             return await conn.fetchval(
                 "INSERT INTO weekly_reports (user_id) VALUES ($1) RETURNING report_id",
                 user_id
             )
 
     async def add_words_to_report(self, report_id: int, words: List[Dict]):
-        async with self.connection_context() as conn:
+        async with self.acquire_connection() as conn:
             for item in words:
                 await conn.execute(
                     "INSERT INTO report_words (report_id, word, sentence, options, correct_index) "
@@ -262,13 +258,13 @@ class ReportDatabase(Database):
                 )
 
     async def get_pending_reports(self) -> List[Dict]:
-        async with self.connection_context() as conn:
+        async with self.acquire_connection() as conn:
             return await conn.fetch(
                 "SELECT report_id, user_id FROM weekly_reports WHERE sent = FALSE"
             )
 
     async def mark_report_as_sent(self, report_id: int):
-        async with self.connection_context() as conn:
+        async with self.acquire_connection() as conn:
             await conn.execute(
                 "UPDATE weekly_reports SET sent = TRUE WHERE report_id = $1",
                 report_id
@@ -276,7 +272,7 @@ class ReportDatabase(Database):
 
     async def cleanup_old_reports(self, days: int) -> Tuple[int, int]:
         cutoff_date = datetime.now() - timedelta(days=days)
-        async with self.connection_context() as conn:
+        async with self.acquire_connection() as conn:
             # Получаем и удаляем старые отчеты
             words_deleted = await conn.execute(
                 "DELETE FROM report_words "

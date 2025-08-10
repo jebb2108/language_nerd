@@ -32,6 +32,7 @@ async def run():
     # Запуск веб-сервера
     web_runner = await start_web_app(db)
 
+    # Регистрация middleware
     disp.message.middleware(resources)
     disp.callback_query.middleware(resources)
     disp.inline_query.middleware(resources)

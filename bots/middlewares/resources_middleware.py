@@ -30,6 +30,7 @@ class ResourcesMiddleware(BaseMiddleware):
         self._lock = asyncio.Lock()
         self._initialized = False
         self._initialization_failed = False
+        self.db_pool = None
 
     async def __call__(
             self,
@@ -53,7 +54,6 @@ class ResourcesMiddleware(BaseMiddleware):
             database=self.db,
             http_session=self.session,
         )
-
         return await handler(event, data)
 
 
@@ -61,11 +61,11 @@ class ResourcesMiddleware(BaseMiddleware):
         """Инициализация ресурсов с созданием экземпляра Database"""
         try:
             # Создаем пул подключений
-            pool = await asyncpg.create_pool(**self.db_config.__dict__)
+            self.db_pool = await asyncpg.create_pool(**self.db_config.__dict__)
             logger.info("Database pool created")
 
             # Создаем экземпляр класса Database
-            self.db = Database(pool)
+            self.db = Database(self.db_pool)
             logger.info("Database instance initialized")
 
             # Инициализация других ресурсов
@@ -90,17 +90,13 @@ class ResourcesMiddleware(BaseMiddleware):
         errors = []
 
         # Закрываем HTTP-сессию и пул подключений
+        # Закрываем пул подключений
         try:
-            if not self.session.closed:
-                await self.session.close()
-                logger.info("HTTP session closed")
-
-            if not self.db.db_pool._closed:
-                await self.db.close()
-                logger.info("Database closed")
-
+            if self.db_pool and not self.db_pool._closed:
+                await self.db_pool.close()
+                logger.info("Database pool closed")
         except Exception as e:
-            errors.append(f"HTTP or Database close error: {e}")
+            errors.append(f"Database pool close error: {e}")
 
         if errors:
             logger.error(" | ".join(errors))
