@@ -128,7 +128,37 @@ class Database:
             )
             return [(row['id'], row['word'], row['part_of_speech'], row['translation']) for row in rows]
 
-    # Все остальные методы работы со словами аналогично используют connection_context()
+
+    async def add_word(self, user_id: int, word: str, pos: str, value: str) -> bool:
+        if value is None:
+            value = ""
+        async with self.connection_context() as conn:
+            try:
+                await conn.execute(
+                    "INSERT INTO words (user_id, word, part_of_speech, translation) VALUES ($1, $2, $3, $4)",
+                    user_id, word, pos, value
+                )
+                return True
+            except Exception as e:
+                logger.error(f"Database error: {e}")
+                return False
+
+    async def search_word(self, user_id: int, word: str) -> List[Tuple[str, str, str, str]]:
+        async with self.connection_context() as conn:
+            row = await conn.fetchrow(
+                "SELECT id, word, part_of_speech, translation FROM words WHERE user_id = $1 AND word = $2",
+                user_id, word
+            )
+            return [(row['id'], row['word'], row['part_of_speech'], row['translation'])]
+
+    async def delete_word(self, user_id: int, word_id: int) -> bool:
+        async with self.connection_context() as conn:
+            result = await conn.execute(
+                "DELETE FROM words WHERE user_id = $1 AND id = $2",
+                user_id, word_id
+            )
+            return "DELETE" in result
+
 
     async def update_word(
             self,
