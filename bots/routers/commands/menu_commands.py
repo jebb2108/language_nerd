@@ -30,8 +30,7 @@ async def show_main_menu(
         database: ResourcesMiddleware,
 ):
     await state.update_data(
-        db_pool=database,
-        user_id=message.from_user.id,
+        user_id= message.from_user.id,
         username=message.from_user.username or "",
         first_name=message.from_user.first_name or "",
         lang_code=message.from_user.language_code or "en",
@@ -47,7 +46,7 @@ async def show_main_menu(
 
     # Получаем язык из БД
     user_info = await database.get_user_info(user_id)
-    lang_code = user_info[-1]
+    # lang_code = user_info[-1]
 
     # Формируем URL с user_id для Web App
     web_app_url = f"https://lllang.site/?user_id={user_id}"

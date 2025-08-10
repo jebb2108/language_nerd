@@ -111,15 +111,14 @@ class Database:
             logger.error(f"Error creating/updating user {user_id}: {e}")
             return False
 
-    async def get_user_info(self, user_id):
+    async def get_user_info(self, user_id: int) -> dict:
         async with self.connection_context() as conn:
             row = await conn.fetchrow(
-                "SELECT username, first_name, language, lang_code FROM users WHERE user_id = $1",
+                "SELECT * FROM users WHERE user_id = $1",
                 user_id
             )
-            if row:
-                return row["username"], row["first_name"], row["language"], row["lang_code"]
-            return None, None, None, None
+            logger.info(f"User {user_id} info: {dict(row)}")
+            return dict(row) if row else None
 
     async def get_words(self, user_id: int) -> List[Tuple[str, str, str, str]]:
         async with self.connection_context() as conn:
