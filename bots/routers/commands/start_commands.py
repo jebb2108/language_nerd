@@ -194,7 +194,6 @@ async def handle_language_choice(
 @router.callback_query(F.data == "action_confirm", PollingStates.introduction_state)
 async def go_to_main_menu(
         callback: CallbackQuery,
-        message: Message,
         state: FSMContext,
         database: ResourcesMiddleware
 ):
@@ -206,7 +205,7 @@ async def go_to_main_menu(
     )
     await state.clear()
     # После сохранения сразу показываем главное меню
-    await show_main_menu(message, state, database)
+    await show_main_menu(callback.message, state, database)
 
 
 async def send_message_with_save(
