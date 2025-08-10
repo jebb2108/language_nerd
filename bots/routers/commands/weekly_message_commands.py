@@ -22,7 +22,7 @@ async def send_user_report(
     Отправляет пользователю его еженедельный отчет.
     """
     try:
-        async with database.acquire_connection() as conn:
+        async with database.connection_context() as conn:
             report = await conn.fetchrow(
                 "SELECT * FROM weekly_reports WHERE report_id = $1",
                 report_id
@@ -72,7 +72,7 @@ async def start_report_handler(
     """
     report_id = int(callback.data.split(":", 1)[1])
 
-    async with database.acquire_connection() as conn:
+    async with database.connection_context() as conn:
         words = await conn.fetch(
             "SELECT word_id FROM report_words WHERE report_id = $1",
             report_id
@@ -118,7 +118,7 @@ async def send_question(
         return
 
     word_id = word_ids[idx]
-    async with db_pool.acquire_connection() as conn:
+    async with db_pool.connection_context() as conn:
         word_data = await conn.fetchrow(
             "SELECT * FROM report_words WHERE word_id = $1",
             word_id
@@ -172,7 +172,7 @@ async def handle_word_quiz(
     word_id = int(parts[1])
     selected_idx = int(parts[2])
 
-    async with db_pool.acquire_connection() as conn:
+    async with db_pool.connection_context() as conn:
         record = await conn.fetchrow(
             "SELECT word, options, correct_index FROM report_words WHERE word_id = $1",
             word_id

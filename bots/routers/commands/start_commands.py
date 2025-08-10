@@ -156,7 +156,7 @@ async def handle_language_choice(
         username = data.get("username", "")
         first_name = data.get("first_name", "")
         camefrom = data.get("camefrom", "")
-        db = data.get("db_pool")
+        db = data.get("db")
 
         users_choice = callback.data.split("_", 1)[1]
 
@@ -177,7 +177,7 @@ async def handle_language_choice(
         await callback.answer()
 
         # Сохраняем нового пользователя в БД
-        async with db.acquire_connection() as conn:
+        async with db.connection_context() as conn:
             await conn.execute(
                 """
                 INSERT INTO users (user_id, username, first_name, camefrom, chosen_language, lang_code)

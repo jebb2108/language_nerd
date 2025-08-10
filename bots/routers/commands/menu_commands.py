@@ -35,6 +35,7 @@ async def show_main_menu(
         username=message.from_user.username or "",
         first_name=message.from_user.first_name or "",
         lang_code=message.from_user.language_code or "en",
+        db=database,
     )
     """
     Показывает главное меню для пользователя.
