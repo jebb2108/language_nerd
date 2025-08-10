@@ -117,7 +117,7 @@ class Database:
                 "SELECT * FROM users WHERE user_id = $1",
                 user_id
             )
-            logger.info(f"User {user_id} info: {dict(row)}")
+            logger.info(f"User {user_id} info: {dict(row) if row else None}")
             return dict(row) if row else None
 
     async def get_words(self, user_id: int) -> List[Tuple[str, str, str, str]]:
