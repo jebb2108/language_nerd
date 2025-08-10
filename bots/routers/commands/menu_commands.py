@@ -94,7 +94,7 @@ async def about(callback: CallbackQuery, database: ResourcesMiddleware):
     # Получаем язык прямо из БД
     user_info = await database.get_user_info(callback.from_user.id)
 
-    lang_code = user_info[-1]
+    lang_code = user_info['lang_code']
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🔙 Go Back", callback_data="go_back")]
