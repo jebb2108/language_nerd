@@ -171,86 +171,78 @@ async def generate_question_for_word(word, session):
 def parse_deepseek_response(content, original_word):
     """Парсит ответ от DeepSeek в нужный формат"""
     try:
-        # Удаляем лишние символы форматирования
-        cleaned_content = re.sub(r'\*|\(.*?\)|\[.*?\]', '', content)
+        # Убираем лишнее форматирование (*, [], (), кавычки)
+        cleaned_content = re.sub(r'\*|\[.*?\]|\(.*?\)', '', content)
 
-        # Ищем предложение и варианты с более гибким распознаванием
+        # Разбиваем на строки и очищаем пробелы
+        lines = [line.strip() for line in cleaned_content.split('\n') if line.strip()]
+
         sentence = None
         options = []
 
-        # Разбиваем содержимое на строки и очищаем
-        lines = [line.strip() for line in cleaned_content.split('\n') if line.strip()]
-
-        # Ищем предложение по наличию троеточия
-        for i, line in enumerate(lines):
+        # --- Поиск предложения с "..." ---
+        for line in lines:
             if "..." in line:
-                # Удаляем метки "Предложение:" если есть
-                sentence = re.sub(r'^(предложение|sentence):\s*', '', line, flags=re.IGNORECASE).strip()
-                # Удаляем лишние пробелы и кавычки
-                sentence = sentence.strip().strip('"').strip("'")
+                sentence = re.sub(r'^(предложение|sentence):\s*', '', line, flags=re.IGNORECASE).strip().strip('"').strip("'")
                 break
 
-        # Если не нашли предложение с троеточием, используем первую строку
+        # Если не нашли — берём первую строку
         if not sentence and lines:
             sentence = lines[0]
 
-        # Ищем варианты ответов
+        # --- Поиск вариантов ---
         for i, line in enumerate(lines):
             if re.match(r'^(варианты|options):', line, re.IGNORECASE):
-                # Собираем следующие строки как варианты
-                for j in range(i + 1, min(i + 5, len(lines))):
-                    option_line = lines[j].strip()
-                    if option_line:
-                        # Удаляем маркеры списка и номера
-                        clean_option = re.sub(r'^[-\*]?\s*\d?\.?\s*', '', option_line)
-                        # Удаляем пометки в скобках
-                        clean_option = re.sub(r'\(.*?\)', '', clean_option).strip()
-                        options.append(clean_option)
+                # Забираем всё, что после двоеточия
+                after_colon = re.sub(r'^(варианты|options):\s*', '', line, flags=re.IGNORECASE)
+                if after_colon:
+                    # Если варианты в одну строку через запятую
+                    inline_opts = [opt.strip() for opt in after_colon.split(',') if opt.strip()]
+                    options.extend(inline_opts)
+
+                # Если модель выдала варианты в следующих строках
+                for j in range(i + 1, min(i + 6, len(lines))):
+                    opt_line = lines[j].strip()
+                    if opt_line:
+                        clean_option = re.sub(r'^[-\*]?\s*\d?\.?\s*', '', opt_line).strip()
+                        if clean_option:
+                            options.append(clean_option)
                 break
 
-        # Если не нашли метку вариантов, ищем список из 4 элементов
+        # --- Если метки "Варианты:" нет, ищем список из 4+ элементов ---
         if not options:
             candidate_options = []
             for line in lines:
-                # Пропускаем строку с предложением
                 if line == sentence:
                     continue
-                # Удаляем маркеры списка и номера
                 clean_option = re.sub(r'^[-\*]?\s*\d?\.?\s*', '', line).strip()
-                # Удаляем пометки в скобках
-                clean_option = re.sub(r'\(.*?\)', '', clean_option).strip()
                 if clean_option:
                     candidate_options.append(clean_option)
-
-            # Если нашли ровно 4 варианта, используем их
             if len(candidate_options) >= 4:
                 options = candidate_options[:4]
 
-        # Проверяем наличие всех необходимых элементов
+        # --- Проверки ---
         if not sentence:
             logger.warning(f"Не найдено предложение в ответе: {content}")
             return None
 
-        if not options or len(options) < 4:
+        if len(options) < 4:
             logger.warning(f"Недостаточно вариантов в ответе (найдено {len(options)}): {content}")
             return None
 
-        # Берем только первые 4 варианта
         options = options[:4]
 
-        # Проверяем наличие оригинального слова в вариантах (без учета регистра)
-        original_lower = original_word.lower()
-        options_lower = [opt.lower() for opt in options]
-
-        if original_lower not in options_lower:
+        # Проверяем, есть ли оригинальное слово среди вариантов
+        if original_word.lower() not in [opt.lower() for opt in options]:
             logger.warning(f"Original word '{original_word}' not found in options: {options}")
             return None
 
-        # Возвращаем варианты в оригинальном регистре
         return {"sentence": sentence, "options": options}
+
     except Exception as e:
         logger.error(f"Parse error for '{original_word}': {e}", exc_info=True)
         return None
+
 
 
 # ========== ОСНОВНЫЕ ФУНКЦИИ ОБРАБОТКИ ==========
