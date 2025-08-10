@@ -45,7 +45,7 @@ async def start_with_polling(
 
     # Проверяем, есть ли запись в users
     try:
-        async with db.acquire_connection() as conn:
+        async with db.connection_context() as conn:
             user_exists = await conn.fetchval(
                 "SELECT 1 FROM users WHERE user_id = $1", user_id
             )

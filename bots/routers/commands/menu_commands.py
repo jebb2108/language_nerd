@@ -46,7 +46,7 @@ async def show_main_menu(
 
     # Получаем язык из БД
     user_info = await database.get_user_info(user_id)
-    # lang_code = user_info[-1]
+    lang_code = user_info['lang_code']
 
     # Формируем URL с user_id для Web App
     web_app_url = f"https://lllang.site/?user_id={user_id}"
