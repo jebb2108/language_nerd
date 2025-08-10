@@ -1,3 +1,6 @@
+from gc import callbacks
+from pyexpat.errors import messages
+
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.enums import ParseMode
@@ -34,19 +37,11 @@ async def show_main_menu(
         username=message.from_user.username or "",
         first_name=message.from_user.first_name or "",
         lang_code=message.from_user.language_code or "en",
-        db=database,
     )
-    """
-    Показывает главное меню для пользователя.
-    Язык пользователя берём из БД, а не из state.
-    """
-    user = message.from_user
-    user_id = user.id
-    first_name = user.first_name or ""
 
-    # Получаем язык из БД
-    user_info = await database.get_user_info(user_id)
-    lang_code = user_info['lang_code']
+    user_id = message.from_user.id
+    first_name = message.from_user.first_name or ""
+    lang_code = message.from_user.language_code or "en"
 
     # Формируем URL с user_id для Web App
     web_app_url = f"https://lllang.site/?user_id={user_id}"
@@ -85,16 +80,14 @@ async def show_main_menu(
 
 
 @router.callback_query(F.data == "about", IsBotFilter(BOT_TOKEN_MAIN))
-async def about(callback: CallbackQuery, database: ResourcesMiddleware):
+async def about(callback: CallbackQuery, state: FSMContext):
     """
     Обработчик нажатия кнопки "О боте".
     Берём текст из QUESTIONARY, ничего не храним в state.
     """
 
-    # Получаем язык прямо из БД
-    user_info = await database.get_user_info(callback.from_user.id)
-
-    lang_code = user_info['lang_code']
+    data = await state.get_data()
+    lang_code = data.get("lang_code")
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🔙 Go Back", callback_data="go_back")]
