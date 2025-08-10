@@ -150,31 +150,30 @@ async def handle_language_choice(
     """
     Сохраняем выбор языка, создаём запись в БД и идём в главное меню.
     """
+    data = await state.get_data()
+    lang_code = data.get("lang_code", "en")
+    user_id = data["user_id"]
+    username = data.get("username", "")
+    first_name = data.get("first_name", "")
+    camefrom = data.get("camefrom", "")
+
+    users_choice = callback.data.split("_", 1)[1]
+
+    # Обновляем текст с подтверждением выбора
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(
+            text=QUESTIONARY["confirm"][lang_code],
+            callback_data="action_confirm"
+        )]
+    ])
+
+    await callback.message.edit_text(
+        f"➪ Вы выбрали: {users_choice}\n\n{QUESTIONARY['gratitude'][lang_code]}",
+        reply_markup=keyboard,
+        parse_mode=ParseMode.HTML,
+    )
+    await callback.answer()
     try:
-        data = await state.get_data()
-        lang_code = data.get("lang_code", "en")
-        user_id = data["user_id"]
-        username = data.get("username", "")
-        first_name = data.get("first_name", "")
-        camefrom = data.get("camefrom", "")
-
-        users_choice = callback.data.split("_", 1)[1]
-
-        # Обновляем текст с подтверждением выбора
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(
-                text=QUESTIONARY["confirm"][lang_code],
-                callback_data="action_confirm"
-            )]
-        ])
-
-        await callback.message.edit_text(
-            f"➪ Вы выбрали: {users_choice}\n\n{QUESTIONARY['gratitude'][lang_code]}",
-            reply_markup=keyboard,
-            parse_mode=ParseMode.HTML,
-        )
-        await state.set_state(PollingStates.introduction_state)
-        await callback.answer()
 
         # Сохраняем нового пользователя в БД
         async with database.connection_context() as conn:
@@ -186,11 +185,28 @@ async def handle_language_choice(
                 user_id, username, first_name, camefrom, users_choice, lang_code
             )
 
-        # После сохранения сразу показываем главное меню
-        await show_main_menu(callback.message, state, database)
-
     except Exception as e:
-        logger.error(f"Error in handle_language_choice: {e}")
+        logger.error(f"Error in passing user to DB: {e}")
+
+    finally:
+        await state.set_state(PollingStates.introduction_state)
+
+@router.callback_query(F.data == "action_confirm", PollingStates.introduction_state)
+async def go_to_main_menu(
+        callback: CallbackQuery,
+        message: Message,
+        state: FSMContext,
+        database: ResourcesMiddleware
+):
+
+    await delete_previous_messages(
+        bot=callback.bot,
+        chat_id=callback.message.chat.id,
+        state=state,
+    )
+    await state.clear()
+    # После сохранения сразу показываем главное меню
+    await show_main_menu(message, state, database)
 
 
 async def send_message_with_save(
