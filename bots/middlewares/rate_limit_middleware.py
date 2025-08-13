@@ -1,3 +1,4 @@
+import logging
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
@@ -12,7 +13,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from utils.async_timed_queue import AsyncTimedQueue # noqa
-from config import logger # noqa
+
+logger = logging.getLogger(name=__name__)
 
 @dataclass(frozen=False)
 class RateLimitInfo:

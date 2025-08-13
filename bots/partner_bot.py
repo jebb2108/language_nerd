@@ -1,4 +1,6 @@
 import asyncio
+import logging
+
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
@@ -9,7 +11,9 @@ from routers import router as main_router
 from middlewares.rate_limit_middleware import RateLimitMiddleware
 
 # Импорт функций БД
-from config import BOT_TOKEN_PARTNER, logger
+from config import BOT_TOKEN_PARTNER
+
+logger = logging.getLogger(name=__name__)
 
 storage = MemoryStorage()
 

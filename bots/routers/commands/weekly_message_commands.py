@@ -220,3 +220,9 @@ async def handle_word_quiz(
     else:
         await state.update_data(current_index=next_idx)
         await send_question(state, callback.bot)
+
+
+@router.callback_query() # Без фильтров, перехватывает все запросы обратного вызова
+async def handle_unhandled_callback_query(callback: types.CallbackQuery):
+    logger.warning(f"Получен необработанный запрос обратного вызова: {callback.data}")
+    await callback.answer("Извините, я не понял эту команду.", show_alert=True)

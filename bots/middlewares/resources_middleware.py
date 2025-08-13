@@ -1,3 +1,4 @@
+import logging
 import sys
 import asyncio
 from dataclasses import dataclass
@@ -10,8 +11,10 @@ from aiohttp import ClientSession
 
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import db_config, logger # noqa
-from utils.database import Database  # Импортируем ваш класс DB # noqa
+from config import db_config # noqa
+from utils.database import Database  # Импортируем ваш класс DB # noqa\
+
+logger = logging.getLogger(name=__name__)
 
 @dataclass(frozen=True)
 class DBConfig:

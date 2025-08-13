@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Router, F, Bot
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
@@ -12,10 +14,12 @@ from aiogram.types import (
 from typing import Union
 from translations import QUESTIONARY # noqa
 from utils.filters import IsBotFilter # noqa
-from config import BOT_TOKEN_MAIN, logger # noqa
+from config import BOT_TOKEN_MAIN # noqa
 from routers.commands.menu_commands import show_main_menu  # переиспользуемый метод # noqa
 
 from middlewares.resources_middleware import ResourcesMiddleware # noqa
+
+logger = logging.getLogger(name=__name__)
 
 # Инициализируем роутер
 router = Router(name=__name__)

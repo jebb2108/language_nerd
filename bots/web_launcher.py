@@ -1,6 +1,8 @@
+import logging
 import os
 from aiohttp import web
-from config import logger
+
+logger = logging.getLogger(name=__name__)
 
 db = None
 

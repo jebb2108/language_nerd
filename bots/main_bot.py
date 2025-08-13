@@ -1,15 +1,18 @@
 import asyncio
+import logging
+
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from web_launcher import start_web_app
-from config import logger, BOT_TOKEN_MAIN
+from config import BOT_TOKEN_MAIN
 from middlewares.resources_middleware import ResourcesMiddleware
 from middlewares.rate_limit_middleware import RateLimitMiddleware
 from routers import router as main_router
 
+logger = logging.getLogger(name=__name__)
 
 # Создаем хранилище состояний в оперативной памяти
 storage = MemoryStorage()

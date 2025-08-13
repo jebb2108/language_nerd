@@ -1,15 +1,13 @@
-from datetime import datetime, timedelta
-import sys
+import logging
 import asyncio
-import random
+import asyncpg
+
+from datetime import datetime, timedelta
 from typing import Dict, Tuple, List
-from pathlib import Path
 from collections import defaultdict
-import asyncpg  # Важно добавить импорт
 from contextlib import asynccontextmanager
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from config import logger  # noqa
+logger = logging.getLogger(name=__name__)
 
 # = КЛАСС ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ =
 class Database:

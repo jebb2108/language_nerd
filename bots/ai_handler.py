@@ -1,10 +1,11 @@
+import logging
 import sys
 import asyncio
 import random
 import aiohttp
 import time
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List
 
 import asyncpg
@@ -37,9 +38,9 @@ from config import (
     TELEGRAM_LAST_REQUEST_TIME,
     TELEGRAM_MIN_DELAY_BETWEEN_REQUESTS,
     DEFAULT_DEEPSEEK_URL,
-    logger,
 )
 
+logger = logging.getLogger(name=__name__)
 
 # ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 def should_retry_api_error(result):
@@ -468,6 +469,7 @@ async def cleanup_old_reports(db: ReportDatabase, days: int = 30) -> bool:
 # ========== ТОЧКА ВХОДА ==========
 async def main():
     """Основная асинхронная точка входа"""
+    bot = None
     resources = ResourcesMiddleware()
     await resources.on_startup()
 
@@ -491,6 +493,7 @@ async def main():
         logger.critical(f"Critical error: {e}", exc_info=True)
 
     finally:
+        if bot: await bot.session.close()
         await resources.on_shutdown()
 
 

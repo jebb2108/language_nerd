@@ -13,8 +13,6 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 )
 
-logger = logging.getLogger(__name__)
-
 # Конфигурация
 BOT_TOKEN_MAIN = os.getenv('BOT_TOKEN_MAIN')
 BOT_TOKEN_PARTNER = os.getenv('BOT_TOKEN_PARTNER')
