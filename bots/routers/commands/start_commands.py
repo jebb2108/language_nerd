@@ -103,13 +103,10 @@ async def start_with_polling(
         ],
     ])
 
-
     await message_mgr.send_message_with_save(
-        message=message,
+        chat_id=message.chat.id,
         text=QUESTIONARY["intro"][lang_code],
-        state=state,
-        markup=True,
-        keyboard=keyboard
+        reply_markup=keyboard
     )
     await state.set_state(PollingStates.camefrom_state)
 
@@ -141,11 +138,9 @@ async def handle_camefrom(
         msg_mgr = data["message_mgr"]
 
         await msg_mgr.send_message_with_save(
-            message=callback,
+            chat_id=callback.message.chat.id,
             text=QUESTIONARY["lang_pick"][lang_code],
-            state=state,
-            markup=True,
-            keyboard=keyboard
+            reply_markup=keyboard
         )
         await state.set_state(PollingStates.language_state)
         await callback.answer()
@@ -215,10 +210,9 @@ async def go_to_main_menu(
     message_mgr = data["message_mgr"]
 
     await message_mgr.delete_previous_messages(
-        bot=callback.bot,
-        chat_id=callback.message.chat.id,
-        state=state,
+        chat_id=callback.message.chat.id
     )
+
     await state.clear()
     # После сохранения сразу показываем главное меню
     await show_main_menu(callback.message, state, database)

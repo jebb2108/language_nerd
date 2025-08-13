@@ -14,45 +14,27 @@ logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='message_mgr')
 
 
-
 class MessageManager:
-
     def __init__(self, bot: Bot, state: FSMContext):
         self.bot = bot
         self.state = state
 
     async def send_message_with_save(
             self,
-            source: Union[types.Message, types.CallbackQuery],
+            chat_id: int,
             text: str,
             parse_mode: Optional[str] = None,
             reply_markup: Optional[types.InlineKeyboardMarkup] = None
     ) -> types.Message:
-
-        """Отправляет/редактирует сообщение, сохраняя его ID"""
-        if isinstance(source, types.CallbackQuery):
-            chat_id = source.message.chat.id
-            message = source.message
-        else:
-            chat_id = source.chat.id
-            message = source
-
-        # Удаляем предыдущее сообщение вопроса
+        """Отправляет сообщение, сохраняя его ID и удаляя предыдущий вопрос"""
         data = await self.state.get_data()
-
-        last_msg_id = data.get("last_question_id")
-        if last_msg_id:
-            try:
-                await self.bot.delete_message(chat_id, last_msg_id)
-            except Exception as e:
-                logger.warning(f"Ошибка удаления сообщения: {e}")
 
         # Отправляем новое сообщение
         sent = await self.bot.send_message(
             chat_id=chat_id,
             text=text,
-            parse_mode=parse_mode,
-            reply_markup=reply_markup
+            reply_markup=reply_markup,
+            parse_mode=parse_mode
         )
 
         # Сохраняем данные
