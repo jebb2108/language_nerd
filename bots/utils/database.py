@@ -53,6 +53,8 @@ class Database:
                             language TEXT NOT NULL,
                             lang_code TEXT NOT NULL,
                             about TEXT NULL,
+                            is_active BOOLEAN DEFAULT TRUE,
+                            blocked_bot BOOLEAN DEFAULT FALSE,
                             UNIQUE (user_id)
                             ); """)
 
@@ -62,6 +64,7 @@ class Database:
                             CREATE TABLE IF NOT EXISTS weekly_reports (
                             report_id SERIAL PRIMARY KEY,
                             user_id BIGINT NOT NULL,
+                            status TEXT DEFAULT 'OK',
                             generation_date TIMESTAMP DEFAULT NOW(),
                             sent BOOLEAN DEFAULT FALSE
                             ); """)
@@ -263,12 +266,37 @@ class ReportDatabase(Database):
                 "SELECT report_id, user_id FROM weekly_reports WHERE sent = FALSE"
             )
 
-    async def mark_report_as_sent(self, report_id: int):
+    # async def mark_report_as_sent(self, report_id: int, status: str='OK'):
+    #     async with self.acquire_connection() as conn:
+    #         await conn.execute(
+    #             "UPDATE weekly_reports SET sent = TRUE, status = $2 WHERE report_id = $1",
+    #             report_id, status
+    #         )
+    #
+    # async def mark_user_as_blocked(self, user_id: int):
+    #     async with self.acquire_connection() as conn:
+    #         await conn.execute(
+    #             "UPDATE users SET status = 'blocked' WHERE user_id = $1",
+    #             user_id
+    #         )
+
+    # В utils/database.py (класс ReportDatabase)
+    async def mark_user_as_blocked(self, user_id: int):
         async with self.acquire_connection() as conn:
             await conn.execute(
-                "UPDATE weekly_reports SET sent = TRUE WHERE report_id = $1",
-                report_id
+                "UPDATE users SET is_active = FALSE, blocked_bot = TRUE WHERE id = $1",
+                user_id
             )
+            logger.info(f"Пользователь {user_id} помечен как заблокированный в БД.")
+
+    # Обновить mark_report_as_sent для приема статуса
+    async def mark_report_as_sent(self, report_id: int, status: str = 'OK'):
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+                "UPDATE weekly_reports SET generation_date = NOW(), status = $1 WHERE id = $2",
+                status, report_id
+            )
+            logger.info(f"Отчет {report_id} помечен как {status} в БД.")
 
     async def cleanup_old_reports(self, days: int) -> Tuple[int, int]:
         cutoff_date = datetime.now() - timedelta(days=days)

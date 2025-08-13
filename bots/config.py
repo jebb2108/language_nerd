@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 from dotenv import load_dotenv
+from asyncio import Semaphore
 
 load_dotenv(".env")
 
@@ -28,3 +29,15 @@ db_config = {
     "password": os.getenv("POSTGRES_PASSWORD", "password"),
     "database": os.getenv("POSTGRES_DB", "telegram_bot"),
 }
+
+# Глобальные переменные для ограничения запросов
+REQUEST_SEMAPHORE = Semaphore(3)
+REQUEST_RATE_LIMITER = Semaphore(50)
+
+TELEGRAM_API_SEMAPHORE = Semaphore(5)
+TELEGRAM_RETRY_UNTIL_TIME = 0.0 # Глобальная метка времени для паузы всех вызовов Telegram API
+TELEGRAM_LAST_REQUEST_TIME = 0.0 # Для принудительного соблюдения лимитов в секунду при необходимости
+TELEGRAM_MIN_DELAY_BETWEEN_REQUESTS = 0.05 # Для проактивного лимита 20 сообщений/сек (1/20)
+
+# Значение по умолчанию для DeepSeek API
+DEFAULT_DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
