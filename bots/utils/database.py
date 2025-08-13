@@ -268,7 +268,7 @@ class ReportDatabase(Database):
     async def get_pending_reports(self) -> List[Dict]:
         async with self.acquire_connection() as conn:
             return await conn.fetch(
-                "SELECT report_id, user_id FROM weekly_reports WHERE sent = FALSE"
+                "SELECT report_id, user_id FROM weekly_reports WHERE sent = FALSE AND status = 'OK'"
             )
 
     # async def mark_report_as_sent(self, report_id: int, status: str='OK'):
@@ -306,8 +306,7 @@ class ReportDatabase(Database):
     async def cleanup_old_reports(self, days: int) -> Tuple[int, int]:
         cutoff_date = datetime.now() - timedelta(days=days)
         async with self.acquire_connection() as conn:
-            # Получаем и удаляем старые отчеты
-            words_deleted = await conn.execute(
+            words_rows = await conn.fetch(
                 "DELETE FROM report_words "
                 "WHERE report_id IN ("
                 "   SELECT report_id FROM weekly_reports "
@@ -315,8 +314,8 @@ class ReportDatabase(Database):
                 ") RETURNING word_id",
                 cutoff_date
             )
-            reports_deleted = await conn.execute(
+            reports_rows = await conn.fetch(
                 "DELETE FROM weekly_reports WHERE generation_date < $1 RETURNING report_id",
                 cutoff_date
             )
-            return len(reports_deleted), len(words_deleted)
+            return len(reports_rows), len(words_rows)
