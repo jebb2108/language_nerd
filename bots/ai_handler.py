@@ -40,7 +40,7 @@ from config import (
     DEFAULT_DEEPSEEK_URL,
 )
 
-logger = logging.getLogger(name=__name__)
+logger = logging.getLogger(name='ai_handler')
 
 # ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 def should_retry_api_error(result):

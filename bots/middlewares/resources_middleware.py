@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config import db_config # noqa
 from utils.database import Database  # Импортируем ваш класс DB # noqa\
 
-logger = logging.getLogger(name=__name__)
+logger = logging.getLogger(name='resources_middleware')
 
 @dataclass(frozen=True)
 class DBConfig:

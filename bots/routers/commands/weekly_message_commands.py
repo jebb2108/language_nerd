@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Router, types, Bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
@@ -5,6 +7,8 @@ from aiogram.utils.formatting import Text, Bold
 from aiogram.utils.markdown import html_decoration as hd
 
 from middlewares.resources_middleware import ResourcesMiddleware # noqa
+
+logger = logging.getLogger(name='weekly_message_commands')
 
 # Инициализация роутера
 router = Router(name=__name__)

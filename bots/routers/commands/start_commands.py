@@ -19,7 +19,7 @@ from routers.commands.menu_commands import show_main_menu  # переиспол�
 
 from middlewares.resources_middleware import ResourcesMiddleware # noqa
 
-logger = logging.getLogger(name=__name__)
+logger = logging.getLogger(name='start_commands')
 
 # Инициализируем роутер
 router = Router(name=__name__)

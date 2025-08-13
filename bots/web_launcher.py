@@ -2,7 +2,7 @@ import logging
 import os
 from aiohttp import web
 
-logger = logging.getLogger(name=__name__)
+logger = logging.getLogger(name='web_launcher')
 
 db = None
 

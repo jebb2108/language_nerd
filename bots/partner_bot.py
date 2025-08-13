@@ -13,7 +13,7 @@ from middlewares.rate_limit_middleware import RateLimitMiddleware
 # Импорт функций БД
 from config import BOT_TOKEN_PARTNER
 
-logger = logging.getLogger(name=__name__)
+logger = logging.getLogger(name='partner_bot')
 
 storage = MemoryStorage()
 

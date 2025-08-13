@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from utils.async_timed_queue import AsyncTimedQueue # noqa
 
-logger = logging.getLogger(name=__name__)
+logger = logging.getLogger(name='rate_limit_middleware')
 
 @dataclass(frozen=False)
 class RateLimitInfo:

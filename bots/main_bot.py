@@ -12,7 +12,7 @@ from middlewares.resources_middleware import ResourcesMiddleware
 from middlewares.rate_limit_middleware import RateLimitMiddleware
 from routers import router as main_router
 
-logger = logging.getLogger(name=__name__)
+logger = logging.getLogger(name='main_bot')
 
 # Создаем хранилище состояний в оперативной памяти
 storage = MemoryStorage()

@@ -7,7 +7,7 @@ from typing import Dict, Tuple, List
 from collections import defaultdict
 from contextlib import asynccontextmanager
 
-logger = logging.getLogger(name=__name__)
+logger = logging.getLogger(name='database')
 
 # = КЛАСС ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ =
 class Database:
