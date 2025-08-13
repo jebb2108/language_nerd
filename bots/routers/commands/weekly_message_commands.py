@@ -7,7 +7,9 @@ from aiogram.utils.formatting import Text, Bold
 from aiogram.utils.markdown import html_decoration as hd
 
 from middlewares.resources_middleware import ResourcesMiddleware # noqa
+from config import LOG_CONFIG # noqa
 
+logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='weekly_message_commands')
 
 # Инициализация роутера

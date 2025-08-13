@@ -1,6 +1,3 @@
-from gc import callbacks
-from pyexpat.errors import messages
-
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.enums import ParseMode

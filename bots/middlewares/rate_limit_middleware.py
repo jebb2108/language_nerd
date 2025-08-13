@@ -13,7 +13,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from utils.async_timed_queue import AsyncTimedQueue # noqa
+from config import LOG_CONFIG # noqa
 
+logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='rate_limit_middleware')
 
 @dataclass(frozen=False)

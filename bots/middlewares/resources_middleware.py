@@ -10,10 +10,12 @@ from aiogram.types import TelegramObject
 from aiohttp import ClientSession
 
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import db_config # noqa
+from config import DB_CONFIG, LOG_CONFIG # noqa
 from utils.database import Database  # Импортируем ваш класс DB # noqa\
 
+logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='resources_middleware')
 
 @dataclass(frozen=True)
@@ -29,7 +31,7 @@ class ResourcesMiddleware(BaseMiddleware):
 
     def __init__(self):
         super().__init__()
-        self.db_config = DBConfig(**db_config)
+        self.db_config = DBConfig(**DB_CONFIG)
         self._lock = asyncio.Lock()
         self._initialized = False
         self._initialization_failed = False

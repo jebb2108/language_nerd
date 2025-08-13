@@ -14,11 +14,12 @@ from aiogram.types import (
 from typing import Union
 from translations import QUESTIONARY # noqa
 from utils.filters import IsBotFilter # noqa
-from config import BOT_TOKEN_MAIN # noqa
+from config import BOT_TOKEN_MAIN, LOG_CONFIG # noqa
 from routers.commands.menu_commands import show_main_menu  # переиспользуемый метод # noqa
 
 from middlewares.resources_middleware import ResourcesMiddleware # noqa
 
+logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='start_commands')
 
 # Инициализируем роутер

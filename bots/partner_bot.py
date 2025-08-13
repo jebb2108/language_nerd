@@ -11,8 +11,9 @@ from routers import router as main_router
 from middlewares.rate_limit_middleware import RateLimitMiddleware
 
 # Импорт функций БД
-from config import BOT_TOKEN_PARTNER
+from config import BOT_TOKEN_PARTNER, LOG_CONFIG
 
+logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='partner_bot')
 
 storage = MemoryStorage()

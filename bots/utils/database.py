@@ -1,3 +1,4 @@
+import sys
 import logging
 import asyncio
 import asyncpg
@@ -7,6 +8,12 @@ from typing import Dict, Tuple, List
 from collections import defaultdict
 from contextlib import asynccontextmanager
 
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from config import LOG_CONFIG # noqa
+
+logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='database')
 
 # = КЛАСС ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ =

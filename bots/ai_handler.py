@@ -8,7 +8,6 @@ import re
 from datetime import datetime
 from typing import List
 
-import asyncpg
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -38,8 +37,10 @@ from config import (
     TELEGRAM_LAST_REQUEST_TIME,
     TELEGRAM_MIN_DELAY_BETWEEN_REQUESTS,
     DEFAULT_DEEPSEEK_URL,
+    LOG_CONFIG,
 )
 
+logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='ai_handler')
 
 # ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========

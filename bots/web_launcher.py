@@ -1,7 +1,9 @@
 import logging
 import os
 from aiohttp import web
+from config import LOG_CONFIG
 
+logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='web_launcher')
 
 db = None

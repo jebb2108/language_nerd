@@ -7,11 +7,12 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from web_launcher import start_web_app
-from config import BOT_TOKEN_MAIN
+from config import BOT_TOKEN_MAIN, LOG_CONFIG
 from middlewares.resources_middleware import ResourcesMiddleware
 from middlewares.rate_limit_middleware import RateLimitMiddleware
 from routers import router as main_router
 
+logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='main_bot')
 
 # Создаем хранилище состояний в оперативной памяти
