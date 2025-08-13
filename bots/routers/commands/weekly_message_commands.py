@@ -1,12 +1,12 @@
 import logging
-from typing import Union
 
 from aiogram import Router, types, Bot
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.formatting import Text, Bold
 from aiogram.utils.markdown import html_decoration as hd
 from aiogram.enums import ParseMode
+from aiogram.exceptions import TelegramForbiddenError, TelegramBadRequest
 
 from middlewares.resources_middleware import ResourcesMiddleware # noqa
 from utils.message_mgr import MessageManager # noqa
@@ -29,6 +29,7 @@ async def send_user_report(
     Отправляет пользователю его еженедельный отчет.
     """
     try:
+
         async with database.acquire_connection() as conn:
             report = await conn.fetchrow(
                 "SELECT * FROM weekly_reports WHERE report_id = $1",
@@ -63,8 +64,13 @@ async def send_user_report(
         )
         return True
 
+    except TelegramForbiddenError:
+        raise
+    except TelegramBadRequest:
+        raise
+
     except Exception as e:
-        logger.error(f"Error sending interactive report to {user_id}: {e}")
+        logger.error(f"Ошибка при отправке отчета {report_id} пользователю {user_id}: {e}", exc_info=True)
         return False
 
 
