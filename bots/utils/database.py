@@ -284,7 +284,7 @@ class ReportDatabase(Database):
     async def mark_user_as_blocked(self, user_id: int):
         async with self.acquire_connection() as conn:
             await conn.execute(
-                "UPDATE users SET is_active = FALSE, blocked_bot = TRUE WHERE id = $1",
+                "UPDATE users SET is_active = FALSE, blocked_bot = TRUE WHERE user_id = $1",
                 user_id
             )
             logger.info(f"Пользователь {user_id} помечен как заблокированный в БД.")
@@ -293,7 +293,7 @@ class ReportDatabase(Database):
     async def mark_report_as_sent(self, report_id: int, status: str = 'OK'):
         async with self.acquire_connection() as conn:
             await conn.execute(
-                "UPDATE weekly_reports SET generation_date = NOW(), status = $1 WHERE id = $2",
+                "UPDATE weekly_reports SET generation_date = NOW(), status = $1 WHERE report_id = $2",
                 status, report_id
             )
             logger.info(f"Отчет {report_id} помечен как {status} в БД.")
