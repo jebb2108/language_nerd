@@ -144,7 +144,7 @@ async def send_question(
         )
 
     if not word_data:
-        await quiz_manager.send_message_wth_save(
+        await quiz_manager.send_message_with_save(
             chat_id=chat_id,
             text="Ошибка: данные вопроса не найдены."
         )
@@ -234,10 +234,10 @@ async def handle_word_quiz(
             logger.warning(f"Ошибка при удалении кнопок: {e}")
 
         # Отправляем результат ответа (используем chat_id)
-        await quiz_manager.send_message_wth_save(
+        await quiz_manager.send_message_with_save(
             chat_id=chat_id,
             text=msg,
-            parse_mode=ParseMode.HTML
+            parse_mode=ParseMode.MARKDOWN_V2
         )
 
         # Переходим к следующему вопросу
