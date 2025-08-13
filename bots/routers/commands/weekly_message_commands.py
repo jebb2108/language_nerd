@@ -222,7 +222,6 @@ async def handle_word_quiz(
                 "❌ К сожалению, неверно.\n\n",
                 Bold("Ваш ответ: "), hd.quote(selected_word), "\n",
                 Bold("Правильный ответ: "), hd.quote(correct_word), "\n",
-                Bold("Слово: "), hd.quote(record['word'])
             ).as_markdown()
 
         await callback.answer()

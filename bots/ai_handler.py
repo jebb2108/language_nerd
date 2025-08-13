@@ -490,7 +490,7 @@ async def main():
             await generate_weekly_reports(db, session)
         elif '--cleanup' in sys.argv:
             logger.info("Cleaning up old reports...")
-            await cleanup_old_reports(db, days=14)
+            await cleanup_old_reports(db, days=8)
         else:
             logger.info("Sending pending reports...")
             bot = Bot(token=BOT_TOKEN_MAIN)
