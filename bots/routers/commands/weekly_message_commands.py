@@ -4,7 +4,6 @@ from aiogram.fsm.context import FSMContext
 from aiogram.utils.formatting import Text, Bold
 from aiogram.utils.markdown import html_decoration as hd
 
-from config import logger # noqa
 from middlewares.resources_middleware import ResourcesMiddleware # noqa
 
 # Инициализация роутера
