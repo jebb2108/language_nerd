@@ -129,7 +129,7 @@ async def send_question(
 
     if idx >= len(word_ids):
         await quiz_manager.delete_previous_messages(chat_id)
-        await quiz_manager.bot.send_message_with_save(  # Используем bot из менеджера
+        await quiz_manager.send_message_with_save(  # Используем bot из менеджера
             chat_id=chat_id,
             text="🎉 Поздравляем! Вы завершили проверку знаний по всем словам за эту неделю."
         )
