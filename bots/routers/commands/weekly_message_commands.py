@@ -70,30 +70,34 @@ async def start_report_handler(
     """
     Начинает интерактивный отчет-опрос по weekly_reports.
     """
-    report_id = int(callback.data.split(":", 1)[1])
+    try:
+        report_id = int(callback.data.split(":", 1)[1])
 
-    async with database.acquire_connection() as conn:
-        words = await conn.fetch(
-            "SELECT word_id FROM report_words WHERE report_id = $1",
-            report_id
+        async with database.acquire_connection() as conn:
+            words = await conn.fetch(
+                "SELECT word_id FROM report_words WHERE report_id = $1",
+                report_id
+            )
+
+        if not words:
+            await callback.answer("Отчет не содержит слов для проверки.", show_alert=True)
+            return
+
+        # Инициализируем state
+        await state.update_data(
+            report_id=report_id,
+            word_ids=[row["word_id"] for row in words],
+            current_index=0,
+            chat_id=callback.message.chat.id,
+            db_pool=database
         )
 
-    if not words:
-        await callback.answer("Отчет не содержит слов для проверки.", show_alert=True)
-        return
+        await send_question(state, callback.bot)
+        await callback.answer()
 
-    # Инициализируем state
-    await state.clear()
-    await state.update_data(
-        report_id=report_id,
-        word_ids=[row["word_id"] for row in words],
-        current_index=0,
-        chat_id=callback.message.chat.id,
-        db_pool=database.db_pool,
-    )
-
-    await send_question(state, callback.bot)
-    await callback.answer()
+    except Exception as e:
+        logger.error(f"Ошибка в start_report_handler: {e}")
+        await callback.answer("Ошибка запуска проверки", show_alert=True)
 
 
 async def send_question(
@@ -108,6 +112,10 @@ async def send_question(
     word_ids = data.get("word_ids")
     chat_id = data.get("chat_id")
     db_pool = data.get("db_pool")
+
+    if not all(key in data for key in ["current_index", "word_ids", "chat_id", "db_pool"]):
+        logger.error("Отсутствуют ключи в состоянии FSM!")
+        return
 
     if idx >= len(word_ids):
         await bot.send_message(
