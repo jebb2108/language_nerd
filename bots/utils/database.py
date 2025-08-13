@@ -303,6 +303,13 @@ class ReportDatabase(Database):
             )
             logger.info(f"Отчет {report_id} помечен как {status} в БД.")
 
+    async def is_user_blocked(self, user_id: int) -> bool:
+        async with self.acquire_connection() as conn:
+            return await conn.fetchval(
+                "SELECT blocked_bot FROM users WHERE user_id = $1",
+                user_id
+            )
+
     async def cleanup_old_reports(self, days: int) -> Tuple[int, int]:
         cutoff_date = datetime.now() - timedelta(days=days)
         async with self.acquire_connection() as conn:

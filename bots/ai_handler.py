@@ -257,6 +257,11 @@ def parse_deepseek_response(content, original_word):
 # ========== ОСНОВНЫЕ ФУНКЦИИ ОБРАБОТКИ ==========
 async def process_user_report(user_id: int, words: List[str], session, db: ReportDatabase) -> int:
     """Обрабатывает отчет для одного пользователя"""
+
+    if await db.is_user_blocked(user_id):
+        logger.info(f"User {user_id} is blocked — skipping report generation")
+        return False
+
     report_data = []
 
     for word in words:
@@ -273,7 +278,7 @@ async def process_user_report(user_id: int, words: List[str], session, db: Repor
         if not question_data:
             continue
 
-        options = question_data["options"]
+        options = question_data["options"].copy()
         random.shuffle(options)
 
         try:
@@ -284,7 +289,7 @@ async def process_user_report(user_id: int, words: List[str], session, db: Repor
             report_data.append({
                 "word": word_str,
                 "sentence": question_data["sentence"],
-                "options": question_data["options"],
+                "options": options,
                 "correct_index": correct_index
             })
         except (ValueError, StopIteration):
@@ -315,8 +320,14 @@ async def generate_weekly_reports(db: ReportDatabase, session):
     start_time = datetime.now()
 
     for record in user_words:
-        words = record["words"]
         user_id = record["user_id"]
+
+        # --- Патч: пропустить заблокированных пользователей ---
+        if await db.is_user_blocked(user_id):
+            logger.info(f"Skipping generation for blocked user {user_id}")
+            continue
+
+        words = record["words"]
 
         selected_words = random.sample(words, min(len(words), max_words_per_user))
         words_processed = await process_user_report(user_id, selected_words, session, db)
@@ -490,7 +501,7 @@ async def main():
             await generate_weekly_reports(db, session)
         elif '--cleanup' in sys.argv:
             logger.info("Cleaning up old reports...")
-            await cleanup_old_reports(db, days=3)
+            await cleanup_old_reports(db, days=30)
         else:
             logger.info("Sending pending reports...")
             bot = Bot(token=BOT_TOKEN_MAIN)
