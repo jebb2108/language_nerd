@@ -41,8 +41,7 @@ class MessageManager:
         msgs = data.get("messages_to_delete", [])
         msgs.append(sent.message_id)
         await self.state.update_data(
-            last_question_id=sent.message_id,
-            messages_to_delete=msgs
+            messages_to_delete=msgs,
         )
 
         return sent
@@ -55,11 +54,8 @@ class MessageManager:
         if not messages:
             return
 
-        # Сохраняем последнее сообщение
-        last_message = messages[-1]
-
-        # Удаляем все кроме последнего
-        for msg_id in messages[:-1]:
+        # Удаляем все cообщения
+        for msg_id in messages:
             try:
                 await self.bot.delete_message(chat_id, msg_id)
             except Exception as e:
@@ -67,6 +63,5 @@ class MessageManager:
 
         # Обновляем state
         await self.state.update_data(
-            messages_to_delete=[last_message],
-            last_question_id=last_message
+            messages_to_delete=[],
         )
