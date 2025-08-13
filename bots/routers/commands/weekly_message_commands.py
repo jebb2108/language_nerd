@@ -74,12 +74,8 @@ async def start_report_handler(
         state: FSMContext,
         database: ResourcesMiddleware,
 ):
-    """
-    Начинает интерактивный отчет-опрос по weekly_reports.
-    """
     try:
         report_id = int(callback.data.split(":", 1)[1])
-
         async with database.acquire_connection() as conn:
             words = await conn.fetch(
                 "SELECT word_id FROM report_words WHERE report_id = $1",
@@ -90,26 +86,26 @@ async def start_report_handler(
             await callback.answer("Отчет не содержит слов для проверки.", show_alert=True)
             return
 
-        # Инициализируем state
+        # Создаем и сохраняем менеджер сообщений в состоянии
+        quiz_manager = MessageManager(bot=callback.bot, state=state)
+        chat_id = callback.message.chat.id
+
         await state.update_data(
             report_id=report_id,
             word_ids=[row["word_id"] for row in words],
             current_index=0,
-            chat_id=callback.message.chat.id,
-            db_pool=database
+            chat_id=chat_id,
+            db_pool=database,
+            quiz_manager=quiz_manager  # Сохраняем менеджер в state
         )
 
-        # Создаем менеджер сообщений
-        quiz_manager = MessageManager(bot=callback.bot, state=state)
-
-        # Отправляем начальное сообщение
         await quiz_manager.send_message_with_save(
-            chat_id=callback.message.chat.id,
-            text="Начинаем проверку знаний...",
+            chat_id=chat_id,
+            text="Начинаем проверку знаний..."
         )
 
-        # Отправляем первый вопрос
-        await send_question(state, callback.bot, quiz_manager)
+        # Передаем quiz_manager в send_question
+        await send_question(state, quiz_manager)
         await callback.answer()
 
     except Exception as e:
@@ -119,10 +115,8 @@ async def start_report_handler(
 
 async def send_question(
         state: FSMContext,
-        bot: Bot,
         quiz_manager: MessageManager
 ):
-    """Отправляет вопрос и сохраняет его ID для последующего удаления"""
     data = await state.get_data()
     idx = data.get("current_index")
     word_ids = data.get("word_ids")
@@ -134,11 +128,8 @@ async def send_question(
         return
 
     if idx >= len(word_ids):
-        # Удаляем все предыдущие сообщения перед финальным
         await quiz_manager.delete_previous_messages(chat_id)
-
-        # Отправляем финальное сообщение (не сохраняем его для удаления)
-        await bot.send_message(
+        await quiz_manager.bot.send_message_with_save(  # Используем bot из менеджера
             chat_id=chat_id,
             text="🎉 Поздравляем! Вы завершили проверку знаний по всем словам за эту неделю."
         )
@@ -153,12 +144,9 @@ async def send_question(
         )
 
     if not word_data:
-        # Создаем фиктивное сообщение для отправки ошибки
-        fake_msg = Message(chat_id=chat_id, message_id=0)
-        await quiz_manager.send_message_with_save(
-            source=fake_msg,
-            text="Ошибка: данные вопроса не найдены.",
-            reply_markup=None
+        await quiz_manager.send_message_wth_save(
+            chat_id=chat_id,
+            text="Ошибка: данные вопроса не найдены."
         )
         return
 
@@ -179,7 +167,6 @@ async def send_question(
     if row:
         keyboard.inline_keyboard.append(row)
 
-
     await quiz_manager.send_message_with_save(
         chat_id=chat_id,
         text=question_text,
@@ -192,65 +179,77 @@ async def handle_word_quiz(
         callback: CallbackQuery,
         state: FSMContext,
 ):
-    data = await state.get_data()
-    db_pool = data.get("db_pool")
+    try:
+        data = await state.get_data()
+        db_pool = data.get("db_pool")
+        chat_id = callback.message.chat.id
+        quiz_manager = data.get("quiz_manager")  # Получаем менеджер из состояния
 
-    # Создаем менеджер сообщений
-    quiz_manager = MessageManager(bot=callback.bot, state=state)
+        if not quiz_manager:
+            logger.error("QuizManager отсутствует в состоянии!")
+            await callback.answer("Ошибка системы", show_alert=True)
+            return
 
-    parts = callback.data.split(":")
-    if len(parts) != 3:
-        await callback.answer("Некорректные данные вопроса.", show_alert=True)
-        return
+        parts = callback.data.split(":")
+        if len(parts) != 3:
+            await callback.answer("Некорректные данные вопроса.", show_alert=True)
+            return
 
-    word_id = int(parts[1])
-    selected_idx = int(parts[2])
+        word_id = int(parts[1])
+        selected_idx = int(parts[2])
 
-    async with db_pool.acquire_connection() as conn:
-        record = await conn.fetchrow(
-            "SELECT word, options, correct_index FROM report_words WHERE word_id = $1",
-            word_id
+        async with db_pool.acquire_connection() as conn:
+            record = await conn.fetchrow(
+                "SELECT word, options, correct_index FROM report_words WHERE word_id = $1",
+                word_id
+            )
+
+        if not record:
+            await callback.answer("Ошибка: данные вопроса не найдены.", show_alert=True)
+            return
+
+        is_correct = selected_idx == record["correct_index"]
+        correct_word = record["options"][record["correct_index"]]
+        selected_word = record["options"][selected_idx]
+
+        if is_correct:
+            msg = Text(
+                "✅ Правильно! Отличная работа!\n\n",
+                Bold("Слово: "), hd.quote(record['word'])
+            ).as_markdown()
+        else:
+            msg = Text(
+                "❌ К сожалению, неверно.\n\n",
+                Bold("Ваш ответ: "), hd.quote(selected_word), "\n",
+                Bold("Правильный ответ: "), hd.quote(correct_word), "\n",
+                Bold("Слово: "), hd.quote(record['word'])
+            ).as_markdown()
+
+        await callback.answer()
+
+        # Убираем кнопки с текущего сообщения
+        try:
+            await callback.message.edit_reply_markup(reply_markup=None)
+        except Exception as e:
+            logger.warning(f"Ошибка при удалении кнопок: {e}")
+
+        # Отправляем результат ответа (используем chat_id)
+        await quiz_manager.send_message_wth_save(
+            chat_id=chat_id,
+            text=msg,
+            parse_mode=ParseMode.HTML
         )
 
-    if not record:
-        await callback.answer("Ошибка: данные вопроса не найдены.", show_alert=True)
-        return
+        # Переходим к следующему вопросу
+        next_idx = data.get("current_index", 0) + 1
+        await state.update_data(current_index=next_idx)
 
-    is_correct = selected_idx == record["correct_index"]
-    correct_word = record["options"][record["correct_index"]]
-    selected_word = record["options"][selected_idx]
+        # Передаем только quiz_manager
+        await send_question(state, quiz_manager)
 
-    if is_correct:
-        msg = Text(
-            "✅ Правильно! Отличная работа!\n\n",
-            Bold("Слово: "), hd.quote(record['word'])
-        ).as_markdown()
-    else:
-        msg = Text(
-            "❌ К сожалению, неверно.\n\n",
-            Bold("Ваш ответ: "), hd.quote(selected_word), "\n",
-            Bold("Правильный ответ: "), hd.quote(correct_word), "\n",
-            Bold("Слово: "), hd.quote(record['word'])
-        ).as_markdown()
-
-    await callback.answer()
-
-    # Убираем кнопки с текущего сообщения
-    try:
-        await callback.message.edit_reply_markup(reply_markup=None)
     except Exception as e:
-        logger.warning(f"Ошибка при удалении кнопок: {e}")
-
-    # Отправляем результат ответа
-    await quiz_manager.send_message_with_save(
-        source=callback.message,
-        text=msg
-    )
-
-    # Переходим к следующему вопросу
-    next_idx = data.get("current_index", 0) + 1
-    await state.update_data(current_index=next_idx)
-    await send_question(state, callback.bot, quiz_manager)
+        logger.error(f"Ошибка в handle_word_quiz: {e}", exc_info=True)
+        await callback.answer("Произошла ошибка при обработке ответа", show_alert=True)
 
 
 @router.callback_query()  # Без фильтров, перехватывает все запросы обратного вызова
