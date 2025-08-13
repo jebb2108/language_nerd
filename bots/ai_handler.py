@@ -33,6 +33,7 @@ from config import (
     REQUEST_SEMAPHORE,
     REQUEST_RATE_LIMITER,
     TELEGRAM_API_SEMAPHORE,
+    AI_LAST_REQUEST_TIME,
     TELEGRAM_RETRY_UNTIL_TIME,
     TELEGRAM_LAST_REQUEST_TIME,
     TELEGRAM_MIN_DELAY_BETWEEN_REQUESTS,
@@ -67,7 +68,8 @@ def is_payment_required_error(exception):
 )
 async def generate_question_for_word(word, session):
     """Генерирует вопрос с вариантами ответов для слова с использованием DeepSeek"""
-    global last_request_time
+
+    global AI_LAST_REQUEST_TIME
 
     word_str = str(word).strip()
     if not word_str:
@@ -89,8 +91,8 @@ async def generate_question_for_word(word, session):
     async with REQUEST_SEMAPHORE:
         async with REQUEST_RATE_LIMITER:
             current_time = time.time()
-            if current_time - last_request_time < 1.2:
-                wait_time = 1.2 - (current_time - last_request_time)
+            if current_time - AI_LAST_REQUEST_TIME < 1.2:
+                wait_time = 1.2 - (current_time - AI_LAST_REQUEST_TIME)
                 await asyncio.sleep(wait_time)
 
             try:
@@ -131,7 +133,7 @@ async def generate_question_for_word(word, session):
                         },
                         timeout=60
                 ) as response:
-                    last_request_time = time.time()
+                    AI_LAST_REQUEST_TIME = time.time()
 
                     # Обработка rate limit
                     if response.status == 429:
@@ -158,6 +160,7 @@ async def generate_question_for_word(word, session):
 
                     response.raise_for_status()
                     data = await response.json()
+
 
                     # Извлекаем ответ из DeepSeek
                     content = data['choices'][0]['message']['content'].strip()
@@ -269,6 +272,9 @@ async def process_user_report(user_id: int, words: List[str], session, db: Repor
 
         if not question_data:
             continue
+
+        options = question_data["options"]
+        random.shuffle(options)
 
         try:
             # Поиск правильного ответа без учета регистра

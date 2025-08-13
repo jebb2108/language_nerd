@@ -36,6 +36,8 @@ DB_CONFIG = {
 REQUEST_SEMAPHORE = Semaphore(3)
 REQUEST_RATE_LIMITER = Semaphore(50)
 
+AI_LAST_REQUEST_TIME = 0.0
+
 TELEGRAM_API_SEMAPHORE = Semaphore(5)
 TELEGRAM_RETRY_UNTIL_TIME = 0.0 # Глобальная метка времени для паузы всех вызовов Telegram API
 TELEGRAM_LAST_REQUEST_TIME = 0.0 # Для принудительного соблюдения лимитов в секунду при необходимости
