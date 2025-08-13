@@ -104,7 +104,7 @@ async def start_report_handler(
 
         # Отправляем начальное сообщение
         await quiz_manager.send_message_with_save(
-            source=callback,
+            chat_id=callback.message.chat.id,
             text="Начинаем проверку знаний...",
         )
 
@@ -179,10 +179,9 @@ async def send_question(
     if row:
         keyboard.inline_keyboard.append(row)
 
-    # Создаем фиктивное сообщение для отправки вопроса
-    fake_msg = Message(chat_id=chat_id, message_id=0)
+
     await quiz_manager.send_message_with_save(
-        source=fake_msg,
+        chat_id=chat_id,
         text=question_text,
         reply_markup=keyboard
     )
@@ -245,8 +244,7 @@ async def handle_word_quiz(
     # Отправляем результат ответа
     await quiz_manager.send_message_with_save(
         source=callback.message,
-        text=msg,
-        parse_mode=ParseMode.MARKDOWN_V2
+        text=msg
     )
 
     # Переходим к следующему вопросу
