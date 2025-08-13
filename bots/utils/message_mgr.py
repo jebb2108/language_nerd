@@ -25,7 +25,7 @@ class MessageManager:
             self,
             source: Union[types.Message, types.CallbackQuery],
             text: str,
-            parse_mode: Optional[str] = ParseMode.HTML,
+            parse_mode: Optional[str] = None,
             reply_markup: Optional[types.InlineKeyboardMarkup] = None
     ) -> types.Message:
 
