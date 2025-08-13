@@ -298,7 +298,7 @@ class ReportDatabase(Database):
     async def mark_report_as_sent(self, report_id: int, status: str = 'OK'):
         async with self.acquire_connection() as conn:
             await conn.execute(
-                "UPDATE weekly_reports SET generation_date = NOW(), status = $1 WHERE report_id = $2",
+                "UPDATE weekly_reports SET generation_date = NOW(), sent = TRUE, status = $1 WHERE report_id = $2",
                 status, report_id
             )
             logger.info(f"Отчет {report_id} помечен как {status} в БД.")
