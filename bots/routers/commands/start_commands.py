@@ -14,6 +14,7 @@ from aiogram.types import (
 from typing import Union
 from translations import QUESTIONARY # noqa
 from utils.filters import IsBotFilter # noqa
+from utils.message_mgr import MessageManager # noqa
 from config import BOT_TOKEN_MAIN, LOG_CONFIG # noqa
 from routers.commands.menu_commands import show_main_menu  # переиспользуемый метод # noqa
 
@@ -48,6 +49,9 @@ async def start_with_polling(
     user_id = message.from_user.id
     lang_code = message.from_user.language_code or "en"
 
+    # Создаем экземпляр класса MessageManager
+    message_mgr = MessageManager(bot=message.bot, state=state)
+
     # Проверяем, есть ли запись в users
     try:
         async with db.acquire_connection() as conn:
@@ -68,6 +72,7 @@ async def start_with_polling(
         camefrom="",
         about="",
         messages_to_delete=[],
+        message_mgr=message_mgr,
         db=database,
     )
 
@@ -98,7 +103,8 @@ async def start_with_polling(
         ],
     ])
 
-    await send_message_with_save(
+
+    await message_mgr.send_message_with_save(
         message=message,
         text=QUESTIONARY["intro"][lang_code],
         state=state,
@@ -131,7 +137,10 @@ async def handle_camefrom(
             [InlineKeyboardButton(text="🇨🇳 中文", callback_data="lang_chinese")],
         ])
 
-        await send_message_with_save(
+        data = await state.get_data()
+        msg_mgr = data["message_mgr"]
+
+        await msg_mgr.send_message_with_save(
             message=callback,
             text=QUESTIONARY["lang_pick"][lang_code],
             state=state,
@@ -202,8 +211,10 @@ async def go_to_main_menu(
         state: FSMContext,
         database: ResourcesMiddleware
 ):
+    data = await state.get_data()
+    message_mgr = data["message_mgr"]
 
-    await delete_previous_messages(
+    await message_mgr.delete_previous_messages(
         bot=callback.bot,
         chat_id=callback.message.chat.id,
         state=state,
@@ -211,48 +222,3 @@ async def go_to_main_menu(
     await state.clear()
     # После сохранения сразу показываем главное меню
     await show_main_menu(callback.message, state, database)
-
-
-async def send_message_with_save(
-        message: Union[Message, CallbackQuery],
-        text: str,
-        state: FSMContext,
-        markup: bool = False,
-        keyboard: InlineKeyboardMarkup = None,
-):
-    """
-    Отправляет (или редактирует) сообщение, сохраняет его ID в state для последующего удаления.
-    """
-    if isinstance(message, CallbackQuery):
-        chat_msg = message.message
-    else:
-        chat_msg = message
-
-    if markup and keyboard:
-        sent = await chat_msg.answer(
-            text=text,
-            reply_markup=keyboard,
-            parse_mode=ParseMode.HTML
-        )
-    else:
-        sent = await chat_msg.answer(text=text)
-
-    data = await state.get_data()
-    msgs = data.get("messages_to_delete", [])
-    msgs.append(sent.message_id)
-    await state.update_data(messages_to_delete=msgs)
-    return sent
-
-
-async def delete_previous_messages(
-        bot: Bot,
-        chat_id: int,
-        state: FSMContext
-):
-    data = await state.get_data()
-    for msg_id in data.get("messages_to_delete", []):
-        try:
-            await bot.delete_message(chat_id, msg_id)
-        except Exception:
-            pass
-    await state.update_data(messages_to_delete=[])

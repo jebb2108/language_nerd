@@ -1,12 +1,15 @@
 import logging
+from typing import Union
 
 from aiogram import Router, types, Bot
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.formatting import Text, Bold
 from aiogram.utils.markdown import html_decoration as hd
+from aiogram.enums import ParseMode
 
 from middlewares.resources_middleware import ResourcesMiddleware # noqa
+from utils.message_mgr import MessageManager # noqa
 from config import LOG_CONFIG # noqa
 
 logging.basicConfig(**LOG_CONFIG)
@@ -14,7 +17,6 @@ logger = logging.getLogger(name='weekly_message_commands')
 
 # Инициализация роутера
 router = Router(name=__name__)
-
 
 
 async def send_user_report(
@@ -97,21 +99,30 @@ async def start_report_handler(
             db_pool=database
         )
 
-        await send_question(state, callback.bot)
+        # Создаем менеджер сообщений
+        quiz_manager = MessageManager(bot=callback.bot, state=state)
+
+        # Отправляем начальное сообщение
+        await quiz_manager.send_message_with_save(
+            source=callback,
+            text="Начинаем проверку знаний...",
+        )
+
+        # Отправляем первый вопрос
+        await send_question(state, callback.bot, quiz_manager)
         await callback.answer()
 
     except Exception as e:
-        logger.error(f"Ошибка в start_report_handler: {e}")
+        logger.error(f"Ошибка в start_report_handler: {e}", exc_info=True)
         await callback.answer("Ошибка запуска проверки", show_alert=True)
 
 
 async def send_question(
         state: FSMContext,
         bot: Bot,
+        quiz_manager: MessageManager
 ):
-    """
-    Отправляет пользователю текущий вопрос из отчета.
-    """
+    """Отправляет вопрос и сохраняет его ID для последующего удаления"""
     data = await state.get_data()
     idx = data.get("current_index")
     word_ids = data.get("word_ids")
@@ -123,6 +134,10 @@ async def send_question(
         return
 
     if idx >= len(word_ids):
+        # Удаляем все предыдущие сообщения перед финальным
+        await quiz_manager.delete_previous_messages(chat_id)
+
+        # Отправляем финальное сообщение (не сохраняем его для удаления)
         await bot.send_message(
             chat_id=chat_id,
             text="🎉 Поздравляем! Вы завершили проверку знаний по всем словам."
@@ -138,9 +153,12 @@ async def send_question(
         )
 
     if not word_data:
-        await bot.send_message(
-            chat_id=chat_id,
-            text="Ошибка: данные вопроса не найдены."
+        # Создаем фиктивное сообщение для отправки ошибки
+        fake_msg = Message(chat_id=chat_id, message_id=0)
+        await quiz_manager.send_message_with_save(
+            source=fake_msg,
+            text="Ошибка: данные вопроса не найдены.",
+            reply_markup=None
         )
         return
 
@@ -149,6 +167,7 @@ async def send_question(
         f"{word_data['sentence']}\n\n"
         "Выберите правильный вариант:"
     )
+
     keyboard = InlineKeyboardMarkup(inline_keyboard=[])
     row = []
     for opt_idx, option in enumerate(word_data["options"]):
@@ -160,8 +179,10 @@ async def send_question(
     if row:
         keyboard.inline_keyboard.append(row)
 
-    await bot.send_message(
-        chat_id=chat_id,
+    # Создаем фиктивное сообщение для отправки вопроса
+    fake_msg = Message(chat_id=chat_id, message_id=0)
+    await quiz_manager.send_message_with_save(
+        source=fake_msg,
         text=question_text,
         reply_markup=keyboard
     )
@@ -169,14 +190,15 @@ async def send_question(
 
 @router.callback_query(lambda callback: callback.data.startswith("quiz:"))
 async def handle_word_quiz(
-        callback: types.CallbackQuery,
+        callback: CallbackQuery,
         state: FSMContext,
 ):
     data = await state.get_data()
     db_pool = data.get("db_pool")
-    """
-    Обработка ответа на вопрос викторины.
-    """
+
+    # Создаем менеджер сообщений
+    quiz_manager = MessageManager(bot=callback.bot, state=state)
+
     parts = callback.data.split(":")
     if len(parts) != 3:
         await callback.answer("Некорректные данные вопроса.", show_alert=True)
@@ -213,29 +235,27 @@ async def handle_word_quiz(
         ).as_markdown()
 
     await callback.answer()
-    await callback.message.reply(text=msg, parse_mode="MarkdownV2")
 
-    # Убираем кнопки с предыдущего сообщения
+    # Убираем кнопки с текущего сообщения
     try:
         await callback.message.edit_reply_markup(reply_markup=None)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Ошибка при удалении кнопок: {e}")
 
-    data = await state.get_data()
+    # Отправляем результат ответа
+    await quiz_manager.send_message_with_save(
+        source=callback.message,
+        text=msg,
+        parse_mode=ParseMode.MARKDOWN_V2
+    )
+
+    # Переходим к следующему вопросу
     next_idx = data.get("current_index", 0) + 1
-
-    if next_idx >= len(data.get("word_ids", [])):
-        await callback.bot.send_message(
-            chat_id=data["chat_id"],
-            text="🎉 Поздравляем! Вы завершили проверку знаний по всем словам."
-        )
-        await state.clear()
-    else:
-        await state.update_data(current_index=next_idx)
-        await send_question(state, callback.bot)
+    await state.update_data(current_index=next_idx)
+    await send_question(state, callback.bot, quiz_manager)
 
 
-@router.callback_query() # Без фильтров, перехватывает все запросы обратного вызова
+@router.callback_query()  # Без фильтров, перехватывает все запросы обратного вызова
 async def handle_unhandled_callback_query(callback: types.CallbackQuery):
     logger.warning(f"Получен необработанный запрос обратного вызова: {callback.data}")
     await callback.answer("Извините, я не понял эту команду.", show_alert=True)
