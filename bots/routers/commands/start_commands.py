@@ -56,7 +56,7 @@ async def start_with_polling(
 
     if user_exists:
         # если пользователь есть — сразу меню
-        await show_main_menu(message, state, database)
+        await show_main_menu(message, state)
         return
 
     await message_mgr.send_message_with_save(

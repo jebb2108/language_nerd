@@ -95,4 +95,4 @@ async def go_to_main_menu(
 
     await state.clear()
     # После сохранения сразу показываем главное меню
-    await show_main_menu(callback.message, state, database)
+    await show_main_menu(callback.message, state)
