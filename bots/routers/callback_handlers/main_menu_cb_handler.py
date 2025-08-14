@@ -6,7 +6,7 @@ from aiogram.types import CallbackQuery
 
 from utils.filters import IsBotFilter # noqa
 from config import LOG_CONFIG, BOT_TOKEN_MAIN # noqa
-from translations import QUESTIONARY # noqa
+from translations import QUESTIONARY, BUTTONS # noqa
 from keyboards.inline_keyboards import get_on_main_menu_keyboard, get_go_back_keyboard # noqa
 
 logging.basicConfig(**LOG_CONFIG)
