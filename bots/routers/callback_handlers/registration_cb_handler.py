@@ -68,7 +68,7 @@ async def handle_language_choice(
     # Отправляем сообщение с подтверждением
     msg = (
             f"➪ Вы выбрали: {users_choice}\n\n"
-            f"{QUESTIONARY['gratitude'][lang_code]}"
+            f"{QUESTIONARY['terms'][lang_code]}"
     )
     await callback.message.edit_text(
         text=msg,
@@ -79,15 +79,16 @@ async def handle_language_choice(
 
 
 @router.callback_query(F.data == "action_confirm")
-async def go_to_main_menu(
-        callback: CallbackQuery,
-        state: FSMContext,
-        database: ResourcesMiddleware
-):
-    await callback.answer()
+async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
 
     data = await state.get_data()
+    lang_code = data.get("lang_code", "en")
+    gratitude_msg = QUESTIONARY["gratitude"][lang_code]
     message_mgr = data.get("message_mgr")
+
+    await callback.answer(
+        text=gratitude_msg,
+    )
 
     await message_mgr.delete_previous_messages(
         chat_id=callback.message.chat.id

@@ -65,14 +65,18 @@ QUESTIONARY = dict(
             "ru4": "Китайский",
         },
 
-        "gratitude": {
-            "en": "Thank you for your patience! In order to use our service, you must agree to the user agreement",
-            "ru": "Спасибо за терпение! В целях использования нашего сервиса, вы должны подтвердить, что вы согласны с пользовательским соглашением",
+        "terms": {
+            "en": "In order to use our service, you must agree to the user agreement",
+            "ru": "В целях использования нашего сервиса, вы должны подтвердить, что вы согласны с пользовательским соглашением",
         },
 
         "confirm": {
             "en": "I agree",
             "ru": "Согласен",
+        },
+        "gratitude": {
+            "en": "Thank you for your patience",
+            "ru": "Спасибо за терпение",
         },
 
         "welcome": {
@@ -98,7 +102,7 @@ QUESTIONARY = dict(
             "en": (
                 "I'm here to make your language learning easier and enjoyable 🌍📚\n\n"
                 "My mission is to give you:\n"
-                "🔹 <b>A handy dictionary</b> at your fingertips (you'll never forget a word!) "
+                "🔹 <b>A handy dictionary</b> at your fingertips (you'll never forget a word!)\n"
                 "🔹 <b>Real conversations</b> with people from all over the world — no unnecessary complications\n"
                 "🔹 <b>AI features:</b> Every week, you'll get a mini quiz to test the words you've learned over the week\n\n"
                 "✨ This app also includes all the essential tools to help your language learning journey be as great as your vibrant soul :)\n\n"
