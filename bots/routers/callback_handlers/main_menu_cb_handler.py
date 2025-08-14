@@ -40,6 +40,8 @@ async def go_back(callback: CallbackQuery, state: FSMContext):
     """
     Возвращает пользователя назад в главное меню, повторно вызывая те же кнопки.
     """
+    await callback.answer()
+
     data = await state.get_data()
     user_id = data.get("user_id")
     first_name = data.get("first_name")
@@ -53,4 +55,3 @@ async def go_back(callback: CallbackQuery, state: FSMContext):
         reply_markup=get_on_main_menu_keyboard(user_id, lang_code),
         parse_mode=ParseMode.HTML,
     )
-    await callback.answer()
