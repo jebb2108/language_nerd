@@ -11,7 +11,7 @@ from translations import BUTTONS, QUESTIONARY # noqa
 
 def get_on_main_menu_keyboard(user_id, lang_code):
     # Формируем URL с user_id для Web App
-    web_app_url = "https://lllang.site/?user_id=%s}".format(str(user_id))
+    web_app_url = "https://lllang.site/?user_id=%s".format(str(user_id))
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
