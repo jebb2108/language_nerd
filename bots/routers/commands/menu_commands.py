@@ -21,6 +21,8 @@ router.callback_query.filter(IsBotFilter(BOT_TOKEN_MAIN))
 @router.message(Command("menu"), IsBotFilter(BOT_TOKEN_MAIN))
 async def show_main_menu(message: Message, state: FSMContext):
 
+    await state.clear()
+
     user_id = message.from_user.id
     user_name = message.from_user.username
     first_name = message.from_user.first_name

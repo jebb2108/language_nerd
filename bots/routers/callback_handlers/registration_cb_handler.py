@@ -85,6 +85,7 @@ async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
     lang_code = data.get("lang_code", "en")
     gratitude_msg = QUESTIONARY["gratitude"][lang_code]
     message_mgr = data.get("message_mgr")
+    orig_message = data.get('orig_message')
 
     await callback.answer(
         text=gratitude_msg,
@@ -94,6 +95,5 @@ async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
         chat_id=callback.message.chat.id
     )
 
-    await state.clear()
     # После сохранения сразу показываем главное меню
-    await show_main_menu()
+    await show_main_menu(orig_message, state)

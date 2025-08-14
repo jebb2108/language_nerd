@@ -52,6 +52,7 @@ async def start_with_polling(
         first_name=message.from_user.first_name or "",
         lang_code=lang_code,
         message_mgr=message_mgr,
+        orig_message=message,
     )
 
     if user_exists:
