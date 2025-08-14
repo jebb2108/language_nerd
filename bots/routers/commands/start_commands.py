@@ -3,7 +3,7 @@ import logging
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
+from aiogram.filters.callback_data import CallbackData
 from aiogram.types import Message
 
 from middlewares.resources_middleware import ResourcesMiddleware # noqa
@@ -24,6 +24,7 @@ router = Router(name=__name__)
 # Фильтрация по токену
 router.message.filter(IsBotFilter(BOT_TOKEN_MAIN))
 router.callback_query.filter(IsBotFilter(BOT_TOKEN_MAIN))
+
 
 @router.message(Command("start"), IsBotFilter(BOT_TOKEN_MAIN))
 async def start_with_polling(

@@ -27,8 +27,10 @@ class Database:
         try:
             await self.__create_words()
             await self.__create_users()
+            await self.__create_locations()
             await self.__create_weekly_reports()
             await self.__create_report_words()
+
         except Exception as e:
             logger.error(f"Database initialization failed: {e}")
 
@@ -56,10 +58,22 @@ class Database:
                             first_name TEXT NOT NULL,
                             camefrom TEXT NOT NULL,
                             language TEXT NOT NULL,
+                            fluency TEXT NOT NULL,
                             lang_code TEXT NOT NULL,
-                            about TEXT NULL,
                             is_active BOOLEAN DEFAULT TRUE,
                             blocked_bot BOOLEAN DEFAULT FALSE,
+                            about TEXT NULL,
+                            UNIQUE (user_id)
+                            ); """)
+
+    async def __create_locations(self):
+        async with self.acquire_connection() as conn:
+            await conn.execute("""
+                            CREATE TABLE IF NOT EXISTS locations (
+                            id SERIAL PRIMARY KEY,
+                            user_id BIGINT NOT NULL,
+                            latitude TEXT NOT NULL,
+                            longitude TEXT NOT NULL,
                             UNIQUE (user_id)
                             ); """)
 
@@ -138,6 +152,18 @@ class Database:
 
         except Exception as e:
             logger.error(f"Error adding user {user_id}: {e}")
+            return
+
+    async def add_users_location(self, user_id: int, latitude: str, longitude: str) -> None:
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+                """
+                INSERT INTO locations (user_id, latitude, longitude)
+                VALUES ($1,$2,$3)
+                """,
+                user_id, latitude, longitude
+            )
+            logger.info(f"User {user_id} location added: {latitude}, {longitude}")
             return
 
     async def get_user_info(self, user_id: int) -> dict:
