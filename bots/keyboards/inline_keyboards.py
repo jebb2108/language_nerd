@@ -1,16 +1,23 @@
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from aiogram.types.web_app_info import WebAppInfo
+import sys
+
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 from translations import BUTTONS, QUESTIONARY # noqa
+
+
 
 def get_on_main_menu_keyboard(user_id, lang_code):
     # Формируем URL с user_id для Web App
-    web_app_url = "https://lllang.site/?user_id=%s}"
+    web_app_url = "https://lllang.site/?user_id=%s}".format(str(user_id))
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
                 text=BUTTONS["dictionary"][lang_code],
-                web_app=WebAppInfo(url=web_app_url.format(user_id)),
+                web_app=WebAppInfo(url=web_app_url),
             ),
         ],
         [
@@ -32,11 +39,13 @@ def get_on_main_menu_keyboard(user_id, lang_code):
     ])
     return keyboard
 
+
 def get_go_back_keyboard():
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🔙 Go Back", callback_data="go_back")]
     ])
     return keyboard
+
 
 def show_where_from_keyboard(lang_code):
     # иначе запускаем опрос «откуда вы о нас узнали»
@@ -62,6 +71,7 @@ def show_where_from_keyboard(lang_code):
     ])
     return keyboard
 
+
 def show_language_keyboard():
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🇷🇺 Русский", callback_data="lang_russian")],
@@ -71,6 +81,7 @@ def show_language_keyboard():
         [InlineKeyboardButton(text="🇨🇳 中文", callback_data="lang_chinese")],
     ])
     return keyboard
+
 
 def confirm_choice_keyboard(lang_code):
     # Обновляем текст с подтверждением выбора
