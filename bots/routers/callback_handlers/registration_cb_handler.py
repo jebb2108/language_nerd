@@ -19,13 +19,7 @@ logger = logging.getLogger(name='registration_cb_handler')
 router = Router(name=__name__)
 
 
-class PollingStates(StatesGroup):
-    camefrom_state = State()
-    language_state = State()
-    introduction_state = State()
-
-
-@router.callback_query(F.data.startswith("camefrom_"), PollingStates.camefrom_state)
+@router.callback_query(F.data.startswith("camefrom_"))
 async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
     """
     После вопроса «откуда узнали» переходим к выбору языка.
@@ -45,13 +39,12 @@ async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
             text=QUESTIONARY["lang_pick"][lang_code],
             reply_markup=show_language_keyboard(),
         )
-        await state.set_state(PollingStates.language_state)
 
     except Exception as e:
         logger.error(f"Error in handle_camefrom: {e}")
 
 
-@router.callback_query(F.data.startswith("lang_"), PollingStates.language_state)
+@router.callback_query(F.data.startswith("lang_"))
 async def handle_language_choice(
         callback: CallbackQuery,
         state: FSMContext,
@@ -83,10 +76,9 @@ async def handle_language_choice(
     )
     # Сохраняем нового пользователя в БД
     await database.add_user(user_id, username, first_name, camefrom, users_choice, lang_code)
-    await state.set_state(PollingStates.introduction_state)
 
 
-@router.callback_query(F.data == "action_confirm", PollingStates.introduction_state)
+@router.callback_query(F.data == "action_confirm")
 async def go_to_main_menu(
         callback: CallbackQuery,
         state: FSMContext,

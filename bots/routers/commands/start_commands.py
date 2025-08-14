@@ -3,6 +3,7 @@ import logging
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message
 
 from middlewares.resources_middleware import ResourcesMiddleware # noqa
@@ -12,7 +13,6 @@ from utils.filters import IsBotFilter # noqa
 from utils.message_mgr import MessageManager # noqa
 from config import BOT_TOKEN_MAIN, LOG_CONFIG # noqa
 from keyboards.inline_keyboards import show_where_from_keyboard, show_language_keyboard, confirm_choice_keyboard # noqa
-from routers.callback_handlers.registration_cb_handler import PollingStates # noqa
 from routers.commands.menu_commands import show_main_menu  # noqa
 
 logging.basicConfig(**LOG_CONFIG)
@@ -64,6 +64,5 @@ async def start_with_polling(
         text=QUESTIONARY["intro"][lang_code],
         reply_markup=show_where_from_keyboard(lang_code),
     )
-    await state.set_state(PollingStates.camefrom_state)
 
 
