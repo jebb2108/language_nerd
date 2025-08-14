@@ -6,7 +6,7 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import CallbackQuery
 
 from middlewares.resources_middleware import ResourcesMiddleware # noqa
-from keyboards.inline_keyboards import get_users_location_keyboard, show_language_keyboard, confirm_choice_keyboard # noqa
+from keyboards.inline_keyboards import show_language_keyboard, confirm_choice_keyboard # noqa
 
 from config import LOG_CONFIG # noqa
 from translations import QUESTIONARY # noqa
@@ -77,19 +77,6 @@ async def handle_language_choice(
     # Сохраняем нового пользователя в БД
     await database.add_user(user_id, username, first_name, camefrom, users_choice, lang_code)
 
-@router.callback_query(F.data == "location")
-async def location_handler(callback: CallbackQuery, state: FSMContext):
-    await callback.answer()
-
-    data = await state.get_data()
-    message_mgr = data["message_mgr"]
-    lang_code = data["lang_code"]
-
-    await message_mgr.send_message_with_save(
-        chat_id=callback.message.chat.id,
-        text=QUESTIONARY["need_location"][lang_code],
-        reply_markup=get_users_location_keyboard(lang_code),
-    )
 
 
 @router.callback_query(F.data == "action_confirm")
