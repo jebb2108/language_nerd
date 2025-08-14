@@ -16,18 +16,18 @@ from translations import QUESTIONARY, BUTTONS, FIND_PARTNER # noqa
 router = Router(name=__name__)
 
 # Фильтрация по токену
-router.message.filter(IsBotFilter(BOT_TOKEN_PARTNER))
-router.callback_query.filter(IsBotFilter(BOT_TOKEN_PARTNER))
+# router.message.filter(IsBotFilter(BOT_TOKEN_PARTNER))
+# router.callback_query.filter(IsBotFilter(BOT_TOKEN_PARTNER))
 
 
-@router.message(Command("start"), IsBotFilter(BOT_TOKEN_PARTNER))
-async def start(message: Message, db: ResourcesMiddleware):
+@router.message(Command("start"))
+async def start(message: Message, database: ResourcesMiddleware):
 
     lang_code = message.from_user.language_code
     greeting = f"{BUTTONS['hello'][lang_code]} <b>{message.from_user.first_name}</b>!\n\n"
 
     markup, txt = None, ''
-    if not db.check_user_exists(message.from_user.id):
+    if not database.check_user_exists(message.from_user.id):
         builder = KeyboardBuilder(button_type=KeyboardButton)
         txt = QUESTIONARY["need_location"][lang_code]
         share_button = KeyboardButton(
@@ -46,7 +46,7 @@ async def start(message: Message, db: ResourcesMiddleware):
         reply_markup=markup
     )
 
-@router.message(F.location, IsBotFilter(BOT_TOKEN_PARTNER))
+@router.message(F.location)
 async def process_location(message: Message):
     lattitude = str(message.location.latitude)
     longitude = str(message.location.longitude)
@@ -58,7 +58,7 @@ async def cancel(message: Message):
     msg = FIND_PARTNER["no_worries"][message.from_user.language_code]
     await message.reply(text=msg)
 
-@router.message(IsBotFilter(BOT_TOKEN_PARTNER))
+@router.message()
 async def echo(message: Message, rate_limit_info: RateLimitInfo):
     # Убираем кнопки после любого сообщения
     remove_keyboard = ReplyKeyboardMarkup(
