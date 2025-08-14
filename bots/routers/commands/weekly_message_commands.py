@@ -1,4 +1,5 @@
 import logging
+from unittest.mock import right
 
 from aiogram import Router, types, Bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
@@ -101,8 +102,10 @@ async def start_report_handler(
             word_ids=[row["word_id"] for row in words],
             current_index=0,
             chat_id=chat_id,
+            right_choices=[],
+            wrong_choices=[],
             db_pool=database,
-            quiz_manager=quiz_manager  # Сохраняем менеджер в state
+            quiz_manager=quiz_manager,  # Сохраняем менеджер в state
         )
 
         await quiz_manager.send_message_with_save(
@@ -134,10 +137,18 @@ async def send_question(
         return
 
     if idx >= len(word_ids):
+        msg = (
+            "🎉 Поздравляем! Вы завершили проверку знаний по всем словам за эту неделю.\n\n"
+            "Слова, на которые вы ответили правильно: {rights}\n"
+            "Ошибочные ответы: {wrongs}\n"
+        )
+
+        rights = ', '.join(data.get("right_choices", [])) or "нет правильных ответов"
+        wrongs = ', '.join(data.get("wrong_choices", [])) or "нет ошибочных ответов"
         await quiz_manager.delete_previous_messages(chat_id)
         await quiz_manager.send_message_with_save(  # Используем bot из менеджера
             chat_id=chat_id,
-            text="🎉 Поздравляем! Вы завершили проверку знаний по всем словам за эту неделю."
+            text=msg.format(rights=rights, wrongs=wrongs)
         )
         await state.clear()
         return
@@ -165,8 +176,9 @@ async def send_question(
     keyboard = InlineKeyboardMarkup(inline_keyboard=[])
     row = []
     for opt_idx, option in enumerate(word_data["options"]):
-        cb = f"quiz:{word_id}:{opt_idx}"
-        row.append(InlineKeyboardButton(text=option, callback_data=cb))
+        # В callback_data мы передаем word_id и индекс варианта
+        call_back = f"quiz:{word_id}:{opt_idx}"
+        row.append(InlineKeyboardButton(text=option, callback_data=call_back))
         if len(row) >= 2:
             keyboard.inline_keyboard.append(row)
             row = []
@@ -220,15 +232,19 @@ async def handle_word_quiz(
 
         if is_correct:
             msg = Text(
-                "✅ Правильно! Отличная работа!\n\n",
+                "✅ Правильно!\n\n",
                 Bold("Слово: "), hd.quote(record['word'])
             ).as_markdown()
+            # Сохраняем правильное слово в data
+            await data["right_choices"].append(record["word"])
         else:
             msg = Text(
                 "❌ К сожалению, неверно.\n\n",
                 Bold("Ваш ответ: "), hd.quote(selected_word), "\n",
                 Bold("Правильный ответ: "), hd.quote(correct_word), "\n",
             ).as_markdown()
+            # Сохраняем неправильное слово в data
+            await data["wrong_choices"].append(record["word"])
 
         await callback.answer()
 

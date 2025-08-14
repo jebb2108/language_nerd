@@ -37,8 +37,11 @@ REQUEST_SEMAPHORE = Semaphore(3)
 REQUEST_RATE_LIMITER = Semaphore(50)
 
 AI_LAST_REQUEST_TIME = 0.0
-
+# Глобальная метка времени для паузы всех вызовов Telegram API
 TELEGRAM_API_SEMAPHORE = Semaphore(5)
-TELEGRAM_RETRY_UNTIL_TIME = 0.0 # Глобальная метка времени для паузы всех вызовов Telegram API
-TELEGRAM_LAST_REQUEST_TIME = 0.0 # Для принудительного соблюдения лимитов в секунду при необходимости
-TELEGRAM_MIN_DELAY_BETWEEN_REQUESTS = 0.05 # Для проактивного лимита 20 сообщений/сек (1/20)
+# Глобальная метка времени для паузы всех вызовов Telegram API
+TELEGRAM_RETRY_UNTIL_TIME = 0.0
+# Для принудительного соблюдения лимитов в секунду при необходимости
+TELEGRAM_LAST_REQUEST_TIME = 0.0
+# Для проактивного лимита 20 сообщений/сек (1/20)
+TELEGRAM_MIN_DELAY_BETWEEN_REQUESTS = 0.05

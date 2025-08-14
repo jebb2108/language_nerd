@@ -115,6 +115,31 @@ class Database:
             logger.error(f"Error creating/updating user {user_id}: {e}")
             return False
 
+    async def add_user(
+            self,
+            user_id: int,
+            username: str,
+            first_name: str,
+            camefrom: str,
+            users_choice: str,
+            lang_code: str
+    ) -> None:
+        try:
+            async with self.acquire_connection() as conn:
+                await conn.execute(
+                    """
+                    INSERT INTO users (user_id, username, first_name, camefrom, language, lang_code)
+                    VALUES ($1,$2,$3,$4,$5,$6)
+                    """,
+                    user_id, username, first_name, camefrom, users_choice, lang_code
+                )
+                logger.info(f"User {user_id} added: {username}")
+                return
+
+        except Exception as e:
+            logger.error(f"Error adding user {user_id}: {e}")
+            return
+
     async def get_user_info(self, user_id: int) -> dict:
         async with self.acquire_connection() as conn:
             row = await conn.fetchrow(
@@ -220,6 +245,13 @@ class Database:
                     logger.error(f"Database error: {e}")
                     return None
 
+    async def check_user_exists(self, user_id: int) -> bool:
+        async with self.acquire_connection() as conn:
+            return bool(await conn.fetchrow(
+                "SELECT 1 FROM users WHERE user_id = $1",
+                user_id
+            ))
+
     def clean_locks(self):
         """Периодически очищаем неиспользуемые блокировки"""
         user_ids = list(self.user_locks.keys())
@@ -271,21 +303,6 @@ class ReportDatabase(Database):
                 "SELECT report_id, user_id FROM weekly_reports WHERE sent = FALSE AND status = 'OK'"
             )
 
-    # async def mark_report_as_sent(self, report_id: int, status: str='OK'):
-    #     async with self.acquire_connection() as conn:
-    #         await conn.execute(
-    #             "UPDATE weekly_reports SET sent = TRUE, status = $2 WHERE report_id = $1",
-    #             report_id, status
-    #         )
-    #
-    # async def mark_user_as_blocked(self, user_id: int):
-    #     async with self.acquire_connection() as conn:
-    #         await conn.execute(
-    #             "UPDATE users SET status = 'blocked' WHERE user_id = $1",
-    #             user_id
-    #         )
-
-    # В utils/database.py (класс ReportDatabase)
     async def mark_user_as_blocked(self, user_id: int):
         async with self.acquire_connection() as conn:
             await conn.execute(
