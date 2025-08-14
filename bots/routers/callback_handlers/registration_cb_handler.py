@@ -96,4 +96,4 @@ async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
 
     await state.clear()
     # После сохранения сразу показываем главное меню
-    await show_main_menu(callback.message, state)
+    await show_main_menu()
