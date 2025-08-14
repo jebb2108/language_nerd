@@ -6,7 +6,7 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import CallbackQuery
 
 from middlewares.resources_middleware import ResourcesMiddleware # noqa
-from routers.keyboards.inline_keyboards import show_where_from_keyboard, show_language_keyboard, confirm_choice_keyboard # noqa
+from keyboards.inline_keyboards import show_where_from_keyboard, show_language_keyboard, confirm_choice_keyboard # noqa
 
 from config import LOG_CONFIG # noqa
 from translations import QUESTIONARY # noqa
