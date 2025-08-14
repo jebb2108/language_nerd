@@ -6,11 +6,11 @@ from aiogram.utils.keyboard import KeyboardBuilder, ReplyKeyboardBuilder, ReplyK
 from aiogram.enums import ParseMode
 
 from config import BOT_TOKEN_PARTNER # noqa
+from middlewares.resources_middleware import ResourcesMiddleware # noqa
 from middlewares.rate_limit_middleware import RateLimitMiddleware, RateLimitInfo # noqa
 from utils.filters import IsBotFilter # noqa
 
 from translations import QUESTIONARY, BUTTONS, FIND_PARTNER # noqa
-from middlewares.resources_middleware import ResourcesMiddleware # noqa
 
 # Инициализируем роутер
 router = Router(name=__name__)
@@ -21,13 +21,13 @@ router.callback_query.filter(IsBotFilter(BOT_TOKEN_PARTNER))
 
 
 @router.message(Command("start"), IsBotFilter(BOT_TOKEN_PARTNER))
-async def start(message: Message, database: ResourcesMiddleware):
+async def start(message: Message, db: ResourcesMiddleware):
 
     lang_code = message.from_user.language_code
     greeting = f"{BUTTONS['hello'][lang_code]} <b>{message.from_user.first_name}</b>!\n\n"
 
     markup, txt = None, ''
-    if not database.check_user_exists(message.from_user.id):
+    if not db.check_user_exists(message.from_user.id):
         builder = KeyboardBuilder(button_type=KeyboardButton)
         txt = QUESTIONARY["need_location"][lang_code]
         share_button = KeyboardButton(
@@ -47,7 +47,7 @@ async def start(message: Message, database: ResourcesMiddleware):
     )
 
 @router.message(F.location, IsBotFilter(BOT_TOKEN_PARTNER))
-async def process_location(message: Message, db: ResourcesMiddleware):
+async def process_location(message: Message):
     lattitude = str(message.location.latitude)
     longitude = str(message.location.longitude)
     db.add_users_location(message.from_user.id, lattitude, longitude)
