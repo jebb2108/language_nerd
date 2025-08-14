@@ -16,11 +16,11 @@ from translations import QUESTIONARY, BUTTONS, FIND_PARTNER # noqa
 router = Router(name=__name__)
 
 # Фильтрация по токену
-# router.message.filter(IsBotFilter(BOT_TOKEN_PARTNER))
-# router.callback_query.filter(IsBotFilter(BOT_TOKEN_PARTNER))
+router.message.filter(IsBotFilter(BOT_TOKEN_PARTNER))
+router.callback_query.filter(IsBotFilter(BOT_TOKEN_PARTNER))
 
 
-@router.message(Command("start"))
+@router.message(Command("start"), IsBotFilter(BOT_TOKEN_PARTNER))
 async def start(message: Message, database: ResourcesMiddleware):
 
     lang_code = message.from_user.language_code
@@ -46,7 +46,7 @@ async def start(message: Message, database: ResourcesMiddleware):
         reply_markup=markup
     )
 
-@router.message(F.location)
+@router.message(F.location, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_location(message: Message):
     lattitude = str(message.location.latitude)
     longitude = str(message.location.longitude)
@@ -58,7 +58,7 @@ async def cancel(message: Message):
     msg = FIND_PARTNER["no_worries"][message.from_user.language_code]
     await message.reply(text=msg)
 
-@router.message()
+@router.message(IsBotFilter(BOT_TOKEN_PARTNER))
 async def echo(message: Message, rate_limit_info: RateLimitInfo):
     # Убираем кнопки после любого сообщения
     remove_keyboard = ReplyKeyboardMarkup(

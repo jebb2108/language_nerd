@@ -8,6 +8,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 # Импорт текстовых сообщений из отдельного файла (translations.py)
 from routers import router as main_router
+from middlewares.resources_middleware import ResourcesMiddleware
 from middlewares.rate_limit_middleware import RateLimitMiddleware
 
 # Импорт функций БД
@@ -34,7 +35,14 @@ async def run():
 
     bot = Bot(token=BOT_TOKEN_PARTNER, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     disp = Dispatcher(storage=storage) if storage else Dispatcher()
+
+    resources = ResourcesMiddleware()
+    db = await resources.on_startup()
+    await db.initialize()
+
     disp.include_router(main_router)
+    disp.message.middleware(resources)
+    disp.callback_query.middleware(resources)
     disp.message.middleware(RateLimitMiddleware())
 
     logger.info("Starting partner bots (polling)…")
