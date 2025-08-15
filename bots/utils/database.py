@@ -110,19 +110,20 @@ class Database:
         finally:
             await self._pool.release(conn)
 
-    async def create_user(self, user_id, username, first_name, camefrom, language, lang_code):
+    async def create_user(self, user_id, username, fluency, first_name, camefrom, language, fluency, lang_code):
         try:
             async with self.acquire_connection() as conn:
                 result = await conn.execute("""
-                    INSERT INTO users (user_id, username, first_name, camefrom, language, lang_code) 
-                    VALUES ($1, $2, $3, $4, $5, $6)
+                    INSERT INTO users (user_id, username, first_name, camefrom, language, fluency, lang_code) 
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
                     ON CONFLICT (user_id) DO UPDATE 
                     SET username = EXCLUDED.username,
                         camefrom = EXCLUDED.camefrom,
                         first_name = EXCLUDED.first_name,
                         language = EXCLUDED.language,
+                        fluency = EXCLUDED.language,
                         lang_code = EXCLUDED.lang_code
-                """, user_id, username, first_name, camefrom, language, lang_code)
+                """, user_id, username, first_name, camefrom, language, fluency, lang_code)
                 logger.info(f"User {user_id} created/updated: {result}")
                 return True
         except Exception as e:
