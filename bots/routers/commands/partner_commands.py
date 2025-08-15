@@ -27,7 +27,7 @@ async def start(message: Message, database: ResourcesMiddleware):
     greeting = f"{BUTTONS['hello'][lang_code]} <b>{message.from_user.first_name}</b>!\n\n"
 
     markup, txt = None, ''
-    if not database.check_user_exists(message.from_user.id):
+    if not database.check_location_exists(message.from_user.id):
         builder = KeyboardBuilder(button_type=KeyboardButton)
         txt = QUESTIONARY["need_location"][lang_code]
         share_button = KeyboardButton(
