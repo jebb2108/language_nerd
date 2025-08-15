@@ -254,6 +254,12 @@ class Database:
                 "SELECT 1 FROM users WHERE user_id = $1",
                 user_id
             ))
+    async def check_location_exists(self, user_id: int) -> bool:
+        async with self.acquire_connection() as conn:
+            return bool(await conn.fetchrow(
+                "SELECT 1 FROM locations WHERE user_id = $1",
+                user_id
+            ))
 
     def clean_locks(self):
         """Периодически очищаем неиспользуемые блокировки"""
