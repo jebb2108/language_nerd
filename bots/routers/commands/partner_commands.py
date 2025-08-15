@@ -28,7 +28,7 @@ async def start(message: Message, database: ResourcesMiddleware):
 
     markup, txt = None, ''
     if not database.check_location_exists(message.from_user.id):
-        builder = KeyboardBuilder(button_type=KeyboardButton)
+        builder = ReplyKeyboardBuilder()
         txt = QUESTIONARY["need_location"][lang_code]
         share_button = KeyboardButton(
             text=QUESTIONARY["share_location"][lang_code]
