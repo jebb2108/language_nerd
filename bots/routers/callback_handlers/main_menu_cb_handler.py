@@ -21,6 +21,8 @@ async def about(callback: CallbackQuery, state: FSMContext):
     Обработчик нажатия кнопки "О боте".
     Берём текст из QUESTIONARY, ничего не храним в state.
     """
+    await callback.answer()  # убираем "часики" на кнопке
+
     data = await state.get_data()
     lang_code = data.get("lang_code")
 
@@ -32,8 +34,7 @@ async def about(callback: CallbackQuery, state: FSMContext):
         reply_markup=get_go_back_keyboard(),
         parse_mode=ParseMode.HTML,
     )
-    await callback.answer()  # убираем "часики" на кнопке
-
+    
 
 @router.callback_query(F.data == "go_back", IsBotFilter(BOT_TOKEN_MAIN))
 async def go_back(callback: CallbackQuery, state: FSMContext):
