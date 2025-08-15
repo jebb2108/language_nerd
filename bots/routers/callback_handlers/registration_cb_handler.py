@@ -61,6 +61,7 @@ async def handle_language_choice(
     username = data.get("username", "")
     first_name = data.get("first_name", "")
     camefrom = data.get("camefrom", "")
+    fluency = data.get("fluency", "in_making")
     lang_code = data.get("lang_code", "en")
 
     users_choice = callback.data.split("_", 1)[1]
@@ -75,7 +76,7 @@ async def handle_language_choice(
         reply_markup=confirm_choice_keyboard(lang_code),
     )
     # Сохраняем нового пользователя в БД
-    await database.create_user(user_id, username, first_name, camefrom, users_choice, lang_code)
+    await database.create_user(user_id, username, first_name, camefrom, users_choice, fluency, lang_code)
 
 
 
