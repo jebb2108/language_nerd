@@ -128,31 +128,7 @@ class Database:
         except Exception as e:
             logger.error(f"Error creating/updating user {user_id}: {e}")
             return False
-
-    async def add_user(
-            self,
-            user_id: int,
-            username: str,
-            first_name: str,
-            camefrom: str,
-            users_choice: str,
-            lang_code: str
-    ) -> None:
-        try:
-            async with self.acquire_connection() as conn:
-                await conn.execute(
-                    """
-                    INSERT INTO users (user_id, username, first_name, camefrom, language, lang_code)
-                    VALUES ($1,$2,$3,$4,$5,$6)
-                    """,
-                    user_id, username, first_name, camefrom, users_choice, lang_code
-                )
-                logger.info(f"User {user_id} added: {username}")
-                return
-
-        except Exception as e:
-            logger.error(f"Error adding user {user_id}: {e}")
-            return
+    
 
     async def add_users_location(self, user_id: int, latitude: str, longitude: str) -> None:
         async with self.acquire_connection() as conn:
