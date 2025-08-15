@@ -75,7 +75,7 @@ async def handle_language_choice(
         reply_markup=confirm_choice_keyboard(lang_code),
     )
     # Сохраняем нового пользователя в БД
-    await database.add_user(user_id, username, first_name, camefrom, users_choice, lang_code)
+    await database.create_user(user_id, username, first_name, camefrom, users_choice, lang_code)
 
 
 
