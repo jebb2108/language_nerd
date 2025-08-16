@@ -53,11 +53,16 @@ async def process_location(message: Message, database: ResourcesMiddleware):
     database.add_users_location(message.from_user.id, lattitude, longitude)
     await message.answer('Thank you for your trust.')
 
-@router.message(lambda message: message.text == FIND_PARTNER["cancel"].get(message.from_user.language_code, FIND_PARTNER["cancel"]["en"]), IsBotFilter(BOT_TOKEN_PARTNER))
+@router.message(
+    lambda message: message.text == FIND_PARTNER["cancel"].get(
+        message.from_user.language_code, FIND_PARTNER["cancel"]["en"]), 
+        IsBotFilter(BOT_TOKEN_PARTNER)
+)
 async def cancel(message: Message, database: ResourcesMiddleware):
-    msg = FIND_PARTNER["no_worries"][message.from_user.language_code]
-    database.add_users_location(message.from_user.id, "refused", "refused")
-    await message.reply(text=msg)
+    if not database.check_location_exists(message.from_user.id):
+        msg = FIND_PARTNER["no_worries"][message.from_user.language_code]
+        database.add_users_location(message.from_user.id, "refused", "refused")
+        await message.reply(text=msg)
 
 @router.message(IsBotFilter(BOT_TOKEN_PARTNER))
 async def echo(message: Message, rate_limit_info: RateLimitInfo):
