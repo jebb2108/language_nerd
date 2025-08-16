@@ -48,10 +48,11 @@ async def start(message: Message, database: ResourcesMiddleware):
 
 @router.message(F.location, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_location(message: Message, database: ResourcesMiddleware):
-    lattitude = str(message.location.latitude)
-    longitude = str(message.location.longitude)
-    database.add_users_location(message.from_user.id, lattitude, longitude)
-    await message.answer('Thank you for your trust.')
+    if not database.check_location_exists(message.from_user.id):
+        lattitude = str(message.location.latitude)
+        longitude = str(message.location.longitude)
+        database.add_users_location(message.from_user.id, lattitude, longitude)
+        await message.answer('Thank you for your trust.')
 
 @router.message(
     lambda message: message.text == FIND_PARTNER["cancel"].get(
