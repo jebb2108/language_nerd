@@ -89,40 +89,34 @@ async def process_intro(message: Message, state: FSMContext, database: Resources
         birthday = data.get("bday", "default")
         # Сохраняем профиль
         await database.add_users_profile(user_id, name, birthday, message.text)
-        return await state.set_state(PollingState.waiting_for_location)
+
+        if not await database.check_location_exists(message.from_user.id):
+            msg = QUESTIONARY["need_location"][lang_code]
+            share_button = KeyboardButton(
+                text=QUESTIONARY["share_location"][lang_code],
+                request_location=True,
+                is_persistent=True,
+            )
+            cancel_button = KeyboardButton(
+                text=FIND_PARTNER["cancel"][lang_code]
+            )
+            markup = ReplyKeyboardMarkup(
+                keyboard=[
+                    [share_button],
+                    [cancel_button]
+                ],
+                resize_keyboard=True,
+            )
+
+            await message.answer(text=msg, parse_mode=ParseMode.HTML, reply_markup=markup)
+
+            return await state.set_state(PollingState.waiting_for_location)
 
     await message.answer(text=QUESTIONARY["wrong_info"][lang_code], parse_mode=ParseMode.HTML)
 
 
-@router.message(PollingState.waiting_for_location, IsBotFilter(BOT_TOKEN_PARTNER))
-async def request_location(message: Message, state: FSMContext, database: ResourcesMiddleware):
 
-    data = await state.get_data()
-    lang_code = data.get("lang_code", "en")
-
-    if not await database.check_location_exists(message.from_user.id):
-
-        msg = QUESTIONARY["need_location"][lang_code]
-        share_button = KeyboardButton(
-            text=QUESTIONARY["share_location"][lang_code],
-            request_location=True,
-            is_persistent=True,
-        )
-        cancel_button = KeyboardButton(
-            text=FIND_PARTNER["cancel"][lang_code]
-        )
-        markup = ReplyKeyboardMarkup(
-            keyboard=[
-                [share_button],
-                [cancel_button]
-            ],
-            resize_keyboard=True,
-        )
-
-        await message.answer(text=msg, parse_mode=ParseMode.HTML, reply_markup=markup)
-
-
-@router.message(F.location, IsBotFilter(BOT_TOKEN_PARTNER))
+@router.message(PollingState.waiting_for_location, F.location, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_location(message: Message, state: FSMContext, database: ResourcesMiddleware):
     if not await database.check_location_exists(message.from_user.id):
         lattitude = message.location.latitude
