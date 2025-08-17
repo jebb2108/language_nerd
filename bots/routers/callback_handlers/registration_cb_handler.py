@@ -52,7 +52,7 @@ async def handle_fluency_choice(callback: CallbackQuery, state: FSMContext):
     users_choice = callback.data.split("_", 1)[1]
     msg = (
             f"➪ Вы выбрали: {users_choice}\n\n"
-            f"QUESTIONARY["language"][lang_code]
+            f"{QUESTIONARY['fluency'][lang_code]}"
     )
     await callback.message.edit_text(
         text=msg,
@@ -88,7 +88,11 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data == "action_confirm")
-async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
+async def go_to_main_menu(
+        callback: CallbackQuery,
+        state: FSMContext,
+        database: ResourcesMiddleware
+):
     
     await callback.answer()
 

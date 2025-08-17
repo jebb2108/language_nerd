@@ -110,7 +110,7 @@ class Database:
         finally:
             await self._pool.release(conn)
 
-    async def create_user(self, user_id, username, fluency, first_name, camefrom, language, fluency, lang_code):
+    async def create_user(self, user_id, username, first_name, camefrom, language, fluency, lang_code):
         try:
             async with self.acquire_connection() as conn:
                 result = await conn.execute("""

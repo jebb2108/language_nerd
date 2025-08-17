@@ -70,6 +70,21 @@ QUESTIONARY = dict(
             "ru": "Каков ваш уровень владения языком?",
         },
 
+        "fluency_levels": {
+            "en": {
+                "beginner": "Beginner",
+                "intermediate": "Intermediate",
+                "advanced": "Advanced",
+                "native": "Native",
+            },
+            "ru": {
+                "beginner": "Начинающий",
+                "intermediate": "Средний",
+                "advanced": "Продвинутый",
+                "native": "Родной",
+            },
+        },
+
         "need_location": {
             "en": "For the correct work of the application, your location is needed, please provide it by the button below.\n"
                   "All your information is confidential. Your location will be stored in encrypted form.\n"
@@ -165,6 +180,11 @@ BUTTONS = dict({
         "ru": "ℹ️ О боте",
     },
 
+    "go_back": {
+        "en": "🔙 Go Back",
+        "ru": "🔙 Назад",
+    },
+
     "support": {
         "en": "🛠 Support",
         "ru": "🛠 Поддержка",
@@ -182,7 +202,6 @@ FIND_PARTNER = dict({
         "en": "I`m a bot to help you find a partner for communication\n",
         "ru": "Я бот, чтобы помочь тебе найти собеседника для общения\n",
     },
-
 
     "location": {
         "en": "📍 Send location",
