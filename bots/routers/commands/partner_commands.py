@@ -14,7 +14,7 @@ from utils.filters import IsBotFilter # noqa
 
 from translations import QUESTIONARY, BUTTONS, FIND_PARTNER # noqa
 
-from bots.keyboards.inline_keyboards import remove_keyboard
+from keyboards.inline_keyboards import remove_keyboard # noqa
 
 # Инициализируем роутер
 router = Router(name=__name__)
