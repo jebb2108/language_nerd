@@ -101,11 +101,11 @@ QUESTIONARY = dict(
 
         "need_intro": {
             "en": "Tell me more about yourself in a few sentences:\n\n"
-                  "e.g. What are your hobbies?\n"
+                  "For example, what are your hobbies?\n"
                   "What do you like to do in your free time? And so on\n\n",
 
             "ru": "Расскажите немного о себе в несколько предложений:\n\n"
-                  "например, Какие у вас хобби?\n"
+                  "Например, какие у вас хобби?\n"
                   "Что вы любите делать в свободное время? И так далее\n\n",
         },
 

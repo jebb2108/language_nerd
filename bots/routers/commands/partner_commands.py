@@ -42,6 +42,7 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
         f"{BUTTONS['hello'][lang_code]} <b>{message.from_user.first_name}</b>!\n\n"
         f"{FIND_PARTNER['intro'][lang_code]}"
     )
+    await message.answer(text=greeting, parse_mode=ParseMode.HTML)
     if not await database.check_profile_exists(message.from_user.id):
         # Обновляем user_id в состоянии
         await state.update_data(user_id=message.from_user.id, lang_code=lang_code)
@@ -153,5 +154,4 @@ async def echo(message: Message, rate_limit_info: RateLimitInfo):
     await message.reply(
         text=f"Your message: {message.text}\n"
         f"Rate limit info: {count} messages at {first_message}",
-        reply_markup=remove_keyboard(),
     )
