@@ -77,11 +77,17 @@ async def process_age(message: Message, state: FSMContext):
 
 
 @router.message(PollingState.waiting_for_intro, IsBotFilter(BOT_TOKEN_PARTNER))
-async def process_intro(message: Message, state: FSMContext):
+async def process_intro(message: Message, state: FSMContext, database: ResourcesMiddleware):
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
+
     if re.search(r'\S{1,500}', message.text):
-        await state.update_data(intro=message.text)
+        # Достаем нужные данные о пользователе
+        user_id = data.get("user_id", 0)
+        name = data.get("name", "default")
+        birthday = data.get("bday", "default")
+        # Сохраняем профиль
+        await database.add_users_profile(user_id, name, birthday, message.text)
         return await state.set_state(PollingState.waiting_for_location)
 
     await message.answer(text=QUESTIONARY["wrong_info"][lang_code], parse_mode=ParseMode.HTML)
@@ -91,14 +97,7 @@ async def process_intro(message: Message, state: FSMContext):
 async def request_location(message: Message, state: FSMContext, database: ResourcesMiddleware):
 
     data = await state.get_data()
-    user_id = data.get("user_id", 0)
-    name = data.get("name", "default")
-    birthday = data.get("bday", "default")
-    about = data.get("intro", "")
     lang_code = data.get("lang_code", "en")
-
-    # Сохраняем профиль
-    await database.add_users_profile(user_id, name, birthday, about)
 
     if not await database.check_location_exists(message.from_user.id):
 
@@ -122,12 +121,12 @@ async def request_location(message: Message, state: FSMContext, database: Resour
         await message.answer(text=msg, parse_mode=ParseMode.HTML, reply_markup=markup)
 
 
-@router.message(F.location, IsBotFilter(BOT_TOKEN_PARTNER), PollingState.waiting_for_location)
+@router.message(F.location, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_location(message: Message, state: FSMContext, database: ResourcesMiddleware):
     if not await database.check_location_exists(message.from_user.id):
         lattitude = message.location.latitude
         longitude = message.location.longitude
-        database.add_users_location(message.from_user.id, lattitude, longitude)
+        await database.add_users_location(message.from_user.id, lattitude, longitude)
 
         await message.answer(text='Thank you for your trust', reply_markup=ReplyKeyboardRemove())
         await state.clear()
