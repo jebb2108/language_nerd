@@ -67,7 +67,7 @@ async def process_age(message: Message, state: FSMContext):
     lang_code = message.from_user.language_code
     if re.match(r'\d{1,2}\.\d{1,2}\.\d{4}', message.text):
         await state.update_data(bday=message.text)
-        await message.answer(text=QUESTIONARY["need_info"][lang_code], parse_mode=ParseMode.HTML)
+        await message.answer(text=QUESTIONARY["need_intro"][lang_code], parse_mode=ParseMode.HTML)
         await state.set_state(PollingState.waiting_for_intro)
     else:
         await message.answer(text=QUESTIONARY["wrong_birthday"][lang_code], parse_mode=ParseMode.HTML)
