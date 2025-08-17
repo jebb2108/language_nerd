@@ -71,13 +71,14 @@ async def process_age(message: Message, state: FSMContext):
         date_obj = datetime.strptime(message.text, '%d.%m.%Y').date()
         await state.update_data(bday=date_obj)
         await message.answer(text=QUESTIONARY["need_intro"][lang_code], parse_mode=ParseMode.HTML)
-        await state.set_state(PollingState.waiting_for_intro)
-    else:
-        await message.answer(text=QUESTIONARY["wrong_birthday"][lang_code], parse_mode=ParseMode.HTML)
+        return await state.set_state(PollingState.waiting_for_intro)
+
+    await message.answer(text=QUESTIONARY["wrong_birthday"][lang_code], parse_mode=ParseMode.HTML)
 
 
 @router.message(PollingState.waiting_for_intro, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_intro(message: Message, state: FSMContext, database: ResourcesMiddleware):
+
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
 
