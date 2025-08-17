@@ -57,7 +57,7 @@ async def process_name(message: Message, state: FSMContext):
         await state.update_data(name=message.text)
         msg = QUESTIONARY["age"][lang_code]
         await message.answer(text=msg, parse_mode=ParseMode.HTML)
-        return state.set_state(PollingState.waiting_for_bday)
+        return await state.set_state(PollingState.waiting_for_bday)
 
     msg = QUESTIONARY["wrong_name"][lang_code]
     await message.reply(msg, parse_mode=ParseMode.HTML)
