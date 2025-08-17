@@ -144,7 +144,7 @@ class Database:
             logger.error(f"Error creating/updating user {user_id}: {e}")
             return False
 
-    async def add_users_profile(self, user_id: int, prefered_name: str, birthday: str, about: str, status: str='rookie') -> None:
+    async def add_users_profile(self, user_id: int, prefered_name: str, birthday: datetime, about: str, status: str='rookie') -> None:
         async with self.acquire_connection() as conn:
             await conn.execute(
             """

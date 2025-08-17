@@ -1,4 +1,6 @@
 import re
+from datetime import datetime
+
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -66,7 +68,8 @@ async def process_name(message: Message, state: FSMContext):
 async def process_age(message: Message, state: FSMContext):
     lang_code = message.from_user.language_code
     if re.match(r'\d{1,2}\.\d{1,2}\.\d{4}', message.text):
-        await state.update_data(bday=message.text)
+        date_obj = datetime.strptime(message.text, '%d.%m.%Y').date()
+        await state.update_data(bday=date_obj)
         await message.answer(text=QUESTIONARY["need_intro"][lang_code], parse_mode=ParseMode.HTML)
         await state.set_state(PollingState.waiting_for_intro)
     else:
