@@ -28,7 +28,7 @@ async def start(message: Message, database: ResourcesMiddleware):
 
     markup, txt = None, ''
     if not await database.check_location_exists(message.from_user.id):
-        builder = ReplyKeyboardBuilder()
+
         txt = QUESTIONARY["need_location"][lang_code]
         share_button = KeyboardButton(
             text=QUESTIONARY["share_location"][lang_code],
@@ -37,15 +37,16 @@ async def start(message: Message, database: ResourcesMiddleware):
         cancel_button = KeyboardButton(
             text=FIND_PARTNER["cancel"][lang_code]
         )
-        builder.row(share_button)  # Добавление кнопок рядами
-        builder.row(cancel_button)
-        markup = builder.as_markup(resize_keyboard=True)
+        markup = ReplyKeyboardMarkup(
+            keyboard=[
+                [share_button],
+                [cancel_button]
+            ],
+            resize_keyboard=True,
+            one_time_keyboard=True,
+        )
 
-    await message.answer(
-        text=greeting+txt,
-        parse_mode=ParseMode.HTML,
-        reply_markup=markup
-    )
+    await message.answer(text=greeting+txt, parse_mode=ParseMode.HTML, reply_markup=markup)
 
 @router.message(F.location, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_location(message: Message, database: ResourcesMiddleware):
@@ -53,7 +54,8 @@ async def process_location(message: Message, database: ResourcesMiddleware):
         lattitude = str(message.location.latitude)
         longitude = str(message.location.longitude)
         database.add_users_location(message.from_user.id, lattitude, longitude)
-        await message.answer('Thank you for your trust.')
+
+        await message.answer(text='Thank you for your trust.')
 
 @router.message(
     lambda message: message.text == FIND_PARTNER["cancel"].get(

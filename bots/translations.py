@@ -86,12 +86,12 @@ QUESTIONARY = dict(
         },
 
         "need_location": {
-            "en": "For the correct work of the application, your location is needed, please provide it by the button below.\n"
-                  "All your information is confidential. Your location will be stored in encrypted form.\n"
+            "en": "For the correct work of the application, your location is needed, please provide it by the button below.\n\n"
+                  "All your information is confidential. Your location will be stored in encrypted form.\n\n"
                   "If you do not want us to use your location, click the 'Decline' button",
 
-            "ru": "Для корректной работы приложения нужна ваша геолокация, пожалуйста, предоставьте ее по кнопке ниже.\n"
-                  "Вся ваша информация является конфидициальной. Геолокация будет хранится в зашифрованном виде.\n"
+            "ru": "Для корректной работы приложения нужна ваша геолокация, пожалуйста, предоставьте ее по кнопке ниже.\n\n"
+                  "Вся ваша информация является конфидициальной. Геолокация будет хранится в зашифрованном виде.\n\n"
                   "Если вы не хотите, чтобы мы использовали вашу геолокацию, то нажмите кнопку 'Отказаться'",
         },
 
