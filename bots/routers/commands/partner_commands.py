@@ -1,3 +1,5 @@
+from sys import prefix
+
 from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.filters import Command
@@ -11,6 +13,8 @@ from middlewares.rate_limit_middleware import RateLimitMiddleware, RateLimitInfo
 from utils.filters import IsBotFilter # noqa
 
 from translations import QUESTIONARY, BUTTONS, FIND_PARTNER # noqa
+
+from bots.keyboards.inline_keyboards import remove_keyboard
 
 # Инициализируем роутер
 router = Router(name=__name__)
@@ -48,6 +52,22 @@ async def start(message: Message, database: ResourcesMiddleware):
 
     await message.answer(text=greeting+txt, parse_mode=ParseMode.HTML, reply_markup=markup)
 
+@router.message(Command('location'), prefix='!/')
+@router.message(IsBotFilter(BOT_TOKEN_PARTNER))
+async def get_my_location(message: Message, database: ResourcesMiddleware):
+    result = await database.get_users_location(message.from_user.id)
+    if result is None or result[0] == "refused":
+        await message.answer(text="You didn't share your location")
+        return
+    lattitude = result['lattitude']
+    longitude = result['longitude']
+    await message.answer(
+        text=f"Your location: <b>{lattitude}</b>, <b>{longitude}</b>",
+        parse_mode=ParseMode.HTML,
+        reply_markup=remove_keyboard()
+    )
+
+
 @router.message(F.location, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_location(message: Message, database: ResourcesMiddleware):
     if not await database.check_location_exists(message.from_user.id):
@@ -55,7 +75,7 @@ async def process_location(message: Message, database: ResourcesMiddleware):
         longitude = str(message.location.longitude)
         database.add_users_location(message.from_user.id, lattitude, longitude)
 
-        await message.answer(text='Thank you for your trust.')
+        await message.answer(text='Thank you for your trust.', reply_markup=remove_keyboard())
 
 @router.message(
     lambda message: message.text == FIND_PARTNER["cancel"].get(
@@ -66,16 +86,11 @@ async def cancel(message: Message, database: ResourcesMiddleware):
     if not await database.check_location_exists(message.from_user.id):
         msg = FIND_PARTNER["no_worries"][message.from_user.language_code]
         database.add_users_location(message.from_user.id, "refused", "refused")
-        await message.reply(text=msg)
+        await message.reply(text=msg, reply_markup=remove_keyboard())
 
 @router.message(IsBotFilter(BOT_TOKEN_PARTNER))
 async def echo(message: Message, rate_limit_info: RateLimitInfo):
     # Убираем кнопки после любого сообщения
-    remove_keyboard = ReplyKeyboardMarkup(
-        keyboard=[],
-        resize_keyboard=True,
-        remove_keyboard=True
-    )
 
     if message.text:
         await message.copy_to(message.chat.id)
@@ -84,5 +99,5 @@ async def echo(message: Message, rate_limit_info: RateLimitInfo):
     await message.reply(
         text=f"Your message: {message.text}\n"
         f"Rate limit info: {count} messages at {first_message}",
-        reply_markup=remove_keyboard,
+        reply_markup=remove_keyboard(),
     )

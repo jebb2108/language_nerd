@@ -1,6 +1,6 @@
 import sys
 
-from aiogram.types import InlineKeyboardButton, WebAppInfo
+from aiogram.types import InlineKeyboardButton, ReplyKeyboardMarkup, WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from pathlib import Path
@@ -108,3 +108,11 @@ def confirm_choice_keyboard(lang_code):
     )
     builder.add(confirm_button)
     return builder.as_markup(resize_keyboard=True)
+
+def remove_keyboard():
+    remove = ReplyKeyboardMarkup(
+        keyboard=[],
+        resize_keyboard=True,
+        remove_keyboard=True
+    )
+    return remove

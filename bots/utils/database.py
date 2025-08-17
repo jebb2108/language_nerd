@@ -143,6 +143,15 @@ class Database:
             logger.info(f"User {user_id} location added: {latitude}, {longitude}")
             return
 
+    async def get_users_location(self, user_id: int) -> dict:
+        async with self.acquire_connection() as conn:
+            row = await conn.fetchrow(
+                "SELECT * FROM locations WHERE user_id = $1",
+                user_id
+            )
+            logger.info(f"User {user_id} location: {dict(row) if row else None}")
+            return dict(row) if row else None
+
     async def get_user_info(self, user_id: int) -> dict:
         async with self.acquire_connection() as conn:
             row = await conn.fetchrow(
