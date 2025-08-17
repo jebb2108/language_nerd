@@ -101,7 +101,7 @@ async def go_to_main_menu(
     username = data.get("username", "")
     first_name = data.get("first_name", "")
     camefrom = data.get("camefrom", "")
-    language = data.get("user_choice", "")
+    language = data.get("language", "")
     fluency = data.get("fluency", "in_making")
     lang_code = data.get("lang_code", "en")
     message_mgr = data.get("message_mgr")
