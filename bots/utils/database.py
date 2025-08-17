@@ -151,8 +151,8 @@ class Database:
             INSERT INTO users_profile (user_id, status, prefered_name, birthday, about)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (user_id) DO UPDATE
-            SET prefered_name = EXCLUDED.prefered_name,
-                status = EXCLUDED.status,
+            SET status = EXCLUDED.status,
+                prefered_name = EXCLUDED.prefered_name,
                 birthday = EXCLUDED.birthday,
                 about = EXCLUDED.about
             """,

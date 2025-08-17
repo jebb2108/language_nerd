@@ -85,7 +85,7 @@ async def process_intro(message: Message, state: FSMContext):
 
 
 @router.message(PollingState.waiting_for_location, IsBotFilter(BOT_TOKEN_PARTNER))
-async def process_location(message: Message, state: FSMContext, database: ResourcesMiddleware):
+async def request_location(message: Message, state: FSMContext, database: ResourcesMiddleware):
 
     data = await state.get_data()
     user_id = data.get("user_id", 0)
