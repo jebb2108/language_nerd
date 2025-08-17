@@ -27,6 +27,7 @@ class Database:
         try:
             await self.__create_words()
             await self.__create_users()
+            await self.__create_users_profile()
             await self.__create_locations()
             await self.__create_weekly_reports()
             await self.__create_report_words()
@@ -62,6 +63,19 @@ class Database:
                             lang_code TEXT NOT NULL,
                             is_active BOOLEAN DEFAULT TRUE,
                             blocked_bot BOOLEAN DEFAULT FALSE,
+                            UNIQUE (user_id)
+                            ); """)
+
+    async def __create_users_profile(self):
+        async with self.acquire_connection() as conn:
+            await conn.execute("""
+                            CREATE TABLE IF NOT EXISTS users_profile (
+                            id SERIAL PRIMARY KEY,
+                            user_id BIGINT NOT NULL,
+                            status VARCHAR(50) NOT NULL,
+                            prefered_name VARCHAR(50) NOT NULL,
+                            birthday DATE NOT NULL,
+                            is_active BOOLEAN DEFAULT TRUE,
                             about TEXT NULL,
                             UNIQUE (user_id)
                             ); """)
@@ -129,6 +143,23 @@ class Database:
         except Exception as e:
             logger.error(f"Error creating/updating user {user_id}: {e}")
             return False
+
+    async def add_users_profile(self, user_id: int, prefered_name: str, birthday: str, about: str, status: str='rookie') -> None:
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+            """
+            INSERT INTO users_profile (user_id, status, prefered_name, birthday, about)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (user_id) DO UPDATE
+            SET prefered_name = EXCLUDED.prefered_name,
+                status = EXCLUDED.status,
+                age = EXCLUDED.birthday,
+                about = EXCLUDED.about
+            """,
+                user_id, status, prefered_name, birthday, about
+        )
+            logger.info(f"User {user_id} profile added: {prefered_name}, {birthday}, {about}, {status}")
+            return
     
 
     async def add_users_location(self, user_id: int, latitude: str, longitude: str) -> None:
@@ -137,6 +168,9 @@ class Database:
                 """
                 INSERT INTO locations (user_id, latitude, longitude)
                 VALUES ($1,$2,$3)
+                ON CONFLICT (user_id) DO UPDATE
+                SET latitude = EXCLUDED.latitude,
+                    longitude = EXCLUDED.longitude
                 """,
                 user_id, latitude, longitude
             )
@@ -263,6 +297,14 @@ class Database:
                 "SELECT 1 FROM users WHERE user_id = $1",
                 user_id
             ))
+
+    async def check_profile_exists(self, user_id: int) -> bool:
+        async with self.acquire_connection() as conn:
+            return bool(await conn.fetchrow(
+                "SELECT 1 FROM profiles WHERE user_id = $1",
+                user_id
+            ))
+
     async def check_location_exists(self, user_id: int) -> bool:
         async with self.acquire_connection() as conn:
             return bool(await conn.fetchrow(

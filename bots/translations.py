@@ -85,6 +85,52 @@ QUESTIONARY = dict(
             },
         },
 
+        "need_profile": {
+            "en": "Let's get to know each other a bit better\n\n"
+                  "We need your profile info to start the conversation\n"
+                  "First, I`d like to ask you to <b>turn off your VPN</b> if you have one, "
+                  "so I can process your profile information right\n\n"
+                  "Okay, so what name do you want to be seen by others?\n",
+
+            "ru": "Давайте познакомимся немного больше\n\n"
+                  "Нам нужна ваша информация о профиле, чтобы начать общение\n"
+                  "Сначала, я бы хотел попросить вас <b>выключить VPN</b>, если вы его имеете, "
+                  "чтобы я мог обработать вашу информацию правильно\n\n"
+                  "Хорошо, так что под каким именем вы хотите, чтобы другие люди видели Вас?\n",
+        },
+
+        "need_intro": {
+            "en": "Tell me more about yourself in a few sentences:\n\n"
+                  "e.g. What are your hobbies?\n"
+                  "What do you like to do in your free time? And so on\n\n",
+
+            "ru": "Расскажите немного о себе в несколько предложений:\n\n"
+                  "например, Какие у вас хобби?\n"
+                  "Что вы любите делать в свободное время? И так далее\n\n",
+        },
+
+        "age": {
+            "en": "How old are you?\n\n"
+                  "Please, enter birth date in format DD.MM.YYYY\n\n",
+            "ru": "Сколько вам лет?\n\n"
+                  "Пожалуйста, введите дату рождения в формате DD.MM.YYYY\n\n",
+        },
+
+        "wrong_name": {
+            "en": "there is either space or too many characters in your name (max 50)",
+            "ru": "есть ли пробел или слишком много символов в вашем имени (максимум 50)",
+        },
+
+        "wrong_birthday": {
+            "en": "Incorrect format. Please, try again",
+            "ru": "Неверный формат. Пожалуйста, попробуйте ещё раз",
+        },
+
+        "wrong_info": {
+            "en": "Your information is either too long or incorrect. Please, try again",
+            "ru": "Ваша информация либо слишком длинная, либо неверная. Пожалуйста, попробуйте ещё раз",
+        },
+
         "need_location": {
             "en": "For the correct work of the application, your location is needed, please provide it by the button below.\n\n"
                   "All your information is confidential. Your location will be stored in encrypted form.\n\n"

@@ -1,6 +1,7 @@
-from sys import prefix
-
+import re
 from aiogram import Router, F
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.types import KeyboardButton
@@ -24,16 +25,83 @@ router.message.filter(IsBotFilter(BOT_TOKEN_PARTNER))
 router.callback_query.filter(IsBotFilter(BOT_TOKEN_PARTNER))
 
 
+class PollingState(StatesGroup):
+    waiting_for_name = State()
+    waiting_for_bday = State()
+    waiting_for_intro = State()
+    waiting_for_location = State()
+
 @router.message(Command("start"), IsBotFilter(BOT_TOKEN_PARTNER))
-async def start(message: Message, database: ResourcesMiddleware):
+async def start(message: Message, state: FSMContext, database: ResourcesMiddleware):
 
     lang_code = message.from_user.language_code
-    greeting = f"{BUTTONS['hello'][lang_code]} <b>{message.from_user.first_name}</b>!\n\n"
+    greeting = (
+        f"{BUTTONS['hello'][lang_code]} <b>{message.from_user.first_name}</b>!\n\n"
+        f"{FIND_PARTNER['inro'][lang_code]}"
+    )
+    if not await database.check_profile_exists(message.from_user.id):
+        # Обновляем user_id в состоянии
+        await state.update_data(user_id=message.from_user.id)
+        # Отправляем приветственное сообщение
+        txt = QUESTIONARY["need_profile"][lang_code]
+        await message.answer(text=greeting+txt, parse_mode=ParseMode.HTML)
+        msg = QUESTIONARY["name"][lang_code]
+        await message.answer(text=msg, parse_mode=ParseMode.HTML)
+        # Переходим в состояние ожидания имени
+        return await state.set_state(PollingState.waiting_for_name)
 
-    markup, txt = None, ''
+
+@router.message(PollingState.waiting_for_name, IsBotFilter(BOT_TOKEN_PARTNER))
+async def process_name(message: Message, state: FSMContext):
+    lang_code = message.from_user.language_code
+    if (len(message.text) <= 50 and
+            re.sub(r'\s', '', message.text) == message.text):
+        await state.update_data(name=message.text)
+        msg = QUESTIONARY["age"][lang_code]
+        await message.answer(text=msg, parse_mode=ParseMode.HTML)
+        return state.set_state(PollingState.waiting_for_bday)
+
+    msg = QUESTIONARY["wrong_name"][lang_code]
+    await message.reply(msg, parse_mode=ParseMode.HTML)
+
+@router.message(PollingState.waiting_for_bday, IsBotFilter(BOT_TOKEN_PARTNER))
+async def process_age(message: Message, state: FSMContext):
+    lang_code = message.from_user.language_code
+    if re.match(r'\d{1,2}\.\d{1,2}\.\d{4}', message.text):
+        await state.update_data(bday=message.text)
+        await message.answer(text=QUESTIONARY["need_info"][lang_code], parse_mode=ParseMode.HTML)
+        await state.set_state(PollingState.waiting_for_intro)
+    else:
+        await message.answer(text=QUESTIONARY["wrong_birthday"][lang_code], parse_mode=ParseMode.HTML)
+
+
+@router.message(PollingState.waiting_for_intro, IsBotFilter(BOT_TOKEN_PARTNER))
+async def process_intro(message: Message, state: FSMContext):
+    data = await state.get_data()
+    lang_code = data.get("lang_code", "en")
+    if re.search(r'\S{1,500}', message.text):
+        await state.update_data(intro=message.text)
+        return await state.set_state(PollingState.waiting_for_location)
+
+    await message.answer(text=QUESTIONARY["wrong_info"][lang_code], parse_mode=ParseMode.HTML)
+
+
+@router.message(PollingState.waiting_for_location, IsBotFilter(BOT_TOKEN_PARTNER))
+async def process_location(message: Message, state: FSMContext, database: ResourcesMiddleware):
+
+    data = await state.get_data()
+    user_id = data.get("user_id", 0)
+    name = data.get("name", "default")
+    birthday = data.get("bday", "default")
+    about = data.get("intro", "")
+    lang_code = data.get("lang_code", "en")
+
+    # Сохраняем профиль
+    await database.add_users_profile(user_id, name, birthday, birthday, about)
+
     if not await database.check_location_exists(message.from_user.id):
 
-        txt = QUESTIONARY["need_location"][lang_code]
+        msg = QUESTIONARY["need_location"][lang_code]
         share_button = KeyboardButton(
             text=QUESTIONARY["share_location"][lang_code],
             request_location=True,
@@ -47,13 +115,35 @@ async def start(message: Message, database: ResourcesMiddleware):
                 [cancel_button]
             ],
             resize_keyboard=True,
-            one_time_keyboard=True,
         )
 
-    await message.answer(text=greeting+txt, parse_mode=ParseMode.HTML, reply_markup=markup)
+        await message.answer(text=msg, parse_mode=ParseMode.HTML, reply_markup=markup)
 
-@router.message(Command('location'))
-@router.message(IsBotFilter(BOT_TOKEN_PARTNER))
+
+@router.message(PollingState.waiting_for_location)
+@router.message(F.location, IsBotFilter(BOT_TOKEN_PARTNER))
+async def process_location(message: Message, state: FSMContext, database: ResourcesMiddleware):
+    if not await database.check_location_exists(message.from_user.id):
+        lattitude = str(message.location.latitude)
+        longitude = str(message.location.longitude)
+        database.add_users_location(message.from_user.id, lattitude, longitude)
+
+        await message.answer(text='Thank you for your trust', reply_markup=remove_keyboard())
+        await state.clear()
+
+
+@router.message(PollingState.waiting_for_location, IsBotFilter(BOT_TOKEN_PARTNER))
+@router.message(
+    lambda message: message.text == FIND_PARTNER["cancel"].get(
+        message.from_user.language_code, FIND_PARTNER["cancel"]["en"])
+)
+async def cancel(message: Message, database: ResourcesMiddleware):
+    if not await database.check_location_exists(message.from_user.id):
+        msg = FIND_PARTNER["no_worries"][message.from_user.language_code]
+        database.add_users_location(message.from_user.id, "refused", "refused")
+        await message.reply(text=msg, reply_markup=remove_keyboard())
+
+@router.message(Command('location'), IsBotFilter(BOT_TOKEN_PARTNER))
 async def get_my_location(message: Message, database: ResourcesMiddleware):
     result = await database.get_users_location(message.from_user.id)
     if result is None or result[0] == "refused":
@@ -66,27 +156,6 @@ async def get_my_location(message: Message, database: ResourcesMiddleware):
         parse_mode=ParseMode.HTML,
         reply_markup=remove_keyboard()
     )
-
-
-@router.message(F.location, IsBotFilter(BOT_TOKEN_PARTNER))
-async def process_location(message: Message, database: ResourcesMiddleware):
-    if not await database.check_location_exists(message.from_user.id):
-        lattitude = str(message.location.latitude)
-        longitude = str(message.location.longitude)
-        database.add_users_location(message.from_user.id, lattitude, longitude)
-
-        await message.answer(text='Thank you for your trust.', reply_markup=remove_keyboard())
-
-@router.message(
-    lambda message: message.text == FIND_PARTNER["cancel"].get(
-        message.from_user.language_code, FIND_PARTNER["cancel"]["en"]), 
-        IsBotFilter(BOT_TOKEN_PARTNER)
-)
-async def cancel(message: Message, database: ResourcesMiddleware):
-    if not await database.check_location_exists(message.from_user.id):
-        msg = FIND_PARTNER["no_worries"][message.from_user.language_code]
-        database.add_users_location(message.from_user.id, "refused", "refused")
-        await message.reply(text=msg, reply_markup=remove_keyboard())
 
 @router.message(IsBotFilter(BOT_TOKEN_PARTNER))
 async def echo(message: Message, rate_limit_info: RateLimitInfo):
