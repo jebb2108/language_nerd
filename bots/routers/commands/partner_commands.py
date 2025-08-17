@@ -31,7 +31,8 @@ async def start(message: Message, database: ResourcesMiddleware):
         builder = ReplyKeyboardBuilder()
         txt = QUESTIONARY["need_location"][lang_code]
         share_button = KeyboardButton(
-            text=QUESTIONARY["share_location"][lang_code]
+            text=QUESTIONARY["share_location"][lang_code],
+            request_location=True,
         )
         cancel_button = KeyboardButton(
             text=FIND_PARTNER["cancel"][lang_code]
