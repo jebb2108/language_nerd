@@ -39,7 +39,7 @@ async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
         reply_markup=show_language_keyboard(),
     )
     
-    await state.update_data(camefrom=camefrom)
+    await state.update_data(user_id=callback.from_user.id, camefrom=camefrom)
     
         
 @router.callback_query(F.data.startswith("lang_"))
