@@ -31,7 +31,7 @@ async def about(callback: CallbackQuery, state: FSMContext):
     # Редактируем текущее сообщение
     await callback.message.edit_text(
         text=msg,
-        reply_markup=get_go_back_keyboard(),
+        reply_markup=get_go_back_keyboard(lang_code),
         parse_mode=ParseMode.HTML,
     )
     
