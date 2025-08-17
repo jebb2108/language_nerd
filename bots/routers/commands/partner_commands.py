@@ -40,7 +40,7 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
     lang_code = message.from_user.language_code
     greeting = (
         f"{BUTTONS['hello'][lang_code]} <b>{message.from_user.first_name}</b>!\n\n"
-        f"{FIND_PARTNER['intro'][lang_code]}"
+        f"{FIND_PARTNER['intro'][lang_code]}\n"
     )
     await message.answer(text=greeting, parse_mode=ParseMode.HTML)
     if not await database.check_profile_exists(message.from_user.id):
@@ -100,7 +100,7 @@ async def process_intro(message: Message, state: FSMContext, database: Resources
 
         if not await database.check_location_exists(message.from_user.id):
             msg = QUESTIONARY["need_location"][lang_code]
-            await message.answer(text=msg, parse_mode=ParseMode.HTML, reply_markup=show_location_keyboard())
+            await message.answer(text=msg, parse_mode=ParseMode.HTML, reply_markup=show_location_keyboard(lang_code))
 
             return await state.set_state(PollingState.waiting_for_location)
 
