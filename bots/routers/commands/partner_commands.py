@@ -140,7 +140,7 @@ async def process_location(message: Message, state: FSMContext, database: Resour
 async def cancel(message: Message, state: FSMContext, database: ResourcesMiddleware):
     if not await database.check_location_exists(message.from_user.id):
         msg = FIND_PARTNER["no_worries"][message.from_user.language_code]
-        database.add_users_location(message.from_user.id, "refused", "refused")
+        await database.add_users_location(message.from_user.id, "refused", "refused")
         await message.reply(text=msg, reply_markup=ReplyKeyboardRemove())
         await state.clear()
 
