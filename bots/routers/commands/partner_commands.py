@@ -45,8 +45,6 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
         # Отправляем приветственное сообщение
         txt = QUESTIONARY["need_profile"][lang_code]
         await message.answer(text=greeting+txt, parse_mode=ParseMode.HTML)
-        msg = QUESTIONARY["name"][lang_code]
-        await message.answer(text=msg, parse_mode=ParseMode.HTML)
         # Переходим в состояние ожидания имени
         return await state.set_state(PollingState.waiting_for_name)
 
