@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 from aiogram.filters import Command
-from aiogram.types import KeyboardButton
+from aiogram.types import KeyboardButton, ReplyKeyboardRemove
 from aiogram.utils.keyboard import KeyboardBuilder, ReplyKeyboardBuilder, ReplyKeyboardMarkup
 from aiogram.enums import ParseMode
 
@@ -106,6 +106,7 @@ async def request_location(message: Message, state: FSMContext, database: Resour
         share_button = KeyboardButton(
             text=QUESTIONARY["share_location"][lang_code],
             request_location=True,
+            is_persistent=True,
         )
         cancel_button = KeyboardButton(
             text=FIND_PARTNER["cancel"][lang_code]
@@ -121,28 +122,27 @@ async def request_location(message: Message, state: FSMContext, database: Resour
         await message.answer(text=msg, parse_mode=ParseMode.HTML, reply_markup=markup)
 
 
-@router.message(PollingState.waiting_for_location)
-@router.message(F.location, IsBotFilter(BOT_TOKEN_PARTNER))
+@router.message(F.location, IsBotFilter(BOT_TOKEN_PARTNER), PollingState.waiting_for_location)
 async def process_location(message: Message, state: FSMContext, database: ResourcesMiddleware):
     if not await database.check_location_exists(message.from_user.id):
-        lattitude = str(message.location.latitude)
-        longitude = str(message.location.longitude)
+        lattitude = message.location.latitude
+        longitude = message.location.longitude
         database.add_users_location(message.from_user.id, lattitude, longitude)
 
-        await message.answer(text='Thank you for your trust', reply_markup=remove_keyboard())
+        await message.answer(text='Thank you for your trust', reply_markup=ReplyKeyboardRemove())
         await state.clear()
 
 
-@router.message(PollingState.waiting_for_location, IsBotFilter(BOT_TOKEN_PARTNER))
-@router.message(
+@router.message(PollingState.waiting_for_location, IsBotFilter(BOT_TOKEN_PARTNER),
     lambda message: message.text == FIND_PARTNER["cancel"].get(
         message.from_user.language_code, FIND_PARTNER["cancel"]["en"])
 )
-async def cancel(message: Message, database: ResourcesMiddleware):
+async def cancel(message: Message, state: FSMContext, database: ResourcesMiddleware):
     if not await database.check_location_exists(message.from_user.id):
         msg = FIND_PARTNER["no_worries"][message.from_user.language_code]
         database.add_users_location(message.from_user.id, "refused", "refused")
-        await message.reply(text=msg, reply_markup=remove_keyboard())
+        await message.reply(text=msg, reply_markup=ReplyKeyboardRemove())
+        await state.clear()
 
 @router.message(Command('location'), IsBotFilter(BOT_TOKEN_PARTNER))
 async def get_my_location(message: Message, database: ResourcesMiddleware):
@@ -155,7 +155,6 @@ async def get_my_location(message: Message, database: ResourcesMiddleware):
     await message.answer(
         text=f"Your location: <b>{lattitude}</b>, <b>{longitude}</b>",
         parse_mode=ParseMode.HTML,
-        reply_markup=remove_keyboard()
     )
 
 @router.message(IsBotFilter(BOT_TOKEN_PARTNER))

@@ -111,9 +111,9 @@ QUESTIONARY = dict(
 
         "age": {
             "en": "How old are you?\n\n"
-                  "Please, enter birth date in format DD.MM.YYYY\n\n",
+                  "Please, enter birth date in format: (DD.MM.YYYY)\n\n",
             "ru": "Сколько вам лет?\n\n"
-                  "Пожалуйста, введите дату рождения в формате DD.MM.YYYY\n\n",
+                  "Пожалуйста, введите дату рождения в формате: (ДД.ММ.ГГГГ)\n\n",
         },
 
         "wrong_name": {
