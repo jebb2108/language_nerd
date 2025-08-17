@@ -87,13 +87,13 @@ QUESTIONARY = dict(
 
         "need_profile": {
             "en": "Let's get to know each other a bit better\n\n"
-                  "We need your profile info to start the conversation\n"
+                  "We need your profile info to start the conversation\n\n"
                   "First, I`d like to ask you to <b>turn off your VPN</b> if you have one, "
                   "so I can process your profile information right\n\n"
                   "Okay, so what name do you want to be seen by others?\n",
 
             "ru": "Давайте познакомимся немного больше\n\n"
-                  "Нам нужна ваша информация о профиле, чтобы начать общение\n"
+                  "Нам нужна ваша информация о профиле, чтобы начать общение\n\n"
                   "Сначала, я бы хотел попросить вас <b>выключить VPN</b>, если вы его имеете, "
                   "чтобы я мог обработать вашу информацию правильно\n\n"
                   "Хорошо, под каким именем вы хотите, чтобы другие люди видели вас?\n",
@@ -257,6 +257,11 @@ FIND_PARTNER = dict({
     "cancel": {
         "en": "❌ Decline",
         "ru": "❌ Отказаться",
+    },
+
+    "success": {
+        "en": "Thank you for your patience",
+        "ru": "Спасибо за терпение",
     },
 
     'no_worries': {

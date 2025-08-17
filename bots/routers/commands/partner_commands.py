@@ -90,7 +90,7 @@ async def process_intro(message: Message, state: FSMContext, database: Resources
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
 
-    if re.search(r'\S{1,500}', message.text):
+    if re.search(r'\S{10,500}', message.text):
         # Достаем нужные данные о пользователе
         user_id = data.get("user_id", 0)
         name = data.get("name", "default")
@@ -111,12 +111,16 @@ async def process_intro(message: Message, state: FSMContext, database: Resources
 @router.message(PollingState.waiting_for_location, F.location, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_location(message: Message, state: FSMContext, database: ResourcesMiddleware):
     if not await database.check_location_exists(message.from_user.id):
+        # Сохраняем координаты в БД
         lattitude = str(message.location.latitude)
         longitude = str(message.location.longitude)
         await database.add_users_location(message.from_user.id, lattitude, longitude)
-
-        await message.answer(text='Thank you for your trust', reply_markup=ReplyKeyboardRemove())
-        await state.clear()
+        # Выводим благодарное сообщение
+        data = await state.get_data()
+        lang_code = data.get("lang_code", "en")
+        msg = FIND_PARTNER["success"][lang_code]
+        await message.answer(text=msg, reply_markup=ReplyKeyboardRemove())
+        await state.clear() # Очищаем состояние
 
 
 @router.message(PollingState.waiting_for_location, IsBotFilter(BOT_TOKEN_PARTNER),
