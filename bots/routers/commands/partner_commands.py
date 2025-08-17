@@ -27,7 +27,7 @@ async def start(message: Message, database: ResourcesMiddleware):
     greeting = f"{BUTTONS['hello'][lang_code]} <b>{message.from_user.first_name}</b>!\n\n"
 
     markup, txt = None, ''
-    if not database.check_location_exists(message.from_user.id):
+    if not await database.check_location_exists(message.from_user.id):
         builder = ReplyKeyboardBuilder()
         txt = QUESTIONARY["need_location"][lang_code]
         share_button = KeyboardButton(
@@ -48,7 +48,7 @@ async def start(message: Message, database: ResourcesMiddleware):
 
 @router.message(F.location, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_location(message: Message, database: ResourcesMiddleware):
-    if not database.check_location_exists(message.from_user.id):
+    if not await database.check_location_exists(message.from_user.id):
         lattitude = str(message.location.latitude)
         longitude = str(message.location.longitude)
         database.add_users_location(message.from_user.id, lattitude, longitude)
@@ -60,7 +60,7 @@ async def process_location(message: Message, database: ResourcesMiddleware):
         IsBotFilter(BOT_TOKEN_PARTNER)
 )
 async def cancel(message: Message, database: ResourcesMiddleware):
-    if not database.check_location_exists(message.from_user.id):
+    if not await database.check_location_exists(message.from_user.id):
         msg = FIND_PARTNER["no_worries"][message.from_user.language_code]
         database.add_users_location(message.from_user.id, "refused", "refused")
         await message.reply(text=msg)
