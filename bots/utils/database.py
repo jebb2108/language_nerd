@@ -153,7 +153,7 @@ class Database:
             ON CONFLICT (user_id) DO UPDATE
             SET prefered_name = EXCLUDED.prefered_name,
                 status = EXCLUDED.status,
-                age = EXCLUDED.birthday,
+                birthday = EXCLUDED.birthday,
                 about = EXCLUDED.about
             """,
                 user_id, status, prefered_name, birthday, about

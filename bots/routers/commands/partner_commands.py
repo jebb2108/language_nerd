@@ -95,7 +95,7 @@ async def process_location(message: Message, state: FSMContext, database: Resour
     lang_code = data.get("lang_code", "en")
 
     # Сохраняем профиль
-    await database.add_users_profile(user_id, name, birthday, birthday, about)
+    await database.add_users_profile(user_id, name, birthday, about)
 
     if not await database.check_location_exists(message.from_user.id):
 
