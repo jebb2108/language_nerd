@@ -86,34 +86,34 @@ QUESTIONARY = dict(
         },
 
         "need_profile": {
-            "en": "Let's get to know each other a bit better\n\n"
-                  "We need your profile info to start the conversation\n"
-                  "First, I`d like to ask you to <b>turn off your VPN</b> if you have one, "
-                  "so I can process your profile information right\n\n"
-                  "Okay, so what name do you want to be seen by others?\n",
+            "en": list(["Let's get to know each other a bit better\n\n"
+                        "We need your profile info to start the conversation",
+                        "First, I`d like to ask you to <b>turn off your VPN</b> if you have one, "
+                        "so I can process your profile information right",
+                        "Okay, so what name do you want to be seen by others?"]),
 
-            "ru": "Давайте познакомимся немного больше\n\n"
-                  "Нам нужна ваша информация о профиле, чтобы начать общение\n"
-                  "Сначала, я бы хотел попросить вас <b>выключить VPN</b>, если вы его имеете, "
-                  "чтобы я мог обработать вашу информацию правильно\n\n"
-                  "Хорошо, под каким именем вы хотите, чтобы другие люди видели вас?\n",
+            "ru": list(["Давайте познакомимся немного больше\n\n"
+                        "Нам нужна ваша информация для заполнения профиля, чтобы начать общение",
+                        "Сначала, я бы хотел попросить вас <b>выключить VPN</b>, если вы его имеете, "
+                        "чтобы я мог корректно обработать ваш профиль",
+                        "Итак, под каким именем вы хотите, чтобы другие люди видели вас?"]),
         },
 
         "need_intro": {
             "en": "Tell me more about yourself in a few sentences:\n\n"
-                  "e.g. What are your hobbies?\n"
+                  "For example, what are your hobbies?\n"
                   "What do you like to do in your free time? And so on\n\n",
 
             "ru": "Расскажите немного о себе в несколько предложений:\n\n"
-                  "например, Какие у вас хобби?\n"
+                  "Например, какие у вас хобби?\n"
                   "Что вы любите делать в свободное время? И так далее\n\n",
         },
 
         "age": {
             "en": "How old are you?\n\n"
-                  "Please, enter birth date in format: (DD.MM.YYYY)\n\n",
+                  "Please, enter birth date in format: DD.MM.YYYY\n\n",
             "ru": "Сколько вам лет?\n\n"
-                  "Пожалуйста, введите дату рождения в формате: (ДД.ММ.ГГГГ)\n\n",
+                  "Пожалуйста, введите дату рождения в формате: ДД.ММ.ГГГГ\n\n",
         },
 
         "wrong_name": {
@@ -132,13 +132,13 @@ QUESTIONARY = dict(
         },
 
         "need_location": {
-            "en": "For the correct work of the application, your location is needed, please provide it by the button below.\n\n"
-                  "All your information is confidential. Your location will be stored in encrypted form.\n\n"
-                  "If you do not want us to use your location, click the 'Decline' button",
+            "en": list(["For the correct work of the application, your location is needed, please provide it by the button below.\n\n"
+                  "All your information is confidential. Your location will be stored in encrypted form",
+                  "If you do not want us to use your location, click the 'Decline' button"]),
 
-            "ru": "Для корректной работы приложения нужна ваша геолокация, пожалуйста, предоставьте ее по кнопке ниже.\n\n"
-                  "Вся ваша информация является конфидициальной. Геолокация будет хранится в зашифрованном виде.\n\n"
-                  "Если вы не хотите, чтобы мы использовали вашу геолокацию, то нажмите кнопку 'Отказаться'",
+            "ru": list(["Для корректной работы приложения нужна ваша геолокация, пожалуйста, предоставьте ее по кнопке ниже.\n\n"
+                  "Вся ваша информация является конфидициальной. Геолокация будет хранится в зашифрованном виде",
+                  "Если вы не хотите, чтобы мы использовали вашу геолокацию, то нажмите кнопку 'Отказаться'"]),
         },
 
         "share_location": {
