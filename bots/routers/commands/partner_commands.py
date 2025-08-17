@@ -141,13 +141,13 @@ async def cancel(message: Message, state: FSMContext, database: ResourcesMiddlew
 @router.message(Command('location'), IsBotFilter(BOT_TOKEN_PARTNER))
 async def get_my_location(message: Message, database: ResourcesMiddleware):
     result = await database.get_users_location(message.from_user.id)
-    if result is None or result["lattitude"] == "refused":
+    if result is None or result["latitude"] == "refused":
         await message.answer(text="You didn't share your location")
         return
-    lattitude = result['lattitude']
+    latitude = result['latitude']
     longitude = result['longitude']
     await message.answer(
-        text=f"Your location: <b>{lattitude}</b>, <b>{longitude}</b>",
+        text=f"Your location: <b>{latitude}</b>, <b>{longitude}</b>",
         parse_mode=ParseMode.HTML,
     )
 
