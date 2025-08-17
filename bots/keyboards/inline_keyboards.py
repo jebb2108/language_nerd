@@ -62,6 +62,7 @@ def show_where_from_keyboard(lang_code):
         callback_data="camefrom_other",
     )
     builder.add(friends_button, search_button, through_ad_button)
+    builder.adjust(1)
     return builder.as_markup(resize_keyboard=True)
 
 
@@ -88,12 +89,13 @@ def show_language_keyboard():
         callback_data="lang_chinese",
     )
     builder.add(russian_button, english_button, german_button, spanish_button, chinese_button)
+    builder.adjust(1)
     return builder.as_markup(resize_keyboard=True)
 
 
 def show_fluency_keyboard(lang_code):
     builder = InlineKeyboardBuilder()
-    for key, value in QUESTIONARY["fluency"][lang_code].items():
+    for key, value in QUESTIONARY["fluency_levels"][lang_code].items():
         builder.row(InlineKeyboardButton(text=value, callback_data=f"fluency_{key}"))
 
     return builder.as_markup(resize_keyboard=True)
