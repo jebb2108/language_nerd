@@ -37,7 +37,7 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
     lang_code = message.from_user.language_code
     greeting = (
         f"{BUTTONS['hello'][lang_code]} <b>{message.from_user.first_name}</b>!\n\n"
-        f"{FIND_PARTNER['inro'][lang_code]}"
+        f"{FIND_PARTNER['intro'][lang_code]}"
     )
     if not await database.check_profile_exists(message.from_user.id):
         # Обновляем user_id в состоянии
