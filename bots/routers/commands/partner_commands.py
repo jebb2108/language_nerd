@@ -52,7 +52,7 @@ async def start(message: Message, database: ResourcesMiddleware):
 
     await message.answer(text=greeting+txt, parse_mode=ParseMode.HTML, reply_markup=markup)
 
-@router.message(Command('location'), prefix='!/')
+@router.message(Command('location'))
 @router.message(IsBotFilter(BOT_TOKEN_PARTNER))
 async def get_my_location(message: Message, database: ResourcesMiddleware):
     result = await database.get_users_location(message.from_user.id)
