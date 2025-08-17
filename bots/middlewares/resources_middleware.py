@@ -67,11 +67,10 @@ class ResourcesMiddleware(BaseMiddleware):
         try:
             # Создаем пул подключений
             self.db_pool = await asyncpg.create_pool(**self.db_config.__dict__)
-            logger.info("Database pool created")
 
             # Создаем экземпляр класса Database
             self.db = Database(self.db_pool)
-            logger.info("Database instance initialized")
+            logger.info("Database initialized")
 
             # Инициализация других ресурсов
             self.session = ClientSession()

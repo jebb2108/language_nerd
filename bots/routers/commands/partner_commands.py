@@ -43,7 +43,7 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
     )
     if not await database.check_profile_exists(message.from_user.id):
         # Обновляем user_id в состоянии
-        await state.update_data(user_id=message.from_user.id)
+        await state.update_data(user_id=message.from_user.id, lang_code=lang_code)
         # Отправляем приветственное сообщение
         txt = QUESTIONARY["need_profile"][lang_code]
         await message.answer(text=greeting+txt, parse_mode=ParseMode.HTML)
@@ -53,7 +53,10 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
 
 @router.message(PollingState.waiting_for_name, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_name(message: Message, state: FSMContext):
-    lang_code = message.from_user.language_code
+
+    data = await state.get_data()
+    lang_code = data.get("lang_code", "en")
+
     if (len(message.text) <= 50 and
             re.sub(r'\s', '', message.text) == message.text):
         await state.update_data(name=message.text)
@@ -66,7 +69,10 @@ async def process_name(message: Message, state: FSMContext):
 
 @router.message(PollingState.waiting_for_bday, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_age(message: Message, state: FSMContext):
-    lang_code = message.from_user.language_code
+
+    data = await state.get_data()
+    lang_code = data.get("lang_code", "en")
+
     if re.match(r'\d{1,2}\.\d{1,2}\.\d{4}', message.text):
         date_obj = datetime.strptime(message.text, '%d.%m.%Y').date()
         await state.update_data(bday=date_obj)
