@@ -119,8 +119,8 @@ async def process_intro(message: Message, state: FSMContext, database: Resources
 @router.message(PollingState.waiting_for_location, F.location, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_location(message: Message, state: FSMContext, database: ResourcesMiddleware):
     if not await database.check_location_exists(message.from_user.id):
-        lattitude = message.location.latitude
-        longitude = message.location.longitude
+        lattitude = str(message.location.latitude)
+        longitude = str(message.location.longitude)
         await database.add_users_location(message.from_user.id, lattitude, longitude)
 
         await message.answer(text='Thank you for your trust', reply_markup=ReplyKeyboardRemove())
