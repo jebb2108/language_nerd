@@ -301,7 +301,7 @@ class Database:
     async def check_profile_exists(self, user_id: int) -> bool:
         async with self.acquire_connection() as conn:
             return bool(await conn.fetchrow(
-                "SELECT 1 FROM profiles WHERE user_id = $1",
+                "SELECT 1 FROM users_profile WHERE user_id = $1",
                 user_id
             ))
 
