@@ -283,8 +283,7 @@ async def process_user_report(user_id: int, words: List[str], session, db: Repor
 
         try:
             # Поиск правильного ответа без учета регистра
-            correct_index = next(i for i, opt in enumerate(question_data["options"])
-                                 if opt.lower() == word_str.lower())
+            correct_index = next(i for i, opt in enumerate(options) if opt.lower() == word_str.lower())
 
             report_data.append({
                 "word": word_str,
