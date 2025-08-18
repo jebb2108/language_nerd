@@ -9,21 +9,47 @@
 </head>
 <body>
     <div class="book-container">
-        <div class="content-area">
-            <div class="book-header">
-                <div class="book-title">
-                    <i class="fas fa-book"></i> Мой словарь
-                </div>
-                <div class="user-info">
-                    Пользователь ID: <span id="userId">загрузка...</span>
-                </div>
+        <div class="book-header">
+            <div class="book-title">
+                <i class="fas fa-book"></i> Мой словарь
             </div>
+            <div class="user-info">
+                Пользователь ID: <span id="userId">загрузка...</span>
+            </div>
+        </div>
 
+        <div class="bookmarks">
+            <div class="bookmark active" data-page="home-page">
+                <i class="fas fa-home"></i> Главная
+            </div>
+            <div class="bookmark" data-page="add-word">
+                <i class="fas fa-plus-circle"></i> Добавить слово
+            </div>
+            <div class="bookmark" data-page="search-word">
+                <i class="fas fa-search"></i> Поиск слова
+            </div>
+            <div class="bookmark" data-page="instructions">
+                <i class="fas fa-info-circle"></i> Инструкция
+            </div>
+        </div>
+
+        <div class="content-area">
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="spinner"></div>
             </div>
 
-            <div id="add-word" class="page active">
+            <div id="home-page" class="page active">
+                <h2 class="page-title"><i class="fas fa-home"></i> Главная</h2>
+                <div class="result-card">
+                    <h3>Привет, <span id="userName"></span>! 👋</h3>
+                    <div style="margin-top: 20px; font-size: 1.1rem; color: #5a5a5a;">
+                        <p>Выучено слов за неделю: <span id="wordsLearned" style="font-weight: bold; color: #2e7d32;">0</span></p>
+                        <p>Ваш статус: <span id="userStatus" style="font-weight: bold; color: #2e7d32;"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="add-word" class="page">
                 <h2 class="page-title"><i class="fas fa-plus-circle"></i> Добавить новое слово</h2>
                 <div class="form-group">
                     <div class="input-row">
@@ -74,6 +100,17 @@
                 </div>
             </div>
 
+            <div id="instructions" class="page">
+                <h2 class="page-title"><i class="fas fa-info-circle"></i> Инструкция</h2>
+                <div class="result-card">
+                    <h3>Как пользоваться словарем</h3>
+                    <p>1. <strong>Добавление слов</strong>: перейдите на вкладку "Добавить слово", заполните все поля и нажмите кнопку.</p>
+                    <p>2. <strong>Поиск слов</strong>: введите слово в поле поиска и нажмите "Найти".</p>
+                    <p>3. <strong>Просмотр словаря</strong>: на вкладке "Весь словарь" вы увидите все добавленные слова.</p>
+                    <p>4. <strong>Удаление слов</strong>: используйте кнопку "Удалить" рядом с нужным словом.</p>
+                </div>
+            </div>
+
             <div id="all-words" class="page">
                 <h2 class="page-title"><i class="fas fa-book-open"></i> Весь словарь</h2>
                 <button class="btn btn-secondary" id="refreshWordsBtn">
@@ -97,17 +134,6 @@
                 </div>
             </div>
 
-            <div id="instructions" class="page">
-                <h2 class="page-title"><i class="fas fa-info-circle"></i> Инструкция</h2>
-                <div class="result-card">
-                    <h3>Как пользоваться словарем</h3>
-                    <p>1. <strong>Добавление слов</strong>: перейдите на вкладку "Добавить слово", заполните все поля и нажмите кнопку.</p>
-                    <p>2. <strong>Поиск слов</strong>: введите слово в поле поиска и нажмите "Найти".</p>
-                    <p>3. <strong>Просмотр словаря</strong>: на вкладке "Весь словарь" вы увидите все добавленные слова.</p>
-                    <p>4. <strong>Удаление слов</strong>: используйте кнопку "Удалить" рядом с нужным словом.</p>
-                </div>
-            </div>
-
             <div id="statistics" class="page">
                 <h2 class="page-title"><i class="fas fa-chart-bar"></i> Статистика</h2>
                 <div class="result-card">
@@ -124,23 +150,17 @@
         </div>
 
         <div class="bookmarks-sidebar">
-            <div class="bookmarks-hint" title="Закладки навигации">
-                <i class="fas fa-arrow-left"></i>
+            <div class="bookmark active" data-page="home-page">
+                <i class="fas fa-home"></i> Главная
             </div>
-            <div class="bookmark active" data-page="add-word">
+            <div class="bookmark" data-page="add-word">
                 <i class="fas fa-plus-circle"></i> Добавить слово
             </div>
             <div class="bookmark" data-page="search-word">
                 <i class="fas fa-search"></i> Поиск слова
             </div>
-            <div class="bookmark" data-page="all-words">
-                <i class="fas fa-book-open"></i> Весь словарь
-            </div>
             <div class="bookmark" data-page="instructions">
                 <i class="fas fa-info-circle"></i> Инструкция
-            </div>
-            <div class="bookmark" data-page="statistics">
-                <i class="fas fa-chart-bar"></i> Статистика
             </div>
         </div>
     </div>

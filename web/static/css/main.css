@@ -56,38 +56,17 @@ body {
     font-size: 1rem;
 }
 
+
+.bookmarks {
+    display: none; /* По умолчанию скрываем на десктопе */
+}
+
 .bookmarks-sidebar {
     width: 220px;
     background: #f8f5ec;
     border-left: 1px solid #e8e0c9;
     padding: 20px 0;
     position: relative;
-}
-
-.bookmarks-hint {
-    position: absolute;
-    top: 50%;
-    left: -50px;
-    transform: translateY(-50%);
-    background: #2e7d32;
-    color: white;
-    padding: 10px;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: pulse 2s infinite;
-    cursor: pointer;
-    z-index: 10;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-}
-
-@keyframes pulse {
-    0% { transform: translateY(-50%) scale(1); }
-    50% { transform: translateY(-50%) scale(1.1); }
-    100% { transform: translateY(-50%) scale(1); }
 }
 
 .bookmark {
@@ -371,21 +350,26 @@ tr:hover {
 
 @media (max-width: 768px) {
     .book-container {
-        flex-direction: column-reverse;
+        flex-direction: column;
     }
 
     .bookmarks-sidebar {
-        width: 100%;
-        display: flex;
-        overflow-x: auto;
-        padding: 0;
-        border-left: none;
-        border-top: 1px solid #e8e0c9;
-        position: relative;
+        display: none; /* Скрываем боковую панель на мобильных */
     }
 
-    .bookmarks-hint {
-        display: none;
+    /* Добавляем стили для нового контейнера вкладок */
+    .bookmarks {
+        display: flex;
+        overflow-x: auto;
+        white-space: nowrap;
+        border-bottom: 1px solid #e8e0c9;
+        background: #f8f5ec;
+        padding: 0 10px;
+        -webkit-overflow-scrolling: touch; /* Для плавного скролла на iOS */
+    }
+
+    .bookmarks::-webkit-scrollbar {
+        display: none; /* Скрыть скроллбар */
     }
 
     .bookmark {
@@ -399,6 +383,15 @@ tr:hover {
     .bookmark.active {
         border-left: none;
         border-bottom: 4px solid #2e7d32;
+    }
+
+    .bookmarks .bookmark.active:hover {
+        background: #f0ede3;
+        color: #2e7d32;
+    }
+
+    .bookmarks-hint {
+        display: none;
     }
 
     .input-row {

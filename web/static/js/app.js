@@ -5,9 +5,14 @@ let notificationElement;
 let loadingOverlay;
 let wordsLoading;
 let bookmarksHint;
+let userNameElement; // Добавляем элемент для имени пользователя
+let wordsLearnedElement; // Добавляем элемент для количества выученных слов
+let userStatusElement; // Добавляем элемент для статуса пользователя
+let bookmarksContainer; // Добавляем контейнер для закладок
 
 // Переменные состояния
 let currentUserId = null;
+let currentUserName = null; // Добавляем переменную для имени пользователя
 
 // Базовый URL API
 const API_BASE_URL = 'https://lllang.site';
@@ -21,6 +26,10 @@ document.addEventListener('DOMContentLoaded', function() {
     loadingOverlay = document.getElementById('loadingOverlay');
     wordsLoading = document.getElementById('wordsLoading');
     bookmarksHint = document.querySelector('.bookmarks-hint');
+    userNameElement = document.getElementById('userName'); // Инициализируем новый элемент
+    wordsLearnedElement = document.getElementById('wordsLearned'); // Инициализируем новый элемент
+    userStatusElement = document.getElementById('userStatus'); // Инициализируем новый элемент
+    bookmarksContainer = document.querySelector('.bookmarks'); // Инициализируем контейнер
 
     // 1. Проверка инициализации Telegram WebApp
     if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
@@ -28,8 +37,10 @@ document.addEventListener('DOMContentLoaded', function() {
         Telegram.WebApp.expand();
 
         const initData = Telegram.WebApp.initDataUnsafe;
-        if (initData && initData.user && initData.user.id) {
+        if (initData && initData.user) {
             currentUserId = initData.user.id.toString();
+            // Получаем имя пользователя из initData
+            currentUserName = initData.user.first_name || 'Пользователь';
             if (userIdElement) userIdElement.textContent = currentUserId;
         }
     }
@@ -48,6 +59,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!currentUserId) {
         showNotification('Ошибка: Не указан ID пользователя', 'error');
         if (userIdElement) userIdElement.textContent = 'не определен';
+        // Если user_id не найден, показываем заглушку на главной странице
+        if (userNameElement) userNameElement.textContent = 'Гость';
+        if (wordsLearnedElement) wordsLearnedElement.textContent = '0';
+        if (userStatusElement) userStatusElement.textContent = 'Неизвестный статус';
         return;
     }
 
@@ -63,6 +78,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Настройка закладок
     setupBookmarks();
+    // Устанавливаем обработчик для сдвига закладок
+    setupBookmarkScrolling();
 
     // Назначаем обработчики кнопок
     document.getElementById('addWordBtn')?.addEventListener('click', addWord);
@@ -76,51 +93,117 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Загружаем слова при открытии страницы
-    loadWords();
+    // Загружаем данные для главной страницы и делаем её активной
+    activateHomePage();
 });
 
 // Настройка закладок
 function setupBookmarks() {
     const bookmarks = document.querySelectorAll('.bookmark');
+    // Обновляем порядок закладок
+    const orderedPages = ['home-page', 'add-word', 'search-word', 'instruction'];
+
+    // Сначала скрываем все страницы
+    document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+
+    // Перебираем закладки и добавляем обработчик
     bookmarks.forEach(bookmark => {
-        bookmark.addEventListener('click', function() {
-            bookmarks.forEach(b => b.classList.remove('active'));
+        // Проверяем, что закладка имеет атрибут data-page
+        const pageId = bookmark.getAttribute('data-page');
+        if (!pageId) return;
+
+        // Удаляем старые обработчики, чтобы избежать дублирования
+        const oldBookmark = bookmark.cloneNode(true);
+        bookmark.parentNode.replaceChild(oldBookmark, bookmark);
+
+        // Добавляем новый обработчик
+        oldBookmark.addEventListener('click', function() {
+            // Удаляем класс 'active' у всех закладок и страниц
+            document.querySelectorAll('.bookmark').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+
+            // Добавляем класс 'active' только для кликнутой закладки и её страницы
             this.classList.add('active');
-
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.remove('active');
-            });
-
-            const pageId = this.getAttribute('data-page');
             const pageElement = document.getElementById(pageId);
             if (pageElement) {
                 pageElement.classList.add('active');
             }
 
-            if (pageId === 'all-words') {
-                loadWords();
+            // Запускаем загрузку данных в зависимости от страницы
+            if (pageId === 'home-page') {
+                activateHomePage();
             }
-            if (pageId === 'statistics') {
-                loadStatistics();
+            if (pageId === 'add-word') {
+                // Ничего не загружаем, просто показываем страницу
+            }
+            if (pageId === 'search-word') {
+                // Ничего не загружаем
             }
         });
     });
 }
 
+// Загрузка данных для главной страницы
+async function activateHomePage() {
+    // Делаем вкладку "Главная" активной
+    const homeBookmark = document.querySelector('.bookmark[data-page="home-page"]');
+    const homePage = document.getElementById('home-page');
+    if (homeBookmark) homeBookmark.classList.add('active');
+    if (homePage) homePage.classList.add('active');
+
+    if (!currentUserId) {
+        // Если user_id не найден, показываем заглушку
+        if (userNameElement) userNameElement.textContent = 'Гость';
+        if (wordsLearnedElement) wordsLearnedElement.textContent = '0';
+        if (userStatusElement) userStatusElement.textContent = 'Неизвестный статус';
+        return;
+    }
+
+    try {
+        const timestamp = new Date().getTime();
+        // Запрос к API для получения имени пользователя и статистики
+        const response = await fetch(`${API_BASE_URL}/api/user_info?user_id=${currentUserId}&_=${timestamp}`, {
+            headers: { 'Accept': 'application/json' }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Ошибка HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (userNameElement) {
+            // Используем имя из Telegram, если доступно, иначе из API
+            userNameElement.textContent = currentUserName || data.name || 'Пользователь';
+        }
+        if (wordsLearnedElement) {
+            // Отображаем количество выученных слов за неделю
+            wordsLearnedElement.textContent = data.words_learned_this_week || '0';
+        }
+        if (userStatusElement) {
+            // Отображаем статус пользователя (например, "Новичок", "Мастер")
+            userStatusElement.textContent = data.status || 'Новичок';
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки данных главной страницы:', error);
+        // В случае ошибки показываем заглушку
+        if (userNameElement) userNameElement.textContent = currentUserName || 'Пользователь';
+        if (wordsLearnedElement) wordsLearnedElement.textContent = '0';
+        if (userStatusElement) userStatusElement.textContent = 'Ошибка загрузки';
+    }
+}
+
 // Загрузка слов пользователя
 async function loadWords() {
+    // ... (весь код функции loadWords() остаётся без изменений) ...
     if (!currentUserId) {
         showNotification('ID пользователя не определен', 'error');
         return;
     }
 
     try {
-        // Показываем индикатор загрузки
         if (wordsLoading) wordsLoading.style.display = 'flex';
         if (wordsListElement) wordsListElement.innerHTML = '';
 
-        // Добавляем timestamp для избежания кэширования
         const timestamp = new Date().getTime();
         const response = await fetch(`${API_BASE_URL}/api/words?user_id=${currentUserId}&_=${timestamp}`, {
             headers: {
@@ -168,6 +251,7 @@ async function loadWords() {
 
 // Загрузка статистики
 async function loadStatistics() {
+    // ... (весь код функции loadStatistics() остаётся без изменений) ...
     if (!currentUserId) return;
 
     const statsContent = document.getElementById('statsContent');
@@ -209,6 +293,7 @@ async function loadStatistics() {
 
 // Добавление нового слова
 async function addWord() {
+    // ... (весь код функции addWord() остаётся без изменений) ...
     const wordInput = document.getElementById('newWord');
     const translationInput = document.getElementById('translation');
 
@@ -254,7 +339,6 @@ async function addWord() {
         translationInput.value = '';
         showNotification(`Слово "${escapeHTML(word)}" добавлено в словарь!`, 'success');
 
-        // Обновляем данные на активных страницах
         const activePage = document.querySelector('.page.active');
         if (activePage && activePage.id === 'all-words') {
             await loadWords();
@@ -272,6 +356,7 @@ async function addWord() {
 
 // Поиск перевода
 async function findTranslation() {
+    // ... (весь код функции findTranslation() остаётся без изменений) ...
     const searchWordInput = document.getElementById('searchWord');
     if (!searchWordInput) return;
 
@@ -328,6 +413,7 @@ async function findTranslation() {
 
 // Удаление слова
 async function deleteWord(wordId) {
+    // ... (весь код функции deleteWord() остаётся без изменений) ...
     if (!confirm('Вы уверены, что хотите удалить это слово?')) return;
 
     if (!currentUserId || !wordId) {
@@ -351,7 +437,6 @@ async function deleteWord(wordId) {
 
         showNotification('Слово успешно удалено', 'success');
 
-        // Обновляем только активные страницы
         const activePage = document.querySelector('.page.active');
         if (activePage && activePage.id === 'all-words') {
             await loadWords();
@@ -366,6 +451,7 @@ async function deleteWord(wordId) {
         if (loadingOverlay) loadingOverlay.style.display = 'none';
     }
 }
+
 
 // Вспомогательные функции
 function getPartOfSpeechName(code) {
@@ -397,4 +483,24 @@ function escapeHTML(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+// Новая функция для сдвига закладок
+function setupBookmarkScrolling() {
+    const bookmarks = document.querySelectorAll('.bookmark');
+    // Проверяем наличие контейнера закладок
+    if (!bookmarksContainer) return;
+
+    bookmarks.forEach(bookmark => {
+        bookmark.addEventListener('click', function() {
+            // Рассчитываем позицию для скролла.
+            // Это сдвинет выбранный элемент к левому краю контейнера.
+            const scrollPosition = this.offsetLeft - bookmarksContainer.offsetLeft;
+            // Используем плавный скролл
+            bookmarksContainer.scrollTo({
+                left: scrollPosition,
+                behavior: 'smooth'
+            });
+        });
+    });
 }

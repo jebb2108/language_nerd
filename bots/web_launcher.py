@@ -68,7 +68,6 @@ async def api_search_word_handler(request):
             return web.json_response({"error": "Missing parameters"}, status=400)
 
         result = await db.search_word(int(user_id), word)
-        logger.DEBUG(f"Search result: [{result[0], result[1], result[2], result[3]}]")
         if result:
             return web.json_response({
                 'id': result[0],
@@ -115,6 +114,27 @@ async def api_stats_handler(request):
         return web.json_response({"error": "Internal server error"}, status=500)
 
 
+# --- НОВЫЙ ЭНДПОИНТ ---
+async def api_user_info_handler(request):
+    """
+    API для получения информации о пользователе.
+    Включает общее количество слов и статистику за последнюю неделю.
+    """
+    try:
+        user_id = request.query.get('user_id')
+        user_info = await db.get_user_info(int(user_id)) # noqa
+        total_words = await db.get_user_stats(int(user_id)) # noqa
+        words_this_week = await db.get_user_stats_last_week(int(user_id)) # noqa
+
+        user_status = user_info['status']
+        return web.json_response({
+            'total_words': total_words,
+            'words_learned_this_week': words_this_week,
+            'status': user_status # Cтатус пользователя
+        })
+    except Exception as e:
+        logger.error(f"Error in api_user_info_handler: {str(e)}")
+        return web.json_response({"error": "Internal server error"}, status=500)
 
 
 async def start_web_app(database):
@@ -129,6 +149,7 @@ async def start_web_app(database):
     app.router.add_get('/api/words/search', api_search_word_handler)
     app.router.add_delete('/api/words/{word_id}', api_delete_word_handler)
     app.router.add_get('/api/stats', api_stats_handler)
+    app.router.add_get('/api/user_info', api_user_info_handler) # Добавляем новый роутер
 
     # Статические файлы
     static_path = os.path.join(get_base_path(), '../web/static')

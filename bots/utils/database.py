@@ -266,27 +266,53 @@ class Database:
                         return "UPDATE" in result
 
     # Temperorary solution
-    async def get_user_stats(self, user_id: int):
-        async with self.stats_lock:
+    async def get_user_stats(self, user_id: int, pos: str=None):
+        async with (self.stats_lock):
             async with self.acquire_connection() as conn:
                 try:
-                    row = await conn.fetchrow(
+                    all_words_count_row = await conn.fetchrow(
                         """
                         SELECT
                           COUNT(*) FILTER (WHERE part_of_speech = 'noun')      AS nouns,
                           COUNT(*) FILTER (WHERE part_of_speech = 'verb')      AS verbs,
                           COUNT(*) FILTER (WHERE part_of_speech = 'adjective') AS adjectives,
-                          COUNT(*) FILTER (WHERE part_of_speech = 'adverb')    AS adverbs
+                          COUNT(*) FILTER (WHERE part_of_speech = 'adverb')    AS adverbs,
+                          COUNT(*) FILTER (WHERE part_of_speech = 'other')       AS other
                         FROM words
                         WHERE user_id = $1
                         """,
                         user_id
                     )
-                    if row:
-                        total_words = row['nouns'] + row['verbs']
-                        return total_words, row['nouns'], row['verbs']
-                    else:
-                        return 0, 0, 0
+                    if all_words_count_row and pos is None:
+                        total_words = all_words_count_row['noun'] + all_words_count_row['verb'] + \
+                                        all_words_count_row['adjective'] + all_words_count_row['adverb'] + \
+                                        all_words_count_row['other']
+
+                        return total_words
+
+                    elif all_words_count_row and pos is not None:
+                        return all_words_count_row[pos]
+
+                    else: return 0
+
+                except Exception as e:
+                    logger.error(f"Database error: {e}")
+                    return None
+
+
+    async def get_user_stats_last_week(self, user_id: int):
+        async with (self.stats_lock):
+            async with self.acquire_connection() as conn:
+                try:
+                    all_words_last_week_count_row = await conn.fetchrow(
+                        """SELECT COUNT(*) FROM words WHERE user_id = $1 AND created_at >= $2""",
+                        user_id, datetime.now() - timedelta(days=7)
+                    )
+                    if all_words_last_week_count_row:
+                        return all_words_last_week_count_row['count']
+
+                    else: return 0
+
                 except Exception as e:
                     logger.error(f"Database error: {e}")
                     return None
