@@ -1,6 +1,10 @@
 import logging
+import asyncio
 import os
-from aiohttp import web
+from bs4 import BeautifulSoup
+from urllib.parse import quote
+
+from aiohttp import web, ClientSession, ClientTimeout
 from config import LOG_CONFIG
 
 logging.basicConfig(**LOG_CONFIG)
@@ -10,6 +14,59 @@ db = None
 
 def get_base_path():
     return os.path.dirname(os.path.abspath(__file__))
+
+async def api_parse_word_handler(request):
+    """API для парсинга определений слова с Merriam-Webster"""
+    try:
+        word = request.match_info['word']
+
+        # Обработка слова для URL
+        word_clean = word.strip().lower().replace(' ', '-')
+        word_encoded = quote(word_clean, safe='-_.')
+        url = f"https://www.merriam-webster.com/dictionary/{word_encoded}"
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+
+        timeout = ClientTimeout(total=10)
+        try:
+            async with ClientSession(timeout=timeout, headers=headers) as session:
+                async with session.get(url) as resp:
+                    if resp.status == 200:
+                        html = await resp.text()
+                        soup = BeautifulSoup(html, 'html.parser')
+
+                        definitions = []
+                        # Поиск элементов с определениями
+                        for item in soup.select('.dtText, .sb .dtText, .vg .dtText'):
+                            text = item.get_text().strip()
+
+                            # Удаление начальных символов : и пробелов
+                            if text.startswith(':'):
+                                text = text[1:].strip()
+
+                            # Удаление примеров использования в скобках
+                            if '(' in text and ')' in text:
+                                text = text.split('(')[0].strip()
+
+                            definitions.append(text)
+                            if len(definitions) >= 3:
+                                break
+
+                        return web.json_response(definitions[:3])
+
+                    return web.json_response(
+                        {"error": f"Слово не найдено или ошибка сервера (HTTP {resp.status})"},
+                        status=resp.status
+                    )
+
+        except asyncio.TimeoutError:
+            return web.json_response({"error": "Таймаут запроса"}, status=504)
+
+    except Exception as e:
+        logger.error(f"Ошибка в api_parse_word_handler: {str(e)}")
+        return web.json_response({"error": "Внутренняя ошибка сервера"}, status=500)
 
 
 async def index_handler(request):
@@ -68,6 +125,7 @@ async def api_search_word_handler(request):
             return web.json_response({"error": "Missing parameters"}, status=400)
 
         result = await db.search_word(int(user_id), word)
+        logger.DEBUG(f"Search result: [{result[0], result[1], result[2], result[3]}]")
         if result:
             return web.json_response({
                 'id': result[0],
@@ -114,27 +172,6 @@ async def api_stats_handler(request):
         return web.json_response({"error": "Internal server error"}, status=500)
 
 
-# --- НОВЫЙ ЭНДПОИНТ ---
-async def api_user_info_handler(request):
-    """
-    API для получения информации о пользователе.
-    Включает общее количество слов и статистику за последнюю неделю.
-    """
-    try:
-        user_id = request.query.get('user_id')
-        user_info = await db.get_user_info(int(user_id)) # noqa
-        total_words = await db.get_user_stats(int(user_id)) # noqa
-        words_this_week = await db.get_user_stats_last_week(int(user_id)) # noqa
-
-        user_status = user_info['status']
-        return web.json_response({
-            'total_words': total_words,
-            'words_learned_this_week': words_this_week,
-            'status': user_status # Cтатус пользователя
-        })
-    except Exception as e:
-        logger.error(f"Error in api_user_info_handler: {str(e)}")
-        return web.json_response({"error": "Internal server error"}, status=500)
 
 
 async def start_web_app(database):
@@ -148,8 +185,8 @@ async def start_web_app(database):
     app.router.add_post('/api/words', api_add_word_handler)
     app.router.add_get('/api/words/search', api_search_word_handler)
     app.router.add_delete('/api/words/{word_id}', api_delete_word_handler)
+    app.router.add_get('/api/parse/{word}', api_parse_word_handler)
     app.router.add_get('/api/stats', api_stats_handler)
-    app.router.add_get('/api/user_info', api_user_info_handler) # Добавляем новый роутер
 
     # Статические файлы
     static_path = os.path.join(get_base_path(), '../web/static')

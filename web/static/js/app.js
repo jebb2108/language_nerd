@@ -1,9 +1,10 @@
-// Объявляем переменные для DOM-элементов
+// Объявляем переменные для DOM-элементов (без инициализации)
 let userIdElement;
 let wordsListElement;
 let notificationElement;
 let loadingOverlay;
 let wordsLoading;
+let bookmarksHint;
 
 // Переменные состояния
 let currentUserId = null;
@@ -13,12 +14,13 @@ const API_BASE_URL = 'https://lllang.site';
 
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', function() {
-    // Инициализируем DOM-элементы
+    // Инициализируем DOM-элементы после загрузки страницы
     userIdElement = document.getElementById('userId');
     wordsListElement = document.getElementById('wordsList');
     notificationElement = document.getElementById('notification');
     loadingOverlay = document.getElementById('loadingOverlay');
     wordsLoading = document.getElementById('wordsLoading');
+    bookmarksHint = document.querySelector('.bookmarks-hint');
 
     // 1. Проверка инициализации Telegram WebApp
     if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
@@ -59,97 +61,51 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Настройка вкладок
-    setupTabs();
+    // Настройка закладок
+    setupBookmarks();
 
     // Назначаем обработчики кнопок
     document.getElementById('addWordBtn')?.addEventListener('click', addWord);
     document.getElementById('searchBtn')?.addEventListener('click', findTranslation);
     document.getElementById('refreshWordsBtn')?.addEventListener('click', loadWords);
 
-    // Загружаем данные при открытии страницы
-    loadHomeData();
+    // Обработчик для подсказки закладок
+    if (bookmarksHint) {
+        bookmarksHint.addEventListener('click', function() {
+            this.style.display = 'none';
+        });
+    }
+
+    // Загружаем слова при открытии страницы
     loadWords();
 });
 
-// Настройка вкладок
-function setupTabs() {
-    const tabs = document.querySelectorAll('.top-tabs .tab');
-
-    tabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            // Удаляем активный класс у всех вкладок
-            tabs.forEach(t => t.classList.remove('active'));
+// Настройка закладок
+function setupBookmarks() {
+    const bookmarks = document.querySelectorAll('.bookmark');
+    bookmarks.forEach(bookmark => {
+        bookmark.addEventListener('click', function() {
+            bookmarks.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
 
-            // Скрываем все страницы
             document.querySelectorAll('.page').forEach(page => {
                 page.classList.remove('active');
             });
 
-            // Показываем выбранную страницу
             const pageId = this.getAttribute('data-page');
             const pageElement = document.getElementById(pageId);
             if (pageElement) {
                 pageElement.classList.add('active');
             }
 
-            // Прокрутка вкладки к левому краю
-            this.scrollIntoView({
-                behavior: 'smooth',
-                block: 'nearest',
-                inline: 'start'
-            });
-
-            // Загрузка данных для страниц
             if (pageId === 'all-words') {
                 loadWords();
-            } else if (pageId === 'home') {
-                loadHomeData();
+            }
+            if (pageId === 'statistics') {
+                loadStatistics();
             }
         });
     });
-}
-
-// Загрузка данных для главной страницы
-async function loadHomeData() {
-    const userNameElement = document.getElementById('userName');
-    const wordsThisWeekElement = document.getElementById('wordsThisWeek');
-    const userStatusElement = document.getElementById('userStatus');
-    const totalWordsElement = document.getElementById('totalWords');
-    const recentWordsList = document.getElementById('recentWordsList');
-
-    // Получаем имя пользователя
-    let firstName = 'Пользователь';
-    if (typeof Telegram !== 'undefined' && Telegram.WebApp &&
-        Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.user) {
-        firstName = Telegram.WebApp.initDataUnsafe.user.first_name || firstName;
-    }
-    userNameElement.textContent = firstName;
-
-    // Загрузка последних слов
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/words?user_id=${currentUserId}&limit=5`);
-        if (response.ok) {
-            const words = await response.json();
-            recentWordsList.innerHTML = '';
-
-            if (words.length > 0) {
-                words.forEach(word => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                        <span>${escapeHTML(word.word)}</span>
-                        <span>${escapeHTML(word.translation)}</span>
-                    `;
-                    recentWordsList.appendChild(li);
-                });
-            } else {
-                recentWordsList.innerHTML = '<li>Нет добавленных слов</li>';
-            }
-        }
-    } catch (error) {
-        console.error('Ошибка загрузки последних слов:', error);
-    }
 }
 
 // Загрузка слов пользователя
@@ -210,6 +166,47 @@ async function loadWords() {
     }
 }
 
+// Загрузка статистики
+async function loadStatistics() {
+    if (!currentUserId) return;
+
+    const statsContent = document.getElementById('statsContent');
+    if (!statsContent) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/stats?user_id=${currentUserId}`, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Ошибка HTTP: ${response.status}`);
+        }
+
+        const stats = await response.json();
+        statsContent.innerHTML = `
+            <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 20px; margin-top: 20px;">
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; min-width: 120px;">
+                    <div style="font-size: 2rem; color: #2e7d32; font-weight: bold;">${escapeHTML(String(stats.total_words || 0))}</div>
+                    <div>Всего слов</div>
+                </div>
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; min-width: 120px;">
+                    <div style="font-size: 2rem; color: #2e7d32; font-weight: bold;">${escapeHTML(String(stats.nouns || 0))}</div>
+                    <div>Существительных</div>
+                </div>
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 10px; min-width: 120px;">
+                    <div style="font-size: 2rem; color: #2e7d32; font-weight: bold;">${escapeHTML(String(stats.verbs || 0))}</div>
+                    <div>Глаголов</div>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Ошибка загрузки статистики:', error);
+        statsContent.innerHTML = '<div style="color: red;">Ошибка загрузки статистики</div>';
+    }
+}
+
 // Добавление нового слова
 async function addWord() {
     const wordInput = document.getElementById('newWord');
@@ -262,10 +259,9 @@ async function addWord() {
         if (activePage && activePage.id === 'all-words') {
             await loadWords();
         }
-        if (document.getElementById('home')?.classList.contains('active')) {
-            await loadHomeData();
+        if (document.getElementById('statistics')?.classList.contains('active')) {
+            await loadStatistics();
         }
-
     } catch (error) {
         console.error('Ошибка добавления слова:', error);
         showNotification(`Ошибка: ${error.message}`, 'error');
@@ -294,7 +290,7 @@ async function findTranslation() {
         if (loadingOverlay) loadingOverlay.style.display = 'flex';
 
         const response = await fetch(
-            `${API_BASE_URL}/api/words/search?user_id=${currentUserId}&word=${encodeURIComponent(word)}`,
+             `${API_BASE_URL}/api/words/search?user_id=${currentUserId}&word=${encodeURIComponent(word)}`,
             {
                 headers: {
                     'Accept': 'application/json'
@@ -360,10 +356,9 @@ async function deleteWord(wordId) {
         if (activePage && activePage.id === 'all-words') {
             await loadWords();
         }
-        if (document.getElementById('home')?.classList.contains('active')) {
-            await loadHomeData();
+        if (document.getElementById('statistics')?.classList.contains('active')) {
+            await loadStatistics();
         }
-
     } catch (error) {
         console.error('Ошибка удаления слова:', error);
         showNotification('Ошибка при удалении слова', 'error');

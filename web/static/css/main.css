@@ -1,3 +1,6 @@
+
+
+
 * {
     margin: 0;
     padding: 0;
@@ -11,10 +14,10 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    padding: 10px;
+    padding: 20px;
 }
 
-.app-container {
+.book-container {
     position: relative;
     width: 100%;
     max-width: 1000px;
@@ -24,89 +27,108 @@ body {
     overflow: hidden;
     border: 1px solid #f0e6d2;
     display: flex;
-    flex-direction: column;
-    min-height: 95vh;
+    min-height: 700px;
 }
 
-/* Верхние вкладки */
-.top-tabs {
-    display: flex;
-    overflow-x: auto;
-    white-space: nowrap;
-    padding: 10px 5px;
-    background: #2e7d32;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-}
-
-.top-tabs::-webkit-scrollbar {
-    display: none;
-}
-
-.top-tabs .tab {
-    display: inline-block;
-    padding: 8px 15px;
-    color: white;
-    opacity: 0.7;
-    border-radius: 20px;
-    margin: 0 5px;
-    border: none;
-    font-size: 0.9rem;
-    flex-shrink: 0;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.top-tabs .tab.active {
-    background: rgba(255,255,255,0.2);
-    opacity: 1;
-    font-weight: bold;
-}
-
-.top-tabs .tab i {
-    margin-right: 5px;
-}
-
-/* Шапка */
-.header {
-    background: #2e7d32;
-    padding: 15px 20px;
-}
-
-.header-content {
+.content-area {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    position: relative;
 }
 
-.app-title {
-    font-size: 1.8rem;
+.book-header {
+    background: #2e7d32;
     color: white;
-    margin-bottom: 10px;
+    padding: 25px 30px;
     text-align: center;
+}
+
+.book-title {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
 }
 
 .user-info {
     background: rgba(255, 255, 255, 0.15);
     padding: 8px 15px;
     border-radius: 20px;
-    color: white;
+    display: inline-block;
     font-size: 1rem;
 }
 
-/* Основное содержимое */
-.content {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
+.bookmarks-sidebar {
+    width: 220px;
+    background: #f8f5ec;
+    border-left: 1px solid #e8e0c9;
+    padding: 20px 0;
     position: relative;
+}
+
+.bookmarks-hint {
+    position: absolute;
+    top: 50%;
+    left: -50px;
+    transform: translateY(-50%);
+    background: #2e7d32;
+    color: white;
+    padding: 10px;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 2s infinite;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+}
+
+@keyframes pulse {
+    0% { transform: translateY(-50%) scale(1); }
+    50% { transform: translateY(-50%) scale(1.1); }
+    100% { transform: translateY(-50%) scale(1); }
+}
+
+.bookmark {
+    padding: 18px 25px;
+    color: #5a5a5a;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-left: 4px solid transparent;
+}
+
+.bookmark.active {
+    background: #fff;
+    color: #2e7d32;
+    border-left: 4px solid #2e7d32;
+    font-weight: 700;
+}
+
+.bookmark:hover:not(.active) {
+    background: #f0ede3;
+    color: #2e7d32;
+}
+
+.bookmark i {
+    font-size: 1.3rem;
+    width: 25px;
+    text-align: center;
 }
 
 .page {
     display: none;
+    padding: 30px;
+    flex: 1;
+    overflow-y: auto;
 }
 
 .page.active {
@@ -145,12 +167,10 @@ label {
     display: flex;
     gap: 15px;
     margin-bottom: 15px;
-    flex-wrap: wrap;
 }
 
 .input-group {
     flex: 1;
-    min-width: 200px;
 }
 
 input, select {
@@ -342,98 +362,9 @@ tr:hover {
     to { transform: rotate(360deg); }
 }
 
-/* Стили для главной страницы */
-.home-content {
-    padding: 10px;
-}
-
-.welcome-section {
-    margin-bottom: 30px;
-    background: #e8f5e9;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+.book-footer {
     text-align: center;
-}
-
-.welcome-section h2 {
-    font-size: 1.8rem;
-    color: #2e7d32;
-    margin-bottom: 15px;
-}
-
-.welcome-section p {
-    color: #5a5a5a;
-    line-height: 1.6;
-    margin-bottom: 15px;
-}
-
-.stats-cards {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    margin: 20px 0;
-    justify-content: center;
-}
-
-.stat-card {
-    background: #e8f5e9;
-    border-radius: 10px;
     padding: 20px;
-    min-width: 150px;
-    flex: 1;
-    text-align: center;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-    max-width: 200px;
-}
-
-.stat-value {
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: #2e7d32;
-    margin-bottom: 10px;
-}
-
-.stat-label {
-    font-size: 1rem;
-    color: #5a5a5a;
-}
-
-.recent-words {
-    margin-top: 30px;
-    background: #f8f9f5;
-    padding: 20px;
-    border-radius: 10px;
-}
-
-.recent-words h3 {
-    color: #2e7d32;
-    margin-bottom: 15px;
-    text-align: center;
-}
-
-.recent-words ul {
-    list-style-type: none;
-    padding: 0;
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-.recent-words li {
-    padding: 10px;
-    border-bottom: 1px solid #e0e0e0;
-    display: flex;
-    justify-content: space-between;
-}
-
-.recent-words li:last-child {
-    border-bottom: none;
-}
-
-/* Футер */
-.footer {
-    text-align: center;
-    padding: 15px;
     color: #757575;
     font-size: 0.9rem;
     background: #f8f9f5;
@@ -442,18 +373,35 @@ tr:hover {
 }
 
 @media (max-width: 768px) {
-    .app-container {
-        min-height: 100vh;
-        border-radius: 0;
+    .book-container {
+        flex-direction: column-reverse;
     }
 
-    .top-tabs .tab {
-        font-size: 0.8rem;
-        padding: 8px 10px;
+    .bookmarks-sidebar {
+        width: 100%;
+        display: flex;
+        overflow-x: auto;
+        padding: 0;
+        border-left: none;
+        border-top: 1px solid #e8e0c9;
+        position: relative;
     }
 
-    .app-title {
-        font-size: 1.5rem;
+    .bookmarks-hint {
+        display: none;
+    }
+
+    .bookmark {
+        padding: 15px 20px;
+        border-left: none;
+        border-bottom: 4px solid transparent;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .bookmark.active {
+        border-left: none;
+        border-bottom: 4px solid #2e7d32;
     }
 
     .input-row {
@@ -461,7 +409,7 @@ tr:hover {
         gap: 15px;
     }
 
-    .input-group {
-        min-width: 100%;
+    .book-title {
+        font-size: 1.8rem;
     }
 }

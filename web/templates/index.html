@@ -8,76 +8,22 @@
     <link rel="stylesheet" href="/static/css/main.css">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Верхние вкладки (для мобильной и десктопной версии) -->
-        <div class="top-tabs">
-            <div class="tab active" data-page="home">
-                <i class="fas fa-home"></i> Главная
-            </div>
-            <div class="tab" data-page="add-word">
-                <i class="fas fa-plus-circle"></i> Добавить
-            </div>
-            <div class="tab" data-page="search-word">
-                <i class="fas fa-search"></i> Поиск
-            </div>
-            <div class="tab" data-page="all-words">
-                <i class="fas fa-book-open"></i> Словарь
-            </div>
-            <div class="tab" data-page="instructions">
-                <i class="fas fa-info-circle"></i> Инструкция
-            </div>
-        </div>
-
-        <!-- Зеленая шапка с ID пользователя -->
-        <div class="header">
-            <div class="header-content">
-                <div class="app-title">
+    <div class="book-container">
+        <div class="content-area">
+            <div class="book-header">
+                <div class="book-title">
                     <i class="fas fa-book"></i> Мой словарь
                 </div>
                 <div class="user-info">
                     Пользователь ID: <span id="userId">загрузка...</span>
                 </div>
             </div>
-        </div>
 
-        <!-- Основное содержимое -->
-        <div class="content">
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="spinner"></div>
             </div>
 
-            <!-- Главная страница -->
-            <div id="home" class="page active">
-                <div class="home-content">
-                    <div class="welcome-section">
-                        <h2>Привет, <span id="userName">Пользователь</span>!</h2>
-                        <p>Добро пожаловать в ваш персональный словарь для изучения английского языка.</p>
-                    </div>
-                    <div class="stats-cards">
-                        <div class="stat-card">
-                            <div class="stat-value" id="wordsThisWeek">7</div>
-                            <div class="stat-label">Слов за неделю</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="userStatus">Изучающий</div>
-                            <div class="stat-label">Ваш статус</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="totalWords">24</div>
-                            <div class="stat-label">Всего слов</div>
-                        </div>
-                    </div>
-                    <div class="recent-words">
-                        <h3>Последние добавленные слова:</h3>
-                        <ul id="recentWordsList">
-                            <!-- Сюда загружаются последние слова -->
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Остальные страницы -->
-            <div id="add-word" class="page">
+            <div id="add-word" class="page active">
                 <h2 class="page-title"><i class="fas fa-plus-circle"></i> Добавить новое слово</h2>
                 <div class="form-group">
                     <div class="input-row">
@@ -161,11 +107,41 @@
                     <p>4. <strong>Удаление слов</strong>: используйте кнопку "Удалить" рядом с нужным словом.</p>
                 </div>
             </div>
+
+            <div id="statistics" class="page">
+                <h2 class="page-title"><i class="fas fa-chart-bar"></i> Статистика</h2>
+                <div class="result-card">
+                    <h3>Ваша статистика</h3>
+                    <div id="statsContent" style="text-align: center; padding: 20px;">
+                        Загрузка статистики...
+                    </div>
+                </div>
+            </div>
+
+            <div class="book-footer">
+                <p>Telegram Vocabulary Bot &copy; 2025 | Словарь знаний</p>
+            </div>
         </div>
 
-        <!-- Футер -->
-        <div class="footer">
-            <p>Telegram Vocabulary Bot &copy; 2025 | Словарь знаний</p>
+        <div class="bookmarks-sidebar">
+            <div class="bookmarks-hint" title="Закладки навигации">
+                <i class="fas fa-arrow-left"></i>
+            </div>
+            <div class="bookmark active" data-page="add-word">
+                <i class="fas fa-plus-circle"></i> Добавить слово
+            </div>
+            <div class="bookmark" data-page="search-word">
+                <i class="fas fa-search"></i> Поиск слова
+            </div>
+            <div class="bookmark" data-page="all-words">
+                <i class="fas fa-book-open"></i> Весь словарь
+            </div>
+            <div class="bookmark" data-page="instructions">
+                <i class="fas fa-info-circle"></i> Инструкция
+            </div>
+            <div class="bookmark" data-page="statistics">
+                <i class="fas fa-chart-bar"></i> Статистика
+            </div>
         </div>
     </div>
 
