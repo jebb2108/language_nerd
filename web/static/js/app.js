@@ -290,7 +290,7 @@ async function findTranslation() {
         if (loadingOverlay) loadingOverlay.style.display = 'flex';
 
         const response = await fetch(
-             `${API_BASE_URL}/api/words/search?user_id=${currentUserId}&word=${encodeURIComponent(word)}`,
+            `${API_BASE_URL}/api/words/search?user_id=${currentUserId}&word=${encodeURIComponent(word)}`,
             {
                 headers: {
                     'Accept': 'application/json'
@@ -307,17 +307,43 @@ async function findTranslation() {
 
         if (!searchResult) return;
 
-        if (result && result.word) {
-            document.getElementById('resultWord').textContent = result.word;
-            document.getElementById('resultPos').textContent = getPartOfSpeechName(result.part_of_speech);
-            document.getElementById('resultTranslation').textContent = result.translation;
+        // Очищаем предыдущие определения
+        const definitionsList = document.getElementById('definitionsList');
+        if (definitionsList) definitionsList.innerHTML = '';
+
+        if (result.db_result) {
+            // Нашли в словаре пользователя
+            document.getElementById('resultWord').textContent = result.db_result.word;
+            document.getElementById('resultPos').textContent = getPartOfSpeechName(result.db_result.part_of_speech);
+            document.getElementById('resultTranslation').textContent = result.db_result.translation;
+
+            // Показываем блок с результатами
             searchResult.style.display = 'block';
         } else {
+            // Не нашли в словаре пользователя
             document.getElementById('resultWord').textContent = word;
             document.getElementById('resultPos').textContent = 'не найдено';
             document.getElementById('resultTranslation').textContent = 'Слово не найдено в словаре';
+
+            // Показываем блок с результатами
             searchResult.style.display = 'block';
         }
+
+        // Добавляем определения из интернета
+        if (result.definitions && result.definitions.length > 0) {
+            const definitionsContainer = document.getElementById('webDefinitions');
+            if (definitionsContainer) definitionsContainer.style.display = 'block';
+
+            result.definitions.forEach((def, index) => {
+                const li = document.createElement('li');
+                li.textContent = def;
+                if (definitionsList) definitionsList.appendChild(li);
+            });
+        } else {
+            const definitionsContainer = document.getElementById('webDefinitions');
+            if (definitionsContainer) definitionsContainer.style.display = 'none';
+        }
+
     } catch (error) {
         console.error('Ошибка поиска слова:', error);
         showNotification('Ошибка при поиске слова', 'error');
@@ -325,6 +351,7 @@ async function findTranslation() {
         if (loadingOverlay) loadingOverlay.style.display = 'none';
     }
 }
+
 
 // Удаление слова
 async function deleteWord(wordId) {
