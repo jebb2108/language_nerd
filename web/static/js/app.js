@@ -59,42 +59,27 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Настройка закладок
-    setupBookmarks();
+    // Настройка вкладок
+    setupTabs();
 
     // Назначаем обработчики кнопок
     document.getElementById('addWordBtn')?.addEventListener('click', addWord);
     document.getElementById('searchBtn')?.addEventListener('click', findTranslation);
     document.getElementById('refreshWordsBtn')?.addEventListener('click', loadWords);
 
-    // Обработчик для подсказки закладок
-    const bookmarksHint = document.querySelector('.bookmarks-hint');
-    if (bookmarksHint) {
-        bookmarksHint.addEventListener('click', function() {
-            this.style.display = 'none';
-        });
-    }
-
-    // Загружаем слова при открытии страницы
+    // Загружаем данные при открытии страницы
+    loadHomeData();
     loadWords();
-
-    // Активируем главную страницу в мобильной версии
-    if (window.innerWidth <= 768) {
-        const homeBookmark = document.querySelector('.mobile-bookmarks .bookmark[data-page="home"]');
-        if (homeBookmark) {
-            homeBookmark.click();
-        }
-    }
 });
 
-// Настройка закладок
-function setupBookmarks() {
-    const bookmarks = document.querySelectorAll('.bookmarks-sidebar .bookmark, .mobile-bookmarks .bookmark');
+// Настройка вкладок
+function setupTabs() {
+    const tabs = document.querySelectorAll('.top-tabs .tab');
 
-    bookmarks.forEach(bookmark => {
-        bookmark.addEventListener('click', function() {
-            // Удаляем активный класс у всех закладок
-            bookmarks.forEach(b => b.classList.remove('active'));
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Удаляем активный класс у всех вкладок
+            tabs.forEach(t => t.classList.remove('active'));
             this.classList.add('active');
 
             // Скрываем все страницы
@@ -109,14 +94,12 @@ function setupBookmarks() {
                 pageElement.classList.add('active');
             }
 
-            // Прокрутка для мобильных закладок
-            if (this.closest('.mobile-bookmarks')) {
-                this.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'nearest',
-                    inline: 'start'
-                });
-            }
+            // Прокрутка вкладки к левому краю
+            this.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'start'
+            });
 
             // Загрузка данных для страниц
             if (pageId === 'all-words') {
@@ -134,6 +117,7 @@ async function loadHomeData() {
     const wordsThisWeekElement = document.getElementById('wordsThisWeek');
     const userStatusElement = document.getElementById('userStatus');
     const totalWordsElement = document.getElementById('totalWords');
+    const recentWordsList = document.getElementById('recentWordsList');
 
     // Получаем имя пользователя
     let firstName = 'Пользователь';
@@ -143,10 +127,29 @@ async function loadHomeData() {
     }
     userNameElement.textContent = firstName;
 
-    // Заглушки для данных (в реальном приложении заменить на запросы к API)
-    wordsThisWeekElement.textContent = '7';
-    userStatusElement.textContent = 'Изучающий';
-    totalWordsElement.textContent = '24';
+    // Загрузка последних слов
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/words?user_id=${currentUserId}&limit=5`);
+        if (response.ok) {
+            const words = await response.json();
+            recentWordsList.innerHTML = '';
+
+            if (words.length > 0) {
+                words.forEach(word => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <span>${escapeHTML(word.word)}</span>
+                        <span>${escapeHTML(word.translation)}</span>
+                    `;
+                    recentWordsList.appendChild(li);
+                });
+            } else {
+                recentWordsList.innerHTML = '<li>Нет добавленных слов</li>';
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки последних слов:', error);
+    }
 }
 
 // Загрузка слов пользователя
