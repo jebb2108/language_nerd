@@ -225,7 +225,7 @@ async def start_web_app(database):
     app.router.add_get('/', index_handler)
     app.router.add_get('/api/words', api_words_handler)
     app.router.add_post('/api/words', api_add_word_handler)
-    app.router.add_get('/api/words/search', api_search_word_handler)
+    app.router.add_get('/api/words/search', api_parse_word_handler)
     app.router.add_delete('/api/words/{word_id}', api_delete_word_handler)
     # app.router.add_get('/api/parse/{word}', api_parse_word_handler)
     app.router.add_get('/api/stats', api_stats_handler)
