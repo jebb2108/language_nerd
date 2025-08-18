@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Словарь Telegram-бота</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="main.css">
 </head>
 <body>
     <div class="book-container">
@@ -19,11 +19,56 @@
                 </div>
             </div>
 
+            <!-- Мобильные закладки -->
+            <div class="mobile-bookmarks">
+                <div class="bookmark" data-page="home">
+                    <i class="fas fa-home"></i> Главная
+                </div>
+                <div class="bookmark" data-page="add-word">
+                    <i class="fas fa-plus-circle"></i> Добавить
+                </div>
+                <div class="bookmark" data-page="search-word">
+                    <i class="fas fa-search"></i> Поиск
+                </div>
+                <div class="bookmark" data-page="all-words">
+                    <i class="fas fa-book-open"></i> Словарь
+                </div>
+                <div class="bookmark" data-page="instructions">
+                    <i class="fas fa-info-circle"></i> Инструкция
+                </div>
+            </div>
+
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="spinner"></div>
             </div>
 
-            <div id="add-word" class="page active">
+            <!-- Главная страница -->
+            <div id="home" class="page">
+                <h2 class="page-title"><i class="fas fa-home"></i> Главная</h2>
+                <div class="home-content">
+                    <div class="welcome-section">
+                        <h3>Привет, <span id="userName">Пользователь</span>!</h3>
+                        <p>Добро пожаловать в ваш персональный словарь для изучения английского языка. Здесь вы можете добавлять новые слова, искать переводы и отслеживать свой прогресс.</p>
+                        <p>Начните изучение прямо сейчас - пополняйте словарный запас каждый день!</p>
+                    </div>
+                    <div class="stats-cards">
+                        <div class="stat-card">
+                            <div class="stat-value" id="wordsThisWeek">0</div>
+                            <div class="stat-label">Слов за неделю</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="userStatus">Новичок</div>
+                            <div class="stat-label">Ваш статус</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalWords">0</div>
+                            <div class="stat-label">Всего слов</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="add-word" class="page">
                 <h2 class="page-title"><i class="fas fa-plus-circle"></i> Добавить новое слово</h2>
                 <div class="form-group">
                     <div class="input-row">
@@ -108,21 +153,12 @@
                 </div>
             </div>
 
-            <div id="statistics" class="page">
-                <h2 class="page-title"><i class="fas fa-chart-bar"></i> Статистика</h2>
-                <div class="result-card">
-                    <h3>Ваша статистика</h3>
-                    <div id="statsContent" style="text-align: center; padding: 20px;">
-                        Загрузка статистики...
-                    </div>
-                </div>
-            </div>
-
             <div class="book-footer">
                 <p>Telegram Vocabulary Bot &copy; 2025 | Словарь знаний</p>
             </div>
         </div>
 
+        <!-- Десктоп закладки -->
         <div class="bookmarks-sidebar">
             <div class="bookmarks-hint" title="Закладки навигации">
                 <i class="fas fa-arrow-left"></i>
@@ -139,14 +175,11 @@
             <div class="bookmark" data-page="instructions">
                 <i class="fas fa-info-circle"></i> Инструкция
             </div>
-            <div class="bookmark" data-page="statistics">
-                <i class="fas fa-chart-bar"></i> Статистика
-            </div>
         </div>
     </div>
 
     <div class="notification" id="notification"></div>
 
-    <script src="/static/js/app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
