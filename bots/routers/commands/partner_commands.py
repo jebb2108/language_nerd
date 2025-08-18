@@ -36,16 +36,16 @@ class PollingState(StatesGroup):
 
 @router.message(Command("start"), IsBotFilter(BOT_TOKEN_PARTNER))
 async def start(message: Message, state: FSMContext, database: ResourcesMiddleware):
-
+    user_id = message.from_user.id
     lang_code = message.from_user.language_code
     greeting = (
         f"{BUTTONS['hello'][lang_code]} <b>{message.from_user.first_name}</b>!\n\n"
         f"{FIND_PARTNER['intro'][lang_code]}\n"
     )
     await message.answer(text=greeting, parse_mode=ParseMode.HTML)
-    if not await database.check_profile_exists(message.from_user.id):
+    if not await database.check_profile_exists(user_id):
         # Обновляем user_id в состоянии
-        await state.update_data(user_id=message.from_user.id, lang_code=lang_code)
+        await state.update_data(user_id=user_id, lang_code=lang_code)
         # Отправляем приветственное сообщение
         txt = QUESTIONARY["need_profile"][lang_code]
         await message.answer(text=txt, parse_mode=ParseMode.HTML)
@@ -98,7 +98,7 @@ async def process_intro(message: Message, state: FSMContext, database: Resources
         # Сохраняем профиль
         await database.add_users_profile(user_id, name, birthday, message.text)
 
-        if not await database.check_location_exists(message.from_user.id):
+        if not await database.check_location_exists(user_id):
             msg = QUESTIONARY["need_location"][lang_code]
             await message.answer(text=msg, parse_mode=ParseMode.HTML, reply_markup=show_location_keyboard(lang_code))
 
@@ -111,13 +111,14 @@ async def process_intro(message: Message, state: FSMContext, database: Resources
 @router.message(PollingState.waiting_for_location, F.location, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_location(message: Message, state: FSMContext, database: ResourcesMiddleware):
     if not await database.check_location_exists(message.from_user.id):
+        data = await state.get_data()
+        user_id = data.get("user_id", 0)
+        lang_code = data.get("lang_code", "en")
         # Сохраняем координаты в БД
         lattitude = str(message.location.latitude)
         longitude = str(message.location.longitude)
-        await database.add_users_location(message.from_user.id, lattitude, longitude)
+        await database.add_users_location(user_id, lattitude, longitude)
         # Выводим благодарное сообщение
-        data = await state.get_data()
-        lang_code = data.get("lang_code", "en")
         msg = FIND_PARTNER["success"][lang_code]
         await message.answer(text=msg, reply_markup=ReplyKeyboardRemove())
         await state.clear() # Очищаем состояние

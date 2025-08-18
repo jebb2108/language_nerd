@@ -236,7 +236,9 @@ async def handle_word_quiz(
                 Bold("Слово: "), hd.quote(record['word'])
             ).as_markdown()
             # Сохраняем правильное слово в data
-            await data["right_choices"].append(record["word"])
+            r_choices = data.get("right_choices", [])
+            r_choices.append(record["word"])
+            await state.update_data(right_choices=r_choices)
         else:
             msg = Text(
                 "❌ К сожалению, неверно.\n\n",
@@ -244,7 +246,9 @@ async def handle_word_quiz(
                 Bold("Правильный ответ: "), hd.quote(correct_word), "\n",
             ).as_markdown()
             # Сохраняем неправильное слово в data
-            await data["wrong_choices"].append(record["word"])
+            w_choices = data.get("wrong_choices", [])
+            w_choices.append(record["word"])
+            await state.update_data(wrong_choices=w_choices)
 
         await callback.answer()
 
