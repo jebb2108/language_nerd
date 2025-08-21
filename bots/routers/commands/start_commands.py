@@ -37,15 +37,16 @@ async def start_with_polling(
     сохраняем основные поля в state и либо идём в show_main_menu, либо стартуем опрос.
     """
 
+    # Проверяем, есть ли запись в users
     user_id = message.from_user.id
     lang_code = message.from_user.language_code or "en"
+    user_exists = await database.check_user_exists(user_id)
+    if user_exists:
+        # если пользователь есть — сразу меню
+        return await show_main_menu(message, state, database)
 
     # Создаем экземпляр класса MessageManager
     message_mgr = MessageManager(bot=message.bot, state=state)
-
-    # Проверяем, есть ли запись в users
-    user_exists = await database.check_user_exists(user_id)
-
     # Обновляем данные в state
     await state.update_data(
         user_id=user_id,
@@ -55,11 +56,6 @@ async def start_with_polling(
         message_mgr=message_mgr,
         orig_message=message,
     )
-
-    if user_exists:
-        # если пользователь есть — сразу меню
-        await show_main_menu(message, state)
-        return
 
     await message_mgr.send_message_with_save(
         chat_id=message.chat.id,

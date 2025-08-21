@@ -122,4 +122,4 @@ async def go_to_main_menu(
     await database.create_user(user_id, username, first_name, camefrom, language, fluency, lang_code)
 
     # После сохранения сразу показываем главное меню
-    await show_main_menu(orig_message, state)
+    await show_main_menu(orig_message, state, database)
