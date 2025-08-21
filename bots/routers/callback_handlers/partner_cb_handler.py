@@ -29,9 +29,9 @@ async def profile_handler(callback: CallbackQuery, state: FSMContext):
     status = " " * 8 + data["status"]
     about = data["about"]
 
-    lang_status = f"   [🟩🟩🟩🟩⬜⬜] Уровень владения: 40%\n▰▰▰▰▱▱▱▱▱▱ 127 слов\n(топ 20% юзеров)"
-
-    msg = f"Info for you - {username}\n\n{lang_status}\n\nNickname: {nickname}\nAge: {age}\nStatus: {status}\nAbout you: {about}"
+    active_status = f"[🟩🟩🟩🟩⬜⬜] Уровень активности: 40%\n"
+    lang_status = "Выученно 127 слов        (топ 20% юзеров)\n"
+    msg = f"Info for you - {username}\n\n{active_status}{lang_status}\n\nNickname: {nickname}\nAge: {age}\nStatus: {status}\nAbout you: {about}"
     await callback.answer(text=msg, show_alert=True)
 
 
