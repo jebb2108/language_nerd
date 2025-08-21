@@ -6,7 +6,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from translations import BUTTONS, QUESTIONARY # noqa
+from translations import BUTTONS, FIND_PARTNER, QUESTIONARY # noqa
 
 
 def get_on_main_menu_keyboard(user_id, lang_code):
@@ -111,10 +111,27 @@ def confirm_choice_keyboard(lang_code):
     builder.add(confirm_button)
     return builder.as_markup(resize_keyboard=True)
 
-def remove_keyboard():
-    remove = ReplyKeyboardMarkup(
-        keyboard=[],
-        resize_keyboard=True,
-        remove_keyboard=True
+def show_partner_menu_keyboard(lang_code):
+    builder = InlineKeyboardBuilder()
+    back_to_main_menu = InlineKeyboardButton(
+        text=BUTTONS["main_bot"][lang_code],
+        url="https://t.me/lllang_bot",
+        callback_data="main_menu",
     )
-    return remove
+    about_button = InlineKeyboardButton(
+        text=BUTTONS["about_bot"][lang_code],
+        callback_data="about",
+    )
+    builder.add(back_to_main_menu, about_button)
+    builder.adjust(1, 1)
+    return builder.as_markup(resize_keyboard=True)
+
+def get_back_to_partner_menu_keyboard(lang_code):
+    builder = InlineKeyboardBuilder()
+    back_to_main_menu = InlineKeyboardButton(
+        text=BUTTONS["main_bot"][lang_code],
+        url="https://t.me/lllang_bot",
+        callback_data="main_bot",
+    )
+    builder.add(back_to_main_menu)
+    return builder.as_markup(resize_keyboard=True)

@@ -109,6 +109,11 @@ QUESTIONARY = dict(
                   "Что вы любите делать в свободное время? И так далее\n\n",
         },
 
+        "need_dating": {
+            "en": "Do you want to find a partner for a date?",
+            "ru": "Вы хотите найти вторую половинку?",
+        },
+
         "age": {
             "en": "How old are you?\n\n"
                   "Please, enter birth date in format: <b>DD.MM.YYYY</b>\n\n",
@@ -226,6 +231,11 @@ BUTTONS = dict({
         "ru": "ℹ️ О боте",
     },
 
+    "main_bot": {
+        "en": "👾 Back to Main Bot",
+        "ru": "👾 Вернуться к Основному Боту",
+    },
+
     "go_back": {
         "en": "🔙 Go Back",
         "ru": "🔙 Назад",
@@ -247,6 +257,34 @@ FIND_PARTNER = dict({
     "intro": {
         "en": "I`m a bot to help you find a partner for communication\n",
         "ru": "Я бот, чтобы помочь тебе найти собеседника для общения\n",
+    },
+    "full_intro": {
+        "en": "I`m here, to help us find a partner and "
+              "practice your communication skills on the selected language",
+        "ru": "Я здесь, чтобы помочь нам найти собеседника и "
+              "попрактиковать твои навыки общения на выбранном языке",
+    },
+
+    "about": {
+        "en": "You can use the following commands:\n\n"
+              "\t/menu - return to the main menu\n"
+              "\t/location - see your location\n"
+              "\t/new_session - start a new conversation\n"
+              "\t/restart - restart the bot\n\n"
+              
+           "if you have any questions, please contact the support",
+
+        "ru": "Вы можете использовать следующие команды:\n\n"
+              "\t/menu - вернуться в главное меню\n"
+              "\t/location - увидеть свою геолокацию\n"
+              "\t/new_session - начать новое общение\n"
+              "\t/restart - перезапустить бота\n\n"
+           "Если у вас есть вопросы, пожалуйста, обратитесь в поддержку",
+    },
+
+    "yes_to_dating": {
+        "en": "❤️ Yes, I`d like to find a soul mate",
+        "ru": "❤️ Да, я заинтересован в отношениях",
     },
 
     "location": {

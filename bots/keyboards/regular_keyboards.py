@@ -24,3 +24,19 @@ def show_location_keyboard(lang_code):
         resize_keyboard=True,
     )
     return markup
+
+def show_dating_keyboard(lang_code):
+    yes_button = KeyboardButton(
+        text=FIND_PARTNER["yes_to_dating"][lang_code],
+    )
+    no_button = KeyboardButton(
+        text=FIND_PARTNER["no_to_dating"][lang_code],
+    )
+    markup = ReplyKeyboardMarkup(
+        keyboard=[
+            [yes_button],
+            [no_button]
+        ],
+        resize_keyboard=True,
+    )
+    return markup

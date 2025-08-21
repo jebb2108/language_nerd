@@ -75,6 +75,7 @@ class Database:
                             status VARCHAR(50) NOT NULL,
                             prefered_name VARCHAR(50) NOT NULL,
                             birthday DATE NOT NULL,
+                            dating BOOLEAN DEFAULT FALSE,
                             is_active BOOLEAN DEFAULT TRUE,
                             about TEXT NULL,
                             UNIQUE (user_id)
@@ -144,21 +145,22 @@ class Database:
             logger.error(f"Error creating/updating user {user_id}: {e}")
             return False
 
-    async def add_users_profile(self, user_id: int, prefered_name: str, birthday: datetime, about: str, status: str='rookie') -> None:
+    async def add_users_profile(self, user_id: int, prefered_name: str, birthday: datetime, about: str, dating: bool=False, status: str='rookie') -> None:
         async with self.acquire_connection() as conn:
             await conn.execute(
             """
-            INSERT INTO users_profile (user_id, status, prefered_name, birthday, about)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO users_profile (user_id, status, prefered_name, birthday, dating, about)
+            VALUES ($1, $2, $3, $4, $5, $6)
             ON CONFLICT (user_id) DO UPDATE
             SET status = EXCLUDED.status,
                 prefered_name = EXCLUDED.prefered_name,
                 birthday = EXCLUDED.birthday,
+                dating = EXCLUDED.dating,
                 about = EXCLUDED.about
             """,
-                user_id, status, prefered_name, birthday, about
+                user_id, status, prefered_name, birthday, dating, about
         )
-            logger.info(f"User {user_id} profile added: {prefered_name}, {birthday}, {about}, {status}")
+            logger.info(f"User {user_id} profile added: their name - {prefered_name}, birthday - {birthday}, dating paramm - {dating}, status - {status},\n intro - {about}")
             return
     
 

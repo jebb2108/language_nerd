@@ -7,7 +7,6 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.types import KeyboardButton, ReplyKeyboardRemove
-from aiogram.utils.keyboard import KeyboardBuilder, ReplyKeyboardBuilder, ReplyKeyboardMarkup
 from aiogram.enums import ParseMode
 
 from config import BOT_TOKEN_PARTNER # noqa
@@ -17,8 +16,8 @@ from utils.filters import IsBotFilter # noqa
 
 from translations import QUESTIONARY, BUTTONS, FIND_PARTNER # noqa
 
-from keyboards.inline_keyboards import remove_keyboard # noqa
-from keyboards.regular_keyboards import show_location_keyboard # noqa
+from keyboards.inline_keyboards import show_partner_menu_keyboard # noqa
+from keyboards.regular_keyboards import show_location_keyboard, show_dating_keyboard # noqa
 
 # Инициализируем роутер
 router = Router(name=__name__)
@@ -32,7 +31,22 @@ class PollingState(StatesGroup):
     waiting_for_name = State()
     waiting_for_bday = State()
     waiting_for_intro = State()
+    waiting_for_dating = State()
     waiting_for_location = State()
+
+@router.message(Command("menu"), IsBotFilter(BOT_TOKEN_PARTNER))
+async def menu(message: Message, state: FSMContext, database: ResourcesMiddleware):
+    lang_code = message.from_user.language_code
+    await state.update_data(
+        lang_code=lang_code,
+        user_id=message.from_user.id,
+        first_name=message.from_user.first_name,
+    )
+    await message.answer(
+        text=FIND_PARTNER["full_intro"][lang_code],
+        parse_mode=ParseMode.HTML,
+        reply_markup=show_partner_menu_keyboard()
+    )
 
 @router.message(Command("start"), IsBotFilter(BOT_TOKEN_PARTNER))
 async def start(message: Message, state: FSMContext, database: ResourcesMiddleware):
@@ -85,26 +99,50 @@ async def process_age(message: Message, state: FSMContext):
 
 
 @router.message(PollingState.waiting_for_intro, IsBotFilter(BOT_TOKEN_PARTNER))
-async def process_intro(message: Message, state: FSMContext, database: ResourcesMiddleware):
+async def process_intro(message: Message, state: FSMContext):
 
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
 
     if re.search(r'\S{10,500}', message.text):
-        # Достаем нужные данные о пользователе
-        user_id = data.get("user_id", 0)
-        name = data.get("name", "default")
-        birthday = data.get("bday", "default")
-        # Сохраняем профиль
-        await database.add_users_profile(user_id, name, birthday, message.text)
-
-        if not await database.check_location_exists(user_id):
-            msg = QUESTIONARY["need_location"][lang_code]
-            await message.answer(text=msg, parse_mode=ParseMode.HTML, reply_markup=show_location_keyboard(lang_code))
-
-            return await state.set_state(PollingState.waiting_for_location)
+        msg = QUESTIONARY["need_dating"][lang_code]
+        await message.answer(
+            text=msg,
+            parse_mode=ParseMode.HTML,
+            reply_markup=show_dating_keyboard(lang_code),
+        )
+        return await state.set_state(PollingState.waiting_for_dating)
 
     await message.answer(text=QUESTIONARY["wrong_info"][lang_code], parse_mode=ParseMode.HTML)
+
+
+@router.message(
+    PollingState.waiting_for_dating, IsBotFilter(BOT_TOKEN_PARTNER,
+    lambda message: message.text == FIND_PARTNER["yes_to_dating"][message.from_user.language_code])
+)
+async def agreed_to_dating_handler(state: FSMContext):
+    return await state.update_data(dating_consent=True)
+
+
+@router.message(PollingState.waiting_for_dating, IsBotFilter(BOT_TOKEN_PARTNER))
+async def process_dating(message: Message, state: FSMContext, database: ResourcesMiddleware):
+    data = await state.get_data()
+    lang_code = data.get("lang_code", "en")
+    # Достаем нужные данные о пользователе
+    user_id = data.get("user_id", 0)
+    name = data.get("name", "default")
+    birthday = data.get("bday", "default")
+    dating_consent = data.get("dating_consent", False)
+    # Сохраняем профиль
+    await database.add_users_profile(user_id, name, birthday, message.text, dating=dating_consent)
+
+    if dating_consent and not (await database.check_location_exists(user_id)):
+        msg = QUESTIONARY["need_location"][lang_code]
+        await message.answer(text=msg, parse_mode=ParseMode.HTML, reply_markup=show_location_keyboard(lang_code))
+
+        return await state.set_state(PollingState.waiting_for_location)
+
+    else: await state.clear()
 
 
 
