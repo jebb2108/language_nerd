@@ -122,31 +122,11 @@ async def process_intro(message: Message, state: FSMContext):
             parse_mode=ParseMode.HTML,
             reply_markup=show_dating_keyboard(lang_code),
         )
+        await state.update_data(intro=message.text)
         return await state.set_state(PollingState.waiting_for_dating)
 
     msg = QUESTIONARY["wrong_intro"][lang_code]
     await message.answer(text=msg, parse_mode=ParseMode.HTML)
-
-
-@router.message(PollingState.waiting_for_dating, IsBotFilter(BOT_TOKEN_PARTNER))
-async def process_dating(message: Message, state: FSMContext, database: ResourcesMiddleware):
-    data = await state.get_data()
-    # Достаем нужные данные о пользователе
-    user_id = data.get("user_id", 0)
-    name = data.get("name", "default")
-    birthday = data.get("bday", "default")
-    lang_code = data.get("lang_code", "en")
-    dating_consent = data.get("dating_consent", False)
-    # Сохраняем профиль
-    await database.add_users_profile(user_id, name, birthday, message.text, dating=dating_consent)
-
-    if dating_consent and not (await database.check_location_exists(user_id)):
-        msg = QUESTIONARY["need_location"][lang_code]
-        await message.answer(text=msg, parse_mode=ParseMode.HTML, reply_markup=show_location_keyboard(lang_code))
-
-        return await state.set_state(PollingState.waiting_for_location)
-
-    else: await state.clear()
 
 
 @router.message(
@@ -154,24 +134,54 @@ async def process_dating(message: Message, state: FSMContext, database: Resource
     lambda message: message.text == FIND_PARTNER["yes_to_dating"][message.from_user.language_code]
 )
 async def agreed_to_dating_handler(message: Message, state: FSMContext, database: ResourcesMiddleware):
-    return await state.update_data(dating_consent=True)
+    data = await state.get_data()
+    # Достаем нужные данные о пользователе
+    user_id = data.get("user_id", 0)
+    name = data.get("name", "default")
+    birthday = data.get("bday", None)
+    intro = data.get("intro", "non-existent")
+    lang_code = data.get("lang_code", "en")
+    # Сохраняем профиль
+    await database.add_users_profile(user_id, name, birthday, about=intro, dating=True)
+
+    location_exists: bool = await database.check_location_exists(user_id)
+    if not location_exists:
+        msg = QUESTIONARY["need_location"][lang_code]
+        await message.answer(text=msg, parse_mode=ParseMode.HTML, reply_markup=show_location_keyboard(lang_code))
+        return await state.set_state(PollingState.waiting_for_location)
+
+    # Если локация каким-то образом существует, то переходим в главное меню
+    else: await show_main_menu(message, state, database)
+
+@router.message(
+    PollingState.waiting_for_dating, IsBotFilter(BOT_TOKEN_PARTNER),
+    lambda message: message.text == FIND_PARTNER["no_to_dating"][message.from_user.language_code]
+)
+async def disagreed_to_dating_handler(message: Message, state: FSMContext, database: ResourcesMiddleware):
+    data = await state.get_data()
+    # Достаем нужные данные о пользователе
+    user_id = data.get("user_id", 0)
+    name = data.get("name", "default")
+    birthday = data.get("bday", None)
+    intro = data.get("intro", "non-existent")
+    # Сохраняем профиль
+    await database.add_users_profile(user_id, name, birthday, about=intro, dating=False)
+    await state.clear()
 
 
 @router.message(PollingState.waiting_for_location, F.location, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_location(message: Message, state: FSMContext, database: ResourcesMiddleware):
-    if not await database.check_location_exists(message.from_user.id):
-        data = await state.get_data()
-        user_id = data.get("user_id", 0)
-        lang_code = data.get("lang_code", "en")
-        # Сохраняем координаты в БД
-        lattitude = str(message.location.latitude)
-        longitude = str(message.location.longitude)
-        await database.add_users_location(user_id, lattitude, longitude)
-        # Выводим благодарное сообщение
-        msg = FIND_PARTNER["success"][lang_code]
-        await message.answer(text=msg, reply_markup=ReplyKeyboardRemove())
-        await state.clear() # Очищаем состояние
-
+    """Обработчик локации"""
+    data = await state.get_data()
+    user_id = data.get("user_id", 0)
+    lang_code = data.get("lang_code", "en")
+    # Сохраняем координаты в БД
+    lattitude = str(message.location.latitude)
+    longitude = str(message.location.longitude)
+    await database.add_users_location(user_id, lattitude, longitude)
+    # Выводим благодарное сообщение
+    msg = FIND_PARTNER["success"][lang_code]
+    await message.answer(text=msg, reply_markup=ReplyKeyboardRemove())
     await show_main_menu(message, state, database)
 
 
@@ -180,12 +190,9 @@ async def process_location(message: Message, state: FSMContext, database: Resour
         message.from_user.language_code, FIND_PARTNER["cancel"]["en"])
 )
 async def cancel(message: Message, state: FSMContext, database: ResourcesMiddleware):
-    if not await database.check_location_exists(message.from_user.id):
-        msg = FIND_PARTNER["no_worries"][message.from_user.language_code]
-        await database.add_users_location(message.from_user.id, "refused", "refused")
-        await message.reply(text=msg, reply_markup=ReplyKeyboardRemove())
-        await state.clear()
-
+    msg = FIND_PARTNER["no_worries"][message.from_user.language_code]
+    await database.add_users_location(message.from_user.id, "refused", "refused")
+    await message.reply(text=msg, reply_markup=ReplyKeyboardRemove())
     await show_main_menu(message, state, database)
 
 @router.message(Command('location'), IsBotFilter(BOT_TOKEN_PARTNER))
