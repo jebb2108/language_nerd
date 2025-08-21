@@ -167,15 +167,15 @@ QUESTIONARY = dict(
 
         "welcome": {
             "en": (
-                "I'm so glad to see you here!\n"
-                "I'm your language learning assistant, and here's what I can do:\n\n"
+                "I'm so glad to see you here and"
+                "will be your language learning assistant. Here's what I can do:\n\n"
                 "✨ <b>Dictionary</b> — save and learn new words easily\n"
                 "🤝 <b>Practice</b> — chat with other students (coming soon!)\n"
                 "🛠 <b>Technical support</b> — I'll help if something breaks\n\n"
                 "Just click the button below and choose what interests you! 😊"
             ),
             "ru": (
-                "Очень рад видеть тебя здесь!\n"
+                "Очень рад видеть тебя здесь!\n\n"
                 "Я — твой помощник в изучении языков, и вот что умею:\n\n"
                 "✨ <b>Словарь</b> — сохраняй и учи новые слова легко\n"
                 "🤝 <b>Практика</b> — общайся с другими учениками (скоро запуск!)\n"
@@ -283,8 +283,13 @@ FIND_PARTNER = dict({
     },
 
     "yes_to_dating": {
-        "en": "❤️ Yes, I`d like to find a soul mate",
-        "ru": "❤️ Да, я заинтересован в отношениях",
+        "en": "🌹 Yes, I`d like to find a soul mate",
+        "ru": "🌹 Да, я заинтересован в отношениях",
+    },
+
+    "no_to_dating": {
+        "en": "🍻🤜🤛 Nah, I want to find a friend",
+        "ru": "🍻🤜🤛 Нет, я заинтересован в дружбе",
     },
 
     "location": {
