@@ -264,7 +264,7 @@ FIND_PARTNER = dict({
         "ru": "Я бот, чтобы помочь тебе найти собеседника для общения\n",
     },
     "full_intro": {
-        "en": "I`m here, to help us find a partner and "
+        "en": "I`m here to help us find a partner and "
               "practice your communication skills on the selected language",
         "ru": "Я здесь, чтобы помочь нам найти собеседника и "
               "попрактиковать твои навыки общения на выбранном языке",
