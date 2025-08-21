@@ -35,21 +35,31 @@ class PollingState(StatesGroup):
     waiting_for_location = State()
 
 @router.message(Command("menu"), IsBotFilter(BOT_TOKEN_PARTNER))
-async def menu(message: Message, state: FSMContext, database: ResourcesMiddleware):
-    lang_code = message.from_user.language_code
+async def show_main_menu(message: Message, state: FSMContext, database: ResourcesMiddleware):
+    """ Главное меню бота """
+    data = await state.get_data()
+    name = data.get("name", await set_user_info(message, state, database))
+    lang_code = data.get("lang_code", "en")
+
+    greeting = FIND_PARTNER["hello"][lang_code] + " <b>" + name + "</b>!"
+    intro = FIND_PARTNER["intro"][lang_code]
     await state.update_data(
         lang_code=lang_code,
         user_id=message.from_user.id,
         first_name=message.from_user.first_name,
     )
     await message.answer(
-        text=FIND_PARTNER["full_intro"][lang_code],
+        text=greeting + "\n\n" + intro,
         parse_mode=ParseMode.HTML,
         reply_markup=show_partner_menu_keyboard(lang_code)
     )
 
 @router.message(Command("start"), IsBotFilter(BOT_TOKEN_PARTNER))
 async def start(message: Message, state: FSMContext, database: ResourcesMiddleware):
+
+    if await database.check_profile_exists(message.from_user.id):
+        await show_main_menu(message, state, database)
+
     user_id = message.from_user.id
     lang_code = message.from_user.language_code
     greeting = (
@@ -81,7 +91,7 @@ async def process_name(message: Message, state: FSMContext):
         return await state.set_state(PollingState.waiting_for_bday)
 
     msg = QUESTIONARY["wrong_name"][lang_code]
-    await message.reply(msg, parse_mode=ParseMode.HTML)
+    await message.reply(text=msg, parse_mode=ParseMode.HTML)
 
 @router.message(PollingState.waiting_for_bday, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_age(message: Message, state: FSMContext):
@@ -95,7 +105,8 @@ async def process_age(message: Message, state: FSMContext):
         await message.answer(text=QUESTIONARY["need_intro"][lang_code], parse_mode=ParseMode.HTML)
         return await state.set_state(PollingState.waiting_for_intro)
 
-    await message.answer(text=QUESTIONARY["wrong_birthday"][lang_code], parse_mode=ParseMode.HTML)
+    msg = QUESTIONARY["wrong_birthday"][lang_code]
+    await message.answer(text=msg, parse_mode=ParseMode.HTML)
 
 
 @router.message(PollingState.waiting_for_intro, IsBotFilter(BOT_TOKEN_PARTNER))
@@ -113,7 +124,8 @@ async def process_intro(message: Message, state: FSMContext):
         )
         return await state.set_state(PollingState.waiting_for_dating)
 
-    await message.answer(text=QUESTIONARY["wrong_info"][lang_code], parse_mode=ParseMode.HTML)
+    msg = QUESTIONARY["wrong_intro"][lang_code]
+    await message.answer(text=msg, parse_mode=ParseMode.HTML)
 
 
 @router.message(
@@ -127,11 +139,11 @@ async def agreed_to_dating_handler(state: FSMContext):
 @router.message(PollingState.waiting_for_dating, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_dating(message: Message, state: FSMContext, database: ResourcesMiddleware):
     data = await state.get_data()
-    lang_code = data.get("lang_code", "en")
     # Достаем нужные данные о пользователе
     user_id = data.get("user_id", 0)
     name = data.get("name", "default")
     birthday = data.get("bday", "default")
+    lang_code = data.get("lang_code", "en")
     dating_consent = data.get("dating_consent", False)
     # Сохраняем профиль
     await database.add_users_profile(user_id, name, birthday, message.text, dating=dating_consent)
@@ -161,6 +173,8 @@ async def process_location(message: Message, state: FSMContext, database: Resour
         await message.answer(text=msg, reply_markup=ReplyKeyboardRemove())
         await state.clear() # Очищаем состояние
 
+    await show_main_menu(message, state, database)
+
 
 @router.message(PollingState.waiting_for_location, IsBotFilter(BOT_TOKEN_PARTNER),
     lambda message: message.text == FIND_PARTNER["cancel"].get(
@@ -173,16 +187,22 @@ async def cancel(message: Message, state: FSMContext, database: ResourcesMiddlew
         await message.reply(text=msg, reply_markup=ReplyKeyboardRemove())
         await state.clear()
 
+    await show_main_menu(message, state, database)
+
 @router.message(Command('location'), IsBotFilter(BOT_TOKEN_PARTNER))
 async def get_my_location(message: Message, database: ResourcesMiddleware):
+    """ Обработчик команды /location """
+    lang_code = message.from_user.language_code
     result = await database.get_users_location(message.from_user.id)
     if result is None or result["latitude"] == "refused":
         await message.answer(text="You didn't share your location")
         return
     latitude = result['latitude']
     longitude = result['longitude']
+
+    msg = FIND_PARTNER["your_location"][lang_code]
     await message.answer(
-        text=f"Your location: <b>{latitude}</b>, <b>{longitude}</b>",
+        text=f"{msg}: <b>{latitude}</b>, <b>{longitude}</b>",
         parse_mode=ParseMode.HTML,
     )
 
@@ -198,3 +218,34 @@ async def echo(message: Message, rate_limit_info: RateLimitInfo):
         text=f"Your message: {message.text}\n"
         f"Rate limit info: {count} messages at {first_message}",
     )
+
+
+async def set_user_info(message: Message, state: FSMContext, database: ResourcesMiddleware):
+    user_id = message.from_user.id
+    user_info = await database.get_user_info(user_id)
+    lang_code = user_info["lang_code"]
+    if database.check_profile_exists(user_id):
+        users_profile_indo = await database.get_users_profile(user_id)
+        preferred_name = users_profile_indo["preferred_name"]
+        status = users_profile_indo["status"]
+        about = users_profile_indo["about"]
+
+        await state.update_data(
+            user_id=user_id,
+            name=preferred_name,
+            status=status,
+            about=about,
+            lang_code=lang_code,
+        )
+        return preferred_name
+
+    preferred_name = user_info["first_name"]
+    await state.update_data(
+        user_id=user_id,
+        name=preferred_name,
+        status='unknown',
+        about='non-existent',
+        lang_code=lang_code,
+    )
+    return preferred_name
+

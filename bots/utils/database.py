@@ -162,7 +162,14 @@ class Database:
         )
             logger.info(f"User {user_id} profile added: their name - {prefered_name}, birthday - {birthday}, dating paramm - {dating}, status - {status},\n intro - {about}")
             return
-    
+
+    async def get_users_profile(self, user_id: int) -> dict:
+        async with self.acquire_connection() as conn:
+            row = await conn.fetchrow(
+                "SELECT * FROM users_profile WHERE user_id = $1",
+                user_id
+            )
+            return dict(row) if row else None
 
     async def add_users_location(self, user_id: int, latitude: str, longitude: str) -> None:
         async with self.acquire_connection() as conn:

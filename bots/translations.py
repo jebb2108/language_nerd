@@ -232,8 +232,8 @@ BUTTONS = dict({
     },
 
     "main_bot": {
-        "en": "👾 Back to Main Bot",
-        "ru": "👾 Вернуться к Основному Боту",
+        "en": "👾 Main Bot",
+        "ru": "👾 Основной Бот",
     },
 
     "go_back": {
@@ -298,12 +298,17 @@ FIND_PARTNER = dict({
     },
 
     "success": {
-        "en": "Thank you for your patience",
-        "ru": "Спасибо за терпение",
+        "en": "🤝 Thank you for your patience",
+        "ru": "🤝 Спасибо за терпение",
+    },
+
+    "your_location": {
+        "en": "🌎 Your location",
+        "ru": "🌎 Ваши гео-координаты",
     },
 
     'no_worries': {
-        "en": "No worries, we won't use your location",
-        "ru": "Ничего страшного, мы не будем использовать вашу геолокацию",
+        "en": "🫶 No worries, we won't use your location",
+        "ru": "🫶 Ничего страшного, мы не будем использовать вашу геолокацию",
     }
 })
