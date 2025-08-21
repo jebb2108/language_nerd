@@ -45,7 +45,7 @@ async def menu(message: Message, state: FSMContext, database: ResourcesMiddlewar
     await message.answer(
         text=FIND_PARTNER["full_intro"][lang_code],
         parse_mode=ParseMode.HTML,
-        reply_markup=show_partner_menu_keyboard()
+        reply_markup=show_partner_menu_keyboard(lang_code)
     )
 
 @router.message(Command("start"), IsBotFilter(BOT_TOKEN_PARTNER))
