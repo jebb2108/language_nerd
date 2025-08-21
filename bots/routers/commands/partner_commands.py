@@ -168,7 +168,7 @@ async def disagreed_to_dating_handler(message: Message, state: FSMContext, datab
     # Сохраняем профиль
     await database.add_users_profile(user_id, name, birthday, about=intro)
     msg = FIND_PARTNER["no_worries_dating"][lang_code]
-    await message.answer(text=msg)
+    await message.answer(text=msg, parse_mode=ParseMode.HTML, reply_markup=ReplyKeyboardRemove())
 
 
 @router.message(PollingState.waiting_for_location, F.location, IsBotFilter(BOT_TOKEN_PARTNER))

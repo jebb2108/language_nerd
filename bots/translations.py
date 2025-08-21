@@ -313,9 +313,10 @@ FIND_PARTNER = dict({
     },
 
     'no_worries': {
-        "en": "🫶 No worries, we won't use your location",
-        "ru": "🫶 Ничего страшного, мы не будем использовать вашу геолокацию",
+        "en": "No worries 🫶 We won't use your location",
+        "ru": "Ничего страшного 🫶 Мы не будем использовать вашу геолокацию",
     },
+
     "no_worries_dating": {
         "en": "Got it! We`ll find you a new friend.\nPress /menu to go to the main menu",
         "ru": "Понял, мы найдем вам нового друга!\nНажмите на /menu, чтобы перейти в главное меню",
