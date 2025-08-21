@@ -230,7 +230,7 @@ async def set_user_info(message: Message, state: FSMContext, database: Resources
     user_id = message.from_user.id
     user_info = await database.get_user_info(user_id)
     lang_code = user_info["lang_code"]
-    if database.check_profile_exists(user_id):
+    if await database.check_profile_exists(user_id):
         users_profile_info = await database.get_users_profile(user_id)
         prefered_name = users_profile_info["prefered_name"]
         status = users_profile_info["status"]
