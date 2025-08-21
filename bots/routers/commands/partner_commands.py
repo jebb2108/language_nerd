@@ -225,27 +225,27 @@ async def set_user_info(message: Message, state: FSMContext, database: Resources
     user_info = await database.get_user_info(user_id)
     lang_code = user_info["lang_code"]
     if database.check_profile_exists(user_id):
-        users_profile_indo = await database.get_users_profile(user_id)
-        preferred_name = users_profile_indo["preferred_name"]
-        status = users_profile_indo["status"]
-        about = users_profile_indo["about"]
+        users_profile_info = await database.get_users_profile(user_id)
+        prefered_name = users_profile_info["prefered_name"]
+        status = users_profile_info["status"]
+        about = users_profile_info["about"]
 
         await state.update_data(
             user_id=user_id,
-            name=preferred_name,
+            name=prefered_name,
             status=status,
             about=about,
             lang_code=lang_code,
         )
-        return preferred_name
+        return prefered_name
 
-    preferred_name = user_info["first_name"]
+    prefered_name = user_info["first_name"]
     await state.update_data(
         user_id=user_id,
-        name=preferred_name,
+        name=prefered_name,
         status='unknown',
         about='non-existent',
         lang_code=lang_code,
     )
-    return preferred_name
+    return prefered_name
 
