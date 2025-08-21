@@ -25,7 +25,7 @@ async def profile_handler(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     username = data["username"]
     nickname = data["name"]
-    age = " " * 10 + data["age"]
+    age = " " * 10 + str(data["age"])
     status = " " * 8 + data["status"]
     about = data["about"]
 
