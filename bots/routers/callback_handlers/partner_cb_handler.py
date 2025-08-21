@@ -5,10 +5,9 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from config import LOG_CONFIG, BOT_TOKEN_PARTNER # noqa
 from utils.filters import IsBotFilter # noqa
-from keyboards.inline_keyboards import get_back_to_partner_menu_keyboard, get_go_back_keyboard # noqa
+from keyboards.inline_keyboards import get_back_to_partner_menu_keyboard, get_go_back_keyboard, show_partner_menu_keyboard # noqa
 from translations import FIND_PARTNER # noqa
 
-from bots.keyboards.inline_keyboards import show_partner_menu_keyboard
 
 router = Router(name=__name__)
 
