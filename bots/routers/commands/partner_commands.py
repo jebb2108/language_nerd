@@ -230,6 +230,7 @@ async def set_user_info(message: Message, state: FSMContext, database: Resources
     user_id = message.from_user.id
     user_info = await database.get_user_info(user_id)
     username = user_info["username"]
+    fluency = user_info["fluency"]
     lang_code = user_info["lang_code"]
     if await database.check_profile_exists(user_id):
         users_profile_info = await database.get_users_profile(user_id)
@@ -245,6 +246,7 @@ async def set_user_info(message: Message, state: FSMContext, database: Resources
             username=username,
             age=age_years,
             name=prefered_name,
+            fluency=fluency,
             status=status,
             about=about,
             lang_code=lang_code,
@@ -256,6 +258,7 @@ async def set_user_info(message: Message, state: FSMContext, database: Resources
         user_id=user_id,
         name=prefered_name,
         status='unknown',
+        fluency=fluency,
         about='non-existent',
         lang_code=lang_code,
     )
