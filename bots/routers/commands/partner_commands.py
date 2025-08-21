@@ -117,8 +117,8 @@ async def process_intro(message: Message, state: FSMContext):
 
 
 @router.message(
-    PollingState.waiting_for_dating, IsBotFilter(BOT_TOKEN_PARTNER,
-    lambda message: message.text == FIND_PARTNER["yes_to_dating"][message.from_user.language_code])
+    PollingState.waiting_for_dating, IsBotFilter(BOT_TOKEN_PARTNER),
+    lambda message: message.text == FIND_PARTNER["yes_to_dating"][message.from_user.language_code]
 )
 async def agreed_to_dating_handler(state: FSMContext):
     return await state.update_data(dating_consent=True)
