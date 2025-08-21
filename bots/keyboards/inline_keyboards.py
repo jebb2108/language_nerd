@@ -130,7 +130,7 @@ def get_back_to_partner_menu_keyboard(lang_code):
     builder = InlineKeyboardBuilder()
     back_to_main_menu = InlineKeyboardButton(
         text=BUTTONS["main_bot"][lang_code],
-        url="https://t.me/lllang_bot",
+        url="https://t.me/lllangbot",
         callback_data="main_bot",
     )
     builder.add(back_to_main_menu)
