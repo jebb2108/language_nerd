@@ -128,14 +128,6 @@ async def process_intro(message: Message, state: FSMContext):
     await message.answer(text=msg, parse_mode=ParseMode.HTML)
 
 
-@router.message(
-    PollingState.waiting_for_dating, IsBotFilter(BOT_TOKEN_PARTNER),
-    lambda message: message.text == FIND_PARTNER["yes_to_dating"][message.from_user.language_code]
-)
-async def agreed_to_dating_handler(state: FSMContext):
-    return await state.update_data(dating_consent=True)
-
-
 @router.message(PollingState.waiting_for_dating, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_dating(message: Message, state: FSMContext, database: ResourcesMiddleware):
     data = await state.get_data()
@@ -156,6 +148,13 @@ async def process_dating(message: Message, state: FSMContext, database: Resource
 
     else: await state.clear()
 
+
+@router.message(
+    PollingState.waiting_for_dating, IsBotFilter(BOT_TOKEN_PARTNER),
+    lambda message: message.text == FIND_PARTNER["yes_to_dating"][message.from_user.language_code]
+)
+async def agreed_to_dating_handler(message: Message, state: FSMContext, database: ResourcesMiddleware):
+    return await state.update_data(dating_consent=True)
 
 
 @router.message(PollingState.waiting_for_location, F.location, IsBotFilter(BOT_TOKEN_PARTNER))
