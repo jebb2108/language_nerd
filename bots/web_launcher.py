@@ -116,70 +116,28 @@ async def api_add_word_handler(request):
         return web.json_response({"error": "Internal server error"}, status=500)
 
 
-async def api_full_search_handler(request):
-    """Комбинированный обработчик поиска слова в БД и парсинга определений"""
+async def api_search_word_handler(request):
+    """API для поиска слова"""
     try:
         user_id = request.query.get('user_id')
         word = request.query.get('word')
         if not user_id or not word:
             return web.json_response({"error": "Missing parameters"}, status=400)
 
-        # 1. Поиск в базе данных пользователя
-        db_result = None
-        try:
-            result = await db.search_word(int(user_id), word)
-            if result:
-                db_result = {
-                    'id': result[0],
-                    'word': result[1],
-                    'part_of_speech': result[2],
-                    'translation': result[3]
-                }
-        except Exception as e:
-            logger.error(f"Database search error: {str(e)}")
-
-        # 2. Парсинг определений с сайта
-        definitions = []
-        try:
-            word_clean = word.strip().lower().replace(' ', '-')
-            word_encoded = quote(word_clean, safe='-_.')
-            url = f"https://www.merriam-webster.com/dictionary/{word_encoded}"
-
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            }
-
-            timeout = ClientTimeout(total=10)
-            async with ClientSession(timeout=timeout, headers=headers) as session:
-                async with session.get(url) as resp:
-                    if resp.status == 200:
-                        html = await resp.text()
-                        soup = BeautifulSoup(html, 'html.parser')
-
-                        # Извлекаем определения
-                        for item in soup.select('.dtText, .sb .dtText, .vg .dtText'):
-                            text = item.get_text().strip()
-
-                            # Очистка текста
-                            if text.startswith(':'):
-                                text = text[1:].strip()
-                            if '(' in text and ')' in text:
-                                text = text.split('(', 1)[0].strip()
-
-                            definitions.append(text)
-                            if len(definitions) >= 3:
-                                break
-        except Exception as e:
-            logger.error(f"Parsing error: {str(e)}")
-
-        return web.json_response({
-            'db_result': db_result,
-            'definitions': definitions[:3]  # Не более 3 определений
-        })
-
+        result = await db.search_word(int(user_id), word)
+        logger.DEBUG(f"Search result: [{result[0], result[1], result[2], result[3]}]")
+        if result:
+            return web.json_response({
+                'id': result[0],
+                'word': result[1],
+                'part_of_speech': result[2],
+                'translation': result[3]
+            })
+        return web.json_response({})
     except Exception as e:
-        logger.error(f"Error in api_full_search_handler: {str(e)}")
+        logger.error(f"Error in api_search_word_handler: {str(e)}")
         return web.json_response({"error": "Internal server error"}, status=500)
+
 
 async def api_delete_word_handler(request):
     """API для удаления слова"""
@@ -225,9 +183,9 @@ async def start_web_app(database):
     app.router.add_get('/', index_handler)
     app.router.add_get('/api/words', api_words_handler)
     app.router.add_post('/api/words', api_add_word_handler)
-    app.router.add_get('/api/words/search', api_parse_word_handler)
+    app.router.add_get('/api/words/search', api_search_word_handler)
     app.router.add_delete('/api/words/{word_id}', api_delete_word_handler)
-    # app.router.add_get('/api/parse/{word}', api_parse_word_handler)
+    app.router.add_get('/api/parse/{word}', api_parse_word_handler)
     app.router.add_get('/api/stats', api_stats_handler)
 
     # Статические файлы
