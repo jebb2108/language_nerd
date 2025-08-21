@@ -164,9 +164,11 @@ async def disagreed_to_dating_handler(message: Message, state: FSMContext, datab
     name = data.get("name", "default")
     birthday = data.get("bday", None)
     intro = data.get("intro", "non-existent")
+    lang_code = data.get("lang_code", "en")
     # Сохраняем профиль
-    await database.add_users_profile(user_id, name, birthday, about=intro, dating=False)
-    await state.clear()
+    await database.add_users_profile(user_id, name, birthday, about=intro)
+    msg = FIND_PARTNER["no_worries_dating"][lang_code]
+    await message.answer(text=msg)
 
 
 @router.message(PollingState.waiting_for_location, F.location, IsBotFilter(BOT_TOKEN_PARTNER))
@@ -182,7 +184,6 @@ async def process_location(message: Message, state: FSMContext, database: Resour
     # Выводим благодарное сообщение
     msg = FIND_PARTNER["success"][lang_code]
     await message.answer(text=msg, reply_markup=ReplyKeyboardRemove())
-    await show_main_menu(message, state, database)
 
 
 @router.message(PollingState.waiting_for_location, IsBotFilter(BOT_TOKEN_PARTNER),
@@ -193,7 +194,6 @@ async def cancel(message: Message, state: FSMContext, database: ResourcesMiddlew
     msg = FIND_PARTNER["no_worries"][message.from_user.language_code]
     await database.add_users_location(message.from_user.id, "refused", "refused")
     await message.reply(text=msg, reply_markup=ReplyKeyboardRemove())
-    await show_main_menu(message, state, database)
 
 @router.message(Command('location'), IsBotFilter(BOT_TOKEN_PARTNER))
 async def get_my_location(message: Message, database: ResourcesMiddleware):
