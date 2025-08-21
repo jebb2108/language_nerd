@@ -231,9 +231,9 @@ BUTTONS = dict({
         "ru": "ℹ️ О боте",
     },
 
-    "main_bot": {
-        "en": "👾 Main Bot",
-        "ru": "👾 Основной Бот",
+    "support": {
+        "en": "🛠 Support",
+        "ru": "🛠 Поддержка",
     },
 
     "go_back": {
@@ -241,10 +241,15 @@ BUTTONS = dict({
         "ru": "🔙 Назад",
     },
 
-    "support": {
-        "en": "🛠 Support",
-        "ru": "🛠 Поддержка",
+    "main_bot": {
+        "en": "👾 Main Bot",
+        "ru": "👾 Основной Бот",
     },
+
+    "profile": {
+        "en": "👤 My profile",
+        "ru": "👤 Мой профиль",
+    }
 
 })
 

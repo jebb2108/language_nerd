@@ -113,6 +113,10 @@ def confirm_choice_keyboard(lang_code):
 
 def show_partner_menu_keyboard(lang_code):
     builder = InlineKeyboardBuilder()
+    profile_button = InlineKeyboardButton(
+        text=BUTTONS["profile"][lang_code],
+        callback_data="profile",
+    )
     back_to_main_menu = InlineKeyboardButton(
         text=BUTTONS["main_bot"][lang_code],
         url="https://t.me/lllangbot",
@@ -122,8 +126,8 @@ def show_partner_menu_keyboard(lang_code):
         text=BUTTONS["about_bot"][lang_code],
         callback_data="about",
     )
-    builder.add(back_to_main_menu, about_button)
-    builder.adjust(1, 1)
+    builder.add(back_to_main_menu, profile_button, about_button)
+    builder.adjust(1, 2)
     return builder.as_markup(resize_keyboard=True)
 
 def get_back_to_partner_menu_keyboard(lang_code):

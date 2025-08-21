@@ -1,5 +1,5 @@
 import re
-from datetime import datetime
+from datetime import datetime, time
 
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
@@ -229,15 +229,21 @@ async def echo(message: Message, rate_limit_info: RateLimitInfo):
 async def set_user_info(message: Message, state: FSMContext, database: ResourcesMiddleware):
     user_id = message.from_user.id
     user_info = await database.get_user_info(user_id)
+    username = user_info["username"]
     lang_code = user_info["lang_code"]
     if await database.check_profile_exists(user_id):
         users_profile_info = await database.get_users_profile(user_id)
         prefered_name = users_profile_info["prefered_name"]
+        birthday = users_profile_info["birthday"]
+        age_delta = datetime.now() - datetime.combine(birthday, time.min)
+        age_years = age_delta.days // 365
         status = users_profile_info["status"]
         about = users_profile_info["about"]
 
         await state.update_data(
             user_id=user_id,
+            username=username,
+            age=age_years,
             name=prefered_name,
             status=status,
             about=about,

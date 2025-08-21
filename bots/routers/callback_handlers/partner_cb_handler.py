@@ -19,6 +19,19 @@ logger = logging.getLogger(name='partner_cb_handler')
 async def main_menu_handler(callback: CallbackQuery):
     await callback.answer()
 
+
+@router.callback_query(F.data == "profile", IsBotFilter(BOT_TOKEN_PARTNER))
+async def profile_handler(callback: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    username = data["username"]
+    nickname = data["name"]
+    age = data["age"]
+    status = data["status"]
+    about = data["about"]
+    msg = f"Info for you - {username}\n\nNickname: {nickname}\nAge: {age}\nStatus: {status}\nAbout you: {about}"
+    await callback.answer(text=msg, show_alert=True)
+
+
 @router.callback_query(F.data == "about", IsBotFilter(BOT_TOKEN_PARTNER))
 async def about_handler(callback: CallbackQuery, state: FSMContext):
 
