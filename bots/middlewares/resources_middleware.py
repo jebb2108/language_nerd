@@ -70,11 +70,11 @@ class ResourcesMiddleware(BaseMiddleware):
 
             # Создаем экземпляр класса Database
             self.db = Database(self.db_pool)
-            logger.info("Database initialized")
+            logger.debug("Database initialized")
 
             # Инициализация других ресурсов
             self.session = ClientSession()
-            logger.info("HTTP session initialized")
+            logger.debug("HTTP session initialized")
 
         except Exception as e:
             logger.error(f"Resource initialization failed: {e}")
@@ -86,7 +86,7 @@ class ResourcesMiddleware(BaseMiddleware):
         if self._initialized:
             await self._safe_close()
             self._initialized = False
-            logger.info("All resources closed")
+            logger.debug("All resources closed")
 
 
     async def _safe_close(self):
@@ -98,7 +98,7 @@ class ResourcesMiddleware(BaseMiddleware):
         try:
             if self.db_pool and not self.db_pool._closed:
                 await self.db_pool.close()
-                logger.info("Database pool closed")
+                logger.debug("Database pool closed")
         except Exception as e:
             errors.append(f"Database pool close error: {e}")
 
@@ -112,10 +112,10 @@ class ResourcesMiddleware(BaseMiddleware):
             async with self._lock:
                 # Проверяем, не была ли уже выполнена инициализация
                 if not self._initialized and not self._initialization_failed:
-                    logger.info("Starting resource initialization...")
+                    logger.debug("Starting resource initialization...")
                     await self.initialize_resources()
                     self._initialized = True
-                    logger.info("Resource initialization completed successfully")
+                    logger.debug("Resource initialization completed successfully")
 
         except Exception as e:
             self._initialization_failed = True

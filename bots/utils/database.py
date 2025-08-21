@@ -160,7 +160,7 @@ class Database:
             """,
                 user_id, status, prefered_name, birthday, dating, about
         )
-            logger.info(f"User {user_id} profile added: their name - {prefered_name}, birthday - {birthday}, dating paramm - {dating}, status - {status},\n intro - {about}")
+            logger.info(f"User {user_id} profile added. Their name: {prefered_name}, birthday: {birthday}, dating paramm: {dating}, status: {status},\n intro: {about}")
             return
 
     async def get_users_profile(self, user_id: int) -> dict:
@@ -192,7 +192,7 @@ class Database:
                 "SELECT * FROM locations WHERE user_id = $1",
                 user_id
             )
-            logger.info(f"User {user_id} location: {dict(row) if row else None}")
+            logger.debug(f"User {user_id} location: {dict(row) if row else None}")
             return dict(row) if row else None
 
     async def get_user_info(self, user_id: int) -> dict:
@@ -201,7 +201,7 @@ class Database:
                 "SELECT * FROM users WHERE user_id = $1",
                 user_id
             )
-            logger.info(f"User {user_id} info: {dict(row) if row else None}")
+            logger.debug(f"User {user_id} info: {dict(row) if row else None}")
             return dict(row) if row else None
 
     async def get_words(self, user_id: int) -> List[Tuple[str, str, str, str]]:
