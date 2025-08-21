@@ -25,11 +25,11 @@ async def profile_handler(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     username = data["username"]
     nickname = data["name"]
-    age = " " * 10 + str(data["age"])
+    age = " " * 14 + str(data["age"])
     status = " " * 8 + data["status"]
-    active_status = f"[🟩🟩🟩🟩⬜⬜] Уровень активности: 40%\n"
+    active_status = f"[🟩🟩🟩🟩⬜⬜]\nУровень активности: 40%\n"
     lang_status = "Выученно 127 слов (топ 20% юзеров)\n"
-    msg = (f"Info for you - {username}\n\n"
+    msg = (f"=== {username} ===\n"
            f"{active_status}{lang_status}\n"
            f"Nickname: {nickname}\nAge: {age}\nStatus: {status}")
     await callback.answer(text=msg, show_alert=True)
