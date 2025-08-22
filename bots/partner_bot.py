@@ -6,10 +6,11 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
-# Импорт текстовых сообщений из отдельного файла (translations.py)
 from routers import router as main_router
 from middlewares.resources_middleware import ResourcesMiddleware
 from middlewares.rate_limit_middleware import RateLimitMiddleware
+
+from chat_launcher import start_server
 
 # Импорт функций БД
 from config import BOT_TOKEN_PARTNER, LOG_CONFIG
@@ -44,6 +45,8 @@ async def run():
     disp.message.middleware(resources)
     disp.callback_query.middleware(resources)
     disp.message.middleware(RateLimitMiddleware())
+
+    await start_server()
 
     logger.info("Starting partner bots (polling)…")
     await disp.start_polling(bot)

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messenger</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.3/socket.io.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 400px;
+            height: 600px;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 20px;
+            background-color: #3b82f6;
+            color: white;
+            text-align: center;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .messages-container {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            background-color: #f8fafc;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .message.my-message {
+            margin-left: auto;
+        }
+
+        .message-content {
+            padding: 10px 14px;
+            border-radius: 18px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .message.my-message .message-content {
+            background-color: #3b82f6;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.other-message .message-content {
+            background-color: #e5e7eb;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-info {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 4px;
+            padding: 0 8px;
+        }
+
+        .message.my-message .message-info {
+            text-align: right;
+        }
+
+        .input-container {
+            padding: 16px;
+            background-color: #fff;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 8px;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 24px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        #messageInput:focus {
+            border-color: #3b82f6;
+        }
+
+        #sendButton {
+            padding: 12px 20px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        #sendButton:hover {
+            background-color: #2563eb;
+        }
+
+        #sendButton:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .system-message {
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+            margin: 16px 0;
+            padding: 8px;
+            background-color: #f1f5f9;
+            border-radius: 8px;
+        }
+
+        .session-ended-message {
+            text-align: center;
+            color: #ef4444;
+            font-weight: 500;
+            padding: 12px;
+            background-color: #fef2f2;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>Messanger</h2>
+        </div>
+
+        <div class="messages-container" id="messagesContainer">
+            <div class="system-message">
+                Chat started. Messages will disappear in 15 minutes
+            </div>
+        </div>
+
+        <div class="input-container">
+            <input type="text" id="messageInput" placeholder="Enter your message...">
+            <button id="sendButton" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+
+        let sessionTimer;
+
+        // Получаем токен из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        // Подключаемся с токеном
+        let socket = io('http://localhost:4000', {
+            query: { token: token }
+        });
+
+        // Установка имени пользователя при подключении
+        socket.on('connect', function() {
+            socket.emit('set_username', userName);
+
+            // Устанавливаем таймер блокировки чата через 15 минут
+            sessionTimer = setTimeout(() => {
+                document.getElementById('messageInput').disabled = true;
+                document.getElementById('sendButton').disabled = true;
+
+                // Добавляем сообщение о завершении сессии
+                const container = document.getElementById('messagesContainer');
+                const sessionEndedMessage = document.createElement('div');
+                sessionEndedMessage.className = 'session-ended-message';
+                sessionEndedMessage.textContent = 'Сессия завершена. Чат заблокирован.';
+                container.appendChild(sessionEndedMessage);
+                container.scrollTop = container.scrollHeight;
+            }, 900000); // 15 минут в миллисекундах
+        });
+
+        // Обработчик нового сообщения от сервера
+        socket.on('new_message', function (data) {
+            addMessageToChat(data, data.sender === userName);
+        });
+
+        // Обработчик истории сообщений при подключении
+        socket.on('message_history', function (messages) {
+            const container = document.getElementById('messagesContainer');
+            // Очищаем системное сообщение
+            container.innerHTML = '';
+
+            messages.forEach(msg => {
+                addMessageToChat(msg, msg.sender === userName);
+            });
+        });
+
+        // Обработчик завершения сессии от сервера
+        socket.on('session_ended', function(data) {
+            // Блокируем чат при получении события от сервера
+            document.getElementById('messageInput').disabled = true;
+            document.getElementById('sendButton').disabled = true;
+
+            // Добавляем сообщение о завершении сессии
+            const container = document.getElementById('messagesContainer');
+            const sessionEndedMessage = document.createElement('div');
+            sessionEndedMessage.className = 'session-ended-message';
+            sessionEndedMessage.textContent = 'Сессия завершена. Чат заблокирован.';
+            container.appendChild(sessionEndedMessage);
+            container.scrollTop = container.scrollHeight;
+
+            // Очищаем таймер, так как сессия уже завершена
+            if (sessionTimer) {
+                clearTimeout(sessionTimer);
+            }
+        });
+
+        // Функция добавления сообщения в чат
+        function addMessageToChat(messageData, isMyMessage = false) {
+            const container = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isMyMessage ? 'my-message' : 'other-message'}`;
+
+            // Форматируем время
+            const messageTime = new Date(messageData.timestamp).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            messageDiv.innerHTML = `
+                <div class="message-content">${messageData.text}</div>
+                <div class="message-info">
+                    ${isMyMessage ? 'Вы' : messageData.sender} • ${messageTime}
+                </div>
+            `;
+
+            container.appendChild(messageDiv);
+            // Прокручиваем к последнему сообщению
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Функция отправки сообщения
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+
+            if (message) {
+                socket.emit('send_message', message);
+                messageInput.value = '';
+            }
+        }
+
+        // Отправка сообщения при нажатии Enter
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

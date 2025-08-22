@@ -139,3 +139,12 @@ def get_back_to_partner_menu_keyboard(lang_code):
     )
     builder.add(back_to_main_menu)
     return builder.as_markup(resize_keyboard=True)
+
+def open_chat_keyboard(lang_code, link):
+    builder = InlineKeyboardBuilder()
+    open_chat_button = InlineKeyboardButton(
+        text=BUTTONS["open_chat"][lang_code],
+        url=link,
+    )
+    builder.add(open_chat_button)
+    return builder.as_markup(resize_keyboard=True)

@@ -18,7 +18,7 @@ DEFAULT_DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
 
 # Настройка логирования
 LOG_CONFIG = {
-    'level': logging.INFO,
+    'level': logging.DEBUG,
     'stream': sys.stdout,
     'format': '%(asctime)s - %(levelname)s - %(name)s - %(message)s'
 }

@@ -249,8 +249,12 @@ BUTTONS = dict({
     "profile": {
         "en": "👤 My profile",
         "ru": "👤 Мой профиль",
-    }
+    },
 
+    "open_chat": {
+        "en": "💬 Open chat",
+        "ru": "💬 Открыть чат",
+    },
 })
 
 FIND_PARTNER = dict({

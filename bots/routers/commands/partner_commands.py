@@ -1,4 +1,5 @@
 import re
+import aiohttp
 from datetime import datetime, time
 
 from aiogram import Router, F
@@ -6,7 +7,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message
 from aiogram.filters import Command
-from aiogram.types import KeyboardButton, ReplyKeyboardRemove
+from aiogram.types import ReplyKeyboardRemove
 from aiogram.enums import ParseMode
 
 from config import BOT_TOKEN_PARTNER # noqa
@@ -16,7 +17,7 @@ from utils.filters import IsBotFilter # noqa
 
 from translations import QUESTIONARY, BUTTONS, FIND_PARTNER # noqa
 
-from keyboards.inline_keyboards import show_partner_menu_keyboard # noqa
+from keyboards.inline_keyboards import show_partner_menu_keyboard, open_chat_keyboard # noqa
 from keyboards.regular_keyboards import show_location_keyboard, show_dating_keyboard # noqa
 
 # Инициализируем роутер
@@ -211,6 +212,31 @@ async def get_my_location(message: Message, database: ResourcesMiddleware):
         text=f"{msg}: <b>{latitude}</b>, <b>{longitude}</b>",
         parse_mode=ParseMode.HTML,
     )
+
+
+@router.message(Command("new_session"))
+async def cmd_new_session(message: Message, state: FSMContext):
+
+    data = await state.get_data()
+    user_id = data.get("user_id", 0)
+    username = data.get("username", "default")
+    lang_code = data.get("lang_code", "en")
+
+    # Генерируем ссылку через backend
+    async with aiohttp.ClientSession() as session:
+        async with session.post(
+                'http://localhost:4000/api/generate_link',
+                json={"user_id": user_id, "username": username}
+        ) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                link = data["link"]
+
+                # Отправляем ссылку пользователю
+                await message.answer(
+                    "Нажмите кнопку ниже чтобы начать анонимный чат",
+                    reply_markup=open_chat_keyboard(lang_code, link)
+                )
 
 @router.message(IsBotFilter(BOT_TOKEN_PARTNER))
 async def echo(message: Message, rate_limit_info: RateLimitInfo):
