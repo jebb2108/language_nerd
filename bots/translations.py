@@ -131,7 +131,7 @@ QUESTIONARY = dict(
             "ru": "Неверный формат. Пожалуйста, попробуйте ещё раз",
         },
 
-        "wrong_info": {
+        "wrong_intro": {
             "en": "Your information is either too long or incorrect. Please, try again",
             "ru": "Ваша информация либо слишком длинная, либо неверная. Пожалуйста, попробуйте ещё раз",
         },
