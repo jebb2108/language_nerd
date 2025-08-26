@@ -1,5 +1,7 @@
+import logging
 import re
 import aiohttp
+import asyncio
 from datetime import datetime, time
 
 from aiogram import Router, F
@@ -16,6 +18,7 @@ from middlewares.rate_limit_middleware import RateLimitMiddleware, RateLimitInfo
 from utils.filters import IsBotFilter # noqa
 
 from translations import QUESTIONARY, BUTTONS, FIND_PARTNER # noqa
+from config import LOG_CONFIG # noqa
 
 from keyboards.inline_keyboards import show_partner_menu_keyboard, open_chat_keyboard # noqa
 from keyboards.regular_keyboards import show_location_keyboard, show_dating_keyboard # noqa
@@ -27,6 +30,11 @@ router = Router(name=__name__)
 router.message.filter(IsBotFilter(BOT_TOKEN_PARTNER))
 router.callback_query.filter(IsBotFilter(BOT_TOKEN_PARTNER))
 
+logging.basicConfig(**LOG_CONFIG)
+logger = logging.getLogger(name='partner_commands')
+
+# Глобальный словарь для отслеживания активных задач поиска
+active_search_tasks = {}
 
 class PollingState(StatesGroup):
     waiting_for_name = State()
@@ -34,6 +42,10 @@ class PollingState(StatesGroup):
     waiting_for_intro = State()
     waiting_for_dating = State()
     waiting_for_location = State()
+
+class SearchStates(StatesGroup):
+    waiting_for_criteria = State()
+
 
 @router.message(Command("menu"), IsBotFilter(BOT_TOKEN_PARTNER))
 async def show_main_menu(message: Message, state: FSMContext, database: ResourcesMiddleware):
@@ -214,29 +226,120 @@ async def get_my_location(message: Message, database: ResourcesMiddleware):
     )
 
 
-@router.message(Command("new_session"))
+@router.message(Command("new_session"), IsBotFilter(BOT_TOKEN_PARTNER))
 async def cmd_new_session(message: Message, state: FSMContext):
-
+    """Обработчик команды /new_session - запускает поиск партнера"""
     data = await state.get_data()
     user_id = data.get("user_id", 0)
-    username = data.get("username", "default")
-    lang_code = data.get("lang_code", "en")
+    username = data.get("username", "")
+    user_language = data.get("language", "english")
 
-    # Генерируем ссылку через backend
-    async with aiohttp.ClientSession() as session:
-        async with session.post(
-                'http://localhost:4000/api/generate_link',
-                json={"user_id": user_id, "username": username}
-        ) as resp:
-            if resp.status == 200:
-                data = await resp.json()
-                link = data["link"]
+    # Отменяем предыдущий поиск, если он был
+    if user_id in active_search_tasks:
+        active_search_tasks.pop(user_id)
+        logger.info(f"Отменен предыдущий поиск для пользователя {user_id}")
 
-                # Отправляем ссылку пользователю
-                await message.answer(
-                    "Нажмите кнопку ниже чтобы начать анонимный чат",
-                    reply_markup=open_chat_keyboard(lang_code, link)
-                )
+        # Показываем сообщение о начале поиска
+    search_message = await message.answer(
+        f"🔍 Ищем партнера для общения на <b>{user_language}</b>...",
+        parse_mode=ParseMode.HTML
+    )
+
+    # Формируем критерии поиска
+    criteria = {"language": user_language}
+
+    # Запускаем поиск партнера
+    task = asyncio.create_task(
+        find_partner_and_notify(user_id, username, criteria, search_message)
+    )
+
+    active_search_tasks[user_id] = task
+
+
+async def find_partner_and_notify(user_id, username, criteria, message):
+    """Фоновая задача для поиска партнера и уведомления пользователя"""
+    try:
+        # Отправляем запрос на сервер для поиска партнера
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                    'http://localhost:4000/api/generate_link',
+                    json={
+                        "user_id": user_id,
+                        "username": username,
+                        "criteria": criteria
+                    }
+            ) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+
+                    if data.get("status") == "found":
+                        # Партнер найден сразу
+                        link = data["link"]
+                        await message.edit_text(
+                            "✅ Партнер найден! Нажмите кнопку чтобы начать общение:",
+                            reply_markup=open_chat_keyboard(link)
+                        )
+                    else:
+                        # Запускаем периодическую проверку статуса
+                        await check_search_status_periodically(user_id, message)
+                else:
+                    await message.edit_text(
+                        "❌ Произошла ошибка при поиске партнера. Попробуйте позже."
+                    )
+
+    except Exception as e:
+        logger.error(f"Ошибка при поиске партнера: {e}")
+        await message.edit_text("❌ Произошла ошибка при поиске партнера. Попробуйте позже.")
+    finally:
+        # Удаляем задачу из активных
+        if user_id in active_search_tasks:
+            del active_search_tasks[user_id]
+
+
+async def check_search_status_periodically(user_id, message, interval=5, max_checks=30):
+    """Периодическая проверка статуса поиска (до 2.5 минут)"""
+    for i in range(max_checks):
+        await asyncio.sleep(interval)
+
+        # Проверяем, не была ли задача отменена
+        if user_id not in active_search_tasks:
+            return
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                        f'http://localhost:4000/api/search_status/{user_id}'
+                ) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+
+                        if data.get("status") == "found":
+                            # Партнер найден
+                            link = data["link"]
+                            await message.edit_text(
+                                "✅ Партнер найден! Нажмите кнопку чтобы начать общение:",
+                                reply_markup=open_chat_keyboard(link)
+                            )
+                            return
+
+                        # Обновляем статус поиска каждые 15 секунд
+                        if i % 3 == 0:
+                            await message.edit_text(
+                                f"🔍 Ищем подходящего партнера... ({i * 5} сек.)"
+                            )
+                    else:
+                        logger.error(f"Ошибка HTTP при проверке статуса: {resp.status}")
+
+        except Exception as e:
+            logger.error(f"Ошибка при проверке статуса поиска: {e}")
+            # Не прерываем поиск при единичной ошибке
+
+    # Если партнер не найден после всех попыток
+    await message.edit_text(
+        "❌ К сожалению, не удалось найти подходящего партнера. Попробуйте позже или измените критерии поиска в настройках."
+    )
+
+
 
 @router.message(IsBotFilter(BOT_TOKEN_PARTNER))
 async def echo(message: Message, rate_limit_info: RateLimitInfo):

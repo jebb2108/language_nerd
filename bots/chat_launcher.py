@@ -6,7 +6,7 @@ import uuid
 import asyncio
 from datetime import datetime, timedelta
 import asyncio_redis
-from config import LOG_CONFIG
+from config import LOG_CONFIG, VERSION
 
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='chat_launcher')
@@ -23,6 +23,10 @@ client = None
 users = {}
 # Хранилище для активных сессий
 sessions = {}
+# Хранилище для очереди поиска партнеров
+partner_search_queue = asyncio.Queue()
+# Хранилище для профилей пользователей
+user_profiles = {}
 
 
 async def init_redis():
@@ -41,31 +45,117 @@ async def init_redis():
         raise
 
 
+async def find_partner(user_data):
+    """Поиск партнера по критериям"""
+    try:
+        # Проверяем есть ли подходящие партнеры в очереди
+        if not partner_search_queue.empty():
+            # Берем первого подходящего партнера из очереди
+            partner_data = await partner_search_queue.get()
+
+            # Проверяем критерии совпадения (по языку)
+            if user_data["criteria"].get("language") == partner_data["criteria"].get("language"):
+                return partner_data
+            else:
+                # Если не подошел, возвращаем в очередь
+                await partner_search_queue.put(partner_data)
+
+        # Если подходящего партнера нет, добавляем в очередь
+        await partner_search_queue.put(user_data)
+        return None
+
+    except Exception as e:
+        logger.error(f"Ошибка поиска партнера: {e}")
+        return None
+
+
 # Новый HTTP endpoint для генерации ссылки
 async def generate_link_handler(request):
     try:
         data = await request.json()
         user_id = data.get("user_id")
         username = data.get("username")
+        user_criteria = data.get("criteria", {})
 
         if not user_id or not username:
             return web.json_response({"error": "Missing user_id or username"}, status=400)
 
-        # Создаем уникальный токен для ссылки
-        link_token = str(uuid.uuid4())
-        logging.info(f"Generated link token: {link_token}")
+        # Сохраняем профиль пользователя для поиска
+        user_profiles[user_id] = {
+            "username": username,
+            "criteria": user_criteria,
+            "timestamp": datetime.now()
+        }
 
-        # Сохраняем в Redis на 15 минут
-        await client.setex(
-            f"link_token:{link_token}",
-            900,
-            json.dumps({"user_id": user_id, "username": username})
-        )
+        # Ищем партнера
+        partner_data = await find_partner({
+            "user_id": user_id,
+            "username": username,
+            "criteria": user_criteria
+        })
 
-        # Формируем ссылку (замените на ваш домен)
-        link = f"https://lllang.site/chat?token={link_token}"
+        if partner_data:
+            # Создаем сессию чата
+            session_id = await create_chat_session(
+                user1_id=user_id,
+                user1_username=username,
+                user2_id=partner_data["user_id"],
+                user2_username=partner_data["username"]
+            )
 
-        return web.json_response({"link": link})
+            # Генерируем ссылку для текущего пользователя
+            link_token = str(uuid.uuid4())
+            await client.setex(
+                f"link_token:{link_token}",
+                900,
+                json.dumps({
+                    "user_id": user_id,
+                    "username": username,
+                    "session_id": session_id
+                })
+            )
+
+            link = f"https://chat.lllang.site/chat?token={link_token}&v={VERSION}"
+
+            # Генерируем ссылку для партнера
+            partner_link_token = str(uuid.uuid4())
+            await client.setex(
+                f"link_token:{partner_link_token}",
+                900,
+                json.dumps({
+                    "user_id": partner_data["user_id"],
+                    "username": partner_data["username"],
+                    "session_id": session_id
+                })
+            )
+
+            partner_link = f"https://chat.lllang.site/chat?token={partner_link_token}&v={VERSION}"
+
+            # Сохраняем информацию о найденном партнере для последующей проверки статуса
+            await client.setex(
+                f"partner_found:{partner_data['user_id']}",
+                300,  # 5 минут
+                json.dumps({
+                    "session_id": session_id,
+                    "link": partner_link
+                })
+            )
+
+            # Удаляем партнера из очереди поиска
+            if partner_data["user_id"] in user_profiles:
+                del user_profiles[partner_data["user_id"]]
+
+            return web.json_response({
+                "link": link,
+                "message": "Партнер найден!",
+                "status": "found",
+                "session_id": session_id
+            })
+        else:
+            return web.json_response({
+                "message": "Ищем подходящего партнера...",
+                "status": "searching"
+            })
 
     except Exception as e:
         logger.error(f"Ошибка генерации ссылки: {e}")
@@ -252,18 +342,16 @@ async def connect(sid, environ):
     query_string = environ.get('QUERY_STRING', '')
     params = dict(param.split('=') for param in query_string.split('&') if '=' in param)
 
-    # token = params.get('token')
-    token = 'jfu2ghbdcbjb'
+    token = params.get('token')
     if token:
         # Проверяем токен в Redis
         token_data = await client.get(f"link_token:{token}")
-        token_data = 'nfuwhbdcnabc927yhsjvd'
         if token_data:
             user_data = json.loads(token_data)
             users[sid] = {
                 "user_id": user_data["user_id"],
                 "username": user_data["username"],
-                "session_id": None
+                "session_id": user_data.get("session_id")
             }
             logger.debug(f'Клиент {sid} подключен с userId: {user_data["user_id"]}')
             return
@@ -384,6 +472,32 @@ async def create_session_handler(request):
         return web.json_response({"error": str(e)}, status=500)
 
 
+# HTTP endpoint для получения статуса поиска
+async def search_status_handler(request):
+    try:
+        user_id = request.match_info.get('user_id')
+
+        # Проверяем, найден ли уже партнер для этого пользователя
+        partner_found = await client.get(f"partner_found:{user_id}")
+        if partner_found:
+            partner_data = json.loads(partner_found)
+            return web.json_response({
+                "status": "found",
+                "session_id": partner_data["session_id"],
+                "link": partner_data["link"]
+            })
+
+        # Проверяем, находится ли пользователь в процессе поиска
+        if user_id in user_profiles:
+            return web.json_response({"status": "searching"})
+
+        return web.json_response({"status": "not_found", "message": "Пользователь не в процессе поиска"})
+
+    except Exception as e:
+        logger.error(f"Ошибка при проверке статуса поиска: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+
 # HTTP endpoint для получения информации о сессии
 async def get_session_handler(request):
     try:
@@ -403,6 +517,7 @@ async def get_session_handler(request):
 app.router.add_post('/api/sessions', create_session_handler)
 app.router.add_get('/api/sessions/{session_id}', get_session_handler)
 app.router.add_post('/api/generate_link', generate_link_handler)
+app.router.add_get('/api/search_status/{user_id}', search_status_handler)
 
 
 # Запуск сервера

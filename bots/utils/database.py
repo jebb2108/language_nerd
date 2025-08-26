@@ -186,6 +186,14 @@ class Database:
             logger.info(f"User {user_id} location added: {latitude}, {longitude}")
             return
 
+    async def get_criteria(self, user_id: int) -> dict:
+        async with self.acquire_connection() as conn:
+            row = await conn.fetchrow(
+                "SELECT language, fluency FROM users WHERE user_id = $1",
+                user_id
+            )
+            return dict(row) if row else None
+
     async def get_users_location(self, user_id: int) -> dict:
         async with self.acquire_connection() as conn:
             row = await conn.fetchrow(
