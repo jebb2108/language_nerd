@@ -324,8 +324,9 @@ async def check_search_status_periodically(user_id, message, interval=5, max_che
 
                         # Обновляем статус поиска каждые 15 секунд
                         if i % 3 == 0:
+                            t = str(i*5)+' сек' if i*5<=60 else str(i*5//60)+' мин ',str(i*5%60)+' сек'
                             await message.edit_text(
-                                f"🔍 Ищем подходящего партнера... ({i * 5} сек.)"
+                                f"🔍 Ищем подходящего партнера...\n\n Время ожидания: {t} "
                             )
                     else:
                         logger.error(f"Ошибка HTTP при проверке статуса: {resp.status}")
@@ -336,7 +337,7 @@ async def check_search_status_periodically(user_id, message, interval=5, max_che
 
     # Если партнер не найден после всех попыток
     await message.edit_text(
-        "❌ К сожалению, не удалось найти подходящего партнера. Попробуйте позже или измените критерии поиска в настройках."
+        "❌ К сожалению, не удалось найти подходящего партнера :(\n\nПопробуйте позже"
     )
 
 
