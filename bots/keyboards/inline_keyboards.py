@@ -11,7 +11,7 @@ from translations import BUTTONS, FIND_PARTNER, QUESTIONARY # noqa
 
 def get_on_main_menu_keyboard(user_id, lang_code):
     # Формируем URL с user_id для Web App
-    web_app_url = f"https://lllang.site/?user_id={user_id}"
+    web_app_url = f"https://dict.lllang.site?v=20250826-2/?user_id={user_id}"
 
     builder = InlineKeyboardBuilder()
     dict_button = InlineKeyboardButton(
