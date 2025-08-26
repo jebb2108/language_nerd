@@ -12,7 +12,7 @@ from config import VERSION # noqa
 
 def get_on_main_menu_keyboard(user_id, lang_code):
     # Формируем URL с user_id для Web App
-    web_app_url = f"https://dict.lllang.site?v={VERSION}/?user_id={user_id}"
+    web_app_url = f"https://dict.lllang.site/?user_id={user_id}&v={VERSION}"
 
     builder = InlineKeyboardBuilder()
     dict_button = InlineKeyboardButton(

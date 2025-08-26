@@ -6,8 +6,6 @@ from asyncio import Semaphore
 
 load_dotenv(".env")
 
-VERSION = '20250826-2'
-
 # Конфигурация
 BOT_TOKEN_MAIN = os.getenv('BOT_TOKEN_MAIN')
 BOT_TOKEN_PARTNER = os.getenv('BOT_TOKEN_PARTNER')
@@ -17,6 +15,9 @@ AI_API_KEY = os.getenv('AI_API_KEY')
 
 # Значение по умолчанию для DeepSeek API
 DEFAULT_DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
+
+# Версия FRONTEND
+VERSION = '20250826-3'
 
 # Настройка логирования
 LOG_CONFIG = {
