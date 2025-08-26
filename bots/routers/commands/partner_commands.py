@@ -294,6 +294,7 @@ async def find_partner_and_notify(user_id, username, criteria, message):
         # Удаляем задачу из активных
         if user_id in active_search_tasks:
             del active_search_tasks[user_id]
+        await session.close()
 
 
 async def check_search_status_periodically(user_id, message, interval=5, max_checks=30):
