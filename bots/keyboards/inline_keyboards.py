@@ -144,7 +144,7 @@ def open_chat_keyboard(lang_code, link):
     builder = InlineKeyboardBuilder()
     open_chat_button = InlineKeyboardButton(
         text=BUTTONS["open_chat"][lang_code],
-        url=link,
+        web_app=WebAppInfo(url=link),
     )
     builder.add(open_chat_button)
     return builder.as_markup(resize_keyboard=True)
