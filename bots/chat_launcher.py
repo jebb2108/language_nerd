@@ -53,6 +53,7 @@ async def generate_link_handler(request):
 
         # Создаем уникальный токен для ссылки
         link_token = str(uuid.uuid4())
+        logging.info(f"Generated link token: {link_token}")
 
         # Сохраняем в Redis на 15 минут
         await client.setex(
@@ -62,7 +63,7 @@ async def generate_link_handler(request):
         )
 
         # Формируем ссылку (замените на ваш домен)
-        link = f"https://yourdomain.com/chat?token={link_token}"
+        link = f"https://lllang.site/chat?token={link_token}"
 
         return web.json_response({"link": link})
 
@@ -251,10 +252,12 @@ async def connect(sid, environ):
     query_string = environ.get('QUERY_STRING', '')
     params = dict(param.split('=') for param in query_string.split('&') if '=' in param)
 
-    token = params.get('token')
+    # token = params.get('token')
+    token = 'jfu2ghbdcbjb'
     if token:
         # Проверяем токен в Redis
         token_data = await client.get(f"link_token:{token}")
+        token_data = 'nfuwhbdcnabc927yhsjvd'
         if token_data:
             user_data = json.loads(token_data)
             users[sid] = {
