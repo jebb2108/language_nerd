@@ -6,6 +6,8 @@ from asyncio import Semaphore
 
 load_dotenv(".env")
 
+VERSION = '20250826-2'
+
 # Конфигурация
 BOT_TOKEN_MAIN = os.getenv('BOT_TOKEN_MAIN')
 BOT_TOKEN_PARTNER = os.getenv('BOT_TOKEN_PARTNER')
@@ -18,7 +20,7 @@ DEFAULT_DEEPSEEK_URL = "https://api.deepseek.com/v1/chat/completions"
 
 # Настройка логирования
 LOG_CONFIG = {
-    'level': logging.DEBUG,
+    'level': logging.INFO,
     'stream': sys.stdout,
     'format': '%(asctime)s - %(levelname)s - %(name)s - %(message)s'
 }
