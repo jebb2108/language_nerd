@@ -35,6 +35,12 @@ DB_CONFIG = {
     "database": os.getenv("POSTGRES_DB", "telegram_bot"),
 }
 
+REDIS_CONFIG = {
+    "host": os.getenv("REDIS_HOST", "localhost"),
+    "port": int(os.getenv("REDIS_PORT", "6379")),
+    "poolsize": int(os.getenv("REDIS_POOLSIZE", "10")),
+}
+
 # Глобальные переменные для ограничения запросов
 REQUEST_SEMAPHORE = Semaphore(3)
 REQUEST_RATE_LIMITER = Semaphore(50)

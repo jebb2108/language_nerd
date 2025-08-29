@@ -1,6 +1,7 @@
 import logging
 import sys
 import asyncio
+import asyncio_redis
 from dataclasses import dataclass
 
 import asyncpg
@@ -12,7 +13,7 @@ from aiohttp import ClientSession
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import DB_CONFIG, LOG_CONFIG # noqa
+from config import DB_CONFIG, REDIS_CONFIG, LOG_CONFIG # noqa
 from utils.database import Database  # Импортируем ваш класс DB # noqa\
 
 logging.basicConfig(**LOG_CONFIG)
@@ -36,6 +37,7 @@ class ResourcesMiddleware(BaseMiddleware):
         self._initialized = False
         self._initialization_failed = False
         self.db_pool = None
+        self.redis_pool = None
 
     async def __call__(
             self,
@@ -57,6 +59,7 @@ class ResourcesMiddleware(BaseMiddleware):
 
         data.update(
             database=self.db,
+            redis=self.redis_pool,
             http_session=self.session,
         )
         return await handler(event, data)
@@ -65,8 +68,9 @@ class ResourcesMiddleware(BaseMiddleware):
     async def initialize_resources(self):
         """Инициализация ресурсов с созданием экземпляра Database"""
         try:
-            # Создаем пул подключений
+            # Создаем пулы подключений к БД и Redis
             self.db_pool = await asyncpg.create_pool(**self.db_config.__dict__)
+            self.redis_pool = await asyncio_redis.Pool.create(**REDIS_CONFIG)
 
             # Создаем экземпляр класса Database
             self.db = Database(self.db_pool)
@@ -99,8 +103,11 @@ class ResourcesMiddleware(BaseMiddleware):
             if self.db_pool and not self.db_pool._closed:
                 await self.db_pool.close()
                 logger.debug("Database pool closed")
+            if self.redis_pool and not self.redis_pool._closed:
+                await self.redis_pool.close()
+                logger.debug("Redis pool closed")
         except Exception as e:
-            errors.append(f"Database pool close error: {e}")
+            errors.append(f"Database || Redis pool close error: {e}")
 
         if errors:
             logger.error(" | ".join(errors))

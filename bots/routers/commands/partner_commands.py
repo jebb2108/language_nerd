@@ -2,6 +2,7 @@ import logging
 import re
 import aiohttp
 import asyncio
+import json
 from datetime import datetime, time
 
 from aiogram import Router, F
@@ -33,8 +34,6 @@ router.callback_query.filter(IsBotFilter(BOT_TOKEN_PARTNER))
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='partner_commands')
 
-# Глобальный словарь для отслеживания активных задач поиска
-active_search_tasks = {}
 
 class PollingState(StatesGroup):
     waiting_for_name = State()
@@ -45,7 +44,6 @@ class PollingState(StatesGroup):
 
 class SearchStates(StatesGroup):
     waiting_for_criteria = State()
-
 
 @router.message(Command("menu"), IsBotFilter(BOT_TOKEN_PARTNER))
 async def show_main_menu(message: Message, state: FSMContext, database: ResourcesMiddleware):
@@ -227,7 +225,7 @@ async def get_my_location(message: Message, database: ResourcesMiddleware):
 
 
 @router.message(Command("new_session"), IsBotFilter(BOT_TOKEN_PARTNER))
-async def cmd_new_session(message: Message, state: FSMContext):
+async def new_session_handler(message: Message, state: FSMContext, redis: ResourcesMiddleware):
     """Обработчик команды /new_session - запускает поиск партнера"""
     data = await state.get_data()
     user_id = data.get("user_id", 0)
@@ -235,8 +233,8 @@ async def cmd_new_session(message: Message, state: FSMContext):
     user_language = data.get("language", "english")
 
     # Отменяем предыдущий поиск, если он был
-    if user_id in active_search_tasks:
-        active_search_tasks.pop(user_id)
+    if user_id in redis.get(f"active_search_tasks:{user_id}"):
+        redis.delete(f"active_search_tasks:{user_id}")
         logger.info(f"Отменен предыдущий поиск для пользователя {user_id}")
 
         # Показываем сообщение о начале поиска
@@ -250,13 +248,13 @@ async def cmd_new_session(message: Message, state: FSMContext):
 
     # Запускаем поиск партнера
     task = asyncio.create_task(
-        find_partner_and_notify(user_id, username, criteria, search_message)
+        find_partner_and_notify(user_id, username, criteria, search_message, redis)
     )
 
-    active_search_tasks[user_id] = task
+    redis.setex(f"searching_users:{user_id}", 210, json.dumps({"user_id": user_id, "criteria": str(user_language), "task": str(task)}))
 
 
-async def find_partner_and_notify(user_id, username, criteria, message):
+async def find_partner_and_notify(user_id, username, criteria, message, redis):
     """Фоновая задача для поиска партнера и уведомления пользователя"""
     try:
         # Отправляем запрос на сервер для поиска партнера
@@ -281,66 +279,67 @@ async def find_partner_and_notify(user_id, username, criteria, message):
                         )
                     else:
                         # Запускаем периодическую проверку статуса
-                        await check_search_status_periodically(user_id, message)
+                        await check_search_status_periodically(user_id, message, redis, session)
                 else:
                     await message.edit_text(
                         "❌ Произошла ошибка при поиске партнера. Попробуйте позже."
                     )
 
+                # Удаляем задачу из активных
+                if user_id in redis.get(f"active_search_tasks:{user_id}"):
+                    redis.delete(f"active_search_tasks:{user_id}")
+
     except Exception as e:
         logger.error(f"Ошибка при поиске партнера: {e}")
         await message.edit_text("❌ Произошла ошибка при поиске партнера. Попробуйте позже.")
+
     finally:
         # Удаляем задачу из активных
-        if user_id in active_search_tasks:
-            del active_search_tasks[user_id]
+        if user_id in redis.get(f"active_search_tasks:{user_id}"):
+            redis.delete(f"active_search_tasks:{user_id}")
         await session.close()
 
 
-async def check_search_status_periodically(user_id, message, interval=5, max_checks=30):
+async def check_search_status_periodically(user_id, message, redis, session, interval=5, max_checks=30):
     """Периодическая проверка статуса поиска (до 2.5 минут)"""
+    # async with aiohttp.ClientSession() as session:
     for i in range(max_checks):
-        await asyncio.sleep(interval)
 
         # Проверяем, не была ли задача отменена
-        if user_id not in active_search_tasks:
+        if user_id not in redis.get(f"active_search_tasks:{user_id}"):
             return
 
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                        f'http://localhost:4000/api/search_status/{user_id}'
-                ) as resp:
-                    if resp.status == 200:
-                        data = await resp.json()
+        async with session.get(
+                f'http://localhost:4000/api/search_status/{user_id}'
+        ) as resp:
+            if resp.status == 200:
+                data = await resp.json()
 
-                        if data.get("status") == "found":
-                            # Партнер найден
-                            link = data["link"]
-                            await message.edit_text(
-                                "✅ Партнер найден! Нажмите кнопку чтобы начать общение:",
-                                reply_markup=open_chat_keyboard(link)
-                            )
-                            return
+                if data.get("status") == "found":
+                    # Партнер найден
+                    link = data["link"]
+                    await message.edit_text(
+                        "✅ Партнер найден! Нажмите кнопку чтобы начать общение:",
+                        reply_markup=open_chat_keyboard(link)
+                    )
+                    return
+                # Обновляем статус поиска каждые 15 секунд
+                if i % 3 == 0:
+                    t = ['', str(i * 5) + ' сек'] if i * 5 < 60 else [str(i * 5 // 60) + ' мин ',
+                                                                      str(i * 5 % 60) + ' сек']
+                    result = ''.join(t if t[1] != '0 сек' else t[0])
+                    await message.edit_text(
+                        f"🔍 Ищем подходящего партнера...\n\n Время ожидания: {result if result else 'только что'} "
+                    )
 
-                        # Обновляем статус поиска каждые 15 секунд
-                        if i % 3 == 0:
-                            t = ['', str(i*5)+' сек'] if i*5<60 else [str(i*5//60)+' мин ',str(i*5%60)+' сек']
-                            result = ''.join(t if t[1] != '0 сек' else t[0])
-                            await message.edit_text(
-                                f"🔍 Ищем подходящего партнера...\n\n Время ожидания: {result if result else 'только что'} "
-                            )
-                    else:
-                        logger.error(f"Ошибка HTTP при проверке статуса: {resp.status}")
+                await asyncio.sleep(interval)
 
-        except Exception as e:
-            logger.error(f"Ошибка при проверке статуса поиска: {e}")
-            # Не прерываем поиск при единичной ошибке
+            else:
+                logger.error(f"Ошибка HTTP при проверке статуса: {resp.status}")
+
 
     # Если партнер не найден после всех попыток
-    await message.edit_text(
-        "❌ К сожалению, не удалось найти подходящего партнера :("
-    )
+    await message.edit_text("❌ К сожалению, не удалось найти подходящего партнера :(")
 
 
 
