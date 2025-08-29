@@ -48,9 +48,9 @@ class SearchStates(StatesGroup):
 @router.message(Command("menu"), IsBotFilter(BOT_TOKEN_PARTNER))
 async def show_main_menu(message: Message, state: FSMContext, database: ResourcesMiddleware):
     """ Главное меню бота """
-    data = await state.get_data()
-    name = data.get("name", await set_user_info(message, state, database))
-    lang_code = data.get("lang_code", "en")
+    data = await get_default_state_info(message, state, database)
+    name = data.get("name")
+    lang_code = data.get("lang_code")
 
     greeting = FIND_PARTNER["hello"][lang_code] + " <b>" + name + "</b>!"
     intro = FIND_PARTNER["intro"][lang_code]
@@ -225,13 +225,12 @@ async def get_my_location(message: Message, database: ResourcesMiddleware):
 
 
 @router.message(Command("new_session"), IsBotFilter(BOT_TOKEN_PARTNER))
-async def new_session_handler(message: Message, state: FSMContext, redis: ResourcesMiddleware):
+async def new_session_handler(message: Message, state: FSMContext, redis: ResourcesMiddleware, database: ResourcesMiddleware):
     """Обработчик команды /new_session - запускает поиск партнера"""
-    data = await state.get_data()
+    data = await get_default_state_info(message, state, database)
     user_id = data.get("user_id", 0)
     username = data.get("username", "")
-    user_language = data.get("language", "english")
-
+    user_language = data.get("lang_code", "en")
     # Отменяем предыдущий поиск, если он был
     active_tasks = await redis.get(f"active_search_tasks:{user_id}")
     if active_tasks and user_id in active_tasks:
@@ -367,6 +366,7 @@ async def set_user_info(message: Message, state: FSMContext, database: Resources
     user_id = message.from_user.id
     user_info = await database.get_user_info(user_id)
     username = user_info["username"]
+    language = user_info["language"]
     fluency = user_info["fluency"]
     lang_code = user_info["lang_code"]
     if await database.check_profile_exists(user_id):
@@ -383,6 +383,7 @@ async def set_user_info(message: Message, state: FSMContext, database: Resources
             username=username,
             age=age_years,
             name=prefered_name,
+            language=language,
             fluency=fluency,
             status=status,
             about=about,
@@ -395,9 +396,19 @@ async def set_user_info(message: Message, state: FSMContext, database: Resources
         user_id=user_id,
         name=prefered_name,
         status='unknown',
+        language=language,
         fluency=fluency,
         about='non-existent',
         lang_code=lang_code,
     )
     return prefered_name
 
+
+async def get_default_state_info(message: Message, state: FSMContext, database: ResourcesMiddleware):
+    """Достаем нужные данные о пользователе"""
+    data = await state.get_data()
+    if data.get("user_id", None) is None:
+        await set_user_info(message, state, database)
+        return await state.get_data()
+
+    return await state.get_data()
