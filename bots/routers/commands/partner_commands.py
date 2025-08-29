@@ -287,9 +287,10 @@ async def find_partner_and_notify(user_id, username, criteria, message, redis):
                     )
 
                 # Удаляем задачу из активных
-                if user_id in redis.get(f"active_search_tasks:{user_id}"):
-                    redis.delete(f"active_search_tasks:{user_id}")
+                active_tasks = await redis.get(f"active_search_tasks:{user_id}")
+                if active_tasks and user_id in active_tasks:
                     await redis.delete(f"active_search_tasks:{user_id}")
+
 
 
     except Exception as e:
@@ -298,8 +299,9 @@ async def find_partner_and_notify(user_id, username, criteria, message, redis):
 
     finally:
         # Удаляем задачу из активных
-        if user_id in redis.get(f"active_search_tasks:{user_id}"):
-            redis.delete(f"active_search_tasks:{user_id}")
+        active_tasks = await redis.get(f"active_search_tasks:{user_id}")
+        if active_tasks and user_id in active_tasks:
+            await redis.delete(f"active_search_tasks:{user_id}")
         await session.close()
 
 
@@ -309,7 +311,8 @@ async def check_search_status_periodically(user_id, message, redis, session, int
     for i in range(max_checks):
 
         # Проверяем, не была ли задача отменена
-        if user_id not in redis.get(f"active_search_tasks:{user_id}"):
+        active_tasks = await redis.get(f"active_search_tasks:{user_id}")
+        if active_tasks and user_id in active_tasks:
             return
 
         async with session.get(
