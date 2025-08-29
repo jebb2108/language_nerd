@@ -230,7 +230,14 @@ async def new_session_handler(message: Message, state: FSMContext, redis: Resour
     data = await get_default_state_info(message, state, database)
     user_id = data.get("user_id", 0)
     username = data.get("username", "")
-    user_language = data.get("lang_code", "en")
+    language = data.get("language")
+
+    if username == "" or user_id == 0:
+        fluency = data.get("fluency")
+        came_from = data.get("came_from")
+        basic_user_info = await get_basic_user_info(message, state, database)
+        database.create_user(**basic_user_info, camefrom=came_from, language=language, fluency=fluency)
+
     # Отменяем предыдущий поиск, если он был
     active_tasks = await redis.get(f"active_search_tasks:{user_id}")
     if active_tasks and user_id in active_tasks:
@@ -239,19 +246,19 @@ async def new_session_handler(message: Message, state: FSMContext, redis: Resour
 
     # Показываем сообщение о начале поиска
     search_message = await message.answer(
-        f"🔍 Ищем партнера для общения на <b>{user_language}</b>...",
+        f"🔍 Ищем партнера для общения на <b>{language}</b>...",
         parse_mode=ParseMode.HTML
     )
 
     # Формируем критерии поиска
-    criteria = {"language": user_language}
+    criteria = {"language": language}
 
     # Запускаем поиск партнера
     task = asyncio.create_task(
         find_partner_and_notify(user_id, username, criteria, search_message, redis, http_session)
     )
 
-    await redis.setex(f"searching_users:{user_id}", 210, json.dumps({"user_id": user_id, "criteria": str(user_language), "task": str(task)}))
+    await redis.setex(f"searching_users:{user_id}", 210, json.dumps({"user_id": user_id, "criteria": str(language), "task": str(task)}))
 
 
 async def find_partner_and_notify(user_id, username, criteria, message, redis, session):
@@ -416,3 +423,13 @@ async def get_default_state_info(message: Message, state: FSMContext, database: 
         return await state.get_data()
 
     return await state.get_data()
+
+
+async def get_basic_user_info(message: Message, state: FSMContext, database: ResourcesMiddleware):
+    data = await get_default_state_info(message, state, database)
+    return dict({
+        "user_id": data.get("user_id", message.from_user.id),
+        "username": data.get("username", message.from_user.username),
+        "first_name": data.get("first_name", message.from_user.first_name),
+        "lang_code": data.get("lang_code", message.from_user.language_code),
+    })

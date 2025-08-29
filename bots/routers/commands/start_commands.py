@@ -50,8 +50,8 @@ async def start_with_polling(
     # Обновляем данные в state
     await state.update_data(
         user_id=user_id,
-        username=message.from_user.username or "",
-        first_name=message.from_user.first_name or "",
+        username=message.from_user.username,
+        first_name=message.from_user.first_name,
         lang_code=lang_code,
         message_mgr=message_mgr,
         orig_message=message,
