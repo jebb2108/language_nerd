@@ -289,6 +289,8 @@ async def find_partner_and_notify(user_id, username, criteria, message, redis):
                 # Удаляем задачу из активных
                 if user_id in redis.get(f"active_search_tasks:{user_id}"):
                     redis.delete(f"active_search_tasks:{user_id}")
+                    await redis.delete(f"active_search_tasks:{user_id}")
+
 
     except Exception as e:
         logger.error(f"Ошибка при поиске партнера: {e}")
