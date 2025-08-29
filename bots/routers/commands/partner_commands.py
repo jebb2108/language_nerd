@@ -360,45 +360,52 @@ async def echo(message: Message, rate_limit_info: RateLimitInfo):
 
 
 async def set_user_info(message: Message, state: FSMContext, database: ResourcesMiddleware):
+    """ Гарантирует, что машина состояние имеет все данные о пользователе """
     user_id = message.from_user.id
-    user_info = await database.get_user_info(user_id)
-    username = user_info["username"]
-    language = user_info["language"]
-    fluency = user_info["fluency"]
-    lang_code = user_info["lang_code"]
-    if await database.check_profile_exists(user_id):
-        users_profile_info = await database.get_users_profile(user_id)
-        prefered_name = users_profile_info["prefered_name"]
-        birthday = users_profile_info["birthday"]
-        age_delta = datetime.now() - datetime.combine(birthday, time.min)
-        age_years = age_delta.days // 365
-        status = users_profile_info["status"]
-        about = users_profile_info["about"]
+    data = await state.get_data()
 
+    if data.get("user_id", None) == user_id:
+        return
+
+    if await database.check_user_exists(user_id):
+        user_info = await database.get_user_info(user_id)
+        username = user_info["username"]
+        language = user_info["language"]
+        fluency = user_info["fluency"]
+        lang_code = user_info["lang_code"]
+        if await database.check_profile_exists(user_id):
+            users_profile_info = await database.get_users_profile(user_id)
+            prefered_name = users_profile_info["prefered_name"]
+            birthday = users_profile_info["birthday"]
+            age_delta = datetime.now() - datetime.combine(birthday, time.min)
+            age_years = age_delta.days // 365
+            status = users_profile_info["status"]
+            about = users_profile_info["about"]
+
+            await state.update_data(
+                user_id=user_id,
+                username=username,
+                age=age_years,
+                name=prefered_name,
+                language=language,
+                fluency=fluency,
+                status=status,
+                about=about,
+                lang_code=lang_code,
+            )
+            return
+
+        prefered_name = user_info["first_name"]
         await state.update_data(
             user_id=user_id,
-            username=username,
-            age=age_years,
             name=prefered_name,
+            status='unknown',
             language=language,
             fluency=fluency,
-            status=status,
-            about=about,
+            about='non-existent',
             lang_code=lang_code,
         )
-        return prefered_name
-
-    prefered_name = user_info["first_name"]
-    await state.update_data(
-        user_id=user_id,
-        name=prefered_name,
-        status='unknown',
-        language=language,
-        fluency=fluency,
-        about='non-existent',
-        lang_code=lang_code,
-    )
-    return prefered_name
+        return
 
 
 async def get_default_state_info(message: Message, state: FSMContext, database: ResourcesMiddleware):
