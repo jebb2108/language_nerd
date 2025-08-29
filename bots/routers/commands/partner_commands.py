@@ -225,7 +225,7 @@ async def get_my_location(message: Message, database: ResourcesMiddleware):
 
 
 @router.message(Command("new_session"), IsBotFilter(BOT_TOKEN_PARTNER))
-async def new_session_handler(message: Message, state: FSMContext, redis: ResourcesMiddleware, database: ResourcesMiddleware):
+async def new_session_handler(message: Message, state: FSMContext, redis: ResourcesMiddleware, http_session: ResourcesMiddleware, database: ResourcesMiddleware):
     """Обработчик команды /new_session - запускает поиск партнера"""
     data = await get_default_state_info(message, state, database)
     user_id = data.get("user_id", 0)
@@ -248,47 +248,45 @@ async def new_session_handler(message: Message, state: FSMContext, redis: Resour
 
     # Запускаем поиск партнера
     task = asyncio.create_task(
-        find_partner_and_notify(user_id, username, criteria, search_message, redis)
+        find_partner_and_notify(user_id, username, criteria, search_message, redis, http_session)
     )
 
     await redis.setex(f"searching_users:{user_id}", 210, json.dumps({"user_id": user_id, "criteria": str(user_language), "task": str(task)}))
 
 
-async def find_partner_and_notify(user_id, username, criteria, message, redis):
+async def find_partner_and_notify(user_id, username, criteria, message, redis, session):
     """Фоновая задача для поиска партнера и уведомления пользователя"""
     try:
-        # Отправляем запрос на сервер для поиска партнера
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                    'http://localhost:4000/api/generate_link',
-                    json={
-                        "user_id": user_id,
-                        "username": username,
-                        "criteria": criteria
-                    }
-            ) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
+        async with session.post(
+                'http://localhost:4000/api/generate_link',
+                json={
+                    "user_id": user_id,
+                    "username": username,
+                    "criteria": criteria
+                }
+        ) as resp:
+            if resp.status == 200:
+                data = await resp.json()
 
-                    if data.get("status") == "found":
-                        # Партнер найден сразу
-                        link = data["link"]
-                        await message.edit_text(
-                            "✅ Партнер найден! Нажмите кнопку чтобы начать общение:",
-                            reply_markup=open_chat_keyboard(link)
-                        )
-                    else:
-                        # Запускаем периодическую проверку статуса
-                        await check_search_status_periodically(user_id, message, redis, session)
-                else:
+                if data.get("status") == "found":
+                    # Партнер найден сразу
+                    link = data["link"]
                     await message.edit_text(
-                        "❌ Произошла ошибка при поиске партнера. Попробуйте позже."
+                        "✅ Партнер найден! Нажмите кнопку чтобы начать общение:",
+                        reply_markup=open_chat_keyboard(link)
                     )
+                else:
+                    # Запускаем периодическую проверку статуса
+                    await check_search_status_periodically(user_id, message, redis, session)
+            else:
+                await message.edit_text(
+                    "❌ Произошла ошибка при поиске партнера. Попробуйте позже."
+                )
 
-                # Удаляем задачу из активных
-                active_tasks = await redis.get(f"active_search_tasks:{user_id}")
-                if active_tasks and user_id in active_tasks:
-                    await redis.delete(f"active_search_tasks:{user_id}")
+            # Удаляем задачу из активных
+            active_tasks = await redis.get(f"active_search_tasks:{user_id}")
+            if active_tasks and user_id in active_tasks:
+                await redis.delete(f"active_search_tasks:{user_id}")
 
 
 
@@ -301,7 +299,6 @@ async def find_partner_and_notify(user_id, username, criteria, message, redis):
         active_tasks = await redis.get(f"active_search_tasks:{user_id}")
         if active_tasks and user_id in active_tasks:
             await redis.delete(f"active_search_tasks:{user_id}")
-        await session.close()
 
 
 async def check_search_status_periodically(user_id, message, redis, session, interval=5, max_checks=30):
