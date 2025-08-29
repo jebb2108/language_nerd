@@ -527,7 +527,6 @@ app.router.add_get('/api/search_status/{user_id}', search_status_handler)
 async def start_server(redis_client):
     global redis
     await init_redis(redis_client)
-    logger.info("Redis подключен")
 
     # Запускаем сервер
     runner = web.AppRunner(app)

@@ -233,11 +233,12 @@ async def new_session_handler(message: Message, state: FSMContext, redis: Resour
     user_language = data.get("language", "english")
 
     # Отменяем предыдущий поиск, если он был
-    if user_id in redis.get(f"active_search_tasks:{user_id}"):
-        redis.delete(f"active_search_tasks:{user_id}")
+    active_tasks = await redis.get(f"active_search_tasks:{user_id}")
+    if active_tasks and user_id in active_tasks:
+        await redis.delete(f"active_search_tasks:{user_id}")
         logger.info(f"Отменен предыдущий поиск для пользователя {user_id}")
 
-        # Показываем сообщение о начале поиска
+    # Показываем сообщение о начале поиска
     search_message = await message.answer(
         f"🔍 Ищем партнера для общения на <b>{user_language}</b>...",
         parse_mode=ParseMode.HTML
@@ -251,7 +252,7 @@ async def new_session_handler(message: Message, state: FSMContext, redis: Resour
         find_partner_and_notify(user_id, username, criteria, search_message, redis)
     )
 
-    redis.setex(f"searching_users:{user_id}", 210, json.dumps({"user_id": user_id, "criteria": str(user_language), "task": str(task)}))
+    await redis.setex(f"searching_users:{user_id}", 210, json.dumps({"user_id": user_id, "criteria": str(user_language), "task": str(task)}))
 
 
 async def find_partner_and_notify(user_id, username, criteria, message, redis):
