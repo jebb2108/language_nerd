@@ -46,7 +46,7 @@ async def run():
     disp.callback_query.middleware(resources)
     disp.message.middleware(RateLimitMiddleware())
 
-    await start_server(resources.redis_pool)
+    await start_server(resources.redis)
 
     logger.info("Starting partner bots (polling)…")
     await disp.start_polling(bot)

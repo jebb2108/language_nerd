@@ -1,5 +1,7 @@
 import logging
 import re
+from json import dumps
+
 import aiohttp
 import asyncio
 import json
@@ -48,7 +50,7 @@ class SearchStates(StatesGroup):
 @router.message(Command("menu"), IsBotFilter(BOT_TOKEN_PARTNER))
 async def show_main_menu(message: Message, state: FSMContext, database: ResourcesMiddleware):
     """ Главное меню бота """
-    data = await get_default_state_info(message, state, database)
+    data = await get_state_data(message, state, database)
     name = data.get("name")
     lang_code = data.get("lang_code")
 
@@ -89,9 +91,9 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
 
 
 @router.message(PollingState.waiting_for_name, IsBotFilter(BOT_TOKEN_PARTNER))
-async def process_name(message: Message, state: FSMContext):
+async def process_name(message: Message, state: FSMContext, database: ResourcesMiddleware):
 
-    data = await state.get_data()
+    data = await get_state_data(message, state, database)
     lang_code = data.get("lang_code", "en")
 
     if (len(message.text) <= 50 and
@@ -105,9 +107,9 @@ async def process_name(message: Message, state: FSMContext):
     await message.reply(text=msg, parse_mode=ParseMode.HTML)
 
 @router.message(PollingState.waiting_for_bday, IsBotFilter(BOT_TOKEN_PARTNER))
-async def process_age(message: Message, state: FSMContext):
+async def process_age(message: Message, state: FSMContext, database: ResourcesMiddleware):
 
-    data = await state.get_data()
+    data = await get_state_data(message, state, database)
     lang_code = data.get("lang_code", "en")
 
     if re.match(r'\d{1,2}\.\d{1,2}\.\d{4}', message.text):
@@ -121,9 +123,9 @@ async def process_age(message: Message, state: FSMContext):
 
 
 @router.message(PollingState.waiting_for_intro, IsBotFilter(BOT_TOKEN_PARTNER))
-async def process_intro(message: Message, state: FSMContext):
+async def process_intro(message: Message, state: FSMContext, database: ResourcesMiddleware):
 
-    data = await state.get_data()
+    data = await get_state_data(message, state, database)
     lang_code = data.get("lang_code", "en")
 
     if re.search(r'\S{10,500}', message.text):
@@ -145,7 +147,7 @@ async def process_intro(message: Message, state: FSMContext):
     lambda message: message.text == FIND_PARTNER["yes_to_dating"][message.from_user.language_code]
 )
 async def agreed_to_dating_handler(message: Message, state: FSMContext, database: ResourcesMiddleware):
-    data = await state.get_data()
+    data = await get_state_data(message, state, database)
     # Достаем нужные данные о пользователе
     user_id = data.get("user_id", 0)
     name = data.get("name", "default")
@@ -169,7 +171,7 @@ async def agreed_to_dating_handler(message: Message, state: FSMContext, database
     lambda message: message.text == FIND_PARTNER["no_to_dating"][message.from_user.language_code]
 )
 async def disagreed_to_dating_handler(message: Message, state: FSMContext, database: ResourcesMiddleware):
-    data = await state.get_data()
+    data = await get_state_data(message, state, database)
     # Достаем нужные данные о пользователе
     user_id = data.get("user_id", 0)
     name = data.get("name", "default")
@@ -185,7 +187,7 @@ async def disagreed_to_dating_handler(message: Message, state: FSMContext, datab
 @router.message(PollingState.waiting_for_location, F.location, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_location(message: Message, state: FSMContext, database: ResourcesMiddleware):
     """Обработчик локации"""
-    data = await state.get_data()
+    data = await get_state_data(message, state, database)
     user_id = data.get("user_id", 0)
     lang_code = data.get("lang_code", "en")
     # Сохраняем координаты в БД
@@ -225,9 +227,15 @@ async def get_my_location(message: Message, database: ResourcesMiddleware):
 
 
 @router.message(Command("new_session"), IsBotFilter(BOT_TOKEN_PARTNER))
-async def new_session_handler(message: Message, state: FSMContext, redis: ResourcesMiddleware, http_session: ResourcesMiddleware, database: ResourcesMiddleware):
+async def new_session_handler(
+        message: Message,
+        state: FSMContext,
+        redis: ResourcesMiddleware,
+        http_session: ResourcesMiddleware,
+        database: ResourcesMiddleware
+):
     """Обработчик команды /new_session - запускает поиск партнера"""
-    data = await get_default_state_info(message, state, database)
+    data = await get_state_data(message, state, database)
     user_id = data.get("user_id", 0)
     username = data.get("username", "")
     language = data.get("language")
@@ -250,7 +258,9 @@ async def new_session_handler(message: Message, state: FSMContext, redis: Resour
     )
 
     # Формируем критерии поиска
-    criteria = {"language": language}
+    criteria = {
+        "language": language,
+    }
 
     # Запускаем поиск партнера
     task = asyncio.create_task(
@@ -268,7 +278,7 @@ async def find_partner_and_notify(user_id, username, criteria, message, redis, s
                 json={
                     "user_id": user_id,
                     "username": username,
-                    "criteria": criteria
+                    "criteria": dumps(criteria)
                 }
         ) as resp:
             if resp.status == 200:
@@ -368,10 +378,6 @@ async def echo(message: Message, rate_limit_info: RateLimitInfo):
 async def set_user_info(message: Message, state: FSMContext, database: ResourcesMiddleware):
     """ Гарантирует, что машина состояние имеет все данные о пользователе """
     user_id = message.from_user.id
-    data = await state.get_data()
-
-    if data.get("user_id", None) == user_id:
-        return
 
     if await database.check_user_exists(user_id):
         user_info = await database.get_user_info(user_id)
@@ -414,7 +420,7 @@ async def set_user_info(message: Message, state: FSMContext, database: Resources
         return
 
 
-async def get_default_state_info(message: Message, state: FSMContext, database: ResourcesMiddleware):
+async def get_state_data(message: Message, state: FSMContext, database: ResourcesMiddleware):
     """Достаем нужные данные о пользователе"""
     data = await state.get_data()
     if data.get("user_id", None) != message.from_user.id:

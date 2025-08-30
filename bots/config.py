@@ -21,7 +21,7 @@ VERSION = '20250826-3'
 
 # Настройка логирования
 LOG_CONFIG = {
-    'level': logging.INFO,
+    'level': logging.DEBUG,
     'stream': sys.stdout,
     'format': '%(asctime)s - %(levelname)s - %(name)s - %(message)s'
 }
@@ -38,7 +38,8 @@ DB_CONFIG = {
 REDIS_CONFIG = {
     "host": os.getenv("REDIS_HOST", "localhost"),
     "port": int(os.getenv("REDIS_PORT", "6379")),
-    "poolsize": int(os.getenv("REDIS_POOLSIZE", "10")),
+    "max_connections": int(os.getenv("REDIS_POOLSIZE", "10")),
+    "decode_responses": True,
 }
 
 # Глобальные переменные для ограничения запросов

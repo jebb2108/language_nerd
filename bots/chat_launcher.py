@@ -5,7 +5,7 @@ import json
 import uuid
 import asyncio
 from datetime import datetime, timedelta
-import asyncio_redis
+import redis.asyncio as redis
 from config import LOG_CONFIG, VERSION
 
 logging.basicConfig(**LOG_CONFIG)
@@ -15,37 +15,34 @@ sio = socketio.AsyncServer(cors_allowed_origins='*', async_mode='aiohttp')
 app = web.Application()
 sio.attach(app)
 
-# Глобальная переменная для Redis подключения
-redis = None
-
 # Хранилище для сопоставления sid с пользователями (остается в памяти)
 users = {}
 
-
-async def init_redis(redis_client):
-    """Инициализация подключения к Redis"""
-    global redis
-    redis = redis_client
-    logger.info("Redis подключен успешно")
+# Глобальная переменная для Redis подключения
+redis_client = redis.from_url("redis://localhost:6379")
 
 
 async def find_partner(user_data):
     """Поиск партнера по критериям"""
     try:
         # Получаем всех пользователей из очереди поиска
-        queue = await redis.lrange('partner_search_queue', 0, -1)
+        queue = await redis_client.lrange('partner_search_queue', 0, -1)
 
         for partner_json in queue:
+            # Декодируем из bytes в str, если необходимо
+            if isinstance(partner_json, bytes):
+                partner_json = partner_json.decode('utf-8')
+
             partner_data = json.loads(partner_json)
 
             # Проверяем критерии совпадения
             if user_data["criteria"].get("language") == partner_data["criteria"].get("language"):
                 # Удаляем найденного партнера из очереди
-                await redis.lrem('partner_search_queue', partner_json)
+                await redis_client.lrem('partner_search_queue', 1, partner_json)
                 return partner_data
 
         # Если подходящего партнера нет, добавляем в очередь
-        await redis.rpush('partner_search_queue', json.dumps(user_data))
+        await redis_client.rpush('partner_search_queue', json.dumps(user_data))
         return None
 
     except Exception as e:
@@ -65,7 +62,7 @@ async def generate_link_handler(request):
 
         # Сохраняем профиль пользователя в Redis
         profile_key = f"user_profile:{user_id}"
-        await redis.setex(profile_key, 3600, json.dumps({
+        await redis_client.setex(profile_key, 3600, json.dumps({
             "username": username,
             "criteria": user_criteria,
             "timestamp": datetime.now().isoformat()
@@ -89,7 +86,7 @@ async def generate_link_handler(request):
 
             # Генерируем ссылку для текущего пользователя
             link_token = str(uuid.uuid4())
-            await redis.setex(
+            await redis_client.setex(
                 f"link_token:{link_token}",
                 900,
                 json.dumps({
@@ -103,7 +100,7 @@ async def generate_link_handler(request):
 
             # Генерируем ссылку для партнера
             partner_link_token = str(uuid.uuid4())
-            await redis.setex(
+            await redis_client.setex(
                 f"link_token:{partner_link_token}",
                 900,
                 json.dumps({
@@ -116,7 +113,7 @@ async def generate_link_handler(request):
             partner_link = f"https://chat.lllang.site/chat?token={partner_link_token}&v={VERSION}"
 
             # Сохраняем информацию о найденном партнере
-            await redis.setex(
+            await redis_client.setex(
                 f"partner_found:{partner_data['user_id']}",
                 300,
                 json.dumps({
@@ -126,7 +123,7 @@ async def generate_link_handler(request):
             )
 
             # Удаляем профиль партнера из Redis
-            await redis.delete(f"user_profile:{partner_data['user_id']}")
+            await redis_client.delete(f"user_profile:{partner_data['user_id']}")
 
             return web.json_response({
                 "link": link,
@@ -161,7 +158,7 @@ async def create_chat_session(user1_id, user1_username, user2_id, user2_username
         "contact_exchange": {"user1_accepted": False, "user2_accepted": False}
     }
 
-    await redis.setex(
+    await redis_client.setex(
         f"chat_session:{session_id}",
         900,
         json.dumps(session_data)
@@ -183,8 +180,8 @@ async def send_message(session_id, sender_id, message_text):
     }
 
     # Добавляем сообщение в Redis
-    await redis.rpush(f"chat_messages:{session_id}", json.dumps(message_data))
-    await redis.expire(f"chat_messages:{session_id}", 900)
+    await redis_client.rpush(f"chat_messages:{session_id}", json.dumps(message_data))
+    await redis_client.expire(f"chat_messages:{session_id}", 900)
 
     # Публикуем сообщение для real-time обновлений
     await sio.emit('new_message', message_data, room=session_id)
@@ -194,20 +191,27 @@ async def send_message(session_id, sender_id, message_text):
 
 async def get_messages(session_id):
     """Получение сообщений из чата"""
-    messages = await redis.lrange(f"chat_messages:{session_id}", 0, -1)
-    return [json.loads(msg) for msg in messages]
+    messages = await redis_client.lrange(f"chat_messages:{session_id}", 0, -1)
+    result = []
+    for msg in messages:
+        if isinstance(msg, bytes):
+            msg = msg.decode('utf-8')
+        result.append(json.loads(msg))
+    return result
 
 
 async def is_session_active(session_id):
     """Проверка активности сессии чата"""
-    exists = await redis.exists([f"chat_session:{session_id}"])
+    exists = await redis_client.exists(f"chat_session:{session_id}")
     return exists > 0
 
 
 async def get_session_info(session_id):
     """Получение информации о сессии"""
-    session_data = await redis.get(f"chat_session:{session_id}")
+    session_data = await redis_client.get(f"chat_session:{session_id}")
     if session_data:
+        if isinstance(session_data, bytes):
+            session_data = session_data.decode('utf-8')
         return json.loads(session_data)
     return None
 
@@ -217,7 +221,7 @@ async def update_session_info(session_id, updates):
     session_info = await get_session_info(session_id)
     if session_info:
         session_info.update(updates)
-        await redis.setex(
+        await redis_client.setex(
             f"chat_session:{session_id}",
             900,
             json.dumps(session_info)
@@ -310,8 +314,10 @@ async def connect(sid, environ):
     token = params.get('token')
     if token:
         # Проверяем токен в Redis
-        token_data = await redis.get(f"link_token:{token}")
+        token_data = await redis_client.get(f"link_token:{token}")
         if token_data:
+            if isinstance(token_data, bytes):
+                token_data = token_data.decode('utf-8')
             user_data = json.loads(token_data)
             users[sid] = {
                 "user_id": user_data["user_id"],
@@ -424,7 +430,7 @@ async def create_session_handler(request):
 
         # Генерируем ссылки для обоих пользователей
         link_token1 = str(uuid.uuid4())
-        await redis.setex(
+        await redis_client.setex(
             f"link_token:{link_token1}",
             900,
             json.dumps({
@@ -436,7 +442,7 @@ async def create_session_handler(request):
         link1 = f"https://chat.lllang.site/chat?token={link_token1}&v={VERSION}"
 
         link_token2 = str(uuid.uuid4())
-        await redis.setex(
+        await redis_client.setex(
             f"link_token:{link_token2}",
             900,
             json.dumps({
@@ -448,7 +454,7 @@ async def create_session_handler(request):
         link2 = f"https://chat.lllang.site/chat?token={link_token2}&v={VERSION}"
 
         # Сохраняем информацию о найденных партнерах
-        await redis.setex(
+        await redis_client.setex(
             f"partner_found:{user1_id}",
             300,
             json.dumps({
@@ -457,7 +463,7 @@ async def create_session_handler(request):
             })
         )
 
-        await redis.setex(
+        await redis_client.setex(
             f"partner_found:{user2_id}",
             300,
             json.dumps({
@@ -482,9 +488,12 @@ async def search_status_handler(request):
         user_id = request.match_info.get('user_id')
 
         # Проверяем, найден ли уже партнер для этого пользователя
-        partner_found = await redis.get(f"partner_found:{user_id}")
+        partner_found = await redis_client.get(f"partner_found:{user_id}")
         if partner_found:
+            if isinstance(partner_found, bytes):
+                partner_found = partner_found.decode('utf-8')
             partner_data = json.loads(partner_found)
+            logger.debug(f'Пользователь {user_id} нашел партнера {partner_data["session_id"]}')
             return web.json_response({
                 "status": "found",
                 "session_id": partner_data["session_id"],
@@ -492,7 +501,7 @@ async def search_status_handler(request):
             })
 
         # Проверяем, находится ли пользователь в процессе поиска
-        user_profile = await redis.get(f"user_profile:{user_id}")
+        user_profile = await redis_client.get(f"user_profile:{user_id}")
         if user_profile:
             return web.json_response({"status": "searching"})
 
@@ -524,10 +533,9 @@ app.router.add_post('/api/generate_link', generate_link_handler)
 app.router.add_get('/api/search_status/{user_id}', search_status_handler)
 
 
-async def start_server(redis_client):
-    global redis
-    await init_redis(redis_client)
-
+async def start_server(r_client):
+    global redis_client
+    redis_client = r_client
     # Запускаем сервер
     runner = web.AppRunner(app)
     await runner.setup()

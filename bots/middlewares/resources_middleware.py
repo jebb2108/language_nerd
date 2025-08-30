@@ -1,7 +1,7 @@
 import logging
 import sys
+import redis.asyncio as redis
 import asyncio
-import asyncio_redis
 from dataclasses import dataclass
 
 import asyncpg
@@ -36,8 +36,6 @@ class ResourcesMiddleware(BaseMiddleware):
         self._lock = asyncio.Lock()
         self._initialized = False
         self._initialization_failed = False
-        self.db_pool = None
-        self.redis_pool = None
 
     async def __call__(
             self,
@@ -59,7 +57,7 @@ class ResourcesMiddleware(BaseMiddleware):
 
         data.update(
             database=self.db,
-            redis=self.redis_pool,
+            redis=self.redis,
             http_session=self.session,
         )
         return await handler(event, data)
@@ -70,7 +68,10 @@ class ResourcesMiddleware(BaseMiddleware):
         try:
             # Создаем пулы подключений к БД и Redis
             self.db_pool = await asyncpg.create_pool(**self.db_config.__dict__)
-            self.redis_pool = await asyncio_redis.Pool.create(**REDIS_CONFIG)
+            redis_pool = redis.ConnectionPool(**REDIS_CONFIG)
+
+            # Создаем клиент Redis с пулом подключений
+            self.redis = redis.Redis(connection_pool=redis_pool)
 
             # Создаем экземпляр класса Database
             self.db = Database(self.db_pool)
@@ -103,8 +104,8 @@ class ResourcesMiddleware(BaseMiddleware):
             if self.db_pool and not self.db_pool._closed:
                 await self.db_pool.close()
                 logger.debug("Database pool closed")
-            if self.redis_pool and not self.redis_pool._closed:
-                await self.redis_pool.close()
+            if self.redis and not self.redis._closed:
+                await self.redis.close()
                 logger.debug("Redis pool closed")
         except Exception as e:
             errors.append(f"Database || Redis pool close error: {e}")
