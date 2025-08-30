@@ -417,7 +417,7 @@ async def set_user_info(message: Message, state: FSMContext, database: Resources
 async def get_default_state_info(message: Message, state: FSMContext, database: ResourcesMiddleware):
     """Достаем нужные данные о пользователе"""
     data = await state.get_data()
-    if data.get("user_id", None) is None:
+    if data.get("user_id", None) != message.from_user.id:
         await set_user_info(message, state, database)
         return await state.get_data()
 
