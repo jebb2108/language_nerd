@@ -19,6 +19,13 @@ class MessageManager:
         self.bot = bot
         self.state = state
 
+    async def insert_message_id(self, message_id: int) -> None:
+        data = await self.state.get_data()
+        msgs = data.get("messages_to_delete", [])
+        await self.state.update_data(
+            messages_to_delete=msgs.insert(0, message_id),
+        )
+
     async def send_message_with_save(
             self,
             chat_id: int,
@@ -38,10 +45,10 @@ class MessageManager:
         )
 
         # Сохраняем данные
-        self.msgs = data.get("messages_to_delete", [])
-        self.msgs.append(sent.message_id)
+        msgs = data.get("messages_to_delete", [])
+        msgs.append(sent.message_id)
         await self.state.update_data(
-            messages_to_delete=self.msgs,
+            messages_to_delete=msgs,
         )
 
         return sent

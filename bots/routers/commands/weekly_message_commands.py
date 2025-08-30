@@ -1,5 +1,4 @@
 import logging
-from unittest.mock import right
 
 from aiogram import Router, types, Bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
@@ -113,7 +112,7 @@ async def start_report_handler(
         )
 
         # Добавляем предыдущее сообщение в список
-        quiz_manager.msgs.insert(0, callback.message.message_id)
+        await quiz_manager.insert_message_id(callback.message.message_id)
 
         # Передаем quiz_manager в send_question
         await send_question(state, quiz_manager)
