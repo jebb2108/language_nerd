@@ -312,6 +312,11 @@ FIND_PARTNER = dict({
         "ru": "🌎 Твои гео-координаты",
     },
 
+    "no_username": {
+        "en": "You don't have a username, please, set one",
+        "ru": "У тебя нет @username, пожалуйста, установи его",
+    },
+
     'no_worries': {
         "en": "No worries 🫶 We won't use your location",
         "ru": "Ничего страшного 🫶 Мы не будем использовать твою геолокацию",

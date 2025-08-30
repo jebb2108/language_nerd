@@ -232,11 +232,10 @@ async def new_session_handler(message: Message, state: FSMContext, redis: Resour
     username = data.get("username", "")
     language = data.get("language")
 
-    if username == "" or user_id == 0:
-        fluency = data.get("fluency")
-        came_from = data.get("came_from")
-        basic_user_info = await get_basic_user_info(message, state, database)
-        database.create_user(**basic_user_info, camefrom=came_from, language=language, fluency=fluency)
+    if username == "NO USERNAME":
+        msg = FIND_PARTNER["no_username"][message.from_user.language_code]
+        await message.answer(text=msg, parse_mode=ParseMode.HTML)
+        return
 
     # Отменяем предыдущий поиск, если он был
     active_tasks = await redis.get(f"active_search_tasks:{user_id}")
@@ -423,13 +422,3 @@ async def get_default_state_info(message: Message, state: FSMContext, database: 
         return await state.get_data()
 
     return await state.get_data()
-
-
-async def get_basic_user_info(message: Message, state: FSMContext, database: ResourcesMiddleware):
-    data = await get_default_state_info(message, state, database)
-    return dict({
-        "user_id": data.get("user_id", message.from_user.id),
-        "username": data.get("username", message.from_user.username),
-        "first_name": data.get("first_name", message.from_user.first_name),
-        "lang_code": data.get("lang_code", message.from_user.language_code),
-    })
