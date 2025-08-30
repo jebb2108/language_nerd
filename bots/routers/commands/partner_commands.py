@@ -276,9 +276,9 @@ async def find_partner_and_notify(user_id, username, criteria, message, redis, s
         async with session.post(
                 'http://localhost:4000/api/generate_link',
                 json={
-                    "user_id": user_id,
+                    "user_id": str(user_id),
                     "username": username,
-                    "criteria": dumps(criteria)
+                    "criteria": criteria
                 }
         ) as resp:
             if resp.status == 200:
@@ -289,7 +289,7 @@ async def find_partner_and_notify(user_id, username, criteria, message, redis, s
                     link = data["link"]
                     await message.edit_text(
                         "✅ Партнер найден! Нажмите кнопку чтобы начать общение:",
-                        reply_markup=open_chat_keyboard(link)
+                        reply_markup=open_chat_keyboard('ru', link)
                     )
                 else:
                     # Запускаем периодическую проверку статуса
@@ -338,11 +338,11 @@ async def check_search_status_periodically(user_id, message, redis, session, int
                     link = data["link"]
                     await message.edit_text(
                         "✅ Партнер найден! Нажмите кнопку чтобы начать общение:",
-                        reply_markup=open_chat_keyboard(link)
+                        reply_markup=open_chat_keyboard("en", link)
                     )
                     return
                 # Обновляем статус поиска каждые 15 секунд
-                if i % 3 == 0:
+                elif i % 3 == 0:
                     t = ['', str(i * 5) + ' сек'] if i * 5 < 60 else [str(i * 5 // 60) + ' мин ',
                                                                       str(i * 5 % 60) + ' сек']
                     result = ''.join(t if t[1] != '0 сек' else t[0])
