@@ -57,7 +57,6 @@ async def send_user_report(
                 callback_data=f"start_report:{report_id}"
             )]
         ])
-
         await bot.send_message(
             chat_id=user_id,
             text=message_text,
@@ -112,6 +111,9 @@ async def start_report_handler(
             chat_id=chat_id,
             text="Начинаем проверку знаний..."
         )
+
+        # Добавляем предыдущее сообщение в список
+        quiz_manager.msgs.insert(0, callback.message.message_id)
 
         # Передаем quiz_manager в send_question
         await send_question(state, quiz_manager)

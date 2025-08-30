@@ -38,10 +38,10 @@ class MessageManager:
         )
 
         # Сохраняем данные
-        msgs = data.get("messages_to_delete", [])
-        msgs.append(sent.message_id)
+        self.msgs = data.get("messages_to_delete", [])
+        self.msgs.append(sent.message_id)
         await self.state.update_data(
-            messages_to_delete=msgs,
+            messages_to_delete=self.msgs,
         )
 
         return sent
