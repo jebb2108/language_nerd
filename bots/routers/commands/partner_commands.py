@@ -336,6 +336,7 @@ async def check_search_status_periodically(user_id, message, redis, session, int
                 if data.get("status") == "found":
                     # Партнер найден
                     link = data["link"]
+                    logger.debug(f"Результат поиска для {user_id}: {data}")
                     await message.edit_text(
                         "✅ Партнер найден! Нажмите кнопку чтобы начать общение:",
                         reply_markup=open_chat_keyboard("en", link)

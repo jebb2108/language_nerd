@@ -21,7 +21,7 @@ VERSION = '20250826-3'
 
 # Настройка логирования
 LOG_CONFIG = {
-    'level': logging.DEBUG,
+    'level': logging.INFO,
     'stream': sys.stdout,
     'format': '%(asctime)s - %(levelname)s - %(name)s - %(message)s'
 }

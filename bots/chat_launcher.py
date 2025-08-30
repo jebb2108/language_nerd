@@ -55,7 +55,7 @@ async def find_partner(user_data):
                     "criteria": partner_data["criteria"]
                 }
 
-        user_id = user_data["user_id"]
+        user_id = user_data.get("user_id")
         logger.debug(f"Пользователь {user_id} добавляется в очередь поиска")
         await redis_client.rpush('partner_search_queue', user_id)
         return None
@@ -142,6 +142,8 @@ async def generate_link_handler(request):
             # Удаляем профили из Redis
             await redis_client.delete(f"user_profile:{user_id}")
             await redis_client.delete(f"user_profile:{partner_data['user_id']}")
+            await redis_client.lrem('partner_search_queue', 1, user_id)
+            await redis_client.lrem('partner_search_queue', 1, partner_data["user_id"])
 
             return web.json_response({
                 "link": link1,
@@ -510,7 +512,7 @@ async def search_status_handler(request):
             if isinstance(partner_found, bytes):
                 partner_found = partner_found.decode('utf-8')
             partner_data = json.loads(partner_found)
-            logger.debug(f'Пользователь {user_id} нашел партнера {partner_data["session_id"]}')
+            logger.debug(f'Пользователь {user_id} перевелся в сессию {partner_data["session_id"]}')
             return web.json_response({
                 "status": "found",
                 "session_id": partner_data["session_id"],
