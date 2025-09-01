@@ -1,7 +1,7 @@
 import logging
 
 from aiogram import Router, types, Bot
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, TelegramObject
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.formatting import Text, Bold
 from aiogram.utils.markdown import html_decoration as hd
@@ -9,8 +9,10 @@ from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramForbiddenError, TelegramBadRequest
 
 from middlewares.resources_middleware import ResourcesMiddleware # noqa
-from utils.message_mgr import MessageManager # noqa
+from keyboards.inline_keyboards import begin_weekly_quiz_keyboard # noqa
 from config import LOG_CONFIG # noqa
+
+from translations import WEEKLY_QUIZ # noqa
 
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='weekly_message_commands')
@@ -29,38 +31,22 @@ async def send_user_report(
     Отправляет пользователю его еженедельный отчет.
     """
     try:
-
-        async with database.acquire_connection() as conn:
-            report = await conn.fetchrow(
-                "SELECT * FROM weekly_reports WHERE report_id = $1",
-                report_id
-            )
-            words = await conn.fetch(
-                "SELECT * FROM report_words WHERE report_id = $1",
-                report_id
-            )
+        report = await database.get_report(report_id)
+        words = await database.get_weekly_words(report_id)
+        user_info = await database.get_user_info(user_id)
+        lang_code = user_info['lang_code']
 
         if not report or not words:
             logger.warning(f"No report data found for report_id: {report_id}")
             return False
 
-        message_text = (
-            f"📊 Ваш еженедельный отчет по изученным словам:\n\n"
-            f"Всего слов: {len(words)}\n\n"
-            "Для начала проверки нажмите кнопку ниже 👇"
-        )
-
-        keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(
-                text="Начать проверку знаний",
-                callback_data=f"start_report:{report_id}"
-            )]
-        ])
+        # Извлекаем ID отправленного сообщения
         await bot.send_message(
             chat_id=user_id,
-            text=message_text,
-            reply_markup=keyboard
+            text=WEEKLY_QUIZ['weekly_report'][lang_code],
+            reply_markup=begin_weekly_quiz_keyboard(lang_code, report_id)
         )
+
         return True
 
     except TelegramForbiddenError:
@@ -73,97 +59,81 @@ async def send_user_report(
         return False
 
 
-@router.callback_query(lambda c: c.data.startswith("start_report:"))
+@router.callback_query(lambda callback: callback.data.startswith("start_report:"))
 async def start_report_handler(
         callback: types.CallbackQuery,
         state: FSMContext,
         database: ResourcesMiddleware,
 ):
-    try:
-        report_id = int(callback.data.split(":", 1)[1])
-        async with database.acquire_connection() as conn:
-            words = await conn.fetch(
-                "SELECT word_id FROM report_words WHERE report_id = $1",
-                report_id
-            )
 
-        if not words:
+    await callback.answer()
+
+    try:
+        # Извлекаю все ID слов конкретного отчета
+        report_id = int(callback.data.split(":", 1)[1])
+        word_ids = [ row['word_id'] for row in await database.get_words_ids(report_id) ]
+
+        if not word_ids:
             await callback.answer("Отчет не содержит слов для проверки.", show_alert=True)
             return
 
-        # Создаем и сохраняем менеджер сообщений в состоянии
-        quiz_manager = MessageManager(bot=callback.bot, state=state)
-        chat_id = callback.message.chat.id
+        user_id = callback.message.chat.id
 
         await state.update_data(
+            user_id=user_id,
             report_id=report_id,
-            word_ids=[row["word_id"] for row in words],
+            word_ids=word_ids,
             current_index=0,
-            chat_id=chat_id,
             right_choices=[],
             wrong_choices=[],
             db_pool=database,
-            quiz_manager=quiz_manager,  # Сохраняем менеджер в state
         )
 
-        await quiz_manager.send_message_with_save(
-            chat_id=chat_id,
-            text="Начинаем проверку знаний..."
+        await callback.bot.send_message(
+            chat_id=user_id,
+            text="Начинаем проверку знаний...",
         )
-
-        # Добавляем предыдущее сообщение в список
-        await quiz_manager.insert_message_id(callback.message.message_id)
 
         # Передаем quiz_manager в send_question
-        await send_question(state, quiz_manager)
-        await callback.answer()
+        await send_question(callback, state)
+
 
     except Exception as e:
         logger.error(f"Ошибка в start_report_handler: {e}", exc_info=True)
         await callback.answer("Ошибка запуска проверки", show_alert=True)
 
 
-async def send_question(
-        state: FSMContext,
-        quiz_manager: MessageManager
-):
+async def send_question(callback, state, database):
+
     data = await state.get_data()
     idx = data.get("current_index")
     word_ids = data.get("word_ids")
-    chat_id = data.get("chat_id")
+    user_id = data.get("user_id")
+    lang_code = data.get("lang_code", "en")
     db_pool = data.get("db_pool")
 
-    if not all(key in data for key in ["current_index", "word_ids", "chat_id", "db_pool"]):
+    if not all(key in data for key in ["current_index", "word_ids", "user_id", "db_pool"]):
         logger.error("Отсутствуют ключи в состоянии FSM!")
         return
 
     if idx >= len(word_ids):
-        msg = (
-            "🎉 Поздравляем! Вы завершили проверку знаний по всем словам за эту неделю.\n\n"
-            "Слова, на которые вы ответили правильно: {rights}\n"
-            "Ошибочные ответы: {wrongs}\n"
-        )
 
-        rights = ', '.join(data.get("right_choices", [])) or "нет правильных ответов"
-        wrongs = ', '.join(data.get("wrong_choices", [])) or "нет ошибочных ответов"
-        await quiz_manager.delete_previous_messages(chat_id)
-        await quiz_manager.send_message_with_save(  # Используем bot из менеджера
-            chat_id=chat_id,
-            text=msg.format(rights=rights, wrongs=wrongs)
+        msg = WEEKLY_QUIZ['congradulations'][lang_code]
+        rights = ', '.join(data.get("right_choices", [])) or WEEKLY_QUIZ["no_rights"][lang_code]
+        wrongs = ', '.join(data.get("wrong_choices", [])) or WEEKLY_QUIZ["no_wrongs"][lang_code]
+        await callback.bot.send_message(  # Используем bot из callback
+            user_id=user_id,
+            text=msg.format(rights=rights, wrongs=wrongs),
+            callback='end_quiz',
         )
-        await state.clear()
-        return
+        return await state.clear()
 
     word_id = word_ids[idx]
-    async with db_pool.acquire_connection() as conn:
-        word_data = await conn.fetchrow(
-            "SELECT * FROM report_words WHERE word_id = $1",
-            word_id
-        )
+    word_data = await database.get_word_data(word_id)
 
     if not word_data:
-        await quiz_manager.send_message_with_save(
-            chat_id=chat_id,
+        await callback.bot.send_message(
+            user_id=user_id,
             text="Ошибка: данные вопроса не найдены."
         )
         return
@@ -186,8 +156,8 @@ async def send_question(
     if row:
         keyboard.inline_keyboard.append(row)
 
-    await quiz_manager.send_message_with_save(
-        chat_id=chat_id,
+    await callback.bot.send_message(
+        user_id=user_id,
         text=question_text,
         reply_markup=keyboard
     )
@@ -197,21 +167,16 @@ async def send_question(
 async def handle_word_quiz(
         callback: CallbackQuery,
         state: FSMContext,
+        database: ResourcesMiddleware,
 ):
     try:
         data = await state.get_data()
         db_pool = data.get("db_pool")
-        chat_id = callback.message.chat.id
-        quiz_manager = data.get("quiz_manager")  # Получаем менеджер из состояния
-
-        if not quiz_manager:
-            logger.error("QuizManager отсутствует в состоянии!")
-            await callback.answer("Ошибка системы", show_alert=True)
-            return
+        user_id = callback.message.chat.id
 
         parts = callback.data.split(":")
         if len(parts) != 3:
-            await callback.answer("Некорректные данные вопроса.", show_alert=True)
+            await callback.answer("Incorrect data of question", show_alert=True)
             return
 
         word_id = int(parts[1])
@@ -259,11 +224,11 @@ async def handle_word_quiz(
         except Exception as e:
             logger.warning(f"Ошибка при удалении кнопок: {e}")
 
-        # Отправляем результат ответа (используем chat_id)
-        await quiz_manager.send_message_with_save(
-            chat_id=chat_id,
+        # Отправляем результат ответа (используем user_id)
+        await callback.bot.send_message(
+            chat_id=user_id,
             text=msg,
-            parse_mode=ParseMode.MARKDOWN_V2
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
 
         # Переходим к следующему вопросу
@@ -271,7 +236,7 @@ async def handle_word_quiz(
         await state.update_data(current_index=next_idx)
 
         # Передаем только quiz_manager
-        await send_question(state, quiz_manager)
+        await send_question(callback, state, database)
 
     except Exception as e:
         logger.error(f"Ошибка в handle_word_quiz: {e}", exc_info=True)

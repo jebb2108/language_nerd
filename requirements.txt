@@ -1,6 +1,9 @@
 asyncpg~=0.30.0
 aiogram~=3.22.0
 aiohttp~=3.12.14
+celery~=5.3.4
+fastapi~=0.116.0
+sqlalchemy~=2.0.43
 redis~=6.4.0
 python-socketio~=5.13.0
 dotenv~=0.9.9

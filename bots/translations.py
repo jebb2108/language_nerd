@@ -327,3 +327,47 @@ FIND_PARTNER = dict({
         "ru": "Понял, мы найдем тебе нового друга!\nНажми на /menu, чтобы перейти в главное меню",
     }
 })
+
+WEEKLY_QUIZ = dict({
+
+    "begin": {
+        "en": "Start quiz",
+        "ru": "Начать проверку знаний"
+    },
+
+    "weekly_report": {
+        "en": (
+                f"📊 Your weekly report with learned words:\n\n"
+                f"Total words: %s\n\n"
+                f"Click button below to proceed 👇"
+        ),
+        "ru": (
+                "f📊 Ваш еженедельный отчет по изученным словам:\n\n"
+                f"Всего слов: %s\n\n"
+                f"Для начала проверки нажмите кнопку ниже 👇"
+        ),
+    },
+
+    "no_rights": {
+        "en": "No right answers",
+        "ru": "Нет правильных ответов",
+    },
+
+    "no_wrongs": {
+        "en": "No wrong answers",
+        "ru": "Нет ошибочных ответов",
+    },
+
+    "congradulations": {
+        "en": (
+            "congrades! You completed this quiz for all the learned words this week.\n\n"
+            "Words which you chose right: {rights}\n"
+            "Words which you made a mistake with: {wrongs\n}"
+        ),
+        "ru": (
+                "🎉 Поздравляем! Вы завершили проверку знаний по всем словам за эту неделю.\n\n"
+                "Слова, на которые вы ответили правильно: {rights}\n"
+                "Ошибочные ответы: {wrongs}\n"
+        )
+    }
+})

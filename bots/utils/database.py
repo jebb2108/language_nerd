@@ -355,19 +355,6 @@ class Database:
                 user_id
             ))
 
-    def clean_locks(self):
-        """Периодически очищаем неиспользуемые блокировки"""
-        user_ids = list(self.user_locks.keys())
-        for user_id in user_ids:
-            if user_id in self.user_locks and not self.user_locks[user_id].locked():
-                del self.user_locks[user_id]
-
-
-# = КЛАСС ДЛЯ РАБОТЫ С ОТЧЕТАМИ =
-class ReportDatabase(Database):
-    def __init__(self, db_pool: asyncpg.pool.Pool):
-        super().__init__(db_pool)
-
     async def get_weekly_words_by_user(self) -> List[Dict]:
         week_ago = datetime.now() - timedelta(days=7)
         async with self.acquire_connection() as conn:
@@ -399,6 +386,34 @@ class ReportDatabase(Database):
                     item["options"],
                     item["correct_index"]
                 )
+
+    async def get_report(self, report_id):
+        async with self.acquire_connection() as conn:
+            return await conn.fetchrow(
+                "SELECT * FROM weekly_reports WHERE report_id = $1",
+                report_id
+            )
+
+    async def get_word_data(self, word_id):
+        async with self.acquire_connection() as conn:
+            return await conn.fetchrow(
+                "SELECT * FROM report_words WHERE word_id = $1",
+                word_id
+            )
+
+    async def get_weekly_words(self, report_id):
+        async with self.acquire_connection() as conn:
+            return await conn.fetch(
+                "SELECT * FROM reported_words WHERE report_id = $1",
+                report_id
+            )
+
+    async def get_words_ids(self, report_id):
+        async with self.acquire_connection() as conn:
+            return await conn.fetch(
+                "SELECT word_id FROM report_words WHERE report_id = $1",
+                report_id
+            )
 
     async def get_pending_reports(self) -> List[Dict]:
         async with self.acquire_connection() as conn:
@@ -446,3 +461,10 @@ class ReportDatabase(Database):
                 cutoff_date
             )
             return len(reports_rows), len(words_rows)
+
+    def clean_locks(self):
+        """Периодически очищаем неиспользуемые блокировки"""
+        user_ids = list(self.user_locks.keys())
+        for user_id in user_ids:
+            if user_id in self.user_locks and not self.user_locks[user_id].locked():
+                del self.user_locks[user_id]

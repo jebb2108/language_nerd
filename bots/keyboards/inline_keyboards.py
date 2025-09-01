@@ -6,7 +6,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from translations import BUTTONS, FIND_PARTNER, QUESTIONARY # noqa
+from translations import BUTTONS, FIND_PARTNER, QUESTIONARY, WEEKLY_QUIZ # noqa
 from config import VERSION # noqa
 
 
@@ -148,4 +148,13 @@ def open_chat_keyboard(lang_code, link):
         web_app=WebAppInfo(url=link),
     )
     builder.add(open_chat_button)
+    return builder.as_markup(resize_keyboard=True)
+
+def begin_weekly_quiz_keyboard(lang_code, report_id):
+    builder = InlineKeyboardBuilder()
+    begin_quiz_button = InlineKeyboardButton(
+        text=WEEKLY_QUIZ["begin"][lang_code],
+        callback_data=f"start_report:{report_id}"
+    )
+    builder.add(begin_quiz_button)
     return builder.as_markup(resize_keyboard=True)
