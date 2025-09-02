@@ -56,7 +56,7 @@ async def get_storage_data(message: Message, state: FSMContext, database: Resour
     """Достаем нужные данные о пользователе"""
     data = await state.get_data()
     keys = ['user_id', 'username', 'first_name', 'lang_code']
-    data_status = all([ data.get(key, None) for key in keys ])
+    data_status = all([ data.get(key, False) for key in keys ])
 
     if not data_status:
         await set_user_info(message, state, database)
