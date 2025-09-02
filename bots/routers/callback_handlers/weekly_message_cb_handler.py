@@ -29,16 +29,19 @@ async def start_report_handler(
 
     await callback.answer()
 
+    data = await state.get_data()
+
     try:
+        user_id = callback.message.chat.id
         # Извлекаю все ID слов конкретного отчета
         report_id = int(callback.data.split(":", 1)[1])
         word_ids = [ row['word_id'] for row in await database.get_words_ids(report_id) ]
+        lang_code = data.get('lang_code', await database.get_user_info(user_id)['lang_code'])
 
         if not word_ids:
             await callback.answer("Отчет не содержит слов для проверки.", show_alert=True)
             return
 
-        user_id = callback.message.chat.id
 
         await state.update_data(
             user_id=user_id,
@@ -47,6 +50,7 @@ async def start_report_handler(
             current_index=0,
             right_choices=[],
             wrong_choices=[],
+            lang_code=lang_code,
         )
 
         await callback.message.edit_text(
@@ -132,7 +136,7 @@ async def send_question(callback, state, database):
 
     logger.debug(f"Data: {data}")
 
-    if not all(key in data.keys() for key in ["current_index", "word_ids", "user_id", "lang_code"]):
+    if not all(key in data for key in ["current_index", "word_ids", "user_id", "lang_code"]):
         return logger.error("Отсутствуют ключи в состоянии FSM (Redis)!")
 
     if idx >= len(word_ids):
