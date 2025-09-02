@@ -29,7 +29,7 @@ class QuizMiddleware:
         chat_id = callback_query.message.chat.id
 
         # Ключи, которые запускают или являются частью quiz
-        start_keys = ["camefrom_", "start_report:", "quiz:"]
+        start_keys = ["start_report:", "quiz:"]
         end_keys = ['action_confirm', 'end_quiz']
 
         # Если это начало quiz, помечаем чат как активный
