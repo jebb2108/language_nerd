@@ -271,15 +271,15 @@ FIND_PARTNER = dict({
               "\t/location - see your location\n"
               "\t/new_session - start a new conversation\n"
               "\t/restart - restart the bot\n\n"
-              
-           "if you have any questions, please contact the support",
+
+              "if you have any questions, please contact the support",
 
         "ru": "Ты можешь использовать следующие команды:\n\n"
               "\t/menu - вернуться в главное меню\n"
               "\t/location - увидеть свою геолокацию\n"
               "\t/new_session - начать новое общение\n"
               "\t/restart - перезапустить бота\n\n"
-           "Если у тебя есть вопросы, пожалуйста, обратись в поддержку",
+              "Если у тебя есть вопросы, пожалуйста, обратись в поддержку",
     },
 
     "yes_to_dating": {
@@ -337,14 +337,14 @@ WEEKLY_QUIZ = dict({
 
     "weekly_report": {
         "en": (
-                f"📊 Your weekly report with learned words:\n\n"
-                f"Total words: %s\n\n"
-                f"Click button below to proceed 👇"
+            f"📊 Your weekly report with learned words:\n\n"
+            f"Total words: %s\n\n"
+            f"Click button below to proceed 👇"
         ),
         "ru": (
-                "f📊 Ваш еженедельный отчет по изученным словам:\n\n"
-                f"Всего слов: %s\n\n"
-                f"Для начала проверки нажмите кнопку ниже 👇"
+            "f📊 Ваш еженедельный отчет по изученным словам:\n\n"
+            f"Всего слов: %s\n\n"
+            f"Для начала проверки нажмите кнопку ниже 👇"
         ),
     },
 
@@ -358,6 +358,41 @@ WEEKLY_QUIZ = dict({
         "ru": "Нет ошибочных ответов",
     },
 
+    "quiestion_text": {
+        "en": (
+            "❓ Question {idx}/{total}\n\n"
+            "{sentence}\n\n"
+            "Choose the right answer:"
+        ),
+        "ru": (
+            "❓ Вопрос {idx}/{total)}\n\n"
+            "{sentence}\n\n"
+            "Выберите правильный вариант:"
+        ),
+    },
+    "right_answer": {
+        "en": (
+            "<b>✅ That`s correct!</b>\n\n"
+            "<b>Word:</b> <i>{correct_word}</i>"
+        ),
+        "ru": (
+            "<b>✅ Правильно!</b>\n\n"
+            "<b>Слово:</b> <i>{correct_word}</i>"
+        )
+    },
+    "wrong_answer": {
+        "en": (
+            "❌ Unfortunately, that`s incorrect\n\n",
+            "<b>Your answer:</b> <i>{selected_word}</i>\n",
+            "<b>Correct answer:</b> <i>{correct_word}</i>\n",
+        ),
+        "ru": (
+            "❌ К сожалению, неверно\n\n",
+            "<b>Ваш ответ: </b><i>{selected_word}</i>\n",
+            "<b>Правильный ответ: </b><i>{correct_word}</i>\n",
+        ),
+    },
+
     "congradulations": {
         "en": (
             "congrades! You completed this quiz for all the learned words this week.\n\n"
@@ -365,9 +400,9 @@ WEEKLY_QUIZ = dict({
             "Words which you made a mistake with: {wrongs\n}"
         ),
         "ru": (
-                "🎉 Поздравляем! Вы завершили проверку знаний по всем словам за эту неделю.\n\n"
-                "Слова, на которые вы ответили правильно: {rights}\n"
-                "Ошибочные ответы: {wrongs}\n"
+            "🎉 Поздравляем! Вы завершили проверку знаний по всем словам за эту неделю.\n\n"
+            "Слова, на которые вы ответили правильно: {rights}\n"
+            "Ошибочные ответы: {wrongs}\n"
         )
     }
 })

@@ -158,3 +158,12 @@ def begin_weekly_quiz_keyboard(lang_code, report_id):
     )
     builder.add(begin_quiz_button)
     return builder.as_markup(resize_keyboard=True)
+
+def show_word_options_keyboard(word_data):
+    builder = InlineKeyboardBuilder()
+    for opt_idx, option in enumerate(word_data["options"]):
+        # В callback_data мы передаем word_id и индекс варианта
+        call_back = f"quiz:{word_data['word_id']}:{opt_idx}"
+        builder.row(InlineKeyboardButton(text=option, callback_data=call_back))
+    builder.adjust(2)
+    return builder.as_markup(resize_keyboard=True)

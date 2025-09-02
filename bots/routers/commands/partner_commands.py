@@ -47,7 +47,7 @@ class PollingState(StatesGroup):
 class SearchStates(StatesGroup):
     waiting_for_criteria = State()
 
-@router.message(Command("menu"), IsBotFilter(BOT_TOKEN_PARTNER))
+@router.message(Command("menu", prefix='!/'), IsBotFilter(BOT_TOKEN_PARTNER))
 async def show_main_menu(message: Message, state: FSMContext, database: ResourcesMiddleware):
     """ Главное меню бота """
     data = await get_state_data(message, state, database)
@@ -67,7 +67,7 @@ async def show_main_menu(message: Message, state: FSMContext, database: Resource
         reply_markup=show_partner_menu_keyboard(lang_code)
     )
 
-@router.message(Command("start"), IsBotFilter(BOT_TOKEN_PARTNER))
+@router.message(Command("start", prefix='!/'), IsBotFilter(BOT_TOKEN_PARTNER))
 async def start(message: Message, state: FSMContext, database: ResourcesMiddleware):
 
     if await database.check_profile_exists(message.from_user.id):
@@ -208,7 +208,7 @@ async def cancel(message: Message, state: FSMContext, database: ResourcesMiddlew
     await database.add_users_location(message.from_user.id, "refused", "refused")
     await message.reply(text=msg, reply_markup=ReplyKeyboardRemove())
 
-@router.message(Command('location'), IsBotFilter(BOT_TOKEN_PARTNER))
+@router.message(Command('location', prefix='!/'), IsBotFilter(BOT_TOKEN_PARTNER))
 async def get_my_location(message: Message, database: ResourcesMiddleware):
     """ Обработчик команды /location """
     lang_code = message.from_user.language_code
@@ -226,7 +226,7 @@ async def get_my_location(message: Message, database: ResourcesMiddleware):
     )
 
 
-@router.message(Command("new_session"), IsBotFilter(BOT_TOKEN_PARTNER))
+@router.message(Command("new_session", prefix='!/'), IsBotFilter(BOT_TOKEN_PARTNER))
 async def new_session_handler(
         message: Message,
         state: FSMContext,

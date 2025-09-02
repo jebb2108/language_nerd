@@ -23,7 +23,7 @@ router.message.filter(IsBotFilter(BOT_TOKEN_MAIN))
 router.callback_query.filter(IsBotFilter(BOT_TOKEN_MAIN))
 
 
-@router.message(Command("menu"), IsBotFilter(BOT_TOKEN_MAIN))
+@router.message(Command("menu", prefix='!/'), IsBotFilter(BOT_TOKEN_MAIN))
 async def show_main_menu(message: Message, state: FSMContext, database: ResourcesMiddleware):
 
     await set_user_info(message, state, database)

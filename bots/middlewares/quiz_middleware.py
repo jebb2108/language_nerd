@@ -21,8 +21,13 @@ class QuizMiddleware:
 
         callback_data = callback_query.data
 
-        if callback_data.startswith('quiz:'):
+        if callback_data.startswith('start_report:'):
             # Добавляем ID сообщения в список
+            chat_id = callback_query.message.chat.id
+            message_id = callback_query.message.message_id
+            self.quiz_messages[chat_id].append(message_id)
+
+        elif callback_data.startswith('quiz:'):
             chat_id = callback_query.message.chat.id
             message_id = callback_query.message.message_id
             self.quiz_messages[chat_id].append(message_id)
@@ -39,4 +44,4 @@ class QuizMiddleware:
                     logger.error(f"Ошибка при удалении сообщения {mid}: {e}")
 
             # Очищаем список для чата
-            self.quiz_messages[chat_id] = []
+            del self.quiz_messages[chat_id]

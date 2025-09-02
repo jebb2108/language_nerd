@@ -26,7 +26,7 @@ router.message.filter(IsBotFilter(BOT_TOKEN_MAIN))
 router.callback_query.filter(IsBotFilter(BOT_TOKEN_MAIN))
 
 
-@router.message(Command("start"), IsBotFilter(BOT_TOKEN_MAIN))
+@router.message(Command("start", prefix='!/'), IsBotFilter(BOT_TOKEN_MAIN))
 async def start_with_polling(
         message: Message,
         state: FSMContext,
