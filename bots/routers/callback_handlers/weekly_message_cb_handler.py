@@ -110,8 +110,7 @@ async def handle_word_quiz(
     try:
         # Отправляем результат ответа (используем user_id)
         await callback.message.edit_reply_markup(reply_markup=None)
-        await callback.bot.send_message(
-            chat_id=user_id,
+        await callback.message.edit_text(
             text=msg,
             parse_mode=ParseMode.HTML,
         )
@@ -144,7 +143,7 @@ async def send_question(callback, state, database):
         msg = WEEKLY_QUIZ['congradulations'][lang_code]
         rights = ', '.join(data.get("right_choices", [])) or WEEKLY_QUIZ["no_rights"][lang_code]
         wrongs = ', '.join(data.get("wrong_choices", [])) or WEEKLY_QUIZ["no_wrongs"][lang_code]
-        await callback.bot.send_message(  # Используем bot из callback
+        await callback.message.edit_text(  # Используем bot из callback
             chat_id=user_id,
             text=msg.format(rights=rights, wrongs=wrongs),
             reply_markup=get_finish_button(lang_code),

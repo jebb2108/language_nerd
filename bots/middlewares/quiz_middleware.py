@@ -22,7 +22,7 @@ class QuizMiddleware:
         # Обрабатываем входящие сообщения и callback-запросы
         if isinstance(event, CallbackQuery):
             await self.process_callback_query(event)
-        if isinstance(event, Message) and event.from_user.is_bot:
+        elif isinstance(event, Message) and event.from_user.is_bot:
             await self.process_bot_message(event)
 
         return await handler(event, data)
