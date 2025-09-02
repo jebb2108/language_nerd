@@ -36,7 +36,7 @@ async def start_report_handler(
         # Извлекаю все ID слов конкретного отчета
         report_id = int(callback.data.split(":", 1)[1])
         word_ids = [ row['word_id'] for row in await database.get_words_ids(report_id) ]
-        lang_code = data.get('lang_code', await database.get_user_info(user_id)['lang_code'])
+        lang_code = data.get('lang_code', (await database.get_user_info(user_id))['lang_code'])
 
         if not word_ids:
             await callback.answer("Отчет не содержит слов для проверки.", show_alert=True)
