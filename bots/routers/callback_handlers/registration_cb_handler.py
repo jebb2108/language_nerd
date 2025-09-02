@@ -33,8 +33,7 @@ async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
 
-    await callback.bot.send_message(
-        chat_id=callback.message.chat.id,
+    await callback.message.edit_text(
         text=QUESTIONARY["lang_pick"][lang_code],
         reply_markup=show_language_keyboard(),
     )
