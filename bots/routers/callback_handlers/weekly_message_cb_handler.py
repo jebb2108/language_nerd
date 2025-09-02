@@ -12,7 +12,6 @@ from config import LOG_CONFIG  # noqa
 
 from translations import WEEKLY_QUIZ # noqa
 from keyboards.inline_keyboards import show_word_options_keyboard, get_finish_button # noqa
-from routers.commands.weekly_message_commands import router, logger # noqa
 
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='weekly_message_cb_handler')
