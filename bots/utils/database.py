@@ -407,7 +407,7 @@ class Database:
     async def get_weekly_words(self, report_id):
         async with self.acquire_connection() as conn:
             return await conn.fetch(
-                "SELECT * FROM reported_words WHERE report_id = $1",
+                "SELECT * FROM report_words WHERE report_id = $1",
                 report_id
             )
 
