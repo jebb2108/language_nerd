@@ -167,3 +167,12 @@ def show_word_options_keyboard(word_data):
         builder.row(InlineKeyboardButton(text=option, callback_data=call_back))
     builder.adjust(2)
     return builder.as_markup(resize_keyboard=True)
+
+def get_finish_button(lang_code):
+    builder = InlineKeyboardBuilder()
+    finish_button = InlineKeyboardButton(
+        text=WEEKLY_QUIZ['finish_button'][lang_code],
+        callback_data='end_quiz',
+    )
+    builder.add(finish_button)
+    return builder.as_markup(resize_keyboard=True)

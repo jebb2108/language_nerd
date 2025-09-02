@@ -411,5 +411,11 @@ WEEKLY_QUIZ = dict({
             "Слова, на которые вы ответили правильно: {rights}\n"
             "Ошибочные ответы: {wrongs}\n"
         )
+    },
+
+    "finish_button": {
+        "en": "End this quiz",
+        "ru": "Завершить тест",
     }
+
 })

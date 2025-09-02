@@ -10,7 +10,7 @@ from middlewares.resources_middleware import ResourcesMiddleware  # noqa
 from config import LOG_CONFIG  # noqa
 
 from translations import WEEKLY_QUIZ # noqa
-from keyboards.inline_keyboards import show_word_options_keyboard # noqa
+from keyboards.inline_keyboards import show_word_options_keyboard, get_finish_button # noqa
 from routers.commands.weekly_message_commands import router, logger # noqa
 
 logging.basicConfig(**LOG_CONFIG)
@@ -48,8 +48,7 @@ async def start_report_handler(
             wrong_choices=[],
         )
 
-        await callback.bot.send_message(
-            chat_id=user_id,
+        await callback.message.edit_text(
             text="Начинаем проверку знаний...",
         )
 
@@ -141,9 +140,7 @@ async def send_question(callback, state, database):
         await callback.bot.send_message(  # Используем bot из callback
             chat_id=user_id,
             text=msg.format(rights=rights, wrongs=wrongs),
-        )
-        await callback.message(
-            callback='end_quiz'
+            reply_markup=get_finish_button(lang_code),
         )
         return await state.clear()
 
