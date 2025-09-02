@@ -39,6 +39,8 @@ class QuizMiddleware:
 
         # Если quiz завершается, удаляем все сообщения
         elif callback_data in end_keys:
+            if callback_query == 'action_confirm':
+                self.quiz_messages[chat_id].append(callback_query.message.message_id)
             await self.cleanup_quiz_messages(chat_id, callback_query.bot)
 
     async def cleanup_quiz_messages(self, chat_id: int, bot):
