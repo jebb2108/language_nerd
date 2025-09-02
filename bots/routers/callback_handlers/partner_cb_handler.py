@@ -3,6 +3,7 @@ import logging
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
+
 from config import LOG_CONFIG, BOT_TOKEN_PARTNER # noqa
 from utils.filters import IsBotFilter # noqa
 from keyboards.inline_keyboards import get_back_to_partner_menu_keyboard, get_go_back_keyboard, show_partner_menu_keyboard # noqa
@@ -40,7 +41,7 @@ async def about_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
     data = await state.get_data()
-    lang_code = data.get("lang_code")
+    lang_code = data.get("lang_code", "en")
 
     await callback.message.edit_text(
         text=FIND_PARTNER["about"][lang_code],
@@ -53,9 +54,11 @@ async def go_back_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
     data = await state.get_data()
-    lang_code = data.get("lang_code")
+    lang_code = data.get("lang_code", "en")
+    name = data.get('first_name', 'User')
 
-    msg = FIND_PARTNER["full_intro"][lang_code]
+    msg = FIND_PARTNER["hello"][lang_code] + " <b>" + name + "</b>!\n\n"
+    msg +=  FIND_PARTNER["intro"][lang_code]
 
     await callback.message.edit_text(
         text=msg,
