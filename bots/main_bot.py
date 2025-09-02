@@ -9,7 +9,7 @@ from web_launcher import start_web_app
 from config import BOT_TOKEN_MAIN, LOG_CONFIG
 from middlewares.resources_middleware import ResourcesMiddleware
 from middlewares.rate_limit_middleware import RateLimitMiddleware
-from bots.middlewares.quiz_middleware import QuizMiddleware
+from middlewares.quiz_middleware import QuizMiddleware
 
 from routers import router as main_router
 
