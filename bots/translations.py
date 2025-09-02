@@ -364,7 +364,7 @@ WEEKLY_QUIZ = dict({
         "ru": "Нет ошибочных ответов",
     },
 
-    "quiestion_text": {
+    "question_text": {
         "en": (
             "❓ Question {idx}/{total}\n\n"
             "{sentence}\n\n"
