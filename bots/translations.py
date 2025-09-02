@@ -388,14 +388,15 @@ WEEKLY_QUIZ = dict({
     },
     "wrong_answer": {
         "en": (
-            "❌ Unfortunately, that`s incorrect\n\n",
-            "<b>Your answer:</b> <i>{selected_word}</i>\n",
-            "<b>Correct answer:</b> <i>{correct_word}</i>\n",
+            "❌ Unfortunately, that`s incorrect\n\n"
+            "<b>Your answer:</b> <i>{selected_word}</i>\n"
+            "<b>Correct answer:</b> <i>{correct_word}</i>\n"
         ),
+
         "ru": (
-            "❌ К сожалению, неверно\n\n",
-            "<b>Ваш ответ: </b><i>{selected_word}</i>\n",
-            "<b>Правильный ответ: </b><i>{correct_word}</i>\n",
+            "❌ К сожалению, неверно\n\n"
+            "<b>Ваш ответ: </b><i>{selected_word}</i>\n"
+            "<b>Правильный ответ: </b><i>{correct_word}</i>\n"
         ),
     },
 
