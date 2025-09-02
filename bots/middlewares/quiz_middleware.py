@@ -16,14 +16,11 @@ class QuizMiddleware:
 
     def __init__(self):
         self.quiz_messages = defaultdict(list)
-        self.quiz_active = defaultdict(bool)  # Отслеживание активных quiz по chat_id
 
     async def __call__(self, handler, event, data):
         # Обрабатываем входящие сообщения и callback-запросы
         if isinstance(event, CallbackQuery):
             await self.process_callback_query(event)
-        elif isinstance(event, Message) and event.from_user.is_bot:
-            await self.process_bot_message(event)
 
         return await handler(event, data)
 
@@ -32,27 +29,17 @@ class QuizMiddleware:
         chat_id = callback_query.message.chat.id
 
         # Ключи, которые запускают или являются частью quiz
-        quiz_keys = ["camefrom_", "start_report:", "quiz:"]
+        start_keys = ["camefrom_", "start_report:", "quiz:"]
         end_keys = ['action_confirm', 'end_quiz']
 
         # Если это начало quiz, помечаем чат как активный
-        if any(callback_data.startswith(key) for key in quiz_keys):
-            self.quiz_active[chat_id] = True
+        if any(callback_data.startswith(key) for key in start_keys):
             if callback_query.message.message_id not in self.quiz_messages[chat_id]:
                 self.quiz_messages[chat_id].append(callback_query.message.message_id)
 
         # Если quiz завершается, удаляем все сообщения
         elif callback_data in end_keys:
             await self.cleanup_quiz_messages(chat_id, callback_query.bot)
-            self.quiz_active[chat_id] = False
-
-    async def process_bot_message(self, message: Message):
-        chat_id = message.chat.id
-
-        # Если в чате активен quiz, сохраняем все сообщения от бота
-        if self.quiz_active.get(chat_id, False):
-            if message.message_id not in self.quiz_messages[chat_id]:
-                self.quiz_messages[chat_id].append(message.message_id)
 
     async def cleanup_quiz_messages(self, chat_id: int, bot):
         """Удаляет все сообщения quiz в указанном чате"""
