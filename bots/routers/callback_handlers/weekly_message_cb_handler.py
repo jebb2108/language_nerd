@@ -1,12 +1,10 @@
 import logging
-from gc import callbacks
 
 from aiogram import Router, types
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from routers.commands.weekly_message_commands import router, logger # noqa
 from middlewares.resources_middleware import ResourcesMiddleware  # noqa
 from config import LOG_CONFIG  # noqa
 
