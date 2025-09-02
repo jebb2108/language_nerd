@@ -104,22 +104,14 @@ async def go_to_main_menu(
     language = data.get("language", "")
     fluency = data.get("fluency", "in_making")
     lang_code = data.get("lang_code", "en")
-    message_mgr = data.get("message_mgr")
-    
+
     gratitude_msg = QUESTIONARY["gratitude"][lang_code]
     
-    orig_message = data.get('orig_message')
 
-    await callback.answer(
-        text=gratitude_msg,
-    )
-
-    await message_mgr.delete_previous_messages(
-        chat_id=callback.message.chat.id
-    )
+    await callback.answer(text=gratitude_msg)
     
     # Сохраняем нового пользователя в БД
     await database.create_user(user_id, username, first_name, camefrom, language, fluency, lang_code)
 
     # После сохранения сразу показываем главное меню
-    await show_main_menu(orig_message, state, database)
+    await show_main_menu(callback.message, state, database)

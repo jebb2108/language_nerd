@@ -303,7 +303,7 @@ FIND_PARTNER = dict({
     },
 
     "success": {
-        "en": "Thank you for your patience 🤝\nPress /menu to return to the main menu",
+        "en": "Thank you for your patience 🤝\nPress /menu to go to the main menu",
         "ru": "Спасибо за терпение 🤝\nНажми /menu, чтобы перейти в главное меню",
     },
 
@@ -318,8 +318,14 @@ FIND_PARTNER = dict({
     },
 
     'no_worries': {
-        "en": "No worries 🫶 We won't use your location",
-        "ru": "Ничего страшного 🫶 Мы не будем использовать твою геолокацию",
+        "en": (
+            "No worries 🫶 We won't use your location\n",
+            "Press /menu to go to the main menu",
+        ),
+        "ru": (
+            "Ничего страшного 🫶 Мы не будем использовать твою геолокацию\n"
+            "Нажми /menu, чтобы перейти в главное меню"
+        ),
     },
 
     "no_worries_dating": {

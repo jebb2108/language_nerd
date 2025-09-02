@@ -51,6 +51,7 @@ async def run():
     # Messages
     disp.message.middleware(resources)
     disp.message.middleware(rate_limit_middleware)
+    disp.message.middleware(quiz_middleware)
     # Callbacks
     disp.callback_query.middleware(quiz_middleware)
     disp.callback_query.middleware(resources)

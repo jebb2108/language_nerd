@@ -18,9 +18,14 @@ class QuizMiddleware:
         self.quiz_messages = defaultdict(list)
 
     async def __call__(self, handler, event, data):
+
+        # Проверяем, является ли событие callback query
+        if isinstance(event, CallbackQuery):
+            await self.process_callback_query(event)
+
         return await handler(event, data)
 
-    async def on_pre_process_callback_query(self, callback_query: CallbackQuery):
+    async def process_callback_query(self, callback_query: CallbackQuery):
 
         callback_data = callback_query.data
         chat_id = callback_query.message.chat.id
@@ -35,6 +40,7 @@ class QuizMiddleware:
         if callback_data == 'action_confirm' or callback_data == 'end_quiz':
             chat_id = callback_query.message.chat.id
             message_ids = self.quiz_messages.get(chat_id, [])
+            message_ids.append(message_id)
 
             # Удаляем все сообщения из списка
             for mid in message_ids:
@@ -42,6 +48,7 @@ class QuizMiddleware:
                     await callback_query.bot.delete_message(chat_id, mid)
                 except Exception as e:
                     logger.error(f"Ошибка при удалении сообщения {mid}: {e}")
+
 
             # Очищаем список для чата
             del self.quiz_messages[chat_id]

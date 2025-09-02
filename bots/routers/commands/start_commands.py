@@ -39,7 +39,9 @@ async def start_with_polling(
     # Проверяем, есть ли запись в users
     user_id = message.from_user.id
     username = message.from_user.username
+
     if not username: username = "NO USERNAME"
+
     first_name = message.from_user.first_name
     lang_code = message.from_user.language_code or "en"
     user_exists = await database.check_user_exists(user_id)
@@ -53,7 +55,6 @@ async def start_with_polling(
         username=username,
         first_name=first_name,
         lang_code=lang_code,
-        orig_message=message,
     )
 
     await message.bot.send_message(
@@ -61,5 +62,3 @@ async def start_with_polling(
         text=QUESTIONARY["intro"][lang_code],
         reply_markup=show_where_from_keyboard(lang_code),
     )
-
-

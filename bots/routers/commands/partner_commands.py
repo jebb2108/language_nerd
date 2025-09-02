@@ -1,11 +1,9 @@
 import logging
 import re
-from json import dumps
 
-import aiohttp
 import asyncio
 import json
-from datetime import datetime, time
+from datetime import datetime
 
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
@@ -25,6 +23,8 @@ from config import LOG_CONFIG  # noqa
 
 from keyboards.inline_keyboards import show_partner_menu_keyboard, open_chat_keyboard  # noqa
 from keyboards.regular_keyboards import show_location_keyboard, show_dating_keyboard  # noqa
+
+from utils.access_data_from_storage import get_storage_data # noqa
 
 # Инициализируем роутер
 router = Router(name=__name__)
@@ -52,7 +52,7 @@ class SearchStates(StatesGroup):
 @router.message(Command("menu", prefix='!/'), IsBotFilter(BOT_TOKEN_PARTNER))
 async def show_main_menu(message: Message, state: FSMContext, database: ResourcesMiddleware):
     """ Главное меню бота """
-    data = await get_state_data(message, state, database)
+    data = await get_storage_data(message, state, database)
     name = data.get("name")
     lang_code = data.get("lang_code")
 
@@ -73,7 +73,7 @@ async def show_main_menu(message: Message, state: FSMContext, database: Resource
 @router.message(Command("start", prefix='!/'), IsBotFilter(BOT_TOKEN_PARTNER))
 async def start(message: Message, state: FSMContext, database: ResourcesMiddleware):
     if await database.check_profile_exists(message.from_user.id):
-        await show_main_menu(message, state, database)
+        return await show_main_menu(message, state, database)
 
     user_id = message.from_user.id
     lang_code = message.from_user.language_code
@@ -94,7 +94,7 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
 
 @router.message(PollingState.waiting_for_name, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_name(message: Message, state: FSMContext, database: ResourcesMiddleware):
-    data = await get_state_data(message, state, database)
+    data = await state.get_data()
     lang_code = data.get("lang_code", "en")
 
     if (len(message.text) <= 50 and
@@ -110,12 +110,11 @@ async def process_name(message: Message, state: FSMContext, database: ResourcesM
 
 @router.message(PollingState.waiting_for_bday, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_age(message: Message, state: FSMContext, database: ResourcesMiddleware):
-    data = await get_state_data(message, state, database)
+    data = await state.get_data()
     lang_code = data.get("lang_code", "en")
 
     if re.match(r'\d{1,2}\.\d{1,2}\.\d{4}', message.text):
-        date_obj = datetime.strptime(message.text, '%d.%m.%Y').date()
-        await state.update_data(bday=date_obj)
+        await state.update_data(bday=message.text)
         await message.answer(text=QUESTIONARY["need_intro"][lang_code], parse_mode=ParseMode.HTML)
         return await state.set_state(PollingState.waiting_for_intro)
 
@@ -125,7 +124,7 @@ async def process_age(message: Message, state: FSMContext, database: ResourcesMi
 
 @router.message(PollingState.waiting_for_intro, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_intro(message: Message, state: FSMContext, database: ResourcesMiddleware):
-    data = await get_state_data(message, state, database)
+    data = await state.get_data()
     lang_code = data.get("lang_code", "en")
 
     if re.search(r'\S{10,500}', message.text):
@@ -147,11 +146,12 @@ async def process_intro(message: Message, state: FSMContext, database: Resources
     lambda message: message.text == FIND_PARTNER["yes_to_dating"][message.from_user.language_code]
 )
 async def agreed_to_dating_handler(message: Message, state: FSMContext, database: ResourcesMiddleware):
-    data = await get_state_data(message, state, database)
+    data = await state.get_data()
     # Достаем нужные данные о пользователе
     user_id = data.get("user_id", 0)
     name = data.get("name", "default")
-    birthday = data.get("bday", None)
+    birthday = datetime.strptime(
+        data.get("bday", '01.01.1800'), '%d.%m.%Y').date()
     intro = data.get("intro", "non-existent")
     lang_code = data.get("lang_code", "en")
     # Сохраняем профиль
@@ -173,11 +173,12 @@ async def agreed_to_dating_handler(message: Message, state: FSMContext, database
     lambda message: message.text == FIND_PARTNER["no_to_dating"][message.from_user.language_code]
 )
 async def disagreed_to_dating_handler(message: Message, state: FSMContext, database: ResourcesMiddleware):
-    data = await get_state_data(message, state, database)
+    data = await state.get_data()
     # Достаем нужные данные о пользователе
     user_id = data.get("user_id", 0)
     name = data.get("name", "default")
-    birthday = data.get("bday", None)
+    birthday = datetime.strptime(
+        data.get("bday", '01.01.1800'), '%d.%m.%Y').date()
     intro = data.get("intro", "non-existent")
     lang_code = data.get("lang_code", "en")
     # Сохраняем профиль
@@ -189,7 +190,7 @@ async def disagreed_to_dating_handler(message: Message, state: FSMContext, datab
 @router.message(PollingState.waiting_for_location, F.location, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_location(message: Message, state: FSMContext, database: ResourcesMiddleware):
     """Обработчик локации"""
-    data = await get_state_data(message, state, database)
+    data = await state.get_data()
     user_id = data.get("user_id", 0)
     lang_code = data.get("lang_code", "en")
     # Сохраняем координаты в БД
@@ -238,7 +239,7 @@ async def new_session_handler(
         database: ResourcesMiddleware
 ):
     """Обработчик команды /new_session - запускает поиск партнера"""
-    data = await get_state_data(message, state, database)
+    data = await get_storage_data(message, state, database)
     user_id = data.get("user_id", 0)
     username = data.get("username", "")
     language = data.get("language")
@@ -376,61 +377,3 @@ async def echo(message: Message, rate_limit_info: RateLimitInfo):
         text=f"Your message: {message.text}\n"
              f"Rate limit info: {count} messages at {first_message}",
     )
-
-
-async def set_user_info(message: Message, state: FSMContext, database: ResourcesMiddleware):
-    """ Гарантирует, что машина состояние имеет все данные о пользователе """
-    user_id = message.from_user.id
-
-    if await database.check_user_exists(user_id):
-        user_info = await database.get_user_info(user_id)
-        username = user_info["username"]
-        language = user_info["language"]
-        fluency = user_info["fluency"]
-        lang_code = user_info["lang_code"]
-        if await database.check_profile_exists(user_id):
-            users_profile_info = await database.get_users_profile(user_id)
-            prefered_name = users_profile_info["prefered_name"]
-            birthday = users_profile_info["birthday"]
-            age_delta = datetime.now() - datetime.combine(birthday, time.min)
-            age_years = age_delta.days // 365
-            status = users_profile_info["status"]
-            about = users_profile_info["about"]
-
-            await state.update_data(
-                user_id=user_id,
-                username=username,
-                age=age_years,
-                name=prefered_name,
-                language=language,
-                fluency=fluency,
-                status=status,
-                about=about,
-                lang_code=lang_code,
-            )
-            return
-
-        prefered_name = user_info["first_name"]
-        await state.update_data(
-            user_id=user_id,
-            name=prefered_name,
-            status='unknown',
-            language=language,
-            fluency=fluency,
-            about='non-existent',
-            lang_code=lang_code,
-        )
-        return
-
-
-async def get_state_data(message: Message, state: FSMContext, database: ResourcesMiddleware):
-    """Достаем нужные данные о пользователе"""
-    data = await state.get_data()
-    keys = ['user_id', 'username', 'first_name', 'lang_code']
-    data_status = all([ data.get(key, None) for key in keys ])
-
-    if not data_status:
-        await set_user_info(message, state, database)
-        return await state.get_data()
-
-    return await state.get_data()
