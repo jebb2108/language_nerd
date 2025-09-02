@@ -132,7 +132,7 @@ async def send_question(callback, state, database):
 
     logger.debug(f"Data: {data}")
 
-    if not all(key in data for key in ["current_index", "word_ids", "user_id", "lang_code"]):
+    if not all(key in data.keys() for key in ["current_index", "word_ids", "user_id", "lang_code"]):
         return logger.error("Отсутствуют ключи в состоянии FSM (Redis)!")
 
     if idx >= len(word_ids):
