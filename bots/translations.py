@@ -371,7 +371,7 @@ WEEKLY_QUIZ = dict({
             "Choose the right answer:"
         ),
         "ru": (
-            "❓ Вопрос {idx}/{total)}\n\n"
+            "❓ Вопрос {idx}/{total}\n\n"
             "{sentence}\n\n"
             "Выберите правильный вариант:"
         ),
