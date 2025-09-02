@@ -404,7 +404,7 @@ WEEKLY_QUIZ = dict({
         "en": (
             "congrades! You completed this quiz for all the learned words this week.\n\n"
             "Words which you chose right: {rights}\n"
-            "Words which you made a mistake with: {wrongs\n}"
+            "Words which you made a mistake with: {wrongs}\n"
         ),
         "ru": (
             "🎉 Поздравляем! Вы завершили проверку знаний по всем словам за эту неделю.\n\n"
