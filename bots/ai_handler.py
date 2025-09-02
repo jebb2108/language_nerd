@@ -25,7 +25,7 @@ from aiogram.exceptions import (
 
 from middlewares.resources_middleware import ResourcesMiddleware
 from routers.commands.weekly_message_commands import send_user_report
-from utils.database import ReportDatabase
+from utils.database import Database
 from config import (
     AI_API_KEY,
     AI_API_URL,
@@ -255,7 +255,7 @@ def parse_deepseek_response(content, original_word):
 
 
 # ========== ОСНОВНЫЕ ФУНКЦИИ ОБРАБОТКИ ==========
-async def process_user_report(user_id: int, words: List[str], session, db: ReportDatabase) -> int:
+async def process_user_report(user_id: int, words: List[str], session, db: Database) -> int:
     """Обрабатывает отчет для одного пользователя"""
 
     if await db.is_user_blocked(user_id):
@@ -305,7 +305,7 @@ async def process_user_report(user_id: int, words: List[str], session, db: Repor
     return len(report_data)
 
 
-async def generate_weekly_reports(db: ReportDatabase, session):
+async def generate_weekly_reports(db: Database, session):
     """Генерирует недельные отчеты с ограничением скорости"""
     user_words = await db.get_weekly_words_by_user()
 
@@ -351,7 +351,7 @@ async def generate_weekly_reports(db: ReportDatabase, session):
     logger.info(f"Generated reports for {processed_users} users")
 
 
-async def send_pending_reports(bot: Bot, db: ReportDatabase):
+async def send_pending_reports(bot: Bot, db: Database):
     reports = await db.get_pending_reports()
     if not reports:
         logger.info("Нет ожидающих отчетов")
@@ -396,7 +396,7 @@ async def send_pending_reports(bot: Bot, db: ReportDatabase):
     # для последующей попытки, или оповещения, если постоянные сбои для определенных пользователей.
 
 
-async def process_report_delivery(bot: Bot, report_id: int, user_id: int, db: ReportDatabase) -> bool:
+async def process_report_delivery(bot: Bot, report_id: int, user_id: int, db: Database) -> bool:
     global TELEGRAM_RETRY_UNTIL_TIME, TELEGRAM_LAST_REQUEST_TIME
     async with TELEGRAM_API_SEMAPHORE:
         # Проактивное ограничение скорости: принудительная минимальная задержка между запросами
@@ -467,7 +467,7 @@ async def process_report_delivery(bot: Bot, report_id: int, user_id: int, db: Re
             logger.critical(f"Неожиданная ошибка при доставке отчета для пользователя {user_id} (отчет {report_id}): {e}", exc_info=True)
             return False
 
-async def cleanup_old_reports(db: ReportDatabase, days: int = 30) -> bool:
+async def cleanup_old_reports(db: Database, days: int = 30) -> bool:
     """Очищает старые отчеты и связанные с ними данные"""
     try:
         logger.info(f"Starting cleanup for reports older than {days} days")
@@ -492,7 +492,7 @@ async def main():
 
     try:
         # Инициализируем базу данных для отчетов
-        db = ReportDatabase(resources.db_pool)
+        db = Database(resources.db_pool)
         session = resources.session
 
         if '--generate' in sys.argv:
