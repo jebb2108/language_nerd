@@ -47,19 +47,16 @@ async def start_with_polling(
         # если пользователь есть — сразу меню
         return await show_main_menu(message, state, database)
 
-    # Создаем экземпляр класса MessageManager
-    message_mgr = MessageManager(bot=message.bot, state=state)
     # Обновляем данные в state
     await state.update_data(
         user_id=user_id,
         username=username,
         first_name=first_name,
         lang_code=lang_code,
-        message_mgr=message_mgr,
         orig_message=message,
     )
 
-    await message_mgr.send_message_with_save(
+    await message.bot.send_message(
         chat_id=message.chat.id,
         text=QUESTIONARY["intro"][lang_code],
         reply_markup=show_where_from_keyboard(lang_code),

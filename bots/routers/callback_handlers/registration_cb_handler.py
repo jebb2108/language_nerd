@@ -1,4 +1,5 @@
 import logging
+from pyexpat.errors import messages
 
 from aiogram import Router, F, types
 from aiogram.fsm.context import FSMContext
@@ -31,9 +32,8 @@ async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
 
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
-    message_mgr = data["message_mgr"]
 
-    await message_mgr.send_message_with_save(
+    await callback.bot.send_message(
         chat_id=callback.message.chat.id,
         text=QUESTIONARY["lang_pick"][lang_code],
         reply_markup=show_language_keyboard(),

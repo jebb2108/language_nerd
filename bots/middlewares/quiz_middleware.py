@@ -23,19 +23,16 @@ class QuizMiddleware:
     async def on_pre_process_callback_query(self, callback_query: CallbackQuery):
 
         callback_data = callback_query.data
+        chat_id = callback_query.message.chat.id
+        message_id = callback_query.message.message_id
+        keys = ["camefrom_", "start_report:", "qiuz:", ]
 
-        if callback_data.startswith('start_report:'):
-            # Добавляем ID сообщения в список
-            chat_id = callback_query.message.chat.id
-            message_id = callback_query.message.message_id
-            self.quiz_messages[chat_id].append(message_id)
+        for key in keys:
+            if callback_data.startswith(key):
+                self.quiz_messages[chat_id].append(message_id)
 
-        elif callback_data.startswith('quiz:'):
-            chat_id = callback_query.message.chat.id
-            message_id = callback_query.message.message_id
-            self.quiz_messages[chat_id].append(message_id)
 
-        elif callback_data == 'end_quiz':
+        if callback_data == 'action_confirm' or callback_data == 'end_quiz':
             chat_id = callback_query.message.chat.id
             message_ids = self.quiz_messages.get(chat_id, [])
 
