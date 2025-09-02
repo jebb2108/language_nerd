@@ -1,4 +1,5 @@
 import logging
+from gc import callbacks
 
 from aiogram import Router, types
 from aiogram.enums import ParseMode
@@ -155,3 +156,8 @@ async def send_question(callback, state, database):
         text=WEEKLY_QUIZ['question_text'][lang_code].format(idx=new_indx, total=total, sentence=sentence),
         reply_markup=show_word_options_keyboard(word_data)
     )
+
+@router.callback_query(lambda callback: callback.data.startswith("end_quiz"))
+async def do_nothing(callback: CallbackQuery):
+    await callback.answer()
+    return
