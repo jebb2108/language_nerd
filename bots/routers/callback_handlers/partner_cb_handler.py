@@ -55,7 +55,7 @@ async def go_back_handler(callback: CallbackQuery, state: FSMContext):
 
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
-    name = data.get('first_name', 'User')
+    name = data.get('name', 'User')
 
     msg = FIND_PARTNER["hello"][lang_code] + " <b>" + name + "</b>!\n\n"
     msg +=  FIND_PARTNER["intro"][lang_code]

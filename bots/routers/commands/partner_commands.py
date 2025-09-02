@@ -53,10 +53,10 @@ class SearchStates(StatesGroup):
 async def show_main_menu(message: Message, state: FSMContext, database: ResourcesMiddleware):
     """ Главное меню бота """
     data = await get_storage_data(message, state, database)
-    name = data.get("name")
+    prefered_name = data.get("name")
     lang_code = data.get("lang_code")
 
-    greeting = FIND_PARTNER["hello"][lang_code] + " <b>" + name + "</b>!"
+    greeting = FIND_PARTNER["hello"][lang_code] + " <b>" + prefered_name + "</b>!"
     intro = FIND_PARTNER["intro"][lang_code]
     await state.update_data(
         lang_code=lang_code,
