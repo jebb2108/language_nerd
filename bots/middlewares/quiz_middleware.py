@@ -51,4 +51,4 @@ class QuizMiddleware:
 
 
             # Очищаем список для чата
-            del self.quiz_messages[chat_id]
+            self.quiz_messages[chat_id] = []
