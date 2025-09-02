@@ -31,15 +31,14 @@ async def send_command_to_bot(command='!generate_reports'):
 async def main():
     """Основная асинхронная точка входа"""
     try:
-
-        if '--generate' in sys.argv:
-            logger.info("Generating weekly reports with DeepSeek...")
-            await send_command_to_bot()
-        elif '--cleanup' in sys.argv:
+        if '--cleanup' in sys.argv:
             logger.info("Cleaning up old reports...")
             await send_command_to_bot('!clean_up_reports')
         elif '--send' in sys.argv:
             await send_command_to_bot('!send_reports')
+        else:
+            logger.info("Generating weekly reports with DeepSeek...")
+            await send_command_to_bot()
 
     except Exception as e:
         logger.critical(f"Critical error: {e}", exc_info=True)
@@ -47,4 +46,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(send_command_to_bot())
+    asyncio.run(main())
