@@ -144,7 +144,6 @@ async def send_question(callback, state, database):
         rights = ', '.join(data.get("right_choices", [])) or WEEKLY_QUIZ["no_rights"][lang_code]
         wrongs = ', '.join(data.get("wrong_choices", [])) or WEEKLY_QUIZ["no_wrongs"][lang_code]
         await callback.message.edit_text(  # Используем bot из callback
-            chat_id=user_id,
             text=msg.format(rights=rights, wrongs=wrongs),
             reply_markup=get_finish_button(lang_code),
         )
