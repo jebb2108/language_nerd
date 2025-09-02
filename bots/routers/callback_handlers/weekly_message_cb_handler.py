@@ -94,7 +94,7 @@ async def handle_word_quiz(
         await state.update_data(right_choices=r_choices)
 
     else:
-        msg = WEEKLY_QUIZ['right_answer'][lang_code].format(
+        msg = WEEKLY_QUIZ['wrong_answer'][lang_code].format(
             selected_word=selected_word,
             correct_word=correct_word
         )
