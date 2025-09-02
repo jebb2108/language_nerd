@@ -95,6 +95,7 @@ async def go_to_main_menu(
 ):
     
     await callback.answer()
+    await callback.message.delete()
 
     data = await state.get_data()
     user_id = data.get("user_id", 0)
