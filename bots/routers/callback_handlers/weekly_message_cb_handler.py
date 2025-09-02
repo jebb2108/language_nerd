@@ -139,7 +139,7 @@ async def send_question(callback, state, database):
         rights = ', '.join(data.get("right_choices", [])) or WEEKLY_QUIZ["no_rights"][lang_code]
         wrongs = ', '.join(data.get("wrong_choices", [])) or WEEKLY_QUIZ["no_wrongs"][lang_code]
         await callback.bot.send_message(  # Используем bot из callback
-            user_id=user_id,
+            chat_id=user_id,
             text=msg.format(rights=rights, wrongs=wrongs),
             callback='end_quiz',
         )
@@ -152,7 +152,7 @@ async def send_question(callback, state, database):
 
     sentence, new_indx, total = word_data['sentence'], idx+1, len(word_ids)
     await callback.bot.send_message(
-        user_id=user_id,
+        chat_id=user_id,
         text=WEEKLY_QUIZ['question_text'][lang_code].format(idx=new_indx, total=total, sentence=sentence),
         reply_markup=show_word_options_keyboard(word_data)
     )
