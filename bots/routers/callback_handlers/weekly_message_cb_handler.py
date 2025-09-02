@@ -141,7 +141,9 @@ async def send_question(callback, state, database):
         await callback.bot.send_message(  # Используем bot из callback
             chat_id=user_id,
             text=msg.format(rights=rights, wrongs=wrongs),
-            callback='end_quiz',
+        )
+        await callback.message(
+            callback='end_quiz'
         )
         return await state.clear()
 
