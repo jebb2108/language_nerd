@@ -10,7 +10,7 @@ logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='run_task_handler')
 
 
-async def send_command_to_bot(command='!generate_reports'):
+async def send_command_to_bot(command='!send_reports'):
     bot_token = os.getenv('BOT_TOKEN_MAIN')
     chat_id = os.getenv('ADMIN_ID')
 
@@ -19,7 +19,6 @@ async def send_command_to_bot(command='!generate_reports'):
         'chat_id': chat_id,
         'text': command
     }
-
     async with aiohttp.ClientSession() as session:
         async with session.post(url, data=payload) as resp:
             if resp.status == 200:
@@ -31,14 +30,15 @@ async def send_command_to_bot(command='!generate_reports'):
 async def main():
     """Основная асинхронная точка входа"""
     try:
-        if '--cleanup' in sys.argv:
+        if '--generate' in sys.argv:
+            logger.info("Generating weekly reports with DeepSeek...")
+            await send_command_to_bot('!generate_reports')
+        elif '--cleanup' in sys.argv:
             logger.info("Cleaning up old reports...")
             await send_command_to_bot('!clean_up_reports')
-        elif '--send' in sys.argv:
-            await send_command_to_bot('!send_reports')
         else:
-            logger.info("Generating weekly reports with DeepSeek...")
             await send_command_to_bot()
+
 
     except Exception as e:
         logger.critical(f"Critical error: {e}", exc_info=True)
