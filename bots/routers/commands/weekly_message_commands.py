@@ -40,7 +40,7 @@ async def send_user_report(
         # Извлекаем ID отправленного сообщения
         await bot.send_message(
             chat_id=user_id,
-            text=WEEKLY_QUIZ['weekly_report'][lang_code],
+            text=WEEKLY_QUIZ['weekly_report'][lang_code].format(total=len(words)),
             reply_markup=begin_weekly_quiz_keyboard(lang_code, report_id)
         )
 

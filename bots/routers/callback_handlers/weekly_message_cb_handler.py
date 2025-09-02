@@ -46,7 +46,6 @@ async def start_report_handler(
             current_index=0,
             right_choices=[],
             wrong_choices=[],
-            db_pool=database,
         )
 
         await callback.bot.send_message(
@@ -60,7 +59,6 @@ async def start_report_handler(
 
     except Exception as e:
         logger.error(f"Ошибка в start_report_handler: {e}", exc_info=True)
-        await callback.answer("Ошибка запуска проверки", show_alert=True)
 
 
 @router.callback_query(lambda callback: callback.data.startswith("quiz:"))

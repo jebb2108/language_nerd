@@ -343,14 +343,14 @@ WEEKLY_QUIZ = dict({
 
     "weekly_report": {
         "en": (
-            f"📊 Your weekly report with learned words:\n\n"
-            f"Total words: %s\n\n"
-            f"Click button below to proceed 👇"
+            "📊 Your weekly report with learned words:\n\n"
+            "Total words: {total}\n\n"
+            "Click button below to proceed 👇"
         ),
         "ru": (
-            "f📊 Ваш еженедельный отчет по изученным словам:\n\n"
-            f"Всего слов: %s\n\n"
-            f"Для начала проверки нажмите кнопку ниже 👇"
+            "📊 Ваш еженедельный отчет по изученным словам:\n\n"
+            "Всего слов: {total}\n\n"
+            "Для начала проверки нажмите кнопку ниже 👇"
         ),
     },
 
