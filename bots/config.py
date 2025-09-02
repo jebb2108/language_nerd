@@ -6,6 +6,8 @@ from asyncio import Semaphore
 
 load_dotenv(".env")
 
+ADMIN_ID = os.getenv('ADMIN_ID')
+
 # Конфигурация
 BOT_TOKEN_MAIN = os.getenv('BOT_TOKEN_MAIN')
 BOT_TOKEN_PARTNER = os.getenv('BOT_TOKEN_PARTNER')
