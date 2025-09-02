@@ -163,7 +163,7 @@ QUESTIONARY = dict(
                 "✨ <b>Dictionary</b> — save and learn new words easily\n"
                 "🤝 <b>Practice</b> — chat with other students (coming soon!)\n"
                 "🛠 <b>Technical support</b> — I'll help if something breaks\n\n"
-                "Just click the button below and choose what interests you! 😊"
+                "Just choose what interests you by clicking one of the buttons below! 😊"
             ),
             "ru": (
                 "Очень рад видеть тебя здесь!\n\n"
@@ -171,7 +171,7 @@ QUESTIONARY = dict(
                 "✨ <b>Словарь</b> — сохраняй и учи новые слова легко\n"
                 "🤝 <b>Практика</b> — общайся с другими учениками (скоро запуск!)\n"
                 "🛠 <b>Техподдержка</b> — помогу, если что-то сломалось\n\n"
-                "Просто нажми на кнопку ниже и выбери, что тебя интересует! 😊"
+                "Просто выбери, что тебя интересует, нажав на одну из кнопок ниже! 😊"
             ),
         },
 
