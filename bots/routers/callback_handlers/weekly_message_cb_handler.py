@@ -5,15 +5,13 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from routers.commands.weekly_message_commands import router, logger, send_question  # noqa
+from routers.commands.weekly_message_commands import router, logger # noqa
 from middlewares.resources_middleware import ResourcesMiddleware  # noqa
 from config import LOG_CONFIG  # noqa
 
 from translations import WEEKLY_QUIZ # noqa
-from routers.commands.weekly_message_commands import send_question # noqa
-
-from bots.keyboards.inline_keyboards import show_word_options_keyboard
-from bots.routers.commands.weekly_message_commands import router, logger
+from keyboards.inline_keyboards import show_word_options_keyboard # noqa
+from routers.commands.weekly_message_commands import router, logger # noqa
 
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='weekly_message_cb_handler')

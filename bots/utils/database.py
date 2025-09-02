@@ -35,6 +35,9 @@ class Database:
         except Exception as e:
             logger.error(f"Database initialization failed: {e}")
 
+        finally:
+            return self
+
     async def __create_words(self):
         async with self.acquire_connection() as conn:
             await conn.execute("""

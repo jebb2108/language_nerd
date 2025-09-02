@@ -18,13 +18,18 @@ logger = logging.getLogger(name='main_bot')
 
 # Глобальная переменная с ресурсами бота
 resources = None
+quiz_middleware = None
+rate_limit_middleware = None
 
 
 async def init_resources() -> None:
-    global resources
+    global resources, quiz_middleware, rate_limit_middleware
     """Запуск глобальных ресурсов """
     # Аргументы к on_startup - время в минутах
+    # Создаю менеджера сообщений
+    quiz_middleware = QuizMiddleware()
     resources = ResourcesMiddleware()
+    rate_limit_middleware = RateLimitMiddleware()
     await resources.on_startup(10, 60)
 
 # noinspection PyUnresolvedReferences
@@ -42,15 +47,15 @@ async def run():
     # Запуск веб-сервера
     web_runner = await start_web_app(resources.access_memory('database'))
 
-    # Создаю менеджера сообщений
-    quiz_middleware = QuizMiddleware
-
     # Регистрация middleware
+    # Messages
     disp.message.middleware(resources)
-    disp.callback_query.middleware(resources)
+    disp.message.middleware(rate_limit_middleware)
+    # Callbacks
     disp.callback_query.middleware(quiz_middleware)
+    disp.callback_query.middleware(resources)
+    # Inline buttons
     disp.inline_query.middleware(resources)
-    disp.message.middleware(RateLimitMiddleware())
 
     # Добавление роутеров
     disp.include_router(main_router)

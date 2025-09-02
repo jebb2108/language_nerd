@@ -10,7 +10,6 @@ from middlewares.resources_middleware import ResourcesMiddleware # noqa
 
 from translations import QUESTIONARY # noqa
 from utils.filters import IsBotFilter # noqa
-from utils.message_mgr import MessageManager # noqa
 from config import BOT_TOKEN_MAIN, LOG_CONFIG # noqa
 from keyboards.inline_keyboards import show_where_from_keyboard, show_language_keyboard, confirm_choice_keyboard # noqa
 from routers.commands.menu_commands import show_main_menu  # noqa

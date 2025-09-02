@@ -38,8 +38,7 @@ async def run():
     disp = Dispatcher(storage=storage) if storage else Dispatcher()
 
     resources = ResourcesMiddleware()
-    db = await resources.on_startup()
-    await db.initialize()
+    await resources.on_startup()
 
     disp.include_router(main_router)
     disp.message.middleware(resources)

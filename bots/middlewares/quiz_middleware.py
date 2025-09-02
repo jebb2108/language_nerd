@@ -17,6 +17,9 @@ class QuizMiddleware:
     def __init__(self):
         self.quiz_messages = defaultdict(list)
 
+    async def __call__(self, handler, event, data):
+        return await handler(event, data)
+
     async def on_pre_process_callback_query(self, callback_query: CallbackQuery):
 
         callback_data = callback_query.data

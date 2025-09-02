@@ -15,16 +15,16 @@ from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardRemove
 from aiogram.enums import ParseMode
 
-from config import BOT_TOKEN_PARTNER # noqa
-from middlewares.resources_middleware import ResourcesMiddleware # noqa
-from middlewares.rate_limit_middleware import RateLimitMiddleware, RateLimitInfo # noqa
-from utils.filters import IsBotFilter # noqa
+from config import BOT_TOKEN_PARTNER  # noqa
+from middlewares.resources_middleware import ResourcesMiddleware  # noqa
+from middlewares.rate_limit_middleware import RateLimitMiddleware, RateLimitInfo  # noqa
+from utils.filters import IsBotFilter  # noqa
 
-from translations import QUESTIONARY, BUTTONS, FIND_PARTNER # noqa
-from config import LOG_CONFIG # noqa
+from translations import QUESTIONARY, BUTTONS, FIND_PARTNER  # noqa
+from config import LOG_CONFIG  # noqa
 
-from keyboards.inline_keyboards import show_partner_menu_keyboard, open_chat_keyboard # noqa
-from keyboards.regular_keyboards import show_location_keyboard, show_dating_keyboard # noqa
+from keyboards.inline_keyboards import show_partner_menu_keyboard, open_chat_keyboard  # noqa
+from keyboards.regular_keyboards import show_location_keyboard, show_dating_keyboard  # noqa
 
 # Инициализируем роутер
 router = Router(name=__name__)
@@ -44,8 +44,10 @@ class PollingState(StatesGroup):
     waiting_for_dating = State()
     waiting_for_location = State()
 
+
 class SearchStates(StatesGroup):
     waiting_for_criteria = State()
+
 
 @router.message(Command("menu", prefix='!/'), IsBotFilter(BOT_TOKEN_PARTNER))
 async def show_main_menu(message: Message, state: FSMContext, database: ResourcesMiddleware):
@@ -67,9 +69,9 @@ async def show_main_menu(message: Message, state: FSMContext, database: Resource
         reply_markup=show_partner_menu_keyboard(lang_code)
     )
 
+
 @router.message(Command("start", prefix='!/'), IsBotFilter(BOT_TOKEN_PARTNER))
 async def start(message: Message, state: FSMContext, database: ResourcesMiddleware):
-
     if await database.check_profile_exists(message.from_user.id):
         await show_main_menu(message, state, database)
 
@@ -92,7 +94,6 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
 
 @router.message(PollingState.waiting_for_name, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_name(message: Message, state: FSMContext, database: ResourcesMiddleware):
-
     data = await get_state_data(message, state, database)
     lang_code = data.get("lang_code", "en")
 
@@ -106,9 +107,9 @@ async def process_name(message: Message, state: FSMContext, database: ResourcesM
     msg = QUESTIONARY["wrong_name"][lang_code]
     await message.reply(text=msg, parse_mode=ParseMode.HTML)
 
+
 @router.message(PollingState.waiting_for_bday, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_age(message: Message, state: FSMContext, database: ResourcesMiddleware):
-
     data = await get_state_data(message, state, database)
     lang_code = data.get("lang_code", "en")
 
@@ -124,7 +125,6 @@ async def process_age(message: Message, state: FSMContext, database: ResourcesMi
 
 @router.message(PollingState.waiting_for_intro, IsBotFilter(BOT_TOKEN_PARTNER))
 async def process_intro(message: Message, state: FSMContext, database: ResourcesMiddleware):
-
     data = await get_state_data(message, state, database)
     lang_code = data.get("lang_code", "en")
 
@@ -164,7 +164,9 @@ async def agreed_to_dating_handler(message: Message, state: FSMContext, database
         return await state.set_state(PollingState.waiting_for_location)
 
     # Если локация каким-то образом существует, то переходим в главное меню
-    else: await show_main_menu(message, state, database)
+    else:
+        await show_main_menu(message, state, database)
+
 
 @router.message(
     PollingState.waiting_for_dating, IsBotFilter(BOT_TOKEN_PARTNER),
@@ -200,13 +202,14 @@ async def process_location(message: Message, state: FSMContext, database: Resour
 
 
 @router.message(PollingState.waiting_for_location, IsBotFilter(BOT_TOKEN_PARTNER),
-    lambda message: message.text == FIND_PARTNER["cancel"].get(
-        message.from_user.language_code, FIND_PARTNER["cancel"]["en"])
-)
+                lambda message: message.text == FIND_PARTNER["cancel"].get(
+                    message.from_user.language_code, FIND_PARTNER["cancel"]["en"])
+                )
 async def cancel(message: Message, state: FSMContext, database: ResourcesMiddleware):
     msg = FIND_PARTNER["no_worries"][message.from_user.language_code]
     await database.add_users_location(message.from_user.id, "refused", "refused")
     await message.reply(text=msg, reply_markup=ReplyKeyboardRemove())
+
 
 @router.message(Command('location', prefix='!/'), IsBotFilter(BOT_TOKEN_PARTNER))
 async def get_my_location(message: Message, database: ResourcesMiddleware):
@@ -267,7 +270,8 @@ async def new_session_handler(
         find_partner_and_notify(user_id, username, criteria, search_message, redis, http_session)
     )
 
-    await redis.setex(f"searching_users:{user_id}", 210, json.dumps({"user_id": user_id, "criteria": str(language), "task": str(task)}))
+    await redis.setex(f"searching_users:{user_id}", 210,
+                      json.dumps({"user_id": user_id, "criteria": str(language), "task": str(task)}))
 
 
 async def find_partner_and_notify(user_id, username, criteria, message, redis, session):
@@ -356,10 +360,8 @@ async def check_search_status_periodically(user_id, message, redis, session, int
             else:
                 logger.error(f"Ошибка HTTP при проверке статуса: {resp.status}")
 
-
     # Если партнер не найден после всех попыток
     await message.edit_text("❌ К сожалению, не удалось найти подходящего партнера :(")
-
 
 
 @router.message(IsBotFilter(BOT_TOKEN_PARTNER))
@@ -372,7 +374,7 @@ async def echo(message: Message, rate_limit_info: RateLimitInfo):
     first_message = rate_limit_info.last_message_time
     await message.reply(
         text=f"Your message: {message.text}\n"
-        f"Rate limit info: {count} messages at {first_message}",
+             f"Rate limit info: {count} messages at {first_message}",
     )
 
 
@@ -424,7 +426,10 @@ async def set_user_info(message: Message, state: FSMContext, database: Resources
 async def get_state_data(message: Message, state: FSMContext, database: ResourcesMiddleware):
     """Достаем нужные данные о пользователе"""
     data = await state.get_data()
-    if data.get("user_id", None) != message.from_user.id:
+    keys = ['user_id', 'username', 'first_name', 'lang_code']
+    data_status = all([ data.get(key, None) for key in keys ])
+
+    if not data_status:
         await set_user_info(message, state, database)
         return await state.get_data()
 

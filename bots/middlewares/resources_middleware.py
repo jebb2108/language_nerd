@@ -78,7 +78,7 @@ class ResourcesMiddleware(BaseMiddleware):
             # Создаем пулы подключений к БД и Redis
             self.db_pool = await asyncpg.create_pool(**self.db_config.__dict__)
             # Создаем экземпляр класса Database
-            self.db = Database(self.db_pool)
+            self.db = await Database(self.db_pool).initialize()
             logger.debug("Database initialized")
             # Создаем клиент Redis с пулом подключений
             redis_pool = redis.ConnectionPool(**REDIS_CONFIG)
