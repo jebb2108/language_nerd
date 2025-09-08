@@ -43,19 +43,8 @@ class ResourcesMiddleware(BaseMiddleware):
         data: Dict[str, Any],
     ) -> Any:
 
-        if not self._initialized and not self._initialization_failed:
-            async with self._lock:
-                if not self._initialized and not self._initialization_failed:
-                    try:
-                        await self.initialize_resources()
-                        self._initialized = True
-                    except Exception as e:
-                        self._initialization_failed = True
-                        logger.critical(f"Resource init failed: {e}")
-                        raise
-
         data.update(
-            database=self.db,
+            database=await get_db(),
             redis=self.redis,
             http_session=self.session,
         )
@@ -65,15 +54,13 @@ class ResourcesMiddleware(BaseMiddleware):
         return dict(
             {
                 "storage": self.storage,
-                "database": self.db,
+                "database": get_db,
             }
         ).get(param, None)
 
     async def initialize_resources(self, storage_state_ttl, storage_data_ttl):
         """Инициализация ресурсов с созданием экземпляра Database"""
         try:
-
-            self.db = get_db()
 
             # Создаем клиент Redis с пулом подключений
             redis_pool = redis.ConnectionPool.from_url(url=config.REDIS_URL)

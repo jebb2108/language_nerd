@@ -7,9 +7,8 @@ from aiogram.enums import ParseMode
 
 from app.bots.main_bot.api.web_launcher import start_web_app
 from config import LOG_CONFIG, config
-from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
-from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
-from app.bots.partner_bot.middlewares.quiz_middleware import QuizMiddleware
+from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
+from app.bots.main_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
 
 from routers import router as main_router
 
@@ -27,7 +26,6 @@ async def init_resources() -> None:
     """Запуск глобальных ресурсов """
     # Аргументы к on_startup - время в минутах
     # Создаю менеджера сообщений
-    quiz_middleware = QuizMiddleware()
     resources = ResourcesMiddleware()
     rate_limit_middleware = RateLimitMiddleware()
     await resources.on_startup(10, 60)

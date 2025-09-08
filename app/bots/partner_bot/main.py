@@ -53,6 +53,7 @@ async def run():
 
     logger.info("Starting partner bots (polling)…")
     await disp.start_polling(bot)
+    await resources.on_shutdown()
 
 
 # Точка входа в программу

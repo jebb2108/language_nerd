@@ -3,7 +3,7 @@ import asyncio
 import asyncpg
 
 from datetime import datetime, timedelta
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Optional
 from collections import defaultdict
 from contextlib import asynccontextmanager
 
@@ -16,12 +16,26 @@ logger = logging.getLogger(name="database")
 # = КЛАСС ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ =
 class DatabaseService:
     def __init__(self):
-        self._pool = asyncpg.create_pool(dsn=config.DATABASE_URL)
+        self._pool: Optional[asyncpg.Pool | None] = None
         self.user_locks = defaultdict(asyncio.Lock)
         self.stats_lock = asyncio.Lock()
+        self._initialized: bool = False
 
     async def initialize(self):
+        """Инициализация пула соединений и создание таблиц"""
+        if self._initialized:
+            return self
+
         try:
+            # Создаем пул соединений
+            self._pool = await asyncpg.create_pool(
+                config.DATABASE_URL,
+                min_size=5,
+                max_size=20,
+                timeout=60
+            )
+
+            # Создаем таблицы
             await self.__create_words()
             await self.__create_users()
             await self.__create_users_profile()
@@ -29,11 +43,13 @@ class DatabaseService:
             await self.__create_weekly_reports()
             await self.__create_report_words()
 
+            self._initialized = True
+            logger.info("Database pool initialized successfully")
+            return self
+
         except Exception as e:
             logger.error(f"Database initialization failed: {e}")
-
-        finally:
-            return self
+            raise
 
     async def __create_words(self):
         async with self.acquire_connection() as conn:

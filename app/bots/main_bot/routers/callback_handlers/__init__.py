@@ -1,15 +1,9 @@
 __all__ = ("router",)
 
 from aiogram import Router
-from app.bots.main_bot.routers.callback_handlers.main_menu_cb_handler import (
-    router as main_menu_cb_handler_router,
-)
-from app.bots.main_bot.routers.callback_handlers.registration_cb_handler import (
-    router as registration_cb_handler_router,
-)
-from app.bots.main_bot.routers.callback_handlers.weekly_message_cb_handler import (
-    router as weekly_message_cb_handler_router,
-)
+from .main_menu_cb_handler import router as main_menu_cb_handler_router
+from .registration_cb_handler import router as registration_cb_handler_router
+from .weekly_message_cb_handler import router as weekly_message_cb_handler_router
 
 router = Router(name=__name__)
 
