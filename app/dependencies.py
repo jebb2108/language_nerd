@@ -13,7 +13,9 @@ async def get_rabbitmq():
 
 async def get_db():
     """Зависимость для получения подключения к БД"""
-    return await database_service.initialize()
+    if not database_service.initialized:
+        await database_service.connect()
+    return database_service
 
 
 async def get_redis():

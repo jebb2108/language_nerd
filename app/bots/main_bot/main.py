@@ -4,11 +4,14 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from typing import Optional
 
 from app.bots.main_bot.api.web_launcher import start_web_app
+from app.dependencies import get_db
 from config import LOG_CONFIG, config
 from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.main_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
+from app.bots.main_bot.middlewares.quiz_middleware import QuizMiddleware
 
 from routers import router as main_router
 
@@ -16,18 +19,19 @@ logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name="main_bot")
 
 # Глобальная переменная с ресурсами бота
-resources = None
-quiz_middleware = None
-rate_limit_middleware = None
+resources: Optional["ResourcesMiddleware"] = None
+rate_limit_middleware: Optional["RateLimitMiddleware"] = None
+quiz_middleware: Optional["QuizMiddleware"] = None
 
 
 async def init_resources() -> None:
-    global resources, quiz_middleware, rate_limit_middleware
+    global resources, rate_limit_middleware, quiz_middleware
     """Запуск глобальных ресурсов """
     # Аргументы к on_startup - время в минутах
     # Создаю менеджера сообщений
     resources = ResourcesMiddleware()
     rate_limit_middleware = RateLimitMiddleware()
+    quiz_middleware = QuizMiddleware()
     await resources.on_startup(10, 60)
 
 
@@ -42,11 +46,12 @@ async def run():
 
     # Инициализация бота
     bot = Bot(
-        token=config.BOT_TOKEN_MAIN, default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+        token=config.BOT_TOKEN_MAIN,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
 
     # Запуск веб-сервера
-    web_runner = await start_web_app(resources.access_memory("database"))
+    web_runner = await start_web_app(await get_db())
 
     # Регистрация middleware
     # Messages

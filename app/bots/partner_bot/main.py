@@ -5,7 +5,6 @@ from typing import Optional
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.fsm.storage.memory import MemoryStorage
 
 from routers import router as main_router
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
@@ -20,8 +19,8 @@ logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name="partner_bot")
 
 # Глобальные переменные
-resources: Optional["ResourcesMiddleware", None] = None
-rate_limit_middleware: Optional["RateLimitMiddleware", None] = None
+resources: Optional["ResourcesMiddleware"] = None
+rate_limit_middleware: Optional["RateLimitMiddleware"] = None
 
 
 async def init_resources():

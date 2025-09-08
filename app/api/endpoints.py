@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from app.services.rabbitmq import RabbitMQService
 from app.dependencies import get_rabbitmq, get_db, get_redis
@@ -30,7 +31,7 @@ async def request_match(
     message = {
         "user_id": request.user_id,
         "criteria": request.criteria.dict(),
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now().isoformat(),
     }
 
     await rabbitmq.publish_message(message)

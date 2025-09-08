@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
 
     # Shutdown
     await rabbitmq_service.disconnect()
-    await database_service.disconnect()
+    await database_service.connect()
     await redis_service.disconnect()
 
 

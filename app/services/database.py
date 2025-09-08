@@ -19,13 +19,10 @@ class DatabaseService:
         self._pool: Optional[asyncpg.Pool | None] = None
         self.user_locks = defaultdict(asyncio.Lock)
         self.stats_lock = asyncio.Lock()
-        self._initialized: bool = False
+        self.initialized: bool = False
 
-    async def initialize(self):
+    async def connect(self):
         """Инициализация пула соединений и создание таблиц"""
-        if self._initialized:
-            return self
-
         try:
             # Создаем пул соединений
             self._pool = await asyncpg.create_pool(
@@ -528,6 +525,10 @@ class DatabaseService:
         for user_id in user_ids:
             if user_id in self.user_locks and not self.user_locks[user_id].locked():
                 del self.user_locks[user_id]
+
+    async def disconnect(self):
+        if self._initialized:
+            await self._pool.close()
 
 
 database_service = DatabaseService()
