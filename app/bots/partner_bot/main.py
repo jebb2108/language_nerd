@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import Optional
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -19,8 +20,8 @@ logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name="partner_bot")
 
 # Глобальные переменные
-resources = None
-rate_limit_middleware = None
+resources: Optional["ResourcesMiddleware", None] = None
+rate_limit_middleware: Optional["RateLimitMiddleware", None] = None
 
 
 async def init_resources():

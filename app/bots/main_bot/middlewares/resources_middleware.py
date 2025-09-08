@@ -50,13 +50,8 @@ class ResourcesMiddleware(BaseMiddleware):
         )
         return await handler(event, data)
 
-    def access_memory(self, param: str = "storage"):
-        return dict(
-            {
-                "storage": self.storage,
-                "database": get_db,
-            }
-        ).get(param, None)
+    def access_memory(self):
+        return self.storage if self._initialized else None
 
     async def initialize_resources(self, storage_state_ttl, storage_data_ttl):
         """Инициализация ресурсов с созданием экземпляра Database"""
