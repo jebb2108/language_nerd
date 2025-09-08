@@ -612,6 +612,7 @@ async def start_server(r_client):
     # Запускаем сервер
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, "localhost", 4000)
+    site = web.TCPSite(runner, "0.0.0.0", 4000)
     await site.start()
     logger.info("Сервер запущен на localhost:4000")
+    return runner

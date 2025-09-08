@@ -97,6 +97,26 @@ QUESTIONARY = dict(
 
 BUTTONS = dict(
     {
+        "dictionary": {
+            "en": "📚 Dictionary",
+            "ru": "📚 Словарь",
+        },
+        "find_partner": {
+            "en": "🌐 Find partner",
+            "ru": "🌐 Найти собеседника",
+        },
+        "about_bot": {
+            "en": "ℹ️ About bot",
+            "ru": "ℹ️ О боте",
+        },
+        "support": {
+            "en": "🛠 Support",
+            "ru": "🛠 Поддержка",
+        },
+        "go_back": {
+            "en": "🔙 Go Back",
+            "ru": "🔙 Назад",
+        },
         "confirm": {
             "en": "I agree",
             "ru": "Согласен",

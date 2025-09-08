@@ -12,48 +12,48 @@ from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitMidd
 
 from app.bots.partner_bot.api.chat_launcher import start_server
 
-
 # Импорт функций БД
 from config import config, LOG_CONFIG
 
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name="partner_bot")
 
-storage = MemoryStorage()
+# Глобальные переменные
+resources = None
+rate_limit_middleware = None
 
-"""
-=============== ЗАПУСК ВСЕЙ СИСТЕМЫ ===============
-"""
+
+async def init_resources():
+    """Инициализация глобальных ресурсов"""
+    global resources, rate_limit_middleware
+    resources = ResourcesMiddleware()
+    rate_limit_middleware = RateLimitMiddleware()
+    await resources.on_startup(10, 10)
 
 
 async def run():
-    """
-    Запускает одного бота
-    Параметры:
-    - bot_token: токен Telegram бота
-    - router: маршрутизатор с обработчиками
-    - storage: хранилище состояний (опционально)
-    """
-
+    await init_resources()
     bot = Bot(
         token=config.BOT_TOKEN_PARTNER,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
-    disp = Dispatcher(storage=storage) if storage else Dispatcher()
-
-    resources = ResourcesMiddleware()
-    await resources.on_startup()
+    disp = Dispatcher(storage=resources.access_memory())
 
     disp.include_router(main_router)
     disp.message.middleware(resources)
     disp.callback_query.middleware(resources)
     disp.message.middleware(RateLimitMiddleware())
 
-    await start_server(resources.redis)
+    server = await start_server(resources.redis)
 
-    logger.info("Starting partner bots (polling)…")
-    await disp.start_polling(bot)
-    await resources.on_shutdown()
+    try:
+        logger.info("Starting partner bots (polling)…")
+        await disp.start_polling(bot)
+
+    finally:
+        await bot.session.close()
+        await resources.on_shutdown()
+        await server.cleanup()
 
 
 # Точка входа в программу

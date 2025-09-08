@@ -29,10 +29,7 @@ class DatabaseService:
         try:
             # Создаем пул соединений
             self._pool = await asyncpg.create_pool(
-                config.DATABASE_URL,
-                min_size=5,
-                max_size=20,
-                timeout=60
+                config.DATABASE_URL, min_size=5, max_size=20, timeout=60
             )
 
             # Создаем таблицы
@@ -44,7 +41,7 @@ class DatabaseService:
             await self.__create_report_words()
 
             self._initialized = True
-            logger.info("Database pool initialized successfully")
+            logger.debug("Database pool initialized successfully")
             return self
 
         except Exception as e:
