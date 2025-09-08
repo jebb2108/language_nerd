@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
 from config import LOG_CONFIG
-from app.bots.middlewares.resources_middleware import ResourcesMiddleware
+from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 
 from app.bots.main_bot.translations import WEEKLY_QUIZ
 from app.bots.main_bot.keyboards.inline_keyboards import (

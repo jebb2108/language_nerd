@@ -3,7 +3,7 @@ from datetime import datetime, time
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from app.bots.middlewares.resources_middleware import ResourcesMiddleware
+from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 
 
 async def set_user_info(

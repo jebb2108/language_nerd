@@ -3,10 +3,9 @@ import logging
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.filters.callback_data import CallbackData
 from aiogram.types import Message
 
-from app.bots.middlewares.resources_middleware import ResourcesMiddleware
+from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 
 from app.bots.main_bot.translations import QUESTIONARY
 from app.bots.main_bot.utils.filters import IsBotFilter

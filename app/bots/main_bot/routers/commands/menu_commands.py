@@ -7,7 +7,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from config import config, LOG_CONFIG
-from app.bots.middlewares.resources_middleware import ResourcesMiddleware
+from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.main_bot.keyboards.inline_keyboards import get_on_main_menu_keyboard
 from app.bots.main_bot.utils.access_data_from_storage import get_storage_data
 from app.bots.main_bot.translations import MESSAGES

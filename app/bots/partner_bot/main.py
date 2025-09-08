@@ -7,8 +7,8 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from routers import router as main_router
-from app.bots.middlewares.resources_middleware import ResourcesMiddleware
-from app.bots.middlewares.rate_limit_middleware import RateLimitMiddleware
+from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
+from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
 
 from app.bots.partner_bot.api.chat_launcher import start_server
 

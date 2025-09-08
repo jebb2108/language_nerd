@@ -13,9 +13,8 @@ from aiogram.exceptions import (
 )
 from aiogram.types import Message
 from aiogram.filters import Command
-from config import config, LOG_CONFIG
 
-from app.bots.middlewares.resources_middleware import ResourcesMiddleware
+from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 
 # from app.bots.main_bot.api.ai_handler import (
 #     generate_weekly_reports,
@@ -24,7 +23,6 @@ from app.bots.middlewares.resources_middleware import ResourcesMiddleware
 # )
 
 from config import config, LOG_CONFIG
-from app.dependencies import get_db
 
 # from routers.commands.weekly_message_commands import send_user_report
 from app.bots.main_bot.keyboards.inline_keyboards import begin_weekly_quiz_keyboard

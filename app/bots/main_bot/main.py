@@ -6,10 +6,10 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from app.bots.main_bot.api.web_launcher import start_web_app
-from config import config, LOG_CONFIG
-from app.bots.middlewares.resources_middleware import ResourcesMiddleware
-from app.bots.middlewares.rate_limit_middleware import RateLimitMiddleware
-from app.bots.middlewares.quiz_middleware import QuizMiddleware
+from config import LOG_CONFIG, config
+from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
+from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
+from app.bots.partner_bot.middlewares.quiz_middleware import QuizMiddleware
 
 from routers import router as main_router
 
@@ -44,7 +44,7 @@ async def run():
 
     # Инициализация бота
     bot = Bot(
-        token=BOT_TOKEN_MAIN, default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+        token=config.BOT_TOKEN_MAIN, default=DefaultBotProperties(parse_mode=ParseMode.HTML)
     )
 
     # Запуск веб-сервера
