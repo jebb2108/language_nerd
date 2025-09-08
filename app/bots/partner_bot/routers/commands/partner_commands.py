@@ -17,6 +17,7 @@ from config import config
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitInfo
 from app.bots.main_bot.utils.filters import IsBotFilter
+from app.dependencies import get_rabbitmq
 
 from app.bots.partner_bot.translations import MESSAGES, QUESTIONARY, BUTTONS
 from config import LOG_CONFIG
@@ -278,6 +279,7 @@ async def new_session_handler(
     user_id = data.get("user_id", 0)
     username = data.get("username", "")
     language = data.get("language")
+    dating = data.get("dating", "false")
 
     if username == "NO USERNAME":
         msg = MESSAGES["no_username"][message.from_user.language_code]
@@ -291,121 +293,19 @@ async def new_session_handler(
         logger.info(f"Отменен предыдущий поиск для пользователя {user_id}")
 
     # Показываем сообщение о начале поиска
-    search_message = await message.answer(
+    await message.answer(
         f"🔍 Ищем партнера для общения на <b>{language}</b>...",
         parse_mode=ParseMode.HTML,
     )
 
-    # Формируем критерии поиска
-    criteria = {
-        "language": language,
-    }
-
-    # Запускаем поиск партнера
-    task = asyncio.create_task(
-        find_partner_and_notify(
-            user_id, username, criteria, search_message, redis, http_session
-        )
+    rabbit = await get_rabbitmq()
+    await rabbit.publish_message(
+        {
+            "user_id": user_id,
+            "username": username,
+            "criteria": {"language": language, "dating": dating},
+        }
     )
-
-    await redis.setex(
-        f"searching_users:{user_id}",
-        210,
-        json.dumps({"user_id": user_id, "criteria": str(language), "task": str(task)}),
-    )
-
-
-async def find_partner_and_notify(user_id, username, criteria, message, redis, session):
-    """Фоновая задача для поиска партнера и уведомления пользователя"""
-    try:
-        async with session.post(
-            "http://localhost:4000/api/generate_link",
-            json={"user_id": str(user_id), "username": username, "criteria": criteria},
-        ) as resp:
-            if resp.status == 200:
-                data = await resp.json()
-
-                if data.get("status") == "found":
-                    # Партнер найден сразу
-                    link = data["link"]
-                    await message.edit_text(
-                        "✅ Партнер найден! Нажмите кнопку чтобы начать общение:",
-                        reply_markup=open_chat_keyboard("ru", link),
-                    )
-                else:
-                    # Запускаем периодическую проверку статуса
-                    await check_search_status_periodically(
-                        user_id, message, redis, session
-                    )
-            else:
-                await message.edit_text(
-                    "❌ Произошла ошибка при поиске партнера. Попробуйте позже."
-                )
-
-            # Удаляем задачу из активных
-            active_tasks = await redis.get(f"active_search_tasks:{user_id}")
-            if active_tasks and user_id in active_tasks:
-                await redis.delete(f"active_search_tasks:{user_id}")
-
-    except Exception as e:
-        logger.error(f"Ошибка при поиске партнера: {e}")
-        await message.edit_text(
-            "❌ Произошла ошибка при поиске партнера. Попробуйте позже."
-        )
-
-    finally:
-        # Удаляем задачу из активных
-        active_tasks = await redis.get(f"active_search_tasks:{user_id}")
-        if active_tasks and user_id in active_tasks:
-            await redis.delete(f"active_search_tasks:{user_id}")
-
-
-async def check_search_status_periodically(
-    user_id, message, redis, session, interval=5, max_checks=30
-):
-    """Периодическая проверка статуса поиска (до 2.5 минут)"""
-    # async with aiohttp.ClientSession() as session:
-    for i in range(max_checks):
-
-        # Проверяем, не была ли задача отменена
-        active_tasks = await redis.get(f"active_search_tasks:{user_id}")
-        if active_tasks and user_id in active_tasks:
-            return
-
-        async with session.get(
-            f"http://localhost:4000/api/search_status/{user_id}"
-        ) as resp:
-            if resp.status == 200:
-                data = await resp.json()
-
-                if data.get("status") == "found":
-                    # Партнер найден
-                    link = data["link"]
-                    logger.debug(f"Результат поиска для {user_id}: {data}")
-                    await message.edit_text(
-                        "✅ Партнер найден! Нажмите кнопку чтобы начать общение:",
-                        reply_markup=open_chat_keyboard("en", link),
-                    )
-                    return
-                # Обновляем статус поиска каждые 15 секунд
-                elif i % 3 == 0:
-                    t = (
-                        ["", str(i * 5) + " сек"]
-                        if i * 5 < 60
-                        else [str(i * 5 // 60) + " мин ", str(i * 5 % 60) + " сек"]
-                    )
-                    result = "".join(t if t[1] != "0 сек" else t[0])
-                    await message.edit_text(
-                        f"🔍 Ищем подходящего партнера...\n\n Время ожидания: {result if result else 'только что'} "
-                    )
-
-                await asyncio.sleep(interval)
-
-            else:
-                logger.error(f"Ошибка HTTP при проверке статуса: {resp.status}")
-
-    # Если партнер не найден после всех попыток
-    await message.edit_text("❌ К сожалению, не удалось найти подходящего партнера :(")
 
 
 @router.message(IsBotFilter(config.BOT_TOKEN_PARTNER))

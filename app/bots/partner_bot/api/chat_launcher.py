@@ -1,4 +1,6 @@
 import logging
+from typing import Optional
+
 import socketio
 from aiohttp import web
 import json
@@ -19,25 +21,12 @@ sio.attach(app)
 users = {}
 
 # Глобальная переменная для Redis подключения
-redis_client = None
+redis_client: Optional[redis] = None
 
 
 async def find_partner(user_data):
     """Поиск партнера по критериям"""
     try:
-        profile_key = f"user_profile:{user_data['user_id']}"
-        await redis_client.setex(
-            profile_key,
-            3600,
-            json.dumps(
-                {
-                    "username": user_data["username"],
-                    "criteria": user_data["criteria"],
-                    "timestamp": datetime.now().isoformat(),
-                }
-            ),
-        )
-
         queue = await redis_client.lrange("partner_search_queue", 0, -1)
         logger.debug(f"Очередь поиска партнеров: {queue}")
 

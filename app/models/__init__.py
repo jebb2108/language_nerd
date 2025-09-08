@@ -35,7 +35,7 @@ class UserMatchRequest(BaseModel):
     user_id: str = Field(..., description="Уникальный идентификатор пользователя")
     criteria: Dict[str, str] = Field(..., description="Критерии поиска собеседника")
     timestamp: Optional[datetime] = Field(
-        default_factory=datetime.utcnow, description="Время создания запроса"
+        default_factory=datetime.now, description="Время создания запроса"
     )
     source: Optional[str] = Field(
         default="api", description="Источник запроса (api, bot, etc)"

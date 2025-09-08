@@ -18,7 +18,7 @@ class RabbitMQService:
         """Установка подключения к RabbitMQ"""
         self.connection = await aio_pika.connect_robust(config.RABBITMQ_URL)
         self.channel = await self.connection.channel()
-        await self.channel.declare_queue(config.RABBITMQ_QUEUE, durable=True)
+        # await self.channel.declare_queue(config.RABBITMQ_QUEUE, durable=False)
 
     async def disconnect(self):
         """Закрытие подключения"""

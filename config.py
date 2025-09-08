@@ -23,7 +23,7 @@ LOG_CONFIG = {
 class Config:
     # RabbitMQ
     RABBITMQ_URL: str = os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/")
-    RABBITMQ_QUEUE: str = os.getenv("RABBITMQ_QUEUE", "user_matching_queue")
+    RABBITMQ_QUEUE: str = os.getenv("RABBITMQ_QUEUE", "default")
 
     # PostgreSQL
     DATABASE_URL: str = os.getenv(

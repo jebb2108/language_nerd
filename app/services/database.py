@@ -37,7 +37,7 @@ class DatabaseService:
             await self.__create_weekly_reports()
             await self.__create_report_words()
 
-            self._initialized = True
+            self.initialized = True
             logger.debug("Database pool initialized successfully")
             return self
 
@@ -527,7 +527,7 @@ class DatabaseService:
                 del self.user_locks[user_id]
 
     async def disconnect(self):
-        if self._initialized:
+        if self.initialized:
             await self._pool.close()
 
 
