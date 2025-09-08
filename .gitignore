@@ -1,9 +1,0 @@
-.idea/
-__pycache__/
-.DS_Store
-bots/dbs/
-.env
-*env/
-bot_manager.sh
-main_bot.log
-partner_bot.log
