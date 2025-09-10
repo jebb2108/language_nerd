@@ -15,6 +15,7 @@ async def get_rabbitmq():
     """Зависимость для получения RabbitMQ сервиса"""
     if not rabbitmq_service.connection:
         await rabbitmq_service.connect()
+
     return rabbitmq_service
 
 

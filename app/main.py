@@ -12,21 +12,10 @@ logger = logging.getLogger(name="FastStream")
 
 # Создаем брокер и приложение
 broker = RabbitBroker(config.RABBITMQ_URL)
-app = FastStream(broker)
-
-# Очередь для обработки совпадений
-match_queue = RabbitQueue(config.RABBITMQ_QUEUE, durable=False)
-
-# Объявление отложенного обменника
-delayed_exchange = RabbitExchange(
-    "user_matching_delayed_exchange",
-    type=ExchangeType.X_DELAYED_MESSAGE,
-    arguments={"x-delayed-type": "direct"},
-)
 
 
 # Определяем обработчик сообщений
-@broker.subscriber(match_queue)
+@broker.subscriber(config.RABBITMQ_QUEUE)
 async def handle_user_match(message: dict):
     """
     Обрабатывает сообщения из очереди user_matching_queue
@@ -42,7 +31,7 @@ async def handle_user_match(message: dict):
 
     matcher = await get_match()
     notifier = await get_notification()
-    redis = await get_redis()
+    # redis = await get_redis()
     room_id, user1_id, user2_id = await matcher.find_match()
 
     if room_id:
@@ -65,11 +54,14 @@ async def handle_user_match(message: dict):
         # Публикация сообщения в отложенный обменник с задержкой
         await broker.publish(
             message,
-            exchange=delayed_exchange,
-            routing_key="user_matching_queue",
+            exchange="",
+            routing_key=config.RABBITMQ_QUEUE,
             headers={"x-delay": 10000},  # Задержка 10 секунд
         )
 
         # Или используйте DLX для отложенной повторной публикации
         # Подтвердите сообщение, чтобы оно не вернулось сразу
         return {"status": "requeued", "user_id": user_id}
+
+
+app = FastStream(broker)

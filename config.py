@@ -24,6 +24,10 @@ class Config:
     # RabbitMQ
     RABBITMQ_URL: str = os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/")
     RABBITMQ_QUEUE: str = os.getenv("RABBITMQ_QUEUE", "default")
+    RABBITMQ_EXCHANGE: str = os.getenv("RABBITMQ_EXCHANGE", "users")
+
+    RABBITMQ_DELAYED_EXCHANGE: str = os.getenv("RABBITMQ_DELAYED_EXCHANGE", "none")
+    RABBITMQ_DELAYED_QUEUE: str = os.getenv("RABBITMQ_DELAYED_QUEUE", "none")
 
     # PostgreSQL
     DATABASE_URL: str = os.getenv(
