@@ -1,67 +1,69 @@
-import asyncio
 import logging
 
-from app.dependencies import get_match, get_notification, get_db, get_redis
 from config import config, LOG_CONFIG
-
 from faststream import FastStream
-from faststream.rabbit import RabbitBroker, RabbitExchange, RabbitQueue, ExchangeType
+from faststream.rabbit import RabbitBroker
+from app.dependencies import get_rabbitmq, get_match, get_notification
 
 logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="FastStream")
+logger = logging.getLogger(name="faststream")
 
-# Создаем брокер и приложение
+# Создаем брокер и приложение FastStream
 broker = RabbitBroker(config.RABBITMQ_URL)
 
 
-# Определяем обработчик сообщений
+# Определяем обработчик сообщений для основной очереди
 @broker.subscriber(config.RABBITMQ_QUEUE)
 async def handle_user_match(message: dict):
     """
-    Обрабатывает сообщения из очереди user_matching_queue
+    Обрабатывает сообщения из основной очереди пользователей
     """
-    logger.info("data: %r", repr(message))
+    logger.info("Received message from main queue: %r", message)
 
     user_id = message.get("user_id")
-    user_data = dict(message["criteria"])
+    user_data = message.get("criteria", {})
 
-    logger.info(
-        f"Received match request from user {user_id} with criteria: {user_data}"
-    )
-
+    # Здесь ваша логика проверки критериев пользователя
     matcher = await get_match()
-    notifier = await get_notification()
-    # redis = await get_redis()
-    room_id, user1_id, user2_id = await matcher.find_match()
+    rabbit = await get_rabbitmq()
+
+    room_id, user1_id, user2_id = await matcher.find_match(user_id, user_data)
 
     if room_id:
-        # Уведомляем пользователей
+        # Найдено совпадение - обрабатываем
+        notifier = await get_notification()
         await matcher.remove_from_queue(user_id)
         await notifier.notify_match(user1_id, user2_id, room_id)
-        # await redis.create_chat_session(user1_id, user2_id, room_id)
-        await asyncio.sleep(5)
+        logger.info(f"Match created: {room_id}")
         return f"Match created: {room_id}"
 
     else:
+        # Совпадение не найдено - отправляем в отложенную очередь
+        delay_ms = message.get("delay_ms", 10000)  # Задержка по умолчанию 10 секунд
 
-        # Совпадение не найдено
-        logger.debug(f"No match for {user_id}. Returning to queue.")
+        # Используем наш сервис для публикации в отложенную очередь
+        await rabbit.publish_delayed_message(message, delay_ms)
+        logger.debug(f"No match for {user_id}. Sent to delayed queue for {delay_ms}ms.")
 
-        # Сохраните пользователя в Redis
-        await matcher.add_to_queue(user_id, user_data)  # TTL 1 час
+        return {"status": "requeued", "user_id": user_id, "delay_ms": delay_ms}
 
-        # Верните сообщение в очередь через delay (например, через 10 секунд)
-        # Публикация сообщения в отложенный обменник с задержкой
-        await broker.publish(
-            message,
-            exchange="",
-            routing_key=config.RABBITMQ_QUEUE,
-            headers={"x-delay": 10000},  # Задержка 10 секунд
-        )
 
-        # Или используйте DLX для отложенной повторной публикации
-        # Подтвердите сообщение, чтобы оно не вернулось сразу
-        return {"status": "requeued", "user_id": user_id}
+# Определяем обработчик для отложенной очереди
+@broker.subscriber(config.RABBITMQ_DELAYED_QUEUE)
+async def handle_delayed_user(message: dict, headers: dict = None):
+    """
+    Обрабатывает сообщения из отложенной очереди
+    Просто возвращает пользователя в основную очередь
+    """
+    rabbit = await get_rabbitmq()
+    logger.info("Received message from delayed queue: %r", message)
+    # Извлекаем задержку из заголовков
+    delay_ms = headers.get("x-delay", 10000) if headers else 10000
+    logger.debug(f"Message was delayed for {delay_ms}ms")
+
+    # Возвращаем пользователя в основную очередь
+    await rabbit.publish_message(message)
+    logger.debug(f"Returned user {message.get('user_id')} to main queue")
 
 
 app = FastStream(broker)

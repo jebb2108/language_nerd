@@ -1,4 +1,6 @@
 import asyncio
+
+
 from app.dependencies import get_rabbitmq
 
 
@@ -7,13 +9,20 @@ async def main():
 
     await rabbit.publish_message(
         {
-            "user_id": 2345,
-            "username": "gabriel",
-            "criteria": {"language": "english", "dating": "true"},
+            "user_id": 2346,
+            "username": "isabelle",
+            "criteria": {"language": "english", "dating": "false"},
         }
     )
 
-    await rabbit.publish_delayed_message({"data": "test"}, 5000)
+    await rabbit.publish_delayed_message(
+        {
+            "user_id": 2345,
+            "username": "gabriel",
+            "criteria": {"language": "english", "dating": "true"},
+        },
+        5000,
+    )
 
 
 if __name__ == "__main__":
