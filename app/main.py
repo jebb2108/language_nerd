@@ -21,7 +21,7 @@ logger = logging.getLogger(name="fastAPI_main")
 app = FastAPI(logger=logger)
 
 origins = [
-    "http://chat.lllang.site",  # адрес фронтенда
+    "http://localhost:4000",  # адрес фронтенда
 ]
 
 app.add_middleware(
