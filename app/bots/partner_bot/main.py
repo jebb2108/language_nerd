@@ -6,7 +6,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
-from routers import router as main_router
+from app.bots.partner_bot.routers import router as main_router
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
 
