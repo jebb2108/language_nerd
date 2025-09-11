@@ -2,8 +2,6 @@ import logging
 import jwt
 
 from fastapi import APIRouter, Depends, HTTPException
-from pycparser.ply.yacc import token
-
 from app.services.rabbitmq import RabbitMQService
 from app.dependencies import get_rabbitmq, get_db, get_redis, get_match
 from app.models import UserMatchRequest, ChatSessionRequest
