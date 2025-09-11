@@ -32,13 +32,14 @@ class UserMatchRequest(BaseModel):
     Содержит user_id и критерии поиска.
     """
 
-    user_id: str = Field(..., description="Уникальный идентификатор пользователя")
+    user_id: int = Field(..., description="Уникальный идентификатор пользователя")
+    username: str = Field(..., description="Никнейм пользователя")
     criteria: Dict[str, str] = Field(..., description="Критерии поиска собеседника")
     timestamp: Optional[datetime] = Field(
-        default_factory=datetime.utcnow, description="Время создания запроса"
+        default_factory=datetime.now, description="Время создания запроса"
     )
     source: Optional[str] = Field(
-        default="api", description="Источник запроса (api, bot, etc)"
+        default="bot", description="Источник запроса (api, bot, etc)"
     )
 
 
@@ -65,13 +66,19 @@ class UserMatchResponse(BaseModel):
     """
 
     status: str = Field(..., description="Статус операции")
-    user_id: str = Field(..., description="ID пользователя")
+    user_id: int = Field(..., description="ID пользователя")
     queue_position: Optional[int] = Field(
         None, description="Позиция в очереди (если применимо)"
     )
     estimated_wait: Optional[int] = Field(
         None, description="Примерное время ожидания в секундах"
     )
+
+
+class ChatSessionRequest(BaseModel):
+    user1_id: int
+    user2_id: int
+    room_id: str
 
 
 class UserProfile(BaseModel):

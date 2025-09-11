@@ -53,3 +53,13 @@ def open_chat_keyboard(lang_code, link):
     )
     builder.add(open_chat_button)
     return builder.as_markup(resize_keyboard=True)
+
+
+def create_start_chat_button(lang_code, link):
+    builder = InlineKeyboardBuilder()
+    start_chat_button = InlineKeyboardButton(
+        text=BUTTONS["open_chat"][lang_code],
+        web_app=WebAppInfo(url=link),
+    )
+    builder.add(start_chat_button)
+    return builder.as_markup(resize_keyboard=True)

@@ -66,6 +66,10 @@ MESSAGES = dict(
             "en": "Got it! We`ll find you a new friend.\nPress /menu to go to the main menu",
             "ru": "Понял, мы найдем тебе нового друга!\nНажми на /menu, чтобы перейти в главное меню",
         },
+        "match_found": {
+            "en": "Match has been found! Their nickname is <b>{nickname}</b>\n\nTap this button to start chat: ",
+            "ru": "Мы нашли вам собеседника! Его псевдоним: <b>{nickname}</b>\n\nНажмите по кнопке ниже, чтобы перейти в чат: ",
+        },
     }
 )
 

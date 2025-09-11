@@ -19,12 +19,12 @@ class RabbitMQService:
         self.connection: Optional["AbstractRobustConnection"] = None
         self.channel: Optional["AbstractChannel"] = None
         self.default_exchange = None
-        self.delayed_exchange = None
 
     async def connect(self):
         """Установка подключения к RabbitMQ"""
         self.connection = await aio_pika.connect_robust(config.RABBITMQ_URL)
         self.channel = await self.connection.channel()
+        await self.channel.set_qos(prefetch_count=1)
 
         # Объявляем обменники и очереди при подключении
         await self.declare_exchanges_and_queues()
@@ -32,27 +32,21 @@ class RabbitMQService:
     async def declare_exchanges_and_queues(self):
         """Объявление всех обменников и очередей"""
         # Основной обменник и очередь
+        # Основной обменник и очередь
+
         self.default_exchange = await self.channel.declare_exchange(
-            name=config.RABBITMQ_EXCHANGE, type="direct", durable=True
+            name=config.RABBITMQ_EXCHANGE, type="direct"
         )
+        logger.info(f"Exchange declared: {config.RABBITMQ_EXCHANGE}")
 
-        main_queue = await self.channel.declare_queue(
-            name=config.RABBITMQ_QUEUE, durable=True
-        )
+        main_queue = await self.channel.declare_queue(name=config.RABBITMQ_QUEUE)
+        logger.info(f"Queue declared: {config.RABBITMQ_QUEUE}")
+
         await main_queue.bind(self.default_exchange, config.RABBITMQ_QUEUE)
-
-        # Отложенный обменник и очередь
-        self.delayed_exchange = await self.channel.declare_exchange(
-            name=config.RABBITMQ_DELAYED_EXCHANGE,
-            type="x-delayed-message",
-            arguments={"x-delayed-type": "direct"},
-            durable=True,
+        logger.info(
+            f"Queue {config.RABBITMQ_QUEUE} bound to exchange {config.RABBITMQ_EXCHANGE} "
+            f"with routing key {config.RABBITMQ_QUEUE}"
         )
-
-        delayed_queue = await self.channel.declare_queue(
-            name=config.RABBITMQ_DELAYED_QUEUE, durable=True
-        )
-        await delayed_queue.bind(self.delayed_exchange, config.RABBITMQ_DELAYED_QUEUE)
 
     async def publish_message(self, message: dict):
         """Публикация сообщения в основную очередь"""
@@ -63,19 +57,6 @@ class RabbitMQService:
                 body=json_message, delivery_mode=aio_pika.DeliveryMode.PERSISTENT
             ),
             routing_key=config.RABBITMQ_QUEUE,
-        )
-
-    async def publish_delayed_message(self, message: dict, delay_ms: int = 5000):
-        """Публикация отложенного сообщения с задержкой"""
-        json_message = json.dumps(message).encode()
-
-        await self.delayed_exchange.publish(
-            aio_pika.Message(
-                body=json_message,
-                delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
-                headers={"x-delay": delay_ms},
-            ),
-            routing_key=config.RABBITMQ_DELAYED_QUEUE,
         )
 
     async def disconnect(self):

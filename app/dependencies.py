@@ -7,7 +7,6 @@ from app.services.notification import notification_service
 from app.services.redis import redis_service
 
 if TYPE_CHECKING:
-    from app.services.redis import RedisService
     from app.services.database import DatabaseService
 
 
@@ -35,7 +34,7 @@ async def get_notification():
     return notification_service
 
 
-async def get_redis() -> "RedisService":
+async def get_redis(call_class: bool = True):
     """Зависимость для получения Redis сервиса"""
     if not redis_service.redis_client:
         await redis_service.connect()

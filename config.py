@@ -13,7 +13,7 @@ load_dotenv(env_path)
 
 # Logging configurations
 LOG_CONFIG = {
-    "level": logging.INFO,
+    "level": logging.WARNING,
     "stream": sys.stdout,
     "format": "%(asctime)s - %(levelname)s - %(name)s - %(message)s",
 }
@@ -29,6 +29,8 @@ class Config:
     RABBITMQ_DELAYED_EXCHANGE: str = os.getenv("RABBITMQ_DELAYED_EXCHANGE", "none")
     RABBITMQ_DELAYED_QUEUE: str = os.getenv("RABBITMQ_DELAYED_QUEUE", "none")
 
+    # URL разных запросов
+    NOTIFICATION_URL: str = os.getenv("NOTIFICATION_URL", "0.0.0.0:8000")
     # PostgreSQL
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL", "postgresql://user:pass@localhost:5432/db"

@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 
 import asyncio
@@ -13,18 +14,15 @@ from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardRemove
 from aiogram.enums import ParseMode
 
-from config import config
+from config import config, LOG_CONFIG
+from app.models import UserMatchRequest
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitInfo
 from app.bots.main_bot.utils.filters import IsBotFilter
-from app.dependencies import get_rabbitmq
-
 from app.bots.partner_bot.translations import MESSAGES, QUESTIONARY, BUTTONS
-from config import LOG_CONFIG
 
 from app.bots.partner_bot.keyboards.inline_keyboards import (
     show_partner_menu_keyboard,
-    open_chat_keyboard,
 )
 from app.bots.partner_bot.keyboards.regular_keyboards import (
     show_location_keyboard,
@@ -277,7 +275,7 @@ async def new_session_handler(
     """Обработчик команды /new_session - запускает поиск партнера"""
     data = await get_storage_data(message, state, database)
     user_id = data.get("user_id", 0)
-    username = data.get("username", "")
+    username = data.get("username", "daniel")
     language = data.get("language")
     dating = data.get("dating", "false")
 
@@ -288,24 +286,35 @@ async def new_session_handler(
 
     # Отменяем предыдущий поиск, если он был
     active_tasks = await redis.get(f"active_search_tasks:{user_id}")
-    if active_tasks and user_id in active_tasks:
+    if active_tasks and username in str(active_tasks.decode()):
         await redis.delete(f"active_search_tasks:{user_id}")
-        logger.info(f"Отменен предыдущий поиск для пользователя {user_id}")
+        logger.debug(f"Отменен предыдущий поиск для пользователя {user_id}")
 
-    # Показываем сообщение о начале поиска
+    await redis.setex(f"active_search_tasks:{user_id}", 180, username)
+    logger.debug(f"Создана сессия поиска для пользователя {user_id}")
+
     await message.answer(
         f"🔍 Ищем партнера для общения на <b>{language}</b>...",
         parse_mode=ParseMode.HTML,
     )
 
-    rabbit = await get_rabbitmq()
-    await rabbit.publish_message(
-        {
-            "user_id": user_id,
-            "username": username,
-            "criteria": {"language": language, "dating": dating},
-        }
-    )
+    # Отправляю запрос на сервер
+    url = "{DOMAIN}/match".format(DOMAIN=os.getenv("BASE_DOMAIN", "0.0.0.0"))
+
+    payload = {
+        "user_id": int(user_id),
+        "username": username,
+        "criteria": {
+            "dating": dating,
+            "language": language,
+            "topic": "general",
+        },
+    }
+
+    async with http_session.post(url=url, json=payload) as response:
+        if response.status != 200:
+            logger.error(f"Ошибка при запросе к API: {response.status}")
+            # Обработка ошибки
 
 
 @router.message(IsBotFilter(config.BOT_TOKEN_PARTNER))

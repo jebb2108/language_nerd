@@ -1,8 +1,13 @@
-from datetime import datetime
+import logging
 from fastapi import APIRouter, Depends, HTTPException
+
 from app.services.rabbitmq import RabbitMQService
-from app.dependencies import get_rabbitmq, get_db, get_redis
-from app.models import UserMatchRequest
+from app.dependencies import get_rabbitmq, get_db, get_redis, get_match
+from app.models import UserMatchRequest, ChatSessionRequest
+from config import LOG_CONFIG, config
+
+logging.basicConfig(**LOG_CONFIG)
+logger = logging.getLogger("endpoints")
 
 router = APIRouter()
 
@@ -13,27 +18,73 @@ async def request_match(
     rabbitmq: RabbitMQService = Depends(get_rabbitmq),
     db=Depends(get_db),
     redis=Depends(get_redis),
+    matcher=Depends(get_match),
 ):
+    logger.info(f"Получен запрос на поиск партнера для пользователя {request.user_id}")
     # Проверяем пользователя в БД
-    user = await db.get_user(request.user_id)
+    user = await db.check_user_exists(request.user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    r_client = redis.get_client()
+    logger.debug(f"User ID: {request.user_id}, criteria: {request.criteria}")
     # Проверяем, не ищет ли уже пользователь собеседника
-    is_searching = await redis.get(f"searching:{request.user_id}")
+    is_searching = await r_client.get(f"searching:{request.user_id}")
     if is_searching:
         raise HTTPException(status_code=400, detail="User is already searching")
-
     # Сохраняем статус поиска в Redis
-    await redis.setex(f"searching:{request.user_id}", 300, "true")
+    await matcher.add_to_queue(request.user_id, request.criteria)
 
     # Отправляем запрос в очередь
     message = {
         "user_id": request.user_id,
-        "criteria": request.criteria.dict(),
-        "timestamp": datetime.now().isoformat(),
+        "username": request.username,
+        "criteria": request.criteria,
+        "status": "search_started",
     }
 
     await rabbitmq.publish_message(message)
 
-    return {"status": "search_started", "user_id": request.user_id}
+
+@router.post("/notify")
+async def notify_users_re_match(
+    request: ChatSessionRequest, db=Depends(get_db), redis=Depends(get_redis)
+):
+    await redis.create_chat_session(request.user1_id, request.user2_id, request.room_id)
+    logger.info(
+        f"Создана сессия чата для пользователей {request.user1_id} и {request.user2_id}"
+    )
+    from aiogram import Bot
+    from app.bots.partner_bot.keyboards.inline_keyboards import create_start_chat_button
+    from app.bots.partner_bot.translations import MESSAGES
+
+    users_exists = await db.check_user_exists(
+        request.user1_id
+    ) and await db.check_user_exists(request.user2_id)
+    if users_exists:
+
+        bot = Bot(token=config.BOT_TOKEN_PARTNER)
+
+        user1_data = await db.get_user_info(request.user1_id)
+        lang_code1 = user1_data["lang_code"]
+        user2_data = await db.get_user_info(request.user2_id)
+        lang_code2 = user2_data["lang_code"]
+
+        msg1 = MESSAGES["match_found"][lang_code1]
+        msg2 = MESSAGES["match_found"][lang_code2]
+
+        link = f"https://chat.lllang.site/enter/{request.room_id}"
+        await bot.send_message(
+            chat_id=request.user1_id,
+            text=msg1.format(nickname=user2_data["username"]),
+            reply_markup=create_start_chat_button(lang_code1, link),
+            parse_mode="HTML",
+        )
+        await bot.send_message(
+            chat_id=request.user2_id,
+            text=msg2.format(nickname=user1_data["username"]),
+            reply_markup=create_start_chat_button(lang_code2, link),
+            parse_mode="HTML",
+        )
+
+    return {"status": "notification_sent"}

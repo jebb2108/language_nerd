@@ -12,13 +12,15 @@ logger = logging.getLogger(name="matching")
 class MatchingService:
     def __init__(self):
         self.redis = aioredis.from_url(config.REDIS_URL)
+        self.acked_users = set()
 
-    async def add_to_queue(self, user_id: int, user_data: dict):
+    async def add_to_queue(self, user_id: int, user_data: dict) -> None:
         """Добавление пользователя в очередь поиска"""
+        logger.info(f"Adding user {user_id} to queue")
         # Сохраняем данные пользователя в Redis
         await self.redis.hset(f"user:{user_id}", mapping=user_data)
         # Указываем TTL для этого пользователя
-        await self.redis.expire(f"user:{user_id}", 600, nx=True)
+        await self.redis.expire(f"user:{user_id}", 300, nx=True)
         # Добавляем в очередь поиска
         await self.redis.lpush("waiting_queue", user_id)
         # Устанавливаем флаг поиска
@@ -26,11 +28,13 @@ class MatchingService:
 
         logger.info(f"User {user_id} added to queue")
 
-    async def remove_from_queue(self, user_id: int):
+    async def remove_from_queue(self, user_id: int, partner_id: int) -> None:
         """Удаление пользователя из очереди"""
         await self.redis.lrem("waiting_queue", 1, user_id)
         await self.redis.delete(f"searching:{user_id}")
-        logger.info(f"User {user_id} removed from queue")
+        await self.redis.lrem("waiting_queue", 1, partner_id)
+        await self.redis.delete(f"searching:{partner_id}")
+        logger.info(f"Users {user_id} and {partner_id} removed from queue")
 
     async def find_match(self):
         """Поиск пары пользователей"""
@@ -38,6 +42,7 @@ class MatchingService:
 
         if queue_length >= 2:
             # Достаем двух пользователей из очереди
+            # (один из них с нужным ID)
             user1_id = await self.redis.rpop("waiting_queue")
             user2_id = await self.redis.rpop("waiting_queue")
             user1_crit = await self.redis.hgetall(f"user:{user1_id}")
@@ -53,6 +58,10 @@ class MatchingService:
 
                 user1_id = int(user1_id)
                 user2_id = int(user2_id)
+
+                if user1_id == user2_id:
+                    await self.redis.lrem("waiting_queue", 1, user1_id)
+                    return None, None, None
 
                 # Создаем комнату чата
                 room_id = str(uuid4())
