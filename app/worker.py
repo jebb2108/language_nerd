@@ -10,8 +10,7 @@ from app.dependencies import get_match, get_notification
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger("worker")
 
-broker = RabbitBroker("amqp://localhost/", logger=logger)
-app = FastStream(broker, logger=logger)
+broker = RabbitBroker(config.RABBITMQ_URL, logger=logger)
 
 
 @broker.subscriber(config.RABBITMQ_QUEUE, no_ack=True)
@@ -46,5 +45,10 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
     await msg.nack()
 
 
+async def main():
+    app = FastStream(broker, logger=logger)
+    await app.run()
+
+
 if __name__ == "__main__":
-    asyncio.run(app.run())
+    asyncio.run(main())

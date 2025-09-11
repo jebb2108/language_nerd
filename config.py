@@ -13,7 +13,7 @@ load_dotenv(env_path)
 
 # Logging configurations
 LOG_CONFIG = {
-    "level": logging.WARNING,
+    "level": logging.INFO,
     "stream": sys.stdout,
     "format": "%(asctime)s - %(levelname)s - %(name)s - %(message)s",
 }

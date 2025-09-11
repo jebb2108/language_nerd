@@ -1,8 +1,6 @@
 import json
 import logging
-import os
-
-import asyncpg
+import uvicorn
 import jwt
 import socketio
 from datetime import datetime
@@ -20,7 +18,7 @@ from config import LOG_CONFIG, config
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name="fastAPI_main")
 
-app = FastAPI()
+app = FastAPI(logger=logger)
 
 origins = [
     "http://chat.lllang.site",  # адрес фронтенда
@@ -165,3 +163,6 @@ async def startup(app: FastAPI):
 
 app = FastAPI(lifespan=startup)
 app.include_router(router)
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
