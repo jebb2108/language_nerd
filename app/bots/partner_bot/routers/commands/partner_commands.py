@@ -85,7 +85,7 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
     user_id = message.from_user.id
     lang_code = message.from_user.language_code
     greeting = (
-        f"{BUTTONS['hello'][lang_code]} <b>{message.from_user.first_name}</b>!\n\n"
+        f"{MESSAGES['hello'][lang_code]} <b>{message.from_user.first_name}</b>!\n\n"
         f"{MESSAGES['intro'][lang_code]}\n"
     )
     await message.answer(text=greeting, parse_mode=ParseMode.HTML)
