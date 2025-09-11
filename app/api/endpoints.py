@@ -1,9 +1,13 @@
 import logging
+import jwt
+
 from fastapi import APIRouter, Depends, HTTPException
+from pycparser.ply.yacc import token
 
 from app.services.rabbitmq import RabbitMQService
 from app.dependencies import get_rabbitmq, get_db, get_redis, get_match
 from app.models import UserMatchRequest, ChatSessionRequest
+from app.validators.create_token import create_token
 from config import LOG_CONFIG, config
 
 logging.basicConfig(**LOG_CONFIG)
@@ -63,6 +67,9 @@ async def notify_users_re_match(
     ) and await db.check_user_exists(request.user2_id)
     if users_exists:
 
+        room_id = request.room_id
+        link = "https://chat.lllang.site/enter/{room_id}?token={token}"
+
         bot = Bot(token=config.BOT_TOKEN_PARTNER)
 
         user1_data = await db.get_user_info(request.user1_id)
@@ -70,20 +77,26 @@ async def notify_users_re_match(
         user2_data = await db.get_user_info(request.user2_id)
         lang_code2 = user2_data["lang_code"]
 
+        link1 = link.format(
+            room_id=room_id, token=await create_token(request.user1_id, room_id)
+        )
+        link2 = link.format(
+            room_id=room_id, token=await create_token(request.user2_id, room_id)
+        )
+
         msg1 = MESSAGES["match_found"][lang_code1]
         msg2 = MESSAGES["match_found"][lang_code2]
 
-        link = f"https://chat.lllang.site/enter/{request.room_id}"
         await bot.send_message(
             chat_id=request.user1_id,
             text=msg1.format(nickname=user2_data["username"]),
-            reply_markup=create_start_chat_button(lang_code1, link),
+            reply_markup=create_start_chat_button(lang_code1, link1),
             parse_mode="HTML",
         )
         await bot.send_message(
             chat_id=request.user2_id,
             text=msg2.format(nickname=user1_data["username"]),
-            reply_markup=create_start_chat_button(lang_code2, link),
+            reply_markup=create_start_chat_button(lang_code2, link2),
             parse_mode="HTML",
         )
 

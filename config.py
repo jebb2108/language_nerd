@@ -63,5 +63,7 @@ class Config:
     # ID админа
     ADMIN_ID: int = os.getenv("ADMIN_ID", 0)
 
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "secret_key")
+
 
 config = Config()
