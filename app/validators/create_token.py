@@ -22,5 +22,5 @@ async def create_token(user_id, room_id, exp: timedelta = timedelta(minutes=15))
         "expires_at": time_obj.isoformat(),
     }
 
-    token = jwt.encode(payload=payload, key=config.SECRET_KEY, alg="HS236")
+    token = jwt.encode(payload=payload, key=config.SECRET_KEY, algorithm=["HS236"])
     return token
