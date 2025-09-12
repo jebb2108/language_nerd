@@ -26,9 +26,8 @@ async def request_match(
     user = await db.check_user_exists(request.user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    r_client = redis.get_client()
     logger.debug(f"User ID: {request.user_id}, criteria: {request.criteria}")
+
     # Сохраняем статус поиска в Redis
     await matcher.add_to_queue(request.user_id, request.criteria)
 

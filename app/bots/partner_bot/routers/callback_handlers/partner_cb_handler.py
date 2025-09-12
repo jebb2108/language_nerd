@@ -90,10 +90,9 @@ async def show_queue_info(
         database: ResourcesMiddleware,
         redis: ResourcesMiddleware
 ):
-    # await callback.answer()
 
     queue = await redis.lrange("waiting_queue", 0, -1)
-    length = len(queue)
+    queue = [ int(user_id.decode()) for user_id in queue ]
 
     common_lans = dict()
 
@@ -109,7 +108,7 @@ async def show_queue_info(
     lans = sorted(common_lans, reverse=True)[:5]
     s_lans = ", ".join(lans)
     s_lans = s_lans if s_lans else MESSAGES['nobody_in_queue'][lang_code]
-    text = MESSAGES['show_queue_info'][lang_code].format(total=length, lans=s_lans)
+    text = MESSAGES['show_queue_info'][lang_code].format(total=len(queue), lans=s_lans)
     await callback.answer(text=text, show_alert=True)
 
 @router.callback_query(F.data == "cancel")

@@ -132,8 +132,7 @@ async def new_session_handler(
             "topic": "general",
         },
     }
-
+    logger.warning(payload)
     async with http_session.post(url=url, json=payload) as response:
         if response.status != 200:
             logger.error(f"Ошибка при запросе к API: {response.status}")
-            # Обработка ошибки
