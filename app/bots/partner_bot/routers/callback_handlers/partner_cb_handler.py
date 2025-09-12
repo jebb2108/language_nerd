@@ -90,10 +90,11 @@ async def show_queue_info(
         database: ResourcesMiddleware,
         redis: ResourcesMiddleware
 ):
-    await callback.answer()
+    # await callback.answer()
 
     queue = await redis.lrange("waiting_queue", 0, -1)
     length = len(queue)
+
     common_lans = dict()
 
     data = await data_storage.get_storage_data(callback.from_user.id, state, database)
@@ -106,7 +107,11 @@ async def show_queue_info(
             common_lans[language] += 1
 
     lans = sorted(common_lans, reverse=True)[:5]
-    text = MESSAGES['show_queue_info'][lang_code]
-    await callback.answer(show_alert=text.format(total=length, lans=", ".join(lans)))
+    s_lans = ", ".join(lans)
+    s_lans = s_lans if s_lans else MESSAGES['nobody_in_queue'][lang_code]
+    text = MESSAGES['show_queue_info'][lang_code].format(total=length, lans=s_lans)
+    await callback.answer(text=text, show_alert=True)
 
-
+@router.callback_query(F.data == "cancel")
+async def cancel_search(callback: CallbackQuery):
+    await callback.answer()

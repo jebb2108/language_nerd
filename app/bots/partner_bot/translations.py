@@ -71,7 +71,12 @@ MESSAGES = dict(
             "ru": "Мы нашли вам собеседника! Его псевдоним: <b>{nickname}</b>\n\nНажмите по кнопке ниже, чтобы перейти в чат: ",
         },
         "show_queue_info": {
-            "en": "Total in search: <b>{total}</b>\n\nMost spoken languages at the moment: <i>{lans}</i>"
+            "en": "Total in search: {total}\n\nMost spoken languages at the moment: {lans}",
+            "ru": "Всего в поиске: {total}\n\nИспользуемые языки в очереди: {lans}",
+        },
+        "nobody_in_queue": {
+            "en": "No one is looking for a match",
+            "ru": "Никого нет, чтобы показать актуальные языки"
         }
     }
 )

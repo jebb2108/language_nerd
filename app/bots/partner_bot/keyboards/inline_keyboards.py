@@ -75,7 +75,7 @@ def get_search_keyboard(lang_code):
         text=BUTTONS["queue_info"][lang_code], callback_data="queue_info"
     )
     cancel_button = InlineKeyboardButton(
-        text=BUTTONS["cancel"][lang_code]
+        text=BUTTONS["cancel"][lang_code], callback_data="cancel"
     )
     builder.add(queue_info_button, cancel_button)
     builder.adjust(1)
