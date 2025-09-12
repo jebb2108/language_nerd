@@ -1,14 +1,18 @@
 from aiogram import Router
 from aiogram.types import Message
+from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitInfo
+from app.bots.partner_bot.utils.filters import IsBotFilter
+from config import config
 
 router = Router(name=__name__)
 
 
-@router.message()
-async def echo(message: Message):
-    if message.text:
-        await message.copy_to(message.chat.id)
-    else:
-        await message.bot.send_message(
-            chat_id=message.chat.id, text="Press /help to get help"
-        )
+@router.message(IsBotFilter(config.BOT_TOKEN_PARTNER))
+async def echo(message: Message, rate_limit_info: RateLimitInfo):
+    # Убираем кнопки после любого сообщения
+    count = rate_limit_info.message_count
+    first_message = rate_limit_info.last_message_time
+    await message.reply(
+        text=f"Your message: {message.text}\n"
+        f"Rate limit info: {count} messages at {first_message}",
+    )

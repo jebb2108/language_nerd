@@ -16,6 +16,8 @@ from app.bots.partner_bot.keyboards.inline_keyboards import (
     show_partner_menu_keyboard,
 )
 
+from app.bots.partner_bot.utils.access_data import data_storage
+
 
 router = Router(name=__name__)
 
@@ -80,3 +82,31 @@ async def go_back_handler(
         text=msg,
         reply_markup=show_partner_menu_keyboard(lang_code),
     )
+
+@router.callback_query(F.data == "queue_info", IsBotFilter(config.BOT_TOKEN_PARTNER))
+async def show_queue_info(
+        callback: CallbackQuery,
+        state: FSMContext,
+        database: ResourcesMiddleware,
+        redis: ResourcesMiddleware
+):
+    await callback.answer()
+
+    queue = await redis.lrange("waiting_queue", 0, -1)
+    length = len(queue)
+    common_lans = dict()
+
+    data = await data_storage.get_storage_data(callback.from_user.id, state, database)
+    lang_code = data.get("lang_code", "en")
+    for user_id in queue:
+        language = await database.get_user_info(user_id)
+        if language not in common_lans:
+            common_lans[language] = 0
+        else:
+            common_lans[language] += 1
+
+    lans = sorted(common_lans, reverse=True)[:5]
+    text = MESSAGES['show_queue_info'][lang_code]
+    await callback.answer(show_alert=text.format(total=length, lans=", ".join(lans)))
+
+

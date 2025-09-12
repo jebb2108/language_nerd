@@ -70,6 +70,9 @@ MESSAGES = dict(
             "en": "Match has been found! Their nickname is <b>{nickname}</b>\n\nTap this button to start chat: ",
             "ru": "Мы нашли вам собеседника! Его псевдоним: <b>{nickname}</b>\n\nНажмите по кнопке ниже, чтобы перейти в чат: ",
         },
+        "show_queue_info": {
+            "en": "Total in search: <b>{total}</b>\n\nMost spoken languages at the moment: <i>{lans}</i>"
+        }
     }
 )
 
@@ -136,7 +139,18 @@ BUTTONS = dict(
             "en": "👤 My profile",
             "ru": "👤 Мой профиль",
         },
-        "search": {"en": "🔍 Search partner", "ru": "🔍 Искать партнера"},
+        "search": {
+            "en": "🔍 Search partner",
+            "ru": "🔍 Искать партнера"
+        },
+        "queue_info": {
+            "en": "❔Show queue info",
+            "ru": "❔Показать очередь",
+        },
+        "cancel": {
+            "en": "❌ Cancel",
+            "ru": "❌ Отменить",
+        },
         "open_chat": {
             "en": "💬 Open chat",
             "ru": "💬 Открыть чат",
@@ -153,7 +167,7 @@ BUTTONS = dict(
             "en": "📍 Send location",
             "ru": "📍 Отправить геолокацию",
         },
-        "cancel": {
+        "decline": {
             "en": "❌ Decline",
             "ru": "❌ Отказаться",
         },

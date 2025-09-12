@@ -67,3 +67,16 @@ def create_start_chat_button(lang_code, link):
     )
     builder.add(start_chat_button)
     return builder.as_markup(resize_keyboard=True)
+
+
+def get_search_keyboard(lang_code):
+    builder = InlineKeyboardBuilder()
+    queue_info_button = InlineKeyboardButton(
+        text=BUTTONS["queue_info"][lang_code], callback_data="queue_info"
+    )
+    cancel_button = InlineKeyboardButton(
+        text=BUTTONS["cancel"][lang_code]
+    )
+    builder.add(queue_info_button, cancel_button)
+    builder.adjust(1)
+    return builder.as_markup(resize_keyboard=True)
