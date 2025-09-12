@@ -3,11 +3,12 @@ import os
 import re
 
 from datetime import datetime
+from typing import Union
 
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardRemove
 from aiogram.enums import ParseMode
@@ -261,17 +262,25 @@ async def get_my_location(message: Message, database: ResourcesMiddleware):
     )
 
 
+@router.callback_query(F.data == "begin_search", IsBotFilter(config.BOT_TOKEN_PARTNER))
 @router.message(
     Command("new_session", prefix="!/"), IsBotFilter(config.BOT_TOKEN_PARTNER)
 )
 async def new_session_handler(
-    message: Message,
+    message: Union[Message, CallbackQuery],
     state: FSMContext,
     redis: ResourcesMiddleware,
     http_session: ResourcesMiddleware,
     database: ResourcesMiddleware,
 ):
+    # Сохраняем оригинальный callback_query для ответа
+    if isinstance(message, CallbackQuery):
+        callback_query = message
+        message = message.message
+        await callback_query.answer()
+
     """Обработчик команды /new_session - запускает поиск партнера"""
+
     data = await data_storage.get_storage_data(message.from_user.id, state, database)
     user_id = data.get("user_id", 0)
     username = data.get("username", "daniel")

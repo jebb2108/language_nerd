@@ -136,6 +136,7 @@ BUTTONS = dict(
             "en": "👤 My profile",
             "ru": "👤 Мой профиль",
         },
+        "search": {"en": "🔍 Search partner", "ru": "🔍 Искать партнера"},
         "open_chat": {
             "en": "💬 Open chat",
             "ru": "💬 Открыть чат",
