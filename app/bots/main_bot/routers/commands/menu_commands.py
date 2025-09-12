@@ -9,7 +9,7 @@ from aiogram.types import Message
 from config import config, LOG_CONFIG
 from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.main_bot.keyboards.inline_keyboards import get_on_main_menu_keyboard
-from app.bots.main_bot.utils.access_data_from_storage import get_storage_data
+from app.bots.main_bot.utils.access_data import data_storage
 from app.bots.main_bot.translations import MESSAGES
 from app.bots.main_bot.utils.filters import IsBotFilter
 
@@ -30,7 +30,7 @@ async def show_main_menu(
 ):
 
     # Получаем данные из состояния
-    data = await get_storage_data(message, state, database)
+    data = await data_storage.get_storage_data(message.from_user.id, state, database)
     user_id = data.get("user_id")
     first_name = data.get("first_name")
     lang_code = data.get("lang_code")

@@ -1,5 +1,4 @@
 import logging
-import jwt
 
 from fastapi import APIRouter, Depends, HTTPException
 from app.services.rabbitmq import RabbitMQService
@@ -82,8 +81,8 @@ async def notify_users_re_match(
             room_id=room_id, token=await create_token(request.user2_id, room_id)
         )
 
-        logger.warning('first_link: %s', link1)
-        logger.warning('second link %s', link2)
+        logger.warning("first_link: %s", link1)
+        logger.warning("second link %s", link2)
 
         msg1 = MESSAGES["match_found"][lang_code1]
         msg2 = MESSAGES["match_found"][lang_code2]

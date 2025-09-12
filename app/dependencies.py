@@ -34,8 +34,12 @@ async def get_notification():
     return notification_service
 
 
-async def get_redis(call_class: bool = True):
+async def get_redis(call_client: bool = False):
     """Зависимость для получения Redis сервиса"""
     if not redis_service.redis_client:
         await redis_service.connect()
-    return redis_service
+
+    if not call_client:
+        return redis_service
+
+    return redis_service.get_client()

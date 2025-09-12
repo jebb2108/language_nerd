@@ -2,8 +2,6 @@ import logging
 import os
 import re
 
-import asyncio
-import json
 from datetime import datetime
 
 from aiogram import Router, F
@@ -29,7 +27,7 @@ from app.bots.partner_bot.keyboards.regular_keyboards import (
     show_dating_keyboard,
 )
 
-from app.bots.partner_bot.utils.access_data_from_storage import get_storage_data
+from app.bots.partner_bot.utils.access_data import data_storage
 
 # Инициализируем роутер
 router = Router(name=__name__)
@@ -59,15 +57,16 @@ async def show_main_menu(
     message: Message, state: FSMContext, database: ResourcesMiddleware
 ):
     """Главное меню бота"""
-    data = await get_storage_data(message, state, database)
-    prefered_name = data.get("name")
+    user_id = message.from_user.id
+    data = await data_storage.get_storage_data(user_id, state, database)
+    prefered_name = data.get("pref_name")
     lang_code = data.get("lang_code")
 
     greeting = MESSAGES["hello"][lang_code] + " <b>" + prefered_name + "</b>!"
     intro = MESSAGES["intro"][lang_code]
     await state.update_data(
+        user_id=user_id,
         lang_code=lang_code,
-        user_id=message.from_user.id,
         first_name=message.from_user.first_name,
     )
     await message.answer(
@@ -273,10 +272,10 @@ async def new_session_handler(
     database: ResourcesMiddleware,
 ):
     """Обработчик команды /new_session - запускает поиск партнера"""
-    data = await get_storage_data(message, state, database)
+    data = await data_storage.get_storage_data(message.from_user.id, state, database)
     user_id = data.get("user_id", 0)
     username = data.get("username", "daniel")
-    language = data.get("language")
+    language = data.get("language", "english")
     dating = data.get("dating", "false")
 
     if username == "NO USERNAME":
@@ -285,12 +284,12 @@ async def new_session_handler(
         return
 
     # Отменяем предыдущий поиск, если он был
-    active_tasks = await redis.get(f"active_search_tasks:{user_id}")
-    if active_tasks and username in str(active_tasks.decode()):
-        await redis.delete(f"active_search_tasks:{user_id}")
+    is_searching = await redis.get(f"searching:{user_id}")
+    if is_searching:
+        await redis.delete(f"searching:{user_id}")
         logger.debug(f"Отменен предыдущий поиск для пользователя {user_id}")
 
-    await redis.setex(f"active_search_tasks:{user_id}", 180, username)
+    await redis.setex(f"searching:{user_id}", 150, username)
     logger.debug(f"Создана сессия поиска для пользователя {user_id}")
 
     await message.answer(

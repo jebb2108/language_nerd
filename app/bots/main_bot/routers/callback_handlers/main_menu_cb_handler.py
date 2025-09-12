@@ -8,7 +8,7 @@ from app.bots.main_bot.utils.filters import IsBotFilter
 from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
 from config import LOG_CONFIG, config
 from app.bots.main_bot.translations import MESSAGES
-from app.bots.main_bot.utils.access_data_from_storage import get_storage_data
+from app.bots.main_bot.utils.access_data import data_storage
 from app.bots.main_bot.keyboards.inline_keyboards import (
     get_on_main_menu_keyboard,
     get_go_back_keyboard,
@@ -29,12 +29,11 @@ async def about(
     Берём текст из QUESTIONARY, ничего не храним в state.
     """
     await callback.answer()  # убираем "часики" на кнопке
-
-    data = await get_storage_data(callback.message, state, database)
+    user_id = callback.from_user.id
+    data = await data_storage.get_storage_data(user_id, state, database)
     lang_code = data.get("lang_code")
 
     msg = MESSAGES["about"][lang_code]
-
     # Редактируем текущее сообщение
     await callback.message.edit_text(
         text=msg,
@@ -51,9 +50,8 @@ async def go_back(
     Возвращает пользователя назад в главное меню, повторно вызывая те же кнопки.
     """
     await callback.answer()
-
-    data = await get_storage_data(callback.message, state, database)
-    user_id = data.get("user_id")
+    user_id = callback.from_user.id
+    data = await data_storage.get_storage_data(user_id, state, database)
     first_name = data.get("first_name")
     lang_code = data.get("lang_code")
     msg = (

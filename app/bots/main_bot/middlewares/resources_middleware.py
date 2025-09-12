@@ -1,31 +1,28 @@
 import logging
-
-import redis.asyncio as redis
 import asyncio
-from dataclasses import dataclass
-from datetime import timedelta
-
 from aiogram import BaseMiddleware
-from typing import Callable, Dict, Any, Awaitable
+from aiogram.dispatcher.middlewares.data import MiddlewareData
+from typing import Callable, Dict, Any, Awaitable, TYPE_CHECKING
 from aiogram.types import TelegramObject
-from aiogram.fsm.storage.redis import RedisStorage
 from aiohttp import ClientSession
 
+if TYPE_CHECKING:
+    from app.services.database import DatabaseService
+    from app.services.redis import RedisService
 
-from app.dependencies import get_db
-from config import LOG_CONFIG, config
+
+from app.dependencies import get_db, get_redis
+from config import LOG_CONFIG
 
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name="resources_middleware")
 
 
-@dataclass(frozen=True)
-class DBConfig:
-    host: str
-    port: int
-    user: str
-    password: str
-    database: str
+class MyMiddlewareData(MiddlewareData):
+
+    redis: object
+    database: object
+    http_session: object
 
 
 class ResourcesMiddleware(BaseMiddleware):
@@ -40,40 +37,24 @@ class ResourcesMiddleware(BaseMiddleware):
         self,
         handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
         event: TelegramObject,
-        data: Dict[str, Any],
+        data: MyMiddlewareData,
     ) -> Any:
 
-        data.update(
-            database=await get_db(),
-            redis=self.redis,
-            http_session=self.session,
-        )
+        data["redis"] = self.redis
+        data["database"] = self.db
+        data["http_session"] = self.session
+
         return await handler(event, data)
 
-    def access_memory(self):
-        return self.storage if self._initialized else None
-
-    async def initialize_resources(self, storage_state_ttl, storage_data_ttl):
+    async def initialize_resources(self):
         """Инициализация ресурсов с созданием экземпляра Database"""
         try:
-
+            # Инициализируем БД
+            self.db: "DatabaseService" = await get_db()
             # Создаем клиент Redis с пулом подключений
-            redis_pool = redis.ConnectionPool.from_url(url=config.REDIS_URL)
-            self.redis = redis.Redis(connection_pool=redis_pool)
-
-            # Создаем Redis storage переменную
-            self.storage = RedisStorage(
-                self.redis,
-                state_ttl=timedelta(minutes=storage_state_ttl),
-                data_ttl=timedelta(minutes=storage_data_ttl),
-            )
-            logger.debug(
-                "Redis storage initialized. State TTL - %s min, Data TTL - %s min",
-                storage_state_ttl,
-                storage_data_ttl,
-            )
-
+            self.redis: "RedisService" = await get_redis(call_client=True)
             # Инициализация других ресурсов
+            # TODO: Вынести session в dependencies
             self.session = ClientSession()
             logger.debug("HTTP session initialized")
 
@@ -91,31 +72,26 @@ class ResourcesMiddleware(BaseMiddleware):
 
     async def _safe_close(self):
         """Безопасное закрытие с обработкой ошибок"""
-        errors = []
-
-        # Закрываем HTTP-сессию и пул подключений
-        # Закрываем пул подключений
         try:
+            # Закрываем HTTP-сессию и пул подключений
+            # Закрываем пул подключений
             if self.redis:
                 await self.redis.close()
                 logger.debug("Redis pool closed")
+            if self.session:
+                await self.session.close()
         except Exception as e:
-            errors.append(f"Redis pool close error: {e}")
-
-        if errors:
-            logger.error(" | ".join(errors))
+            logger.error("Error while closing resources: %s", e)
 
     # Методы для интеграции с жизненным циклом aiogram
-    async def on_startup(
-        self, storage_state_ttl: int = 10, storage_data_ttl: int = 60
-    ) -> None:
+    async def on_startup(self) -> None:
         """Предварительная инициализация при старте приложения"""
         try:
             async with self._lock:
                 # Проверяем, не была ли уже выполнена инициализация
                 if not self._initialized and not self._initialization_failed:
                     logger.debug("Starting resource initialization...")
-                    await self.initialize_resources(storage_state_ttl, storage_data_ttl)
+                    await self.initialize_resources()
                     self._initialized = True
                     logger.debug("Resource initialization completed successfully")
 
@@ -131,6 +107,4 @@ class ResourcesMiddleware(BaseMiddleware):
 
     async def on_shutdown(self):
         """Очистка ресурсов при остановке"""
-        await self.session.close()
-        await self.redis.aclose()
         await self.close()

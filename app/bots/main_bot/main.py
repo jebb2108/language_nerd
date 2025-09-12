@@ -3,11 +3,12 @@ import logging
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
+from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.enums import ParseMode
 from typing import Optional
 
 from app.bots.main_bot.api.web_launcher import start_web_app
-from app.dependencies import get_db
+from app.dependencies import get_db, get_redis
 from config import LOG_CONFIG, config
 from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.main_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
@@ -32,7 +33,7 @@ async def init_resources() -> None:
     resources = ResourcesMiddleware()
     rate_limit_middleware = RateLimitMiddleware()
     quiz_middleware = QuizMiddleware()
-    await resources.on_startup(10, 60)
+    await resources.on_startup()
 
 
 # noinspection PyUnresolvedReferences
@@ -40,9 +41,11 @@ async def run():
     """Запуск бота и веб-сервера в одном event loop"""
 
     await init_resources()
+    redis = await get_redis(call_client=True)
+    storage = RedisStorage(redis, state_ttl=10, data_ttl=60)
 
     # Инициализация диспетчера
-    disp = Dispatcher(storage=resources.access_memory())
+    disp = Dispatcher(storage=storage)
 
     # Инициализация бота
     bot = Bot(

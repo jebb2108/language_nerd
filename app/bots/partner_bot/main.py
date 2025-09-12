@@ -5,12 +5,14 @@ from typing import Optional
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.fsm.storage.redis import RedisStorage
 
 from app.bots.partner_bot.routers import router as main_router
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
 
 from app.bots.partner_bot.api.chat_launcher import start_server
+from app.dependencies import get_redis
 
 # Импорт функций БД
 from config import config, LOG_CONFIG
@@ -28,7 +30,7 @@ async def init_resources():
     global resources, rate_limit_middleware
     resources = ResourcesMiddleware()
     rate_limit_middleware = RateLimitMiddleware()
-    await resources.on_startup(10, 10)
+    await resources.on_startup()
 
 
 async def run():
@@ -37,7 +39,9 @@ async def run():
         token=config.BOT_TOKEN_PARTNER,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
-    disp = Dispatcher(storage=resources.access_memory())
+    redis = await get_redis(call_client=True)
+    storage = RedisStorage(redis, state_ttl=10, data_ttl=60)
+    disp = Dispatcher(storage=storage)
 
     disp.include_router(main_router)
     disp.message.middleware(resources)
