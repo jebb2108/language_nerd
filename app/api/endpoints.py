@@ -29,10 +29,6 @@ async def request_match(
 
     r_client = redis.get_client()
     logger.debug(f"User ID: {request.user_id}, criteria: {request.criteria}")
-    # Проверяем, не ищет ли уже пользователь собеседника
-    is_searching = await r_client.get(f"searching:{request.user_id}")
-    if is_searching:
-        raise HTTPException(status_code=400, detail="User is already searching")
     # Сохраняем статус поиска в Redis
     await matcher.add_to_queue(request.user_id, request.criteria)
 
