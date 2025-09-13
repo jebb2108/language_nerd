@@ -31,7 +31,7 @@ class Config:
     RABBITMQ_DELAYED_QUEUE: str = os.getenv("RABBITMQ_DELAYED_QUEUE", "none")
 
     # URL разных запросов
-    NOTIFICATION_URL: str = os.getenv("NOTIFICATION_URL", "0.0.0.0:8100")
+    NOTIFICATION_URL: str = os.getenv("NOTIFICATION_URL", "0.0.0.0:8080")
     # PostgreSQL
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL", "postgresql://user:pass@localhost:5432/db"
