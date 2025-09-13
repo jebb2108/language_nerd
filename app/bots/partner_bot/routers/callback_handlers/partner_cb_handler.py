@@ -124,7 +124,7 @@ async def cancel_search(
 
     redis = await get_redis(call_client=True)
 
-    """Обработчик команды /new_session - запускает поиск партнера"""
+    """Обработчик callback(а) отменяет поиск партнера"""
 
     data = await data_storage.get_storage_data(message.from_user.id, state, database)
     user_id = data.get("user_id", 0)
@@ -139,7 +139,7 @@ async def cancel_search(
         await redis.delete(f"searching:{user_id}")
         logger.debug(f"Отменен предыдущий поиск для пользователя {user_id}")
 
-    await message.edit_text(text=MESSAGES['cancel'][lang_code])
+    await message.edit_text(text=MESSAGES['cancel_search'][lang_code])
 
     # Отправляю запрос на сервер
     url = "{DOMAIN}/cancel".format(DOMAIN=config.BASE_URL)
