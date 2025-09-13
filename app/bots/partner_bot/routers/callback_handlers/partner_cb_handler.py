@@ -1,9 +1,11 @@
 import logging
 
 from aiogram import F, Router
+from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
+from app.dependencies import get_redis
 from config import LOG_CONFIG, config
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.partner_bot.utils.filters import IsBotFilter
@@ -15,9 +17,6 @@ from app.bots.partner_bot.keyboards.inline_keyboards import (
     get_go_back_keyboard,
     show_partner_menu_keyboard,
 )
-
-from app.bots.partner_bot.utils.access_data import data_storage
-
 
 router = Router(name=__name__)
 
@@ -111,6 +110,60 @@ async def show_queue_info(
     text = MESSAGES['show_queue_info'][lang_code].format(total=len(queue), lans=s_lans)
     await callback.answer(text=text, show_alert=True)
 
+
 @router.callback_query(F.data == "cancel")
-async def cancel_search(callback: CallbackQuery):
+async def cancel_search(
+        callback: CallbackQuery,
+        state: FSMContext,
+        database: ResourcesMiddleware,
+        http_session: ResourcesMiddleware,
+):
     await callback.answer()
+
+    message = callback.message
+
+    redis = await get_redis(call_client=True)
+
+    """Обработчик команды /new_session - запускает поиск партнера"""
+
+    data = await data_storage.get_storage_data(message.from_user.id, state, database)
+    user_id = data.get("user_id", 0)
+    username = data.get("username", "daniel")
+    language = data.get("language", "english")
+    dating = data.get("dating", "false")
+    lang_code = data.get("lang_code", "en")
+
+    # Отменяем предыдущий поиск, если он был
+    is_searching = await redis.get(f"searching:{user_id}")
+    if is_searching:
+        await redis.delete(f"searching:{user_id}")
+        logger.debug(f"Отменен предыдущий поиск для пользователя {user_id}")
+
+    await message.edit_text(text=MESSAGES['cancel'][lang_code])
+
+    # Отправляю запрос на сервер
+    url = "{DOMAIN}/cancel".format(DOMAIN=config.BASE_URL)
+
+    payload = {
+        "user_id": int(user_id),
+        "username": username,
+        "criteria": {
+            "dating": dating,
+            "language": language,
+            "topic": "general",
+        },
+    }
+
+    try:
+        async with http_session.post(url=url, json=payload, headers={'Content-Type': 'application/json'}) as response:
+            response_text = await response.text()
+            logger.warning(f"Статус ответа: {response.status}")
+            logger.warning(f"Тело ответа: {response_text}")
+
+            if response.status != 200:
+                logger.error(f"Ошибка при запросе к API: {response.status}. Ответ: {response_text}")
+            else:
+                logger.info("Запрос успешно обработан")
+
+    except Exception as e:
+        logger.error(f"Исключение при выполнении запроса: {e}")

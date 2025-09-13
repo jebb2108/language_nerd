@@ -77,7 +77,11 @@ MESSAGES = dict(
         "nobody_in_queue": {
             "en": "No one is looking for a match",
             "ru": "Никого нет, чтобы показать актуальные языки"
-        }
+        },
+        "cancel_search": {
+            "en": "Ended search",
+            "ru": "Поиск завершен"
+        },
     }
 )
 
