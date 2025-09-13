@@ -17,43 +17,20 @@ class MatchingService:
         self.user_status = dict()
         self.acked_users = set()
 
-    def set_status(self, user_id: int, status: str, acked=False) -> None:
-        self.user_status[user_id] = {
-            "status": status,
-            "acked": acked,
-            "created_at": datetime.now()
-        }
-        logger.warning(self.user_status[user_id])
+    def create_status(self, data: dict, acked=False) -> None:
+        user_id = int(data["user_id"])
+        if user_id not in self.user_status:
+            self.user_status[user_id] = {
+                "user_id": user_id,
+                "status": data["status"],
+                "acked": acked,
+                "created_at": data['created_at']
+            }
+            logger.warning(
+                "Users key in matcher.user_status: %s",
+                self.user_status[user_id]
+            )
 
-    def get_status(self, user_id: int) -> dict:
-        if user_id in self.user_status:
-            res = self.user_status[user_id]
-            if datetime.now() > self.user_status[user_id]['created_at'] + timedelta(minutes=3):
-                del self.user_status[user_id]
-            return res
-        logger.error("User's status unknown. Their ID: %d", user_id)
-
-    async def add_to_queue(self, user_id: int, user_data: dict) -> None:
-        """Добавление пользователя в очередь поиска"""
-        logger.info(f"Adding user {user_id} to queue")
-        # Сохраняем данные пользователя в Redis
-        await self.redis.hset(f"user:{user_id}", mapping=user_data)
-        # Указываем TTL для этого пользователя
-        await self.redis.expire(f"user:{user_id}", 300, nx=True)
-        # Добавляем в очередь поиска
-        await self.redis.lpush("waiting_queue", user_id)
-        # Устанавливаем флаг поиска
-        await self.redis.setex(f"searching:{user_id}", 300, "true")
-
-        logger.info(f"User {user_id} added to queue")
-
-    async def remove_from_queue(self, user_id: int, partner_id: int) -> None:
-        """Удаление пользователя из очереди"""
-        await self.redis.lrem("waiting_queue", 1, user_id)
-        await self.redis.delete(f"searching:{user_id}")
-        await self.redis.lrem("waiting_queue", 1, partner_id)
-        await self.redis.delete(f"searching:{partner_id}")
-        logger.info(f"Users {user_id} and {partner_id} removed from queue")
 
     async def find_match(self):
         """Поиск пары пользователей"""

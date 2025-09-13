@@ -3,6 +3,7 @@ import sys
 import logging
 from asyncio import Semaphore
 from dataclasses import dataclass
+from datetime import timezone, timedelta
 
 from dotenv import load_dotenv
 
@@ -66,6 +67,11 @@ class Config:
     ADMIN_ID: int = os.getenv("ADMIN_ID", 0)
 
     SECRET_KEY: str = os.getenv("SECRET_KEY", "secret_key")
+
+    TZINFO = timezone(timedelta(hours=0.0))
+
+    SEARCH_STARTED = 'search_started'
+    SEARCH_CANCELED = 'search_canceled'
 
 
 config = Config()
