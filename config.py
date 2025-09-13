@@ -72,6 +72,7 @@ class Config:
 
     SEARCH_STARTED = 'search_started'
     SEARCH_CANCELED = 'search_canceled'
+    SEARCH_COMPLETED = 'search_completed'
 
 
 config = Config()

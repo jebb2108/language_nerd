@@ -23,6 +23,11 @@ broker = RabbitBroker(config.RABBITMQ_URL, logger=logger)
 async def elevate_user(user_data: dict, matcher: MatchingService, msg: RabbitMessage) -> None:
     """ Функция, для обработки состояния пользовательского инфо в очереди ожидания """
     user_id, to_ack = int(user_data["user_id"]), False
+
+    if user_data['status'] in [config.SEARCH_CANCELED, config.SEARCH_COMPLETED]:
+        del matcher.user_status[user_id]
+        return await msg.ack()
+
     """ Ситуация, когда пользователь находится в словаре """
     if exists := int(user_data["user_id"]) in matcher.user_status:
         # Определяю, не просрочен ли таймер в информации о пользователе

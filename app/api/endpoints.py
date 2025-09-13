@@ -42,7 +42,7 @@ async def request_match(
         "username": request.username,
         "criteria": request.criteria,
         "created_at": datetime.now(tz=config.TZINFO).isoformat(), # переводит в строку
-        "status": "search_started",
+        "status": config.SEARCH_STARTED,
     }
 
     await rabbitmq.publish_message(message)
@@ -50,7 +50,10 @@ async def request_match(
 
 @router.post("/notify")
 async def notify_users_re_match(
-    request: ChatSessionRequest, db=Depends(get_db), redis=Depends(get_redis)
+    request: ChatSessionRequest,
+    db=Depends(get_db),
+    redis=Depends(get_redis),
+    rabbitmq=Depends(get_rabbitmq)
 ):
     await redis.create_chat_session(request.user1_id, request.user2_id, request.room_id)
     logger.info(
@@ -101,6 +104,19 @@ async def notify_users_re_match(
             parse_mode="HTML",
         )
 
+        # Отправляем запрос в очередь
+        message = {
+            "user_id": request.user_id,
+            "username": request.username,
+            "criteria": request.criteria,
+            "created_at": datetime.now(tz=config.TZINFO).isoformat(),  # переводит в строку
+            "status": config.SEARCH_COMPLETED,
+        }
+
+        await rabbitmq.publish_message(message)
+
+
+
     return {"status": "notification_sent"}
 
 
@@ -121,7 +137,7 @@ async def request_match(
         "username": request.username,
         "criteria": request.criteria,
         "created_at": datetime.now(tz=config.TZINFO).isoformat(),
-        "status": "search_canceled",
+        "status": config.SEARCH_CANCELED,
     }
 
     await rabbitmq.publish_message(message)
