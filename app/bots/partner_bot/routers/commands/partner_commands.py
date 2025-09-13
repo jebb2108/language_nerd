@@ -85,12 +85,6 @@ async def new_session_handler(
     http_session: ResourcesMiddleware,
     database: ResourcesMiddleware,
 ):
-    # Сохраняем оригинальный callback_query для ответа
-    if isinstance(message, CallbackQuery):
-        callback_query = message
-        message = message.message
-        await callback_query.answer()
-
     """Обработчик команды /new_session - запускает поиск партнера"""
 
     data = await data_storage.get_storage_data(message.from_user.id, state, database)

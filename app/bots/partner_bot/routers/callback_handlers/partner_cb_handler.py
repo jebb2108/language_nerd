@@ -1,4 +1,5 @@
 import logging
+from typing import Union
 
 from aiogram import F, Router
 from aiogram.enums import ParseMode
@@ -15,7 +16,7 @@ from app.bots.partner_bot.translations import MESSAGES
 
 from app.bots.partner_bot.keyboards.inline_keyboards import (
     get_go_back_keyboard,
-    show_partner_menu_keyboard,
+    show_partner_menu_keyboard, get_search_keyboard,
 )
 
 router = Router(name=__name__)
@@ -153,6 +154,74 @@ async def cancel_search(
             "topic": "general",
         },
     }
+
+    try:
+        async with http_session.post(url=url, json=payload, headers={'Content-Type': 'application/json'}) as response:
+            response_text = await response.text()
+            logger.warning(f"Статус ответа: {response.status}")
+            logger.warning(f"Тело ответа: {response_text}")
+
+            if response.status != 200:
+                logger.error(f"Ошибка при запросе к API: {response.status}. Ответ: {response_text}")
+            else:
+                logger.info("Запрос успешно обработан")
+
+    except Exception as e:
+        logger.error(f"Исключение при выполнении запроса: {e}")
+
+
+@router.callback_query(F.data == "begin_search", IsBotFilter(config.BOT_TOKEN_PARTNER))
+async def new_session_handler(
+    callback: CallbackQuery,
+    state: FSMContext,
+    redis: ResourcesMiddleware,
+    http_session: ResourcesMiddleware,
+    database: ResourcesMiddleware,
+):
+    """Обработчик команды /new_session - запускает поиск партнера"""
+
+    data = await data_storage.get_storage_data(callback.from_user.id, state, database)
+    user_id = data.get("user_id", 0)
+    username = data.get("username", "daniel")
+    language = data.get("language", "english")
+    dating = data.get("dating", "false")
+    lang_code = data.get("lang_code", "en")
+
+    if username == "NO USERNAME":
+        msg = MESSAGES["no_username"][callback.from_user.language_code]
+        await callback.message.answer(text=msg, parse_mode=ParseMode.HTML)
+        return
+
+    # Отменяем предыдущий поиск, если он был
+    is_searching = await redis.get(f"searching:{user_id}")
+    if is_searching:
+        await redis.delete(f"searching:{user_id}")
+        logger.debug(f"Отменен предыдущий поиск для пользователя {user_id}")
+
+    await redis.setex(f"searching:{user_id}", 150, username)
+    logger.debug(f"Создана сессия поиска для пользователя {user_id}")
+
+    await callback.message.answer(
+        f"🔍 Ищем партнера для общения - <b>{language}</b>\n\n",
+        parse_mode=ParseMode.HTML,
+        reply_markup=get_search_keyboard(lang_code),
+    )
+
+    # Отправляю запрос на сервер
+    url = "{DOMAIN}/match".format(DOMAIN=config.BASE_URL)
+
+    payload = {
+        "user_id": int(user_id),
+        "username": username,
+        "criteria": {
+            "dating": dating,
+            "language": language,
+            "topic": "general",
+        },
+    }
+
+    logger.warning(f"Отправка запроса на: {url}")
+    logger.warning(f"Данные запроса: {payload}")
 
     try:
         async with http_session.post(url=url, json=payload, headers={'Content-Type': 'application/json'}) as response:
