@@ -180,6 +180,8 @@ async def new_session_handler(
 ):
     """Обработчик команды /new_session - запускает поиск партнера"""
 
+    await callback.answer()
+
     data = await data_storage.get_storage_data(callback.from_user.id, state, database)
     user_id = data.get("user_id", 0)
     username = data.get("username", "daniel")
