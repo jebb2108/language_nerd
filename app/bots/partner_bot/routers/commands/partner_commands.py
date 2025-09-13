@@ -74,7 +74,6 @@ async def get_my_location(message: Message, database: ResourcesMiddleware):
     )
 
 
-@router.callback_query(F.data == "begin_search", IsBotFilter(config.BOT_TOKEN_PARTNER))
 @router.message(
     Command("new_session", prefix="!/"), IsBotFilter(config.BOT_TOKEN_PARTNER)
 )
