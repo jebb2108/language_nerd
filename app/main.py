@@ -10,9 +10,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-from app.api.endpoints import router
 from app.dependencies import get_rabbitmq, get_db, get_redis
 from config import LOG_CONFIG, config
+
+from app.api.endpoints import router
 
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name="fastAPI_main")

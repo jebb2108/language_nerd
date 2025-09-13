@@ -3,9 +3,9 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.main import redis
+# from app.main import redis
 from app.services.rabbitmq import RabbitMQService
-from app.dependencies import get_rabbitmq, get_db, get_redis, get_match
+from app.dependencies import get_rabbitmq, get_db, get_redis
 from app.models import UserMatchRequest, ChatSessionRequest
 from app.validators.create_token import create_token
 from config import LOG_CONFIG, config
@@ -34,6 +34,7 @@ async def request_match(
     # Сохраняем статус поиска в Redis
     # ( На этом уровне мы можем работать только с методами класса,
     # которые ввзаимодействуют с Redis )
+    redis = await get_redis()
     await redis.add_to_queue(request.user_id, request.criteria)
 
     # Отправляем запрос в очередь
