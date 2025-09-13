@@ -121,7 +121,7 @@ async def new_session_handler(
     )
 
     # Отправляю запрос на сервер
-    url = "{DOMAIN}/match".format(DOMAIN=os.getenv("BASE_DOMAIN", "0.0.0.0"))
+    url = "{DOMAIN}/match".format(DOMAIN=config.BASE_URL)
 
     payload = {
         "user_id": int(user_id),
@@ -132,7 +132,20 @@ async def new_session_handler(
             "topic": "general",
         },
     }
-    logger.warning(payload)
-    async with http_session.post(url=url, json=payload) as response:
-        if response.status != 200:
-            logger.error(f"Ошибка при запросе к API: {response.status}")
+
+    logger.warning(f"Отправка запроса на: {url}")
+    logger.warning(f"Данные запроса: {payload}")
+
+    try:
+        async with http_session.post(url=url, json=payload, headers={'Content-Type': 'application/json'}) as response:
+            response_text = await response.text()
+            logger.warning(f"Статус ответа: {response.status}")
+            logger.warning(f"Тело ответа: {response_text}")
+
+            if response.status != 200:
+                logger.error(f"Ошибка при запросе к API: {response.status}. Ответ: {response_text}")
+            else:
+                logger.info("Запрос успешно обработан")
+
+    except Exception as e:
+        logger.error(f"Исключение при выполнении запроса: {e}")

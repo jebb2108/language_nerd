@@ -1,6 +1,8 @@
 import logging
 from datetime import datetime
 from uuid import uuid4
+
+from asyncpg.pgproto.pgproto import timedelta
 from redis import asyncio as aioredis
 
 from config import LOG_CONFIG, config
@@ -12,7 +14,24 @@ logger = logging.getLogger(name="matching")
 class MatchingService:
     def __init__(self):
         self.redis = aioredis.from_url(config.REDIS_URL)
+        self.user_status = dict()
         self.acked_users = set()
+
+    def set_status(self, user_id: int, status: str, acked=False) -> None:
+        self.user_status[user_id] = {
+            "status": status,
+            "acked": acked,
+            "created_at": datetime.now()
+        }
+        logger.warning(self.user_status[user_id])
+
+    def get_status(self, user_id: int) -> dict:
+        if user_id in self.user_status:
+            res = self.user_status[user_id]
+            if datetime.now() > self.user_status[user_id]['created_at'] + timedelta(minutes=3):
+                del self.user_status[user_id]
+            return res
+        logger.error("User's status unknown. Their ID: %d", user_id)
 
     async def add_to_queue(self, user_id: int, user_data: dict) -> None:
         """Добавление пользователя в очередь поиска"""
@@ -63,8 +82,12 @@ class MatchingService:
                     await self.redis.lrem("waiting_queue", 1, user1_id)
                     return None, None, None
 
+                elif self.user_status[user1_id] != self.user_status[user2_id]:
+                    return None, None, None
+
                 # Создаем комнату чата
                 room_id = str(uuid4())
+
 
                 # Сохраняем информацию о комнате
                 room_data = {

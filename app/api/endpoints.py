@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from app.services.rabbitmq import RabbitMQService
@@ -18,15 +19,16 @@ async def request_match(
     request: UserMatchRequest,
     rabbitmq: RabbitMQService = Depends(get_rabbitmq),
     db=Depends(get_db),
-    redis=Depends(get_redis),
     matcher=Depends(get_match),
 ):
-    logger.info(f"Получен запрос на поиск партнера для пользователя {request.user_id}")
+    logger.warning(
+        f"Получен запрос на поиск партнера для пользователя {request.user_id}"
+    )
     # Проверяем пользователя в БД
     user = await db.check_user_exists(request.user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    logger.debug(f"User ID: {request.user_id}, criteria: {request.criteria}")
+    logger.warning(f"User ID: {request.user_id}, criteria: {request.criteria}")
 
     # Сохраняем статус поиска в Redis
     await matcher.add_to_queue(request.user_id, request.criteria)
@@ -36,8 +38,13 @@ async def request_match(
         "user_id": request.user_id,
         "username": request.username,
         "criteria": request.criteria,
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "status": "search_started",
     }
+
+    matcher.set_status(int(request.user_id), "search_started")
+    res = matcher.get_status(int(request.user_id))
+    logger.warning(res)
 
     await rabbitmq.publish_message(message)
 
@@ -96,3 +103,31 @@ async def notify_users_re_match(
         )
 
     return {"status": "notification_sent"}
+
+
+@router.post("/cancel")
+async def request_match(
+    request: UserMatchRequest,
+    rabbitmq: RabbitMQService = Depends(get_rabbitmq),
+    db=Depends(get_db),
+    matcher=Depends(get_match),
+):
+    # Проверяем пользователя в БД
+    user = await db.check_user_exists(request.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    # logger.debug(f"User ID: {request.user_id}, criteria: {request.criteria}")
+
+    matcher = await get_match()
+    # Отправляем запрос в очередь
+    message = {
+        "user_id": request.user_id,
+        "username": request.username,
+        "criteria": request.criteria,
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "status": "search_canceled",
+    }
+
+    matcher.set_status(int(request.user_id), "search_canceled", acked=True)
+
+    await rabbitmq.publish_message(message)

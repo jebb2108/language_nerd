@@ -17,12 +17,23 @@ from config import LOG_CONFIG, config
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name="fastAPI_main")
 
-app = FastAPI(logger=logger)
-
+# Настройки CORS
 origins = [
-    "http://localhost:4000",  # адрес фронтенда
+    "http://localhost:4000",
 ]
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Инициализация ресурсов"""
+    await get_rabbitmq()
+    await get_redis()
+    await get_db()
+    yield
+
+# Создаем единственный экземпляр FastAPI
+app = FastAPI(lifespan=lifespan)
+
+# Добавляем middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -30,6 +41,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Подключаем роутер
+app.include_router(router)
 
 # Инициализация Socket.IO
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
@@ -150,18 +164,6 @@ def convert_token(token: str):
     return jwt.decode(jwt=token, key=config.SECRET_KEY, algorithms=["HS236"])
 
 
-@asynccontextmanager
-async def startup(app: FastAPI):
-    """Инициализация ресурсов"""
-    await get_rabbitmq()
-    await get_redis()
-    await get_db()
-
-    yield
-
-
-app = FastAPI(lifespan=startup)
-app.include_router(router)
 
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8080, reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8100, reload=True)
