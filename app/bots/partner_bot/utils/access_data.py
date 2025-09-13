@@ -9,24 +9,31 @@ from app.bots.partner_bot.utils.exc import StorageDataException
 
 class DataStorage:
     def __init__(self):
-        self.lock = asyncio.Lock()
+        self.lock = None
 
     async def get_storage_data(
         self, user_id: int, state: FSMContext, database: ResourcesMiddleware
     ) -> dict:
         """Достаем нужные данные о пользователе"""
+        if self.lock is None:
+            self.lock = asyncio.Lock()
+
         async with self.lock:
+
             s_data = await state.get_data()
+
+            # Проверяем наличие необходимых ключей
             keys = ["user_id", "username", "first_name", "lang_code"]
-            data_status = all([s_data.get(key, False) for key in keys])
+            data_status = all(key in s_data for key in keys)
 
             if not data_status:
-                if s_data := await self.set_user_info(user_id, database):
-                    await state.update_data(s_data)
+                user_data = await self.set_user_info(user_id, database)
+                if user_data:
+                    await state.update_data(user_data)
                     return await state.get_data()
-                raise StorageDataException("Error while trying to access data")
+                else:
+                    raise StorageDataException("Error while trying to access user data from database")
 
-            return s_data
 
     @staticmethod
     async def set_user_info(user_id: int, database: ResourcesMiddleware) -> dict:
@@ -36,7 +43,13 @@ class DataStorage:
             if profile_info := await database.get_users_profile(user_id):
 
                 birthday = profile_info["birthday"]
-                age_delta = datetime.now() - datetime.combine(birthday, time.min)
+                if isinstance(birthday, datetime):
+                    age_delta = datetime.now() - birthday
+                else:
+                    # Предполагаем, что birthday это date или строка
+                    birthday_date = datetime.combine(birthday, time.min)
+                    age_delta = datetime.now() - birthday_date
+
                 s_data.update(
                     user_id=user_id,
                     username=user_info["username"],
@@ -62,7 +75,7 @@ class DataStorage:
 
             return s_data
 
-        return s_data
+        return {}
 
 
 data_storage = DataStorage()
