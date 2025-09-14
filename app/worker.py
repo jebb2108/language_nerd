@@ -65,6 +65,7 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
     updated_data["current_time"] = current_time.isoformat()
         
     logger.warning(f"Received message: {data}")
+    logger.warning(f"Message after processing: {updated_data}")
 
     matcher = await get_match()
     notifier = await get_notification()
