@@ -20,13 +20,15 @@ logger = logging.getLogger("worker")
 broker = RabbitBroker(config.RABBITMQ_URL, logger=logger)
 
 
-async def elevate_user(user_data: dict, matcher: MatchingService, msg: RabbitMessage) -> None:
+async def elevate_user(user_data: dict, matcher: MatchingService) -> bool:
     """ Функция, для обработки состояния пользовательского инфо в очереди ожидания """
     user_id, to_ack = int(user_data["user_id"]), False
 
-    if user_data['status'] in [config.SEARCH_CANCELED, config.SEARCH_COMPLETED]:
-        del matcher.user_status[user_id]
-        return await msg.ack()
+    if user_data['status'] in [
+        config.SEARCH_CANCELED, 
+        config.SEARCH_COMPLETED
+        ]: 
+        return True
 
     """ Ситуация, когда пользователь находится в словаре """
     if exists := int(user_data["user_id"]) in matcher.user_status:
@@ -41,13 +43,12 @@ async def elevate_user(user_data: dict, matcher: MatchingService, msg: RabbitMes
         if exists and is_acked and expired: del matcher.user_status[user_id]
 
         logger.debug("User has been processed")
-        if to_ack: await msg.ack()
-        return
+        if to_ack: return True
 
     """ Ситуация, когда пользователь НЕ аходится в словаре """
     matcher.user_status[user_id] = user_data
     logger.debug("user has been put/updated in matcher's dict")
-    return
+    return False
 
 
 @broker.subscriber(config.RABBITMQ_QUEUE)
@@ -66,7 +67,9 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
 
     matcher.create_status(data)
     # Оцениваю сообщение по определенным параметрам
-    await elevate_user(data, matcher, msg)
+    should_ack = await elevate_user(data, matcher)
+    if should_ack: return await msg.ack()
+        
     # Поиск подходящей пары в Redis
     room_id, user1_id, user2_id = await matcher.find_match()
 
