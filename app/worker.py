@@ -31,16 +31,17 @@ async def elevate_user(user_data: dict, matcher: MatchingService) -> bool:
         return True
 
     """ Ситуация, когда пользователь находится в словаре """
-    if exists := int(user_data["user_id"]) in matcher.user_status:
+    if int(user_data["user_id"]) in matcher.user_status:
         # Определяю, не просрочен ли таймер в информации о пользователе
-        orig_time = datetime.fromisoformat(matcher.user_status[user_id]['created_at'])
-
+        orig_time = datetime.fromisoformat(
+            matcher.user_status[user_id]['created_at']
+        )
         time_period = datetime.now() - orig_time
         if expired := time_period > timedelta(minutes=3): to_ack = True
         # Глобальный параметр acked нужно только для тех сообщений,
         # когда польщователь нажал кнопку отмены в чате с ботом
         if is_acked := matcher.user_status[user_id]['acked']: to_ack = True
-        if exists and is_acked and expired: del matcher.user_status[user_id]
+        if is_acked and expired: del matcher.user_status[user_id]
 
         logger.debug("User has been processed")
         if to_ack: return True
