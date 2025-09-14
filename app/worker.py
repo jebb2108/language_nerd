@@ -38,12 +38,13 @@ async def elevate_user(user_data: dict, matcher: MatchingService) -> bool:
             matcher.user_status[user_id]['created_at']
         )
         time_period = datetime.now() - orig_time
-        if expired := time_period > timedelta(minutes=3): to_ack = True
+        if time_period > timedelta(minutes=3): 
+            del matcher.user_status[user_id]
+            to_ack = True
         # Глобальный параметр acked нужно только для тех сообщений,
         # когда польщователь нажал кнопку отмены в чате с ботом
-        if is_acked := matcher.user_status[user_id]['acked']: to_ack = True
-        if is_acked and expired: del matcher.user_status[user_id]
-
+        elif matcher.user_status[user_id]['acked']: to_ack = True
+    
         logger.debug("User has been processed")
         if to_ack: return True
 
