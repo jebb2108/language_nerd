@@ -50,10 +50,15 @@ async def elevate_user(user_data: dict, matcher: MatchingService, msg: RabbitMes
     return
 
 
-@broker.subscriber(config.RABBITMQ_QUEUE, no_ack=True)
+@broker.subscriber(config.RABBITMQ_QUEUE)
 async def handle_match_request(data: dict, msg: RabbitMessage):
 
-    await asyncio.sleep(2)
+    current_time = datetime.now(tz=config.TZINFO)
+    message_time = datetime.fromisoformat(data.get("current_time"))
+    if current_time - message_time < timedelta(seconds=1):
+        await msg.nack()
+        return
+        
     logger.warning(f"Received message: {data}")
 
     matcher = await get_match()
