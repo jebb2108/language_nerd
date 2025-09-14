@@ -61,6 +61,9 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
     if current_time - message_time < timedelta(seconds=1):
         await msg.nack()
         return
+    else:
+        # Обновляем таймер
+        data["current_time"] = current_time
         
     logger.warning(f"Received message: {data}")
 
