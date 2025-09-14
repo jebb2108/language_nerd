@@ -85,7 +85,6 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
         matcher.user_status[user2_id]['acked'] = True
         await notifier.notify_match(user1_id, user2_id, room_id)
         await redis.remove_from_queue(user1_id, user2_id)
-        return await msg.ack()
 
     await msg.nack()
     return updated_data
