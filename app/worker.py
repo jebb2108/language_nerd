@@ -28,6 +28,7 @@ async def elevate_user(user_data: dict, matcher: MatchingService) -> bool:
         config.SEARCH_CANCELED, 
         config.SEARCH_COMPLETED
         ]: 
+        matcher[user_id]["acked"] = True
         return True
 
     """ Ситуация, когда пользователь находится в словаре """
@@ -65,8 +66,7 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
 
     matcher = await get_match()
     notifier = await get_notification()
-
-    matcher.create_status(data)
+    
     # Оцениваю сообщение по определенным параметрам
     should_ack = await elevate_user(data, matcher)
     if should_ack: return await msg.ack()
