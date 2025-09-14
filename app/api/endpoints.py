@@ -36,13 +36,14 @@ async def request_match(
     # которые ввзаимодействуют с Redis )
     redis = await get_redis()
     await redis.add_to_queue(request.user_id, request.criteria)
-
+    time_str = datetime.now(tz=config.TZINFO).isoformat()
     # Отправляем запрос в очередь
     message = {
         "user_id": request.user_id,
         "username": request.username,
         "criteria": request.criteria,
-        "created_at": datetime.now(tz=config.TZINFO).isoformat(), # переводит в строку
+        "current_time": time_str,
+        "created_at": time_str,
         "status": config.SEARCH_STARTED,
     }
 
@@ -110,7 +111,8 @@ async def notify_users_re_match(
             "user_id": request.user_id,
             "username": request.username,
             "criteria": request.criteria,
-            "created_at": datetime.now(tz=config.TZINFO).isoformat(),  # переводит в строку
+            "current_time": time_str,
+             "created_at": time_str,
             "status": config.SEARCH_COMPLETED,
         }
 
@@ -131,7 +133,7 @@ async def request_match(
     user = await db.check_user_exists(request.user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
+    time_str = datetime.now(tz=config.TZINFO).isoformat()
     # Отправляем запрос в очередь
     message = {
         "user_id": request.user_id,
