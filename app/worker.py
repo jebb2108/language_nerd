@@ -59,11 +59,10 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
     current_time = datetime.now(tz=config.TZINFO)
     message_time = datetime.fromisoformat(data.get("current_time"))
     if current_time - message_time < timedelta(seconds=1):
-        await msg.nack()
-        return
-    else:
-        # Обновляем таймер
-        data["current_time"] = current_time
+        return await msg.nack()
+    
+    updated_data = data.copy()
+    updated_data["current_time"] = current_time.isoformat()
         
     logger.warning(f"Received message: {data}")
 
@@ -83,8 +82,11 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
         matcher.user_status[user2_id]['acked'] = True
         await notifier.notify_match(user1_id, user2_id, room_id)
         await redis.remove_from_queue(user1_id, user2_id)
+        await msg.ack()
+        return None
 
     await msg.nack()
+    return updated_data
 
 
 async def main():
