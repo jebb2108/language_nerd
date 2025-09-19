@@ -30,25 +30,22 @@ class MatchingService:
         queue_length, cnt = await self.redis.llen("waiting_queue"), 0
         user_crit = await self.redis.hgetall(f"user:{user_id}")
 
-        while queue_length >= 2 and cnt < queue_length:
+        user_status = True if await self.redis.get(f"searching:{user_id}") else False
+
+        while queue_length >= 2 and cnt < queue_length and user_status:
             # Достаем двух пользователей из очереди
             # (один из них с нужным ID)
             cnt += 1
             partner_id = int( await self.redis.lpop("waiting_queue") )
             partner_crit = await self.redis.hgetall(f"user:{partner_id}")
+            partner_status = True if await self.redis.get(f"searching:{partner_id}") else False
 
             # Если partner id - user id
             if user_id == partner_id:
                 await self.redis.rpush("waiting_queue", user_id)
 
             # Смотрим, не истекло ли TTL одного из участников
-            if not user_crit and partner_crit:
-                self.redis.rpush("waiting_queue", partner_crit)
-                return None, None, None
-            elif not partner_crit and user_crit:
-                self.redis.rpush("waiting_queue", user_id)
-                return None, None, None
-            elif not user_crit and not partner_crit:
+            if not partner_status:
                 return None, None, None
 
             criteria_match = True

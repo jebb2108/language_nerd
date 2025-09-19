@@ -27,7 +27,8 @@ async def elevate_user(user_data: dict, matcher: MatchingService) -> bool:
     if user_data['status'] in [
         config.SEARCH_CANCELED, 
         config.SEARCH_COMPLETED
-        ]: 
+        ]:
+
         matcher.set_status(data=user_data, acked=True)
         return True
 
