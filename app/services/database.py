@@ -156,7 +156,7 @@ class DatabaseService:
                 result = await conn.execute(
                     """
                     INSERT INTO users (user_id, username, first_name, camefrom, language, fluency, topic, lang_code) 
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, &8)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                     ON CONFLICT (user_id) DO UPDATE 
                     SET username = EXCLUDED.username,
                         camefrom = EXCLUDED.camefrom,
