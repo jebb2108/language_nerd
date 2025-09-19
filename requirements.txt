@@ -12,3 +12,5 @@ uvicorn~=0.35.0
 faststream~=0.5.48
 PyJWT~=2.10.1
 pycparser~=2.23
+tenacity~=9.1.2
+apscheduler~=4.0.0

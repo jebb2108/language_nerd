@@ -1,5 +1,7 @@
 import asyncio
 import logging
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -13,6 +15,9 @@ from config import LOG_CONFIG, config
 from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.main_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
 from app.bots.main_bot.middlewares.quiz_middleware import QuizMiddleware
+
+from app.api.ai_handler.ai_report_generator import generate_weekly_reports
+from app.api.ai_handler.ai_quiz_sender import send_pending_reports
 
 from routers import router as main_router
 
@@ -36,6 +41,33 @@ async def init_resources() -> None:
     await resources.on_startup()
 
 
+def run_scheduler(bot, db):
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(
+        generate_weekly_reports,
+            trigger=CronTrigger(
+                day_of_week='sat',
+                hour=12,
+                minute=0,
+                timezone=config.TZINFO
+            ),
+        id='weekly_reports',
+        replace_existing=True
+    )
+    scheduler.add_job(
+        send_pending_reports(bot, db),
+            trigger=CronTrigger(
+                day_of_week='sun',
+                hour=12,
+                minute=0,
+                timezone=config.TZINFO
+            ),
+        id='sending_reports',
+        replace_existing=True
+    )
+    return scheduler
+
+
 # noinspection PyUnresolvedReferences
 async def run():
     """Запуск бота и веб-сервера в одном event loop"""
@@ -52,9 +84,36 @@ async def run():
         token=config.BOT_TOKEN_MAIN,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
-
+    # Инициализация БД
+    db = await get_db()
+    # Создаем планировщик задач
+    scheduler = AsyncIOScheduler()
+    # Генерирует отчеты
+    scheduler.add_job(
+        generate_weekly_reports,
+        trigger=CronTrigger(
+            day_of_week='sat',
+            hour=12,
+            minute=0,
+            timezone=config.TZINFO
+        ),
+        id='weekly_reports',
+        replace_existing=True
+    )
+    # Отправляет их каждому пользователю
+    scheduler.add_job(
+        lambda: send_pending_reports(bot, db),
+        trigger=CronTrigger(
+            day_of_week='sun',
+            hour=12,
+            minute=0,
+            timezone=config.TZINFO
+        ),
+        id='sending_reports',
+        replace_existing=True
+    )
     # Запуск веб-сервера
-    web_runner = await start_web_app(await get_db())
+    web_runner = await start_web_app(db)
 
     # Регистрация middleware
     # Messages
@@ -71,11 +130,14 @@ async def run():
     disp.include_router(main_router)
 
     try:
+        logger.info("Starting scheduler...")
+        scheduler.start()
         logger.info("Starting main bot (polling)…")
         await disp.start_polling(bot)
 
     finally:
         # Корректное завершение
+        scheduler.shutdown()
         await bot.session.close()
         await web_runner.cleanup()
         await resources.on_shutdown()

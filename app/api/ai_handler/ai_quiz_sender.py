@@ -11,10 +11,9 @@ from aiogram.exceptions import (
     TelegramServerError,
     TelegramAPIError,
 )
-from aiogram.types import Message
-from aiogram.filters import Command
 
 from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
+from app.dependencies import get_db
 from config import config, LOG_CONFIG
 
 from app.bots.main_bot.keyboards.inline_keyboards import begin_weekly_quiz_keyboard
@@ -25,85 +24,9 @@ logger = logging.getLogger(name="tasks_handler")
 
 router = Router(name=__name__)
 
-# @router.message(Command("generate_reports", prefix="!"))
-# async def generate_reports(
-#     message: Message, database: ResourcesMiddleware, http_session: ResourcesMiddleware
-# ):
-#     if message.from_user.id == int(config.ADMIN_ID):
-#         await generate_weekly_reports(database, http_session)
-#     return message.reply(text="You don`t have a permission")
-#
-#
-# @router.message(Command("clean_up_reports", prefix="!"))
-# async def clean_up_reports(
-#     message: Message,
-#     database: ResourcesMiddleware,
-# ):
-#     if message.from_user.id == int(config.ADMIN_ID):
-#         await cleanup_old_reports(database, days=30)
-#         return
-#     return message.reply(text="You don`t have a permission")
-
-
-@router.message(Command("send_reports", prefix="!"))
-async def send_reports(
-    message: Message,
-    database: ResourcesMiddleware,
-):
-    if message.from_user.id == int(config.ADMIN_ID):
-        reports = await database.get_pending_reports()
-        if not reports:
-            logger.info("Нет ожидающих отчетов")
-            return
-
-        logger.info(f"Попытка отправить {len(reports)} ожидающих отчетов.")
-        success_count = 0
-        failed_reports = []
-
-        # Использование TaskGroup для структурированного параллелизма (Python 3.11+)
-        # Это обеспечивает правильную очистку и обработку исключений по задачам.
-        async with asyncio.TaskGroup() as tg:
-            tasks = []
-            for rec in reports:
-                task = tg.create_task(
-                    process_report_delivery(bot, rec["report_id"], rec["user_id"], db)
-                )
-                tasks.append(task)
-
-            # Ожидание завершения всех задач в TaskGroup
-            # TaskGroup обрабатывает исключения, отменяя другие задачи и повторно возбуждая
-            # Мы должны явно проверять результаты каждой задачи
-            for task in tasks:
-                try:
-                    result = (
-                        await task
-                    )  # Ожидать каждую задачу, чтобы получить ее результат (True/False)
-                    if result:
-                        success_count += 1
-                    else:
-                        # process_report_delivery вернул False, указывая на обработанный сбой
-                        # (например, ограничение скорости, пользователь заблокирован, некорректный запрос)
-                        # Конкретная причина логируется внутри process_report_delivery
-                        failed_reports.append(
-                            task.get_name()
-                        )  # Или более конкретная информация
-                except Exception as e:
-                    # Этого в идеале не должно происходить, если process_report_delivery обрабатывает ошибки
-                    # Но это запасной вариант для неожиданных ошибок, распространяющихся из задач
-                    logger.error(
-                        f"Задача по доставке отчета неожиданно завершилась сбоем: {e}",
-                        exc_info=True,
-                    )
-                    failed_reports.append(task.get_name())
-
-        logger.info(
-            f"Отправлено {success_count}/{len(reports)} отчетов. {len(failed_reports)} не удалось отправить."
-        )
-        if failed_reports:
-            logger.warning(f"Детали неудачных отчетов: {failed_reports}")
-        return
-
-    return message.reply(text="You don`t have a permission")
+TELEGRAM_RETRY_UNTIL_TIME = config.TELEGRAM_RETRY_UNTIL_TIME
+TELEGRAM_LAST_REQUEST_TIME = config.AI_LAST_REQUEST_TIME
+TELEGRAM_API_SEMAPHORE = config.TELEGRAM_API_SEMAPHORE
 
 
 async def send_pending_reports(bot, db):
@@ -163,7 +86,7 @@ async def send_pending_reports(bot, db):
 
 
 async def process_report_delivery(
-    bot: Bot, report_id: int, user_id: int, db: Database
+    bot: Bot, report_id: int, user_id: int, db
 ) -> bool:
     global TELEGRAM_RETRY_UNTIL_TIME, TELEGRAM_LAST_REQUEST_TIME
     async with TELEGRAM_API_SEMAPHORE:
@@ -172,9 +95,9 @@ async def process_report_delivery(
         current_time = time.time()
         if (
             current_time - TELEGRAM_LAST_REQUEST_TIME
-            < TELEGRAM_MIN_DELAY_BETWEEN_REQUESTS
+            < config.TELEGRAM_MIN_DELAY_BETWEEN_REQUESTS
         ):
-            wait_time = TELEGRAM_MIN_DELAY_BETWEEN_REQUESTS - (
+            wait_time = config.TELEGRAM_MIN_DELAY_BETWEEN_REQUESTS - (
                 current_time - TELEGRAM_LAST_REQUEST_TIME
             )
             logger.debug(
