@@ -73,6 +73,7 @@ class DatabaseService:
                             camefrom TEXT NOT NULL,
                             language TEXT NOT NULL,
                             fluency TEXT NOT NULL,
+                            topic TEXT NOT NULL,
                             lang_code TEXT NOT NULL,
                             is_active BOOLEAN DEFAULT TRUE,
                             blocked_bot BOOLEAN DEFAULT FALSE,
@@ -148,20 +149,21 @@ class DatabaseService:
             await self._pool.release(conn)
 
     async def create_user(
-        self, user_id, username, first_name, camefrom, language, fluency, lang_code
+        self, user_id, username, first_name, camefrom, language, fluency, topic, lang_code
     ):
         try:
             async with self.acquire_connection() as conn:
                 result = await conn.execute(
                     """
-                    INSERT INTO users (user_id, username, first_name, camefrom, language, fluency, lang_code) 
-                    VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    INSERT INTO users (user_id, username, first_name, camefrom, language, fluency, topic, lang_code) 
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, &8)
                     ON CONFLICT (user_id) DO UPDATE 
                     SET username = EXCLUDED.username,
                         camefrom = EXCLUDED.camefrom,
                         first_name = EXCLUDED.first_name,
                         language = EXCLUDED.language,
                         fluency = EXCLUDED.language,
+                        topic = EXCLUDED.topic,
                         lang_code = EXCLUDED.lang_code
                 """,
                     user_id,
@@ -170,6 +172,7 @@ class DatabaseService:
                     camefrom,
                     language,
                     fluency,
+                    topic,
                     lang_code,
                 )
                 logger.info(f"User {user_id} created/updated: {result}")

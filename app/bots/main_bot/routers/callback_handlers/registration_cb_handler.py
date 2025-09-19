@@ -49,7 +49,7 @@ async def handle_fluency_choice(callback: CallbackQuery, state: FSMContext):
     lang_code = data.get("lang_code", "en")
 
     users_choice = callback.data.split("_", 1)[1]
-    msg = f"{QUESTIONARY["you_chose"][lang_code]} {users_choice}\n\n" \
+    msg = f"{MESSAGES["you_chose"][lang_code]} {users_choice}\n\n" \
           f"{QUESTIONARY['fluency'][lang_code]}"
     await callback.message.edit_text(
         text=msg,
@@ -71,8 +71,8 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
     users_choice = callback.data.split("_", 1)[1]
 
     # Отправляем сообщение с подтверждением
-    msg = f"{QUESTIONARY["you_chose"][lang_code]} {users_choice}\n\n" \
-          f"{QUESTIONARY['topic'][lang_code]}"
+    msg = f"{MESSAGES["you_chose"][lang_code]} {users_choice}\n\n" \
+          f"{QUESTIONARY['choose_topic'][lang_code]}"
     await callback.message.edit_text(
         text=msg,
         reply_markup=show_topic_keyboard(lang_code),
@@ -92,7 +92,7 @@ async def handle_topic_choice(callback: CallbackQuery, state: FSMContext):
     users_choice = callback.data.split('_', 1)[1]
 
     # Отправляем сообщение с подтверждением
-    msg = f"{QUESTIONARY["you_chose"][lang_code]} {users_choice}\n\n" \
+    msg = f"{MESSAGES["you_chose"][lang_code]} {users_choice}\n\n" \
           f"{QUESTIONARY['terms'][lang_code]}"
 
     await callback.message.edit_text(
@@ -118,6 +118,7 @@ async def go_to_main_menu(
     camefrom = data.get("camefrom", "")
     language = data.get("language", "")
     fluency = data.get("fluency", "in_making")
+    topic = data.get("topic", "general")
     lang_code = data.get("lang_code", "en")
 
     gratitude_msg = MESSAGES["gratitude"][lang_code]
@@ -126,7 +127,7 @@ async def go_to_main_menu(
 
     # Сохраняем нового пользователя в БД
     await database.create_user(
-        user_id, username, first_name, camefrom, language, fluency, lang_code
+        user_id, username, first_name, camefrom, language, fluency, topic, lang_code
     )
 
     # После сохранения сразу показываем главное меню

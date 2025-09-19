@@ -98,6 +98,10 @@ QUESTIONARY = dict(
                 "native": "Родной",
             },
         },
+        "choose_topic": {
+            "en": "What interests you the most from the options below?",
+            "ru": "Какое увлечение тебя интересует больше всего из предложенного выбора ниже?",
+        },
         "topics": {
             "en": {
                 "general": "General",
@@ -124,8 +128,8 @@ QUESTIONARY = dict(
         },
         # TODO: Исправить логику на более читаемый алгоритм
         "where_youcamefrom": {
-            "en0": "My coworkers or friends told me",
-            "ru0": "Мои коллеги или друзья рассказали мне",
+            "en0": "Friends told me",
+            "ru0": "Знакомые рассказали мне",
             "en1": "Found it on the Internet",
             "ru1": "Нашел в Интернете",
             "en2": "Through an advertisement",
