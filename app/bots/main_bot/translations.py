@@ -85,17 +85,17 @@ QUESTIONARY = dict(
         },
         "fluency_levels": {
             "en": {
-                "beginer": "Beginer",
-                "intermediate": "Intermediate",
-                "advanced": "Advanced",
-                "native": "Native",
+                "beginer": "🏁Beginer",
+                "intermediate": "👟Intermediate",
+                "advanced": "🦾Advanced",
+                "native": "🗿Native",
             },
 
             "ru": {
-                "beginer": "Начальный",
-                "intermediate": "Средний",
-                "advanced": "Продвинутый",
-                "native": "Родной",
+                "beginer": "🏁Начальный",
+                "intermediate": "👟Средний",
+                "advanced": "🦾Продвинутый",
+                "native": "🗿Родной",
             },
         },
         "choose_topic": {
@@ -104,22 +104,22 @@ QUESTIONARY = dict(
         },
         "topics": {
             "en": {
-                "general": "General",
-                "music": "Music",
-                "movies": "Movies",
-                "sports": "Sports",
-                "technology": "Technology",
-                "travel": "Travel",
-                "games": "Games",
+                "general": "🗞️General",
+                "music": "🎵Music",
+                "movies": "🍿Movies",
+                "sports": "🏈Sports",
+                "technology": "🧠Technology",
+                "travel": "✈️Travel",
+                "games": "🎮Games",
             },
             "ru": {
-                "general": "Общее",
-                "music": "Музыка",
-                "movies": "Фильмы",
-                "sports": "Спорт",
-                "technology": "Технология",
-                "travel": "Путешествия",
-                "games": "Видеоигры",
+                "general": "🗞️Общее",
+                "music": "🎵Музыка",
+                "movies": "🍿Фильмы",
+                "sports": "🏈Спорт",
+                "technology": "🧠Технологии",
+                "travel": "✈️Путешествия",
+                "games": "🎮Видеоигры",
             },
         },
         "terms": {
@@ -128,12 +128,12 @@ QUESTIONARY = dict(
         },
         # TODO: Исправить логику на более читаемый алгоритм
         "where_youcamefrom": {
-            "en0": "Friends told me",
-            "ru0": "Знакомые рассказали мне",
-            "en1": "Found it on the Internet",
-            "ru1": "Нашел в Интернете",
-            "en2": "Through an advertisement",
-            "ru2": "Через рекламу",
+            "en0": "🗣️Friends told me",
+            "ru0": "🗣️Знакомые рассказали мне",
+            "en1": "🌐Found it on the Internet",
+            "ru1": "🌐Нашел в Интернете",
+            "en2": "📇Through an advertisement",
+            "ru2": "📇Через рекламу",
         },
     }
 )
