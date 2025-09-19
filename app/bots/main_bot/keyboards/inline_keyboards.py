@@ -71,6 +71,13 @@ def show_fluency_keyboard(lang_code):
 
     return builder.as_markup(resize_keyboard=True)
 
+def show_topic_keyboard(lang_code):
+    builder = InlineKeyboardBuilder()
+    for key, value in QUESTIONARY["topics"][lang_code].items():
+        builder.row(InlineKeyboardButton(text=value, callback_data=f"fluency_{key}"))
+
+    return builder.as_markup(resize_keyboard=True)
+
 
 def confirm_choice_keyboard(lang_code):
     # Обновляем текст с подтверждением выбора

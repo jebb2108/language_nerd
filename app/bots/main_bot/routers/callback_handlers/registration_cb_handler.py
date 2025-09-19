@@ -9,6 +9,7 @@ from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddlewa
 from app.bots.main_bot.keyboards.inline_keyboards import (
     show_language_keyboard,
     show_fluency_keyboard,
+    show_topic_keyboard,
     confirm_choice_keyboard,
 )
 from app.bots.main_bot.translations import MESSAGES, QUESTIONARY
@@ -48,7 +49,8 @@ async def handle_fluency_choice(callback: CallbackQuery, state: FSMContext):
     lang_code = data.get("lang_code", "en")
 
     users_choice = callback.data.split("_", 1)[1]
-    msg = f"➪ Вы выбрали: {users_choice}\n\n" f"{QUESTIONARY['fluency'][lang_code]}"
+    msg = f"{QUESTIONARY["you_chose"][lang_code]} {users_choice}\n\n" \
+          f"{QUESTIONARY['fluency'][lang_code]}"
     await callback.message.edit_text(
         text=msg,
         reply_markup=show_fluency_keyboard(lang_code),
@@ -66,17 +68,39 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
 
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
-
     users_choice = callback.data.split("_", 1)[1]
 
     # Отправляем сообщение с подтверждением
-    msg = f"➪ Вы выбрали: {users_choice}\n\n" f"{QUESTIONARY['terms'][lang_code]}"
+    msg = f"{QUESTIONARY["you_chose"][lang_code]} {users_choice}\n\n" \
+          f"{QUESTIONARY['topic'][lang_code]}"
+    await callback.message.edit_text(
+        text=msg,
+        reply_markup=show_topic_keyboard(lang_code),
+    )
+
+
+    await state.update_data(fluency=users_choice)
+
+
+@router.callback_query(F.data.startswith("topic_"))
+async def handle_topic_choice(callback: CallbackQuery, state: FSMContext):
+
+    await callback.answer()
+
+    data = await state.get_data()
+    lang_code = data.get("lang_code", "en")
+    users_choice = callback.data.split('_', 1)[1]
+
+    # Отправляем сообщение с подтверждением
+    msg = f"{QUESTIONARY["you_chose"][lang_code]} {users_choice}\n\n" \
+          f"{QUESTIONARY['terms'][lang_code]}"
+
     await callback.message.edit_text(
         text=msg,
         reply_markup=confirm_choice_keyboard(lang_code),
     )
 
-    await state.update_data(fluency=users_choice)
+    await state.update_data(topic=users_choice)
 
 
 @router.callback_query(F.data == "action_confirm")

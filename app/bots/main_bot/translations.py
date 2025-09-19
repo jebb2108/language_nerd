@@ -44,6 +44,10 @@ MESSAGES = dict(
                 "Здесь ты сможешь учиться в своем ритме и находить друзей в процессе!"
             ),
         },
+        "you_chose": {
+            "en": "➪ You chose:",
+            "ru": "➪ Вы выбрали:",
+        },
         "gratitude": {
             "en": "Thank you for your patience",
             "ru": "Спасибо за терпение",
@@ -78,6 +82,41 @@ QUESTIONARY = dict(
         "fluency": {
             "en": "What is your level of fluency?",
             "ru": "Какой твой уровень владения языком?",
+        },
+        "fluency_levels": {
+            "en": {
+                "beginer": "Beginer",
+                "intermediate": "Intermediate",
+                "advanced": "Advanced",
+                "native": "Native",
+            },
+
+            "ru": {
+                "beginer": "Начальный",
+                "intermediate": "Средний",
+                "advanced": "Продвинутый",
+                "native": "Родной",
+            },
+        },
+        "topics": {
+            "en": {
+                "general": "General",
+                "music": "Music",
+                "movies": "Movies",
+                "sports": "Sports",
+                "technology": "Technology",
+                "travel": "Travel",
+                "games": "Games",
+            },
+            "ru": {
+                "general": "Общее",
+                "music": "Музыка",
+                "movies": "Фильмы",
+                "sports": "Спорт",
+                "technology": "Технология",
+                "travel": "Путешествия",
+                "games": "Видеоигры",
+            },
         },
         "terms": {
             "en": "In order to use our service, you must agree to the user agreement",
