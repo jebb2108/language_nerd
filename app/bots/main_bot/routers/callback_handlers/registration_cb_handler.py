@@ -112,7 +112,7 @@ async def go_to_main_menu(
     await callback.message.delete()
 
     data = await state.get_data()
-    user_id = data.get("user_id", 0)
+    user_id = int(data.get("user_id", 0))
     username = data.get("username", "")
     first_name = data.get("first_name", "")
     camefrom = data.get("camefrom", "")
