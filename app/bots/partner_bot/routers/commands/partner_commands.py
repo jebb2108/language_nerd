@@ -90,6 +90,7 @@ async def new_session_handler(
     username = data.get("username", "daniel")
     language = data.get("language", "english")
     dating = data.get("dating", "false")
+    topic = data.get("topic", "general")
     lang_code = data.get("lang_code", "en")
 
     if username == "NO USERNAME":
@@ -121,7 +122,7 @@ async def new_session_handler(
         "criteria": {
             "dating": dating,
             "language": language,
-            "topic": "general",
+            "topic": topic,
         },
     }
 

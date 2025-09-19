@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Any, Dict, Set
+from typing import Any, Dict, Set, Tuple, Optional
 from uuid import uuid4
 from redis import asyncio as aioredis
 
@@ -21,56 +21,66 @@ class MatchingService:
         self.user_status[user_id] = data
         self.user_status[user_id].update(acked=acked)
 
+    async def find_match(
+        self, user_id: Optional[int, str]
+    ) -> Optional[Tuple[str, int, int], Tuple[None, None, None]]:
 
-    async def find_match(self):
         """Поиск пары пользователей"""
-        queue_length = await self.redis.llen("waiting_queue")
+        user_id = int(user_id)
+        queue_length, cnt = await self.redis.llen("waiting_queue"), 0
+        user_crit = await self.redis.hgetall(f"user:{user_id}")
 
-        if queue_length >= 2:
+        while queue_length >= 2 and cnt < queue_length:
             # Достаем двух пользователей из очереди
             # (один из них с нужным ID)
-            user1_id = await self.redis.rpop("waiting_queue")
-            user2_id = await self.redis.rpop("waiting_queue")
-            user1_crit = await self.redis.hgetall(f"user:{user1_id}")
-            user2_crit = await self.redis.hgetall(f"user:{user2_id}")
+            cnt += 1
+            partner_id = int( await self.redis.lpop("waiting_queue") )
+            partner_crit = await self.redis.hgetall(f"user:{partner_id}")
+
+            # Если partner id - user id
+            if user_id == partner_id:
+                await self.redis.rpush("waiting_queue", user_id)
+
+            # Смотрим, не истекло ли TTL одного из участников
+            if not user_crit and partner_crit:
+                self.redis.rpush("waiting_queue", partner_crit)
+                return None, None, None
+            elif not partner_crit and user_crit:
+                self.redis.rpush("waiting_queue", user_id)
+                return None, None, None
+            elif not user_crit and not partner_crit:
+                return None, None, None
 
             criteria_match = True
-            for key in user1_crit.keys():
-                if key in user2_crit and user1_crit[key] != user2_crit[key]:
+            for key in user_crit.keys():
+                if key in partner_crit and user_crit[key] != partner_crit[key]:
                     criteria_match = False
                     break
 
             if criteria_match:
-
-                user1_id = int(user1_id)
-                user2_id = int(user2_id)
-
-                if user1_id == user2_id:
-                    await self.redis.lrem("waiting_queue", 1, user1_id)
-                    return None, None, None
-
-                elif self.user_status[user1_id] != self.user_status[user2_id]:
-                    return None, None, None
 
                 # Создаем комнату чата
                 room_id = str(uuid4())
 
                 # Сохраняем информацию о комнате
                 room_data = {
-                    "user1_id": user1_id,
-                    "user2_id": user2_id,
+                    "user_id": user_id,
+                    "partner_id": partner_id,
                     "created_at": datetime.now().isoformat(),
                 }
+                await self.redis.lrem("waiting_queue", 1, user_id)
                 await self.redis.hset(f"room:{room_id}", mapping=room_data)
                 await self.redis.expire(f"room:{room_id}", 3600)  # 1 час
 
                 # Удаляем флаги поиска
-                await self.redis.delete(f"searching:{user1_id}")
-                await self.redis.delete(f"searching:{user2_id}")
+                await self.redis.delete(f"searching:{user_id}")
+                await self.redis.delete(f"searching:{partner_id}")
 
-                logger.info(f"Match found: {user1_id} and {user2_id}, room: {room_id}")
+                logger.info(f"Match found: {user_id} and {partner_id}, room: {room_id}")
 
-                return room_id, user1_id, user2_id
+                return room_id, user_id, partner_id
+
+            self.redis.rpush("waiting_queue", partner_id)
 
         return None, None, None
 
