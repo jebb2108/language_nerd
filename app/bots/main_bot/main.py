@@ -41,53 +41,7 @@ async def init_resources() -> None:
     await resources.on_startup()
 
 
-def run_scheduler(bot, db):
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(
-        generate_weekly_reports,
-            trigger=CronTrigger(
-                day_of_week='sat',
-                hour=12,
-                minute=0,
-                timezone=config.TZINFO
-            ),
-        id='weekly_reports',
-        replace_existing=True
-    )
-    scheduler.add_job(
-        send_pending_reports(bot, db),
-            trigger=CronTrigger(
-                day_of_week='sun',
-                hour=12,
-                minute=0,
-                timezone=config.TZINFO
-            ),
-        id='sending_reports',
-        replace_existing=True
-    )
-    return scheduler
-
-
-# noinspection PyUnresolvedReferences
-async def run():
-    """Запуск бота и веб-сервера в одном event loop"""
-
-    await init_resources()
-    redis = await get_redis(call_client=True)
-    storage = RedisStorage(redis, state_ttl=10, data_ttl=60)
-
-    # Инициализация диспетчера
-    disp = Dispatcher(storage=storage)
-
-    # Инициализация бота
-    bot = Bot(
-        token=config.BOT_TOKEN_MAIN,
-        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-    )
-    # Инициализация БД
-    db = await get_db()
-    # Создаем планировщик задач
-    scheduler = AsyncIOScheduler()
+def setup_scheduler(scheduler, bot, db):
     # Генерирует отчеты
     scheduler.add_job(
         generate_weekly_reports,
@@ -112,6 +66,31 @@ async def run():
         id='sending_reports',
         replace_existing=True
     )
+
+
+# noinspection PyUnresolvedReferences
+async def run():
+    """Запуск бота и веб-сервера в одном event loop"""
+
+    await init_resources()
+    redis = await get_redis(call_client=True)
+    storage = RedisStorage(redis, state_ttl=10, data_ttl=60)
+
+    # Инициализация диспетчера
+    disp = Dispatcher(storage=storage)
+
+    # Инициализация бота
+    bot = Bot(
+        token=config.BOT_TOKEN_MAIN,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    )
+
+    # Инициализация БД
+    db = await get_db()
+    # Создаем планировщик задач
+    scheduler = AsyncIOScheduler()
+    # Подключаем задачи для планировщика
+    setup_scheduler(scheduler, bot, db)
     # Запуск веб-сервера
     web_runner = await start_web_app(db)
 
