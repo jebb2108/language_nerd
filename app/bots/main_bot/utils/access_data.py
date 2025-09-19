@@ -45,6 +45,7 @@ class DataStorage:
             "first_name": user_info["first_name"],
             "language": user_info["language"],
             "fluency": user_info["fluency"],
+            "topic": user_info['topic'],
             "lang_code": user_info["lang_code"],
         }
 

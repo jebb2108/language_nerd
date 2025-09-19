@@ -13,14 +13,13 @@ from aiogram.exceptions import (
 )
 
 from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
-from app.dependencies import get_db
 from config import config, LOG_CONFIG
 
 from app.bots.main_bot.keyboards.inline_keyboards import begin_weekly_quiz_keyboard
 from app.bots.main_bot.translations import WEEKLY_QUIZ
 
 logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="tasks_handler")
+logger = logging.getLogger(name="ai_quiz_sender")
 
 router = Router(name=__name__)
 

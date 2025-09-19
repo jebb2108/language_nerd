@@ -28,7 +28,7 @@ async def elevate_user(user_data: dict, matcher: MatchingService) -> bool:
         config.SEARCH_CANCELED, 
         config.SEARCH_COMPLETED
         ]: 
-        matcher[user_id]["acked"] = True
+        matcher.set_status(data=user_data, acked=True)
         return True
 
     """ Ситуация, когда пользователь находится в словаре """
@@ -50,8 +50,8 @@ async def elevate_user(user_data: dict, matcher: MatchingService) -> bool:
         if to_ack: return True
 
     """ Ситуация, когда пользователь НЕ аходится в словаре """
-    matcher.user_status[user_id] = user_data
-    logger.debug("user has been put/updated in matcher's dict")
+    matcher.set_status(data=user_data)
+    logger.debug("user has been set up in matcher's dict")
     return False
 
 
@@ -75,14 +75,14 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
     # Оцениваю сообщение по определенным параметрам
     should_ack = await elevate_user(data, matcher)
     if should_ack: return await msg.ack()
-        
+
     # Поиск подходящей пары в Redis
     room_id, user1_id, user2_id = await matcher.find_match()
 
     if room_id:
         # Пара найдена: уведомляем обоих пользователей
-        matcher.user_status[user1_id]['acked'] = True
-        matcher.user_status[user2_id]['acked'] = True
+        matcher.set_status(data=data, acked=True)
+        matcher.set_status(data=data, acked=True)
         await notifier.notify_match(user1_id, user2_id, room_id)
         await redis.remove_from_queue(user1_id, user2_id)
 

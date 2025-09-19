@@ -1,8 +1,7 @@
 import logging
 from datetime import datetime
+from typing import Any, Dict, Set
 from uuid import uuid4
-
-from asyncpg.pgproto.pgproto import timedelta
 from redis import asyncio as aioredis
 
 from config import LOG_CONFIG, config
@@ -14,22 +13,13 @@ logger = logging.getLogger(name="matching")
 class MatchingService:
     def __init__(self):
         self.redis = aioredis.from_url(config.REDIS_URL)
-        self.user_status = dict()
-        self.acked_users = set()
+        self.user_status: Dict[int, Dict[str, Any]] = {}
+        self.acked_users: Set[int] = set()
 
-    def create_status(self, data: dict, acked=False) -> None:
+    def set_status(self, data: dict, acked=False) -> None:
         user_id = int(data["user_id"])
-        if user_id not in self.user_status:
-            self.user_status[user_id] = {
-                "user_id": user_id,
-                "status": data["status"],
-                "acked": acked,
-                "created_at": data['created_at']
-            }
-            logger.warning(
-                "Users key in matcher.user_status: %s",
-                self.user_status[user_id]
-            )
+        self.user_status[user_id] = data
+        self.user_status[user_id].update(acked=acked)
 
 
     async def find_match(self):
@@ -64,7 +54,6 @@ class MatchingService:
 
                 # Создаем комнату чата
                 room_id = str(uuid4())
-
 
                 # Сохраняем информацию о комнате
                 room_data = {

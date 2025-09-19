@@ -20,7 +20,7 @@ from app.dependencies import get_db
 from config import LOG_CONFIG, config
 
 logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name='ai_handler')
+logger = logging.getLogger(name='schedulers')
 
 AI_LAST_REQUEST_TIME = config.AI_LAST_REQUEST_TIME
 
