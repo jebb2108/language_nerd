@@ -41,19 +41,7 @@ async def init_resources() -> None:
     await resources.on_startup()
 
 
-def setup_scheduler(scheduler, bot, db):
-    # Генерирует отчеты
-    scheduler.add_job(
-        generate_weekly_reports,
-        trigger=CronTrigger(
-            day_of_week='sat',
-            hour=12,
-            minute=0,
-            timezone=config.TZINFO
-        ),
-        id='weekly_reports',
-        replace_existing=True
-    )
+def setup_scheduler(scheduler, bot, db) -> None:
     # Отправляет их каждому пользователю
     scheduler.add_job(
         lambda: send_pending_reports(bot, db),
