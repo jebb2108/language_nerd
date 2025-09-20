@@ -78,7 +78,7 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
     if should_ack: return await msg.ack()
 
     # Поиск подходящей пары в Redis
-    room_id, user1_id, user2_id = await matcher.find_match()
+    room_id, user1_id, user2_id = await matcher.find_match(updated_data["user_id"])
 
     if room_id:
         # Пара найдена: уведомляем обоих пользователей
