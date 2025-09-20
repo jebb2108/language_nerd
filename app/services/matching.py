@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Any, Dict, Set, Tuple, Optional
+from typing import Any, Dict, Set, Tuple, Optional, Union
 from uuid import uuid4
 from redis import asyncio as aioredis
 
@@ -22,8 +22,8 @@ class MatchingService:
         self.user_status[user_id].update(acked=acked)
 
     async def find_match(
-        self, user_id: int
-    ) -> Optional[Tuple[str, int, int], Tuple[None, None, None]]:
+        self, user_id: Union[int, str]
+    ) -> Union[Tuple[str, int, int], Tuple[None, None, None]]:
 
         """Поиск пары пользователей"""
         user_id = int(user_id)
