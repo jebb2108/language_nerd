@@ -99,11 +99,12 @@ async def show_queue_info(
     data = await data_storage.get_storage_data(callback.from_user.id, state, database)
     lang_code = data.get("lang_code", "en")
     for user_id in queue:
-        language = await database.get_user_info(user_id)
-        if language not in common_lans:
-            common_lans[language] = 0
+        user_info = await database.get_user_info(user_id)
+        lan = user_info["language"]
+        if lan not in common_lans:
+            common_lans[lan] = 0
         else:
-            common_lans[language] += 1
+            common_lans[lan] += 1
 
     lans = sorted(common_lans, reverse=True)[:5]
     s_lans = ", ".join(lans)
