@@ -114,7 +114,7 @@ async def new_session_handler(
     )
 
     # Отправляю запрос на сервер
-    url = "{DOMAIN}/match".format(DOMAIN=config.BASE_URL)
+    url = "{DOMAIN}/match".format(DOMAIN=f"{config.BASE_URL}{config.BASE_PORT}")
 
     payload = {
         "user_id": int(user_id),
