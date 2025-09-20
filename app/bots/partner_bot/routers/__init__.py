@@ -13,6 +13,7 @@ router = Router(name=__name__)
 router.include_routers(
     partner_cb_handler_router,
     partner_commands_router,
+    partner_commands_router,
 )
 
 router.include_router(common_router)
