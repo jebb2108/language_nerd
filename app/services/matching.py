@@ -22,7 +22,7 @@ class MatchingService:
         self.user_status[user_id].update(acked=acked)
 
     async def find_match(
-        self, user_id: Optional[int, str]
+        self, user_id: int
     ) -> Optional[Tuple[str, int, int], Tuple[None, None, None]]:
 
         """Поиск пары пользователей"""
