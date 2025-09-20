@@ -39,7 +39,7 @@ async def elevate_user(user_data: dict, matcher: "MatchingService") -> bool:
             matcher.user_status[user_id]['created_at']
         )
         # Проверка на просроченность
-        time_period = datetime.now() - orig_time
+        time_period = datetime.now(tz=config.TZINFO) - orig_time
         if time_period > timedelta(minutes=3): 
             del matcher.user_status[user_id]
             to_ack = True
@@ -60,7 +60,7 @@ async def elevate_user(user_data: dict, matcher: "MatchingService") -> bool:
 async def handle_match_request(data: dict, msg: RabbitMessage):
 
     current_time = datetime.now(tz=config.TZINFO)
-    message_time = datetime.fromisoformat(data.get("current_time", datetime.now().isoformat()))
+    message_time = datetime.fromisoformat(data.get("current_time", datetime.now(tz=config.TZINFO).isoformat()))
     if current_time - message_time < timedelta(seconds=1):
         return await msg.nack()
     
