@@ -3,6 +3,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from app.bots.partner_bot.api.chat_launcher import redis_client
 # from app.main import redis
 from app.services.rabbitmq import RabbitMQService
 from app.dependencies import get_rabbitmq, get_db, get_redis
@@ -105,14 +106,14 @@ async def notify_users_re_match(
             reply_markup=create_start_chat_button(lang_code2, link2),
             parse_mode="HTML",
         )
-
+        time_str = datetime.now(tz=config.TZINFO).isoformat()
         # Отправляем запрос в очередь
         message = {
             "user_id": request.user_id,
             "username": request.username,
             "criteria": request.criteria,
             "current_time": time_str,
-             "created_at": time_str,
+            "created_at": time_str,
             "status": config.SEARCH_COMPLETED,
         }
 
@@ -128,6 +129,7 @@ async def request_match(
     request: UserMatchRequest,
     rabbitmq: RabbitMQService = Depends(get_rabbitmq),
     db=Depends(get_db),
+    redis=Depends(get_redis),
 ):
     # Проверяем пользователя в БД
     user = await db.check_user_exists(request.user_id)
@@ -139,8 +141,11 @@ async def request_match(
         "user_id": request.user_id,
         "username": request.username,
         "criteria": request.criteria,
-        "created_at": datetime.now(tz=config.TZINFO).isoformat(),
+        "current_time": time_str,
+        "created_at": time_str,
         "status": config.SEARCH_CANCELED,
     }
 
     await rabbitmq.publish_message(message)
+    await redis.remove_from_queue(request.user_id)
+

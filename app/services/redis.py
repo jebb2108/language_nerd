@@ -1,6 +1,7 @@
 import logging
-
+from typing import Union
 import redis.asyncio as redis
+
 from config import config, LOG_CONFIG
 
 logging.basicConfig(**LOG_CONFIG)
@@ -41,13 +42,16 @@ class RedisService:
 
         logger.info(f"User {user_id} added to queue")
 
-    async def remove_from_queue(self, user_id: int, partner_id: int) -> None:
+    async def remove_from_queue(self, user_id: int, partner_id: Union[int, None] = None) -> None:
         """Удаление пользователя из очереди"""
         await self.redis_client.lrem("waiting_queue", 1, user_id)
         await self.redis_client.delete(f"searching:{user_id}")
+        # Если только одного человека удаляем
+        if not partner_id: return logger.info(f"Users {user_id} removed from queue")
+        # Удаляем второго пользователя из очереди
         await self.redis_client.lrem("waiting_queue", 1, partner_id)
         await self.redis_client.delete(f"searching:{partner_id}")
-        logger.info(f"Users {user_id} and {partner_id} removed from queue")
+        return logger.info(f"Users {user_id} and {partner_id} removed from queue")
 
     async def create_chat_session(self, room_id, user1_id, user2_id):
         """Создание сессии чата в Redis"""

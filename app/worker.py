@@ -60,7 +60,7 @@ async def elevate_user(user_data: dict, matcher: "MatchingService") -> bool:
 async def handle_match_request(data: dict, msg: RabbitMessage):
 
     current_time = datetime.now(tz=config.TZINFO)
-    message_time = datetime.fromisoformat(data.get("current_time", ''))
+    message_time = datetime.fromisoformat(data.get("current_time", datetime.now().isoformat()))
     if current_time - message_time < timedelta(seconds=1):
         return await msg.nack()
     
