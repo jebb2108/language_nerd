@@ -167,4 +167,4 @@ def convert_token(token: str):
 
 
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="0.0.0.0", port=config.BASE_URL, reload=True)
+    uvicorn.run("app.main:app", host='localhost', port=config.BASE_PORT, reload=True)

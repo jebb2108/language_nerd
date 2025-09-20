@@ -37,8 +37,8 @@ class Config:
         "DATABASE_URL", "postgresql://user:pass@localhost:5432/db"
     )
 
-    BASE_URL: str = os.getenv("BASE_DOMAIN", "0.0.0.0:8100")
-    BASE_PORT: str = os.getenv("BASE_PORT", 0000)
+    BASE_URL: str = os.getenv("BASE_DOMAIN", "localhost")
+    BASE_PORT: int = int(os.getenv("BASE_PORT", 0000))
 
     # Redis
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
