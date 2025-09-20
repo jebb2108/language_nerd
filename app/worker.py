@@ -20,7 +20,7 @@ logger = logging.getLogger("worker")
 broker = RabbitBroker(config.RABBITMQ_URL, logger=logger)
 
 
-async def elevate_user(user_data: dict, matcher: MatchingService) -> bool:
+async def elevate_user(user_data: dict, matcher: "MatchingService") -> bool:
     """ Функция, для обработки состояния пользовательского инфо в очереди ожидания """
     user_id, to_ack = int(user_data["user_id"]), False
 
@@ -60,7 +60,7 @@ async def elevate_user(user_data: dict, matcher: MatchingService) -> bool:
 async def handle_match_request(data: dict, msg: RabbitMessage):
 
     current_time = datetime.now(tz=config.TZINFO)
-    message_time = datetime.fromisoformat(data.get("current_time"))
+    message_time = datetime.fromisoformat(data.get("current_time", ''))
     if current_time - message_time < timedelta(seconds=1):
         return await msg.nack()
     
