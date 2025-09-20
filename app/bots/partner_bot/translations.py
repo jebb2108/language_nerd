@@ -78,6 +78,10 @@ MESSAGES = dict(
             "en": "No one is looking for a match",
             "ru": "Никого нет, чтобы показать актуальные языки"
         },
+        "its_just_you": {
+            "en": "It`s just you",
+            "ru": "Кроме Вас никого нет",
+        },
         "cancel_search": {
             "en": "Ended search",
             "ru": "Поиск завершен"

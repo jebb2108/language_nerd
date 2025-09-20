@@ -109,7 +109,8 @@ async def show_queue_info(
     lans = sorted(common_lans, reverse=True)[:5]
     s_lans = ", ".join(lans)
     s_lans = s_lans if s_lans else MESSAGES['nobody_in_queue'][lang_code]
-    text = MESSAGES['show_queue_info'][lang_code].format(total=len(queue), lans=s_lans)
+    total = str(len(queue)) if len(queue) != 1 else MESSAGES['its_just_you'][lang_code]
+    text = MESSAGES['show_queue_info'][lang_code].format(total=total, lans=s_lans)
     await callback.answer(text=text, show_alert=True)
 
 
