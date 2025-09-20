@@ -42,6 +42,7 @@ class MatchingService:
 
             # Если partner id - user id
             if user_id == partner_id:
+                await self.redis.rpush("waiting_queue", user_id)
                 continue
 
             # Смотрим, не истекло ли TTL одного из участников
