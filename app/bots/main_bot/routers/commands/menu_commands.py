@@ -11,7 +11,6 @@ from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddlewa
 from app.bots.main_bot.keyboards.inline_keyboards import get_on_main_menu_keyboard
 from app.bots.main_bot.utils.access_data import data_storage
 from app.bots.main_bot.translations import MESSAGES
-from app.bots.main_bot.utils.filters import IsBotFilter
 
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name="menu_commands")
@@ -19,12 +18,8 @@ logger = logging.getLogger(name="menu_commands")
 # Инициализируем роутер
 router = Router(name=__name__)
 
-# Фильтрация по токену основного бота
-router.message.filter(IsBotFilter(config.BOT_TOKEN_MAIN))
-router.callback_query.filter(IsBotFilter(config.BOT_TOKEN_MAIN))
 
-
-@router.message(Command("menu", prefix="!/"), IsBotFilter(config.BOT_TOKEN_MAIN))
+@router.message(Command("menu", prefix="!/"))
 async def show_main_menu(
     message: Message, state: FSMContext, database: ResourcesMiddleware
 ):

@@ -1,5 +1,4 @@
 import logging
-from typing import Union
 
 from aiogram import F, Router
 from aiogram.enums import ParseMode
@@ -9,7 +8,6 @@ from aiogram.types import CallbackQuery
 from app.dependencies import get_redis
 from config import LOG_CONFIG, config
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
-from app.bots.partner_bot.utils.filters import IsBotFilter
 from app.bots.partner_bot.utils.access_data import data_storage
 from app.bots.partner_bot.translations import MESSAGES
 
@@ -25,12 +23,12 @@ logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name="partner_cb_handler")
 
 
-@router.callback_query(F.data == "main_bot", IsBotFilter(config.BOT_TOKEN_PARTNER))
+@router.callback_query(F.data == "main_bot")
 async def main_menu_handler(callback: CallbackQuery):
     await callback.answer()
 
 
-@router.callback_query(F.data == "profile", IsBotFilter(config.BOT_TOKEN_PARTNER))
+@router.callback_query(F.data == "profile")
 async def profile_handler(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     nickname = data["name"]
@@ -46,7 +44,7 @@ async def profile_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer(text=msg, show_alert=True)
 
 
-@router.callback_query(F.data == "about", IsBotFilter(config.BOT_TOKEN_PARTNER))
+@router.callback_query(F.data == "about")
 async def about_handler(
     callback: CallbackQuery, state: FSMContext, database: ResourcesMiddleware
 ):
@@ -63,7 +61,7 @@ async def about_handler(
     )
 
 
-@router.callback_query(F.data == "go_back", IsBotFilter(config.BOT_TOKEN_PARTNER))
+@router.callback_query(F.data == "go_back")
 async def go_back_handler(
     callback: CallbackQuery, state: FSMContext, database: ResourcesMiddleware
 ):
@@ -83,7 +81,7 @@ async def go_back_handler(
         reply_markup=show_partner_menu_keyboard(lang_code),
     )
 
-@router.callback_query(F.data == "queue_info", IsBotFilter(config.BOT_TOKEN_PARTNER))
+@router.callback_query(F.data == "queue_info")
 async def show_queue_info(
         callback: CallbackQuery,
         state: FSMContext,
@@ -172,7 +170,7 @@ async def cancel_search(
         logger.error(f"Исключение при выполнении запроса: {e}")
 
 
-@router.callback_query(F.data == "begin_search", IsBotFilter(config.BOT_TOKEN_PARTNER))
+@router.callback_query(F.data == "begin_search")
 async def new_session_handler(
     callback: CallbackQuery,
     state: FSMContext,

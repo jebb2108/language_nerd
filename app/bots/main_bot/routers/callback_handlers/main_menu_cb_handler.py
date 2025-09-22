@@ -4,9 +4,8 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from app.bots.main_bot.utils.filters import IsBotFilter
 from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
-from config import LOG_CONFIG, config
+from config import LOG_CONFIG
 from app.bots.main_bot.translations import MESSAGES
 from app.bots.main_bot.utils.access_data import data_storage
 from app.bots.main_bot.keyboards.inline_keyboards import (
@@ -20,7 +19,7 @@ logger = logging.getLogger(name="main_menu_cb_handler")
 router = Router(name=__name__)
 
 
-@router.callback_query(F.data == "about", IsBotFilter(config.BOT_TOKEN_MAIN))
+@router.callback_query(F.data == "about")
 async def about(
     callback: CallbackQuery, state: FSMContext, database: ResourcesMiddleware
 ):
@@ -42,7 +41,7 @@ async def about(
     )
 
 
-@router.callback_query(F.data == "go_back", IsBotFilter(config.BOT_TOKEN_MAIN))
+@router.callback_query(F.data == "go_back")
 async def go_back(
     callback: CallbackQuery, state: FSMContext, database: ResourcesMiddleware
 ):

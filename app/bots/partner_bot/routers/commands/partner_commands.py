@@ -10,7 +10,8 @@ from aiogram.enums import ParseMode
 
 from config import config, LOG_CONFIG
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
-from app.bots.main_bot.utils.filters import IsBotFilter
+
+# from app.bots.main_bot.utils.filters import IsBotFilter
 from app.bots.partner_bot.translations import MESSAGES
 
 from app.bots.partner_bot.keyboards.inline_keyboards import (
@@ -23,23 +24,22 @@ from app.bots.partner_bot.utils.access_data import data_storage
 # Инициализируем роутер
 router = Router(name=__name__)
 
-# Фильтрация по токену
-router.message.filter(IsBotFilter(config.BOT_TOKEN_PARTNER))
-router.callback_query.filter(IsBotFilter(config.BOT_TOKEN_PARTNER))
-
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name="partner_commands")
 
 
-@router.message(Command("menu", prefix="!/"), IsBotFilter(config.BOT_TOKEN_PARTNER))
+@router.message(Command("menu", prefix="!/"))
 async def show_main_menu(
     message: Message, state: FSMContext, database: ResourcesMiddleware
 ):
     """Главное меню бота"""
     user_id = message.from_user.id
     data = await data_storage.get_storage_data(user_id, state, database)
-    prefered_name = data.get("pref_name")
+    prefered_name = data.get("pref_name", None)
     lang_code = data.get("lang_code")
+
+    if prefered_name is None:
+        return
 
     greeting = MESSAGES["hello"][lang_code] + " <b>" + prefered_name + "</b>!"
     intro = MESSAGES["intro"][lang_code]
@@ -55,7 +55,7 @@ async def show_main_menu(
     )
 
 
-@router.message(Command("location", prefix="!/"), IsBotFilter(config.BOT_TOKEN_PARTNER))
+@router.message(Command("location", prefix="!/"))
 async def get_my_location(message: Message, database: ResourcesMiddleware):
     """Обработчик команды /location"""
     lang_code = message.from_user.language_code
@@ -73,9 +73,7 @@ async def get_my_location(message: Message, database: ResourcesMiddleware):
     )
 
 
-@router.message(
-    Command("new_session", prefix="!/"), IsBotFilter(config.BOT_TOKEN_PARTNER)
-)
+@router.message(Command("new_session", prefix="!/"))
 async def new_session_handler(
     message: Union[Message, CallbackQuery],
     state: FSMContext,
@@ -130,13 +128,17 @@ async def new_session_handler(
     logger.warning(f"Данные запроса: {payload}")
 
     try:
-        async with http_session.post(url=url, json=payload, headers={'Content-Type': 'application/json'}) as response:
+        async with http_session.post(
+            url=url, json=payload, headers={"Content-Type": "application/json"}
+        ) as response:
             response_text = await response.text()
             logger.warning(f"Статус ответа: {response.status}")
             logger.warning(f"Тело ответа: {response_text}")
 
             if response.status != 200:
-                logger.error(f"Ошибка при запросе к API: {response.status}. Ответ: {response_text}")
+                logger.error(
+                    f"Ошибка при запросе к API: {response.status}. Ответ: {response_text}"
+                )
             else:
                 logger.info("Запрос успешно обработан")
 

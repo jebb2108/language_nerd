@@ -9,7 +9,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove
 
-from app.bots.main_bot.utils.filters import IsBotFilter
+# from app.bots.main_bot.utils.filters import IsBotFilter
 from app.bots.partner_bot.keyboards.regular_keyboards import (
     show_dating_keyboard,
     show_location_keyboard,
@@ -31,39 +31,41 @@ class PollingState(StatesGroup):
 # Инициализируем роутер
 router = Router(name=__name__)
 
-# Фильтрация по токену
-router.message.filter(IsBotFilter(config.BOT_TOKEN_PARTNER))
-router.callback_query.filter(IsBotFilter(config.BOT_TOKEN_PARTNER))
-
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name="registration_commands")
 
 
-@router.message(Command("start", prefix="!/"), IsBotFilter(config.BOT_TOKEN_PARTNER))
+@router.message(Command("start", prefix="!/"))
 async def start(message: Message, state: FSMContext, database: ResourcesMiddleware):
     if await database.check_profile_exists(message.from_user.id):
         return await show_main_menu(message, state, database)
 
+    await state.clear()
+
     user_id = message.from_user.id
     lang_code = message.from_user.language_code
+
+    if await database.check_profile_exists(user_id):
+        return
+
     greeting = (
         f"{MESSAGES['hello'][lang_code]} <b>{message.from_user.first_name}</b>!\n\n"
         f"{MESSAGES['intro'][lang_code]}\n"
     )
     await message.answer(text=greeting, parse_mode=ParseMode.HTML)
-    if not await database.check_profile_exists(user_id):
-        # Обновляем user_id в состоянии
-        await state.update_data(user_id=user_id, lang_code=lang_code)
-        # Отправляем приветственное сообщение
-        txt = QUESTIONARY["need_profile"][lang_code]
-        await message.answer(text=txt, parse_mode=ParseMode.HTML)
-        # Переходим в состояние ожидания имени
-        return await state.set_state(PollingState.waiting_for_name)
+
+    # Обновляем user_id в состоянии
+    await state.update_data(user_id=user_id, lang_code=lang_code)
+    # Отправляем приветственное сообщение
+    txt = QUESTIONARY["need_profile"][lang_code]
+    await message.answer(text=txt, parse_mode=ParseMode.HTML)
+    # Переходим в состояние ожидания имени
+    await state.set_state(PollingState.waiting_for_name)
 
 
-@router.message(PollingState.waiting_for_name, IsBotFilter(config.BOT_TOKEN_PARTNER))
+@router.message(PollingState.waiting_for_name)
 async def process_name(
-    message: Message, state: FSMContext, database: ResourcesMiddleware
+    message: Message, state: FSMContext
 ):
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
@@ -72,33 +74,42 @@ async def process_name(
         await state.update_data(name=message.text)
         msg = QUESTIONARY["need_age"][lang_code]
         await message.answer(text=msg, parse_mode=ParseMode.HTML)
-        return await state.set_state(PollingState.waiting_for_bday)
+        await state.set_state(PollingState.waiting_for_bday)
+        return
 
     msg = MESSAGES["wrong_name"][lang_code]
     await message.reply(text=msg, parse_mode=ParseMode.HTML)
+    await state.set_state(PollingState.waiting_for_name)
 
 
-@router.message(PollingState.waiting_for_bday, IsBotFilter(config.BOT_TOKEN_PARTNER))
+@router.message(PollingState.waiting_for_bday)
 async def process_age(
-    message: Message, state: FSMContext, database: ResourcesMiddleware
+    message: Message, state: FSMContext
 ):
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
 
-    if re.match(r"\d{1,2}\.\d{1,2}\.\d{4}", message.text):
-        await state.update_data(bday=message.text)
-        await message.answer(
-            text=QUESTIONARY["need_intro"][lang_code], parse_mode=ParseMode.HTML
-        )
-        return await state.set_state(PollingState.waiting_for_intro)
+    if int(message.text.split('.')[2]) > 1900:
+        if re.match(r"\d{1,2}\.\d{1,2}\.\d{4}", message.text):
+            try:
+                datetime.strptime(message.text, "%d.%m.%Y")
+                await state.update_data(bday=message.text)
+                await message.answer(
+                    text=QUESTIONARY["need_intro"][lang_code], parse_mode=ParseMode.HTML
+                )
+                await state.set_state(PollingState.waiting_for_intro)
+                return
+
+            except ValueError: pass
 
     msg = MESSAGES["wrong_birthday"][lang_code]
     await message.answer(text=msg, parse_mode=ParseMode.HTML)
+    await state.set_state(PollingState.waiting_for_bday)
 
 
-@router.message(PollingState.waiting_for_intro, IsBotFilter(config.BOT_TOKEN_PARTNER))
+@router.message(PollingState.waiting_for_intro)
 async def process_intro(
-    message: Message, state: FSMContext, database: ResourcesMiddleware
+    message: Message, state: FSMContext
 ):
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
@@ -111,15 +122,17 @@ async def process_intro(
             reply_markup=show_dating_keyboard(lang_code),
         )
         await state.update_data(intro=message.text)
-        return await state.set_state(PollingState.waiting_for_dating)
+        await state.set_state(PollingState.waiting_for_dating)
+        return
 
     msg = MESSAGES["wrong_intro"][lang_code]
     await message.answer(text=msg, parse_mode=ParseMode.HTML)
+    await state.set_state(PollingState.waiting_for_intro)
+
 
 
 @router.message(
     PollingState.waiting_for_dating,
-    IsBotFilter(config.BOT_TOKEN_PARTNER),
     lambda message: message.text
     == BUTTONS["yes_to_dating"][message.from_user.language_code],
 )
@@ -144,7 +157,8 @@ async def agreed_to_dating_handler(
             parse_mode=ParseMode.HTML,
             reply_markup=show_location_keyboard(lang_code),
         )
-        return await state.set_state(PollingState.waiting_for_location)
+        await state.set_state(PollingState.waiting_for_location)
+        return
 
     # Если локация каким-то образом существует, то переходим в главное меню
     else:
@@ -153,7 +167,6 @@ async def agreed_to_dating_handler(
 
 @router.message(
     PollingState.waiting_for_dating,
-    IsBotFilter(config.BOT_TOKEN_PARTNER),
     lambda message: message.text
     == BUTTONS["no_to_dating"][message.from_user.language_code],
 )
@@ -173,10 +186,11 @@ async def disagreed_to_dating_handler(
     await message.answer(
         text=msg, parse_mode=ParseMode.HTML, reply_markup=ReplyKeyboardRemove()
     )
+    await state.clear()
 
 
 @router.message(
-    PollingState.waiting_for_location, F.location, IsBotFilter(config.BOT_TOKEN_PARTNER)
+    PollingState.waiting_for_location, F.location
 )
 async def process_location(
     message: Message, state: FSMContext, database: ResourcesMiddleware
@@ -192,11 +206,11 @@ async def process_location(
     # Выводим благодарное сообщение
     msg = MESSAGES["success"][lang_code]
     await message.answer(text=msg, reply_markup=ReplyKeyboardRemove())
+    await state.clear()
 
 
 @router.message(
     PollingState.waiting_for_location,
-    IsBotFilter(config.BOT_TOKEN_PARTNER),
     lambda message: message.text
     == BUTTONS["cancel"].get(message.from_user.language_code, BUTTONS["cancel"]["en"]),
 )
@@ -204,3 +218,4 @@ async def cancel(message: Message, state: FSMContext, database: ResourcesMiddlew
     msg = MESSAGES["no_worries"][message.from_user.language_code]
     await database.add_users_location(message.from_user.id, "refused", "refused")
     await message.reply(text=msg, reply_markup=ReplyKeyboardRemove())
+    await state.clear()

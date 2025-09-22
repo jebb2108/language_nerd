@@ -6,6 +6,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.redis import RedisStorage
+from asyncpg.pgproto.pgproto import timedelta
 
 from app.bots.partner_bot.routers import router as main_router
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
@@ -40,7 +41,7 @@ async def run():
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
     redis = await get_redis(call_client=True)
-    storage = RedisStorage(redis, state_ttl=10, data_ttl=60)
+    storage = RedisStorage(redis, state_ttl=timedelta(minutes=10), data_ttl=timedelta(minutes=60))
     disp = Dispatcher(storage=storage)
 
     disp.include_router(main_router)
@@ -51,6 +52,7 @@ async def run():
     server = await start_server(resources.redis)
 
     try:
+
         logger.info("Starting partner bots (polling)…")
         await disp.start_polling(bot)
 

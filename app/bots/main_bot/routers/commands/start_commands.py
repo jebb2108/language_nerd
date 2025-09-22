@@ -8,7 +8,6 @@ from aiogram.types import Message
 from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
 
 from app.bots.main_bot.translations import QUESTIONARY
-from app.bots.main_bot.utils.filters import IsBotFilter
 from config import config, LOG_CONFIG
 from app.bots.main_bot.keyboards.inline_keyboards import show_where_from_keyboard
 from app.bots.main_bot.routers.commands.menu_commands import show_main_menu
@@ -19,12 +18,8 @@ logger = logging.getLogger(name="start_commands")
 # Инициализируем роутер
 router = Router(name=__name__)
 
-# Фильтрация по токену
-router.message.filter(IsBotFilter(config.BOT_TOKEN_MAIN))
-router.callback_query.filter(IsBotFilter(config.BOT_TOKEN_MAIN))
 
-
-@router.message(Command("start", prefix="!/"), IsBotFilter(config.BOT_TOKEN_MAIN))
+@router.message(Command("start", prefix="!/"))
 async def start_with_polling(
     message: Message,
     state: FSMContext,

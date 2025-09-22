@@ -53,14 +53,13 @@ MESSAGES = dict(
             "ru": "У тебя нет @username, пожалуйста, установи его",
         },
         "no_worries": {
-            "en": (
-                "No worries 🫶 We won't use your location\n",
+            "en":
+                "No worries 🫶 We won't use your location\n"
                 "Press /menu to go to the main menu",
-            ),
-            "ru": (
+
+            "ru":
                 "Ничего страшного 🫶 Мы не будем использовать твою геолокацию\n"
-                "Нажми /menu, чтобы перейти в главное меню"
-            ),
+                "Нажми /menu, чтобы перейти в главное меню",
         },
         "no_worries_dating": {
             "en": "Got it! We`ll find you a new friend.\nPress /menu to go to the main menu",
