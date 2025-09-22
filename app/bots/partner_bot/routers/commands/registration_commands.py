@@ -9,7 +9,6 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove
 
-# from app.bots.main_bot.utils.filters import IsBotFilter
 from app.bots.partner_bot.keyboards.regular_keyboards import (
     show_dating_keyboard,
     show_location_keyboard,
@@ -17,6 +16,7 @@ from app.bots.partner_bot.keyboards.regular_keyboards import (
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.partner_bot.routers.commands.partner_commands import show_main_menu
 from app.bots.partner_bot.translations import MESSAGES, QUESTIONARY, BUTTONS
+from app.bots.partner_bot.utils.access_data import data_storage
 from config import config, LOG_CONFIG
 
 
@@ -40,13 +40,12 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
     if await database.check_profile_exists(message.from_user.id):
         return await show_main_menu(message, state, database)
 
-    await state.clear()
-
     user_id = message.from_user.id
-    lang_code = message.from_user.language_code
 
-    if await database.check_profile_exists(user_id):
-        return
+    if await database.check_profile_exists(user_id): return
+
+    data = await data_storage.get_storage_data(user_id=user_id, state=state, database=database)
+    lang_code = data.get('lang_code')
 
     greeting = (
         f"{MESSAGES['hello'][lang_code]} <b>{message.from_user.first_name}</b>!\n\n"
