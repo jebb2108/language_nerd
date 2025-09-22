@@ -88,7 +88,7 @@ async def process_age(
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
 
-    if int(message.text.split('.')[2]) > 1900:
+    if datetime.now(tz=config.TZINFO).date().year >= int(message.text.split('.')[2]) > 1900:
         if re.match(r"\d{1,2}\.\d{1,2}\.\d{4}", message.text):
             try:
                 datetime.strptime(message.text, "%d.%m.%Y")
