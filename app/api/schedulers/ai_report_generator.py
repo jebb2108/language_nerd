@@ -387,3 +387,7 @@ async def generate_weekly_reports():
             start_time = datetime.now()
 
     logger.info(f"Generated reports for {processed_users} users")
+
+
+if __name__ == '__main__':
+    asyncio.run(generate_weekly_reports())
