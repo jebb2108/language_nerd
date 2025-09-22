@@ -9,6 +9,8 @@ from aiogram.fsm.storage.redis import RedisStorage
 from aiogram.enums import ParseMode
 from typing import Optional
 
+from asyncpg.pgproto.pgproto import timedelta
+
 from app.bots.main_bot.api.web_launcher import start_web_app
 from app.dependencies import get_db, get_redis
 from config import LOG_CONFIG, config
@@ -61,7 +63,7 @@ async def run():
 
     await init_resources()
     redis = await get_redis(call_client=True)
-    storage = RedisStorage(redis, state_ttl=10, data_ttl=60)
+    storage = RedisStorage(redis, state_ttl=timedelta(minutes=10), data_ttl=timedelta(minutes=60))
 
     # Инициализация диспетчера
     disp = Dispatcher(storage=storage)

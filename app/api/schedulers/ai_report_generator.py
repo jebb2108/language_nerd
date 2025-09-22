@@ -1,6 +1,8 @@
 import logging
 import asyncio
 import random
+import sys
+
 import aiohttp
 import time
 import re
@@ -15,7 +17,7 @@ from tenacity import (
     retry_if_result
 )
 
-
+from app.api.schedulers.ai_cleanup import cleanup_old_reports
 from app.dependencies import get_db
 from config import LOG_CONFIG, config
 
@@ -324,22 +326,6 @@ async def generate_weekly_reports():
 
     logger.info(f"Generated reports for {processed_users} users")
 
-
-async def cleanup_old_reports(days: int = 30) -> bool:
-    """Очищает старые отчеты и связанные с ними данные"""
-    db = await get_db()
-    try:
-        logger.info(f"Starting cleanup for reports older than {days} days")
-        reports_deleted, words_deleted = await db.cleanup_old_reports(days)
-
-        logger.info(
-            f"Cleaned up {reports_deleted} reports and "
-            f"{words_deleted} words older than {days} days"
-        )
-        return True
-    except Exception as e:
-        logger.error(f"Error cleaning old reports: {e}")
-        return False
 
 async def generate_weekly_reports():
     """Генерирует недельные отчеты с ограничением скорости"""
