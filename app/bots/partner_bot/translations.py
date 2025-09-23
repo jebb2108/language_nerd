@@ -19,40 +19,34 @@ MESSAGES = dict(
                   "чтобы я подобрала тебе собеседника",
         },
         "about": {
-            "en": "You may ask me whatever you want by tapping one of these options::\n\n"
+            "en": "You may ask me by tapping one of these options::\n\n"
                 "\t/menu - return to the main menu\n"
                 "\t/location - see your location\n"
                 "\t/new_session - start a new conversation\n"
                 "\t/restart - restart the bot\n\n"
-                "if you see me weid or not answering you, contact support. They`ll be glad to help",
+                "if you see me I`m not answering or anything else, contact support. They`ll help",
 
-            "ru": "Ты можешь попросить меня о чем угодно, использовав следующие команды:\n\n"
+            "ru": "Ты можешь попросить меня, выбрав следующие команды:\n\n"
                     "\t/menu - вернуться в главное меню\n"
                     "\t/location - увидеть свою геолокацию\n"
                     "\t/new_session - начать новое общение\n"
                     "\t/restart - перезапустить бота\n\n"
-                "Если ты видишь, что я не отвечаю или отвечаю странно, "
-                "пожалуйста, напиши в тех. поддержку. Они с радостью помогут!",
+                "Если ты видишь, что я не отвечаю или что-то пошло не так, "
+                "пожалуйста, напиши в тех. поддержку. Они помогут",
         },
         "user_info": {
                 "en": "=== {nickname} ===\n\n"
-                    "{level_status}\n"
-                    "Till next level: {percentage}\n\n"
                     "Your age: {age}\n"
                     "Chosen language: {language}\n"
                     "Fluency: {fluency}\n"
                     "Topic: {topic}\n"
-                    "Status: {status}\n\n"
                     "About you: {about}",
 
                 "ru": "=== {nickname} ===\n\n"
-                    "{level_status}\n"
-                    "До следующего уровня: {percentage}\n\n"
                     "Твой возраст: {age}\n"
                     "Выбранный язык: {language}\n"
                     "Уровень владения: {fluency}\n"
                     "Тема для разговора: {topic}\n"
-                    "Статус: {status}\n\n"
                     "О себе: {about}",
         },
         "wrong_name": {

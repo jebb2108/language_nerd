@@ -41,13 +41,10 @@ async def profile_handler(
     lang_code = data.get("lang_code", "en")
 
     msg = MESSAGES["user_info"][lang_code].format(
-        level_status=f"[🟩🟩🟩🟩⬜⬜]",
-        percentage="40%",
         nickname=data.get("pref_name"),
         age=data.get("age"),
         fluency=TRANSCRIPTIONS["fluency"][data.get("fluency")][lang_code],
         topic=TRANSCRIPTIONS["topics"][data.get("topic")][lang_code],
-        status=TRANSCRIPTIONS["status"][data.get("status")][lang_code],
         language=TRANSCRIPTIONS["languages"][data.get("language")][lang_code],
         about=data.get("about"),
     )
