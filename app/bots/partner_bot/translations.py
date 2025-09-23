@@ -156,8 +156,8 @@ QUESTIONARY = dict(
 BUTTONS = dict(
     {
         "about_bot": {
-            "en": "ℹ️ About bot",
-            "ru": "ℹ️ О боте",
+            "en": "ℹ️ About me",
+            "ru": "ℹ️ Обо мне",
         },
         "go_back": {
             "en": "🔙 Go Back",
@@ -168,8 +168,8 @@ BUTTONS = dict(
             "ru": "👾 Основое меню",
         },
         "profile": {
-            "en": "👤 My profile",
-            "ru": "👤 Мой профиль",
+            "en": "👤 Your profile",
+            "ru": "👤 Твой профиль",
         },
         "search": {
             "en": "🔍 Search partner",

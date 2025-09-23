@@ -144,8 +144,8 @@ BUTTONS = dict(
             "ru": "🌐 Найти собеседника",
         },
         "about_bot": {
-            "en": "ℹ️ About bot",
-            "ru": "ℹ️ О боте",
+            "en": "ℹ️ About me",
+            "ru": "ℹ️ Обо мне",
         },
         "support": {
             "en": "🛠 Support",
