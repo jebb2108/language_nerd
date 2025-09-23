@@ -33,7 +33,7 @@ async def show_main_menu(
     if not await database.check_profile_exists(user_id):
         msg += MESSAGES['get_to_know'][lang_code]
 
-    image_from_file = FSInputFile("media/IMG_3903.PNG")
+    image_from_file = FSInputFile("/srv/language_nerd/app/bots/main_bot/media/IMG_3903.PNG")
     await message.answer_photo(
         photo=image_from_file,
         caption=msg,
