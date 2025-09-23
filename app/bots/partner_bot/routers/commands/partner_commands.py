@@ -53,7 +53,7 @@ async def show_main_menu(
         first_name=message.from_user.first_name,
     )
 
-    image_from_file = FSInputFile("/srv/language_nerd/app/bots/main_bot/media/IMG_3904.jpg")
+    image_from_file = FSInputFile("/srv/language_nerd/app/bots/partner_bot/media/IMG_3904.jpg")
     await message.answer_photo(
         photo=image_from_file,
         caption=greeting + "\n\n" + intro,
