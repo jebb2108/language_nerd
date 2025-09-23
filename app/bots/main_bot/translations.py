@@ -23,8 +23,8 @@ MESSAGES = dict(
             "ru": "\n\nНе забудь завершить регистрацию! Просто нажми на 'Найти собеседника' для продолжения"
         },
         "pin_me": {
-            "en": "\n\n📌 Pin this chat, so you will never loose me",
-            "ru": "\n\n📌 Закрепи этот чат, чтобы никогда меня не потерять"
+            "en": "📌 Pin this chat, so you will never loose me",
+            "ru": "📌 Закрепи этот чат, чтобы никогда меня не потерять"
         },
         "about": {
             "en": (
