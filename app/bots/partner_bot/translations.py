@@ -35,18 +35,18 @@ MESSAGES = dict(
                 "пожалуйста, напиши в тех. поддержку. Они помогут",
         },
         "user_info": {
-                "en": "=== {nickname} ===\n\n"
-                    "Your age: {age}\n"
-                    "Chosen language: {language}\n"
-                    "Fluency: {fluency}\n"
-                    "Topic: {topic}\n"
+                "en": "=== <b>{nickname}</b> ===\n\n"
+                    "Your age: <b>{age}</b>\n"
+                    "Chosen language: <b>{language}</b>\n"
+                    "Fluency: <b>{fluency}</b>\n"
+                    "Topic: <b>{topic}</b>\n\n"
                     "About you: {about}",
 
-                "ru": "=== {nickname} ===\n\n"
-                    "Твой возраст: {age}\n"
-                    "Выбранный язык: {language}\n"
-                    "Уровень владения: {fluency}\n"
-                    "Тема для разговора: {topic}\n"
+                "ru": "=== <b>{nickname}</b> ===\n\n"
+                    "Твой возраст: <b>{age}\n"
+                    "Выбранный язык: <b>{language}</b>\n"
+                    "Уровень владения: <b>{fluency}</b>\n"
+                    "Тема для разговора: <b>{topic}</b>\n\n"
                     "О себе: {about}",
         },
         "wrong_name": {
