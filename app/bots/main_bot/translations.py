@@ -12,15 +12,15 @@ MESSAGES = dict(
                 "🛠 <b>Technical support</b> — I'll help if something breaks\n\n"
             ),
             "ru": (
-                "Я Сэм. Помогу тебе в закреплении изученного.\n\nВот что я умею:\n"
+                "Я Сэм. Помогу тебе в закреплении изученного. Вот что я умею:\n\n"
                 "✨ <b>Словарь</b> — сохраняй и закрепляй новые слова легко\n"
                 "🤝 <b>Практика</b> — общайся с другими учениками\n"
                 "🛠 <b>Техподдержка</b> — помогу, если что-то сломалось\n\n"
             ),
         },
         "get_to_know": {
-            "en": "\n\nDon`t forget to complete your registration! Just click 'Find partner' below to do so",
-            "ru": "\n\nНе забудь завершить регистрацию! Просто нажми на 'Найти собеседника' ниже для продолжения"
+            "en": "\n\nDon`t forget to complete your registration! Just click 'Find partner' to do so",
+            "ru": "\n\nНе забудь завершить регистрацию! Просто нажми на 'Найти собеседника' для продолжения"
         },
         "about": {
             "en": (
