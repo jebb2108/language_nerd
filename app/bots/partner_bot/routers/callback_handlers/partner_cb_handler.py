@@ -91,7 +91,7 @@ async def go_back_handler(
     prefered_name = data.get("pref_name", "User")
 
     msg = MESSAGES["hello"][language] + " <b>" + prefered_name + "</b>!\n\n"
-    msg += MESSAGES["intro"][lang_code]
+    msg += MESSAGES["full_intro"][lang_code]
 
     await callback.message.edit_caption(
         caption=msg,

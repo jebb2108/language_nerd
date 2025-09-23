@@ -13,10 +13,10 @@ MESSAGES = dict(
             "ru": "Снова привет, в этом месте я буду искать тебе собеседника\n"
         },
         "full_intro": {
-            "en": "Don`t you want to talk to someone real? Tap 'Search partner', "
+            "en": "Don`t you want to talk to anyone? Tap <i>Search partner</i>, "
                   "and I'll find a person for you",
-            "ru": "Не хочешь поговорить с кем-нибудь реальным? Жми 'Искать партнера', "
-                  "и я подберу тебе человека",
+            "ru": "Не хочешь поговорить с кем-нибудь? Жми <i>Искать партнера</i>, "
+                  "чтобы я подобрала тебе собеседника",
         },
         "about": {
             "en": "You may ask me whatever you want by tapping one of these options::\n\n"
