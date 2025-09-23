@@ -51,8 +51,9 @@ async def profile_handler(
         language=TRANSCRIPTIONS["languages"][data.get("language")][lang_code],
         about=data.get("about"),
     )
-    await callback.message.edit_text(
-        text=msg,
+
+    await callback.message.edit_caption(
+        caption=msg,
         reply_markup=get_go_back_keyboard(lang_code),
         parse_mode=ParseMode.HTML,
     )
@@ -69,9 +70,10 @@ async def about_handler(
     data = await data_storage.get_storage_data(user_id, state, database)
     lang_code = data.get("lang_code", "en")
 
-    await callback.message.edit_text(
-        text=MESSAGES["about"][lang_code],
+    await callback.message.edit_caption(
+        caption=MESSAGES["about"][lang_code],
         reply_markup=get_go_back_keyboard(lang_code),
+        parse_mode=ParseMode.HTML,
     )
 
 
@@ -91,9 +93,10 @@ async def go_back_handler(
     msg = MESSAGES["hello"][language] + " <b>" + prefered_name + "</b>!\n\n"
     msg += MESSAGES["intro"][lang_code]
 
-    await callback.message.edit_text(
-        text=msg,
+    await callback.message.edit_caption(
+        caption=msg,
         reply_markup=show_partner_menu_keyboard(lang_code),
+        parse_mode=ParseMode.HTML,
     )
 
 

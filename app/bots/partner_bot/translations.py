@@ -170,8 +170,8 @@ BUTTONS = dict(
             "ru": "🔙 Назад",
         },
         "main_bot": {
-            "en": "👾 Main Bot",
-            "ru": "👾 Основной Бот",
+            "en": "👾 Main menu",
+            "ru": "👾 Основое меню",
         },
         "profile": {
             "en": "👤 My profile",

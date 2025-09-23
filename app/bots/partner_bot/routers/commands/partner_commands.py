@@ -4,7 +4,7 @@ from typing import Union
 
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import Command
 from aiogram.enums import ParseMode
 
@@ -44,7 +44,7 @@ async def show_main_menu(
             text="I can`t seem to know you :( Go to @lllangbot"
         )
         return
-    media = ...
+
     greeting = MESSAGES["hello"][language] + " <b>" + prefered_name + "</b>!"
     intro = MESSAGES["full_intro"][lang_code]
     await state.update_data(
@@ -52,10 +52,13 @@ async def show_main_menu(
         lang_code=lang_code,
         first_name=message.from_user.first_name,
     )
-    await message.answer(
-        text=greeting + "\n\n" + intro,
-        parse_mode=ParseMode.HTML,
+
+    image_from_file = FSInputFile("/srv/language_nerd/app/bots/main_bot/media/IMG_3904.jpg")
+    await message.answer_photo(
+        photo=image_from_file,
+        caption=greeting + "\n\n" + intro,
         reply_markup=show_partner_menu_keyboard(lang_code),
+        parse_mode=ParseMode.HTML,
     )
 
 
