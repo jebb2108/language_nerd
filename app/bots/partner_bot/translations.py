@@ -119,25 +119,24 @@ QUESTIONARY = dict(
     {
         "need_profile": {
             "en": "Let's get to know each other a bit better\n\n"
-            "We need your profile info to start the conversation\n\n"
-            "First, I`d like to ask you to <b>turn off your VPN</b> if you have one, "
-            "so I can process your profile information right\n\n"
-            "Okay, so what name do you want to be seen by others?\n",
+                "First, I`d like to ask you to <b>turn off your VPN</b> if you have one, "
+                "so I can process your profile information right\n\n"
+                "Okay, so what name do you want to be seen by others?\n",
+
             "ru": "Давайте познакомимся немного ближе\n\n"
-            "Мне нужна информация для твоего профиля, чтобы начать общение с другими\n\n"
-            "Сначала, я бы хотела попросить тебя <b>выключить VPN</b> (если он у тебя есть), "
-            "так я смогу обработать информацию правильно\n\n"
-            "Хорошо, под каким именем ты хочешь, чтобы другие люди видели тебя?\n",
+                "Сначала, я бы хотела попросить тебя <b>выключить VPN</b> (если он у тебя есть), "
+                "так я смогу обработать информацию правильно\n\n"
+                "Хорошо, под каким именем ты хочешь, чтобы другие люди видели тебя?\n",
         },
         "need_intro": {
             "en": "Tell me a few facts about yourself:\n\n"
-            "For example, what do you do in your free time?\n"
-            "Maybe you have a cool hobby, favorite TV show or\n"
-            "place for walks? Any small details are welcome\n\n",
+                "For example, what do you do in your free time?\n"
+                "Maybe you have a cool hobby, favorite TV show or\n"
+                "place for walks? Any small details are welcome\n\n",
             "ru": "Расскажи пару фактов о себе:\n\n"
-            "Например, чем ты занимаешься в свободное время?"
-            "Может, у тебя есть крутое хобби, любимый сериал или"
-            "место для прогулок? Любые мелочи приветствуются\n\n",
+                "Например, чем ты занимаешься в свободное время?"
+                "Может, у тебя есть крутое хобби, любимый сериал или"
+                "место для прогулок? Любые мелочи приветствуются\n\n",
         },
         "need_location": {
             "en": "For the correct work of the application, your location is needed, please provide it by the button below.\n\n"
@@ -215,6 +214,20 @@ BUTTONS = dict(
 
 
 TRANSCRIPTIONS = dict({
+    "came_from": {
+        "friends": {
+            "en": "through friends",
+            "ru": "через знакомых",
+        },
+        "search": {
+            "en": "on internet",
+            "ru": "по интернету",
+        },
+        "other": {
+            "en": "through ads",
+            "ru": "через рекламу",
+        },
+    },
     "languages": {
         "russian": {
             "en": "Russian",

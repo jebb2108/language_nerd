@@ -4,7 +4,7 @@ from aiogram import Router
 from aiogram.filters import Command
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import Message, InputMediaPhoto, FSInputFile
 
 from config import config, LOG_CONFIG
 from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
@@ -27,19 +27,18 @@ async def show_main_menu(
     # Получаем данные из состояния
     data = await data_storage.get_storage_data(message.from_user.id, state, database)
     user_id = data.get("user_id")
-    first_name = data.get("first_name")
     lang_code = data.get("lang_code")
 
-    msg = (
-        f"{MESSAGES['hello'][lang_code]} <b>{first_name}</b>! "
-        f"{MESSAGES['my_name'][lang_code]}\n\n"
-        f"{MESSAGES['welcome'][lang_code]}"
-    )
+    msg = f"{MESSAGES['welcome'][lang_code]}"
+    if not await database.check_profile_exists(user_id):
+        msg += MESSAGES['get_to_know'][lang_code]
 
-    if not await database.check_profile_exists(user_id): msg += MESSAGES['get_to_know_sis'][lang_code]
-
-    await message.answer(
-        text=msg,
+    image_from_file = FSInputFile("media/IMG_3903.PNG")
+    await message.answer_photo(
+        photo=image_from_file,
+        caption=msg,
         reply_markup=get_on_main_menu_keyboard(user_id, lang_code),
         parse_mode=ParseMode.HTML,
     )
+
+

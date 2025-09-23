@@ -33,12 +33,14 @@ async def about(
     lang_code = data.get("lang_code")
 
     msg = MESSAGES["about"][lang_code]
+
     # Редактируем текущее сообщение
-    await callback.message.edit_text(
-        text=msg,
+    await callback.message.edit_caption(
+        caption=msg,
         reply_markup=get_go_back_keyboard(lang_code),
         parse_mode=ParseMode.HTML,
     )
+
 
 
 @router.callback_query(F.data == "go_back")
@@ -51,14 +53,16 @@ async def go_back(
     await callback.answer()
     user_id = callback.from_user.id
     data = await data_storage.get_storage_data(user_id, state, database)
-    first_name = data.get("first_name")
     lang_code = data.get("lang_code")
+
     msg = (
-        f"{MESSAGES['hello'][lang_code]} <b>{first_name}</b>!\n\n"
         f"{MESSAGES['welcome'][lang_code]}"
     )
-    await callback.message.edit_text(
-        text=msg,
+
+    if not await database.check_profile_exists(user_id): msg += MESSAGES['get_to_know'][lang_code]
+
+    await callback.message.edit_caption(
+        caption=msg,
         reply_markup=get_on_main_menu_keyboard(user_id, lang_code),
         parse_mode=ParseMode.HTML,
     )

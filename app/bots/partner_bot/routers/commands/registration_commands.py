@@ -42,11 +42,6 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
 
     user_id = message.from_user.id
 
-    if not await database.check_profile_exists(user_id):
-        await message.answer(
-            text="I can`t seem to know my sister met you before :( Check her out @lllangbot"
-        )
-
     data = await data_storage.get_storage_data(
         user_id=user_id, state=state, database=database
     )
@@ -55,7 +50,6 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
     lang_code = data.get("lang_code")
 
     greeting = (
-        f"{MESSAGES['hello'][language]} <b>{first_name}</b>!\n\n"
         f"{MESSAGES['intro'][lang_code].format(language=TRANSCRIPTIONS["languages"][language][lang_code])}\n"
     )
     await message.answer(text=greeting, parse_mode=ParseMode.HTML)

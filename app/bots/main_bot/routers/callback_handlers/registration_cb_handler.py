@@ -4,6 +4,7 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
+from app.bots.partner_bot.translations import TRANSCRIPTIONS
 from config import LOG_CONFIG
 from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.main_bot.keyboards.inline_keyboards import (
@@ -32,9 +33,13 @@ async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
 
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
+    users_choice = callback.data.split("_", 1)[1]
+
+    msg = f"{MESSAGES["you_chose"][lang_code]} {TRANSCRIPTIONS["came_from"][users_choice][lang_code]}\n\n" \
+          f"{QUESTIONARY["pick_lang"][lang_code]}"
 
     await callback.message.edit_text(
-        text=QUESTIONARY["pick_lang"][lang_code],
+        text=msg,
         reply_markup=show_language_keyboard(),
     )
 
@@ -49,7 +54,7 @@ async def handle_fluency_choice(callback: CallbackQuery, state: FSMContext):
     lang_code = data.get("lang_code", "en")
 
     users_choice = callback.data.split("_", 1)[1]
-    msg = f"{MESSAGES["you_chose"][lang_code]} {users_choice}\n\n" \
+    msg = f"{MESSAGES["you_chose"][lang_code]} {TRANSCRIPTIONS["languages"][users_choice][lang_code]}\n\n" \
           f"{QUESTIONARY['fluency'][lang_code]}"
     await callback.message.edit_text(
         text=msg,
@@ -71,7 +76,7 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
     users_choice = callback.data.split("_", 1)[1]
 
     # Отправляем сообщение с подтверждением
-    msg = f"{MESSAGES["you_chose"][lang_code]} {users_choice}\n\n" \
+    msg = f"{MESSAGES["you_chose"][lang_code]} {TRANSCRIPTIONS["fluency"][users_choice][lang_code]}\n\n" \
           f"{QUESTIONARY['choose_topic'][lang_code]}"
     await callback.message.edit_text(
         text=msg,
@@ -92,7 +97,7 @@ async def handle_topic_choice(callback: CallbackQuery, state: FSMContext):
     users_choice = callback.data.split('_', 1)[1]
 
     # Отправляем сообщение с подтверждением
-    msg = f"{MESSAGES["you_chose"][lang_code]} {users_choice}\n\n" \
+    msg = f"{MESSAGES["you_chose"][lang_code]} {TRANSCRIPTIONS["topics"][users_choice][lang_code]}\n\n" \
           f"{QUESTIONARY['terms'][lang_code]}"
 
     await callback.message.edit_text(

@@ -39,11 +39,14 @@ async def show_main_menu(
     language = data.get("language")
     lang_code = data.get("lang_code")
 
-    if prefered_name is None:
+    if not await database.check_profile_exists(user_id):
+        await message.answer(
+            text="I can`t seem to know you :( Go to @lllangbot"
+        )
         return
-
+    media = ...
     greeting = MESSAGES["hello"][language] + " <b>" + prefered_name + "</b>!"
-    intro = MESSAGES["intro"][lang_code]
+    intro = MESSAGES["full_intro"][lang_code]
     await state.update_data(
         user_id=user_id,
         lang_code=lang_code,

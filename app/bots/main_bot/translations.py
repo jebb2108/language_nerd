@@ -4,29 +4,21 @@ MESSAGES = dict(
             "en": "👋 Hello, ",
             "ru": "👋 Привет, ",
         },
-        "my_name": {
-            "en": "I`m Sam ;)",
-            "ru": "Меня зовут Сэм",
-        },
         "welcome": {
             "en": (
-                "I'm so glad to see you here and"
-                "will be your language learning assistant. Here's what I can do:\n\n"
+                "I`m Sam. Your language learning assistant. Here's what I can do:\n\n"
                 "✨ <b>Dictionary</b> — save and learn new words easily\n"
                 "🤝 <b>Practice</b> — chat with other students (coming soon!)\n"
                 "🛠 <b>Technical support</b> — I'll help if something breaks\n\n"
-                "Just choose what interests you by clicking one of the buttons below! 😊"
             ),
             "ru": (
-                "Рада видеть тебя здесь\n\n"
-                "Я — твой помощница в закреплении изученного, и вот что умею:\n\n"
+                "Я Сэм. Твоя помощница в закреплении изученного в иностранных языках. Вот что я умею:\n\n"
                 "✨ <b>Словарь</b> — сохраняй и закрепляй новые слова легко\n"
                 "🤝 <b>Практика</b> — общайся с другими учениками (скоро запуск!)\n"
                 "🛠 <b>Техподдержка</b> — помогу, если что-то сломалось\n\n"
-                "Просто выбери, что тебя интересует, нажав на одну из кнопок ниже! 😊"
             ),
         },
-        "get_to_know_sis": {
+        "get_to_know": {
             "en": "\n\nDon`t forget to complete your registration! Just click 'Find partner' below to do so",
             "ru": "\n\nНе забудь завершить регистрацию! Просто нажми на 'Найти собеседника' ниже для продолжения"
         },
@@ -38,15 +30,15 @@ MESSAGES = dict(
                 "With me, you can progress in language learning at your own pace and make friends along the way!"
             ),
             "ru": (
-                "Мое имя - Сэм. Я совсем как человек с той лиишь разницей, что мой внутренний мир состоит из нулей и единиц."
-                "Для меня самой большой радостью будет помочь тебе с закреплением новых слова и идиом."
+                "Мое имя - Сэм. Я совсем как человек с той лишь разницей, что мой внутренний мир состоит из нулей и единиц\n\n"
+                "Для меня самой большой радостью будет помочь тебе с закреплением новых слов и идиом\n\n"
                 "✨ Дам тебе все самое необходимое для этого, а раз в неделю буду писать тебе тесты на закрепление\n\n"
                 "Со мною ты сможешь двигаться в изучении языка в своем ритме и находить друзей в процессе!"
             ),
         },
         "you_chose": {
             "en": "➪ You chose:",
-            "ru": "➪ Вы выбрали:",
+            "ru": "➪ Ты выбрал:",
         },
         "gratitude": {
             "en": "Thank you for your patience",
@@ -59,21 +51,21 @@ QUESTIONARY = dict(
     {
         "intro": {
             "en": (
-                "Welcome! My name is Sam. I'm a smart helper "
+                "My name is Sam. I'm a smart helper "
                 "who will help you reinforce new words so they're never forgotten. "
                 "Here's what awaits you:\n\n"
                     "1️⃣ A few general questions — you're here\n"
                     "2️⃣ Filling out a questionnaire about yourself\n"
-                    "3️⃣ By choice Preselection of interesting interviewees\n\n"
-                "And in the next Monday, the bots will choose tasks to reinforce new words\n\n"
+                    "3️⃣ By choice preselection of interesting partners, including dating\n\n"
+                    "And in the next Monday, I`ll send you a quiz for reinforcement\n\n"
                 "👀 Tell me where you heard about me?\n"
             ),
             "ru": (
-                "Добро пожаловать! Меня зовут Sam. Я умная помощница, помогаю людям закреплять новые слова, "
+                "Меня зовут Sam. Я умная помощница, помогаю людям закреплять новые слова, "
                 "чтобы они никогда не забывались. Вот что тебя ждёт:\n\n"
                     "1️⃣ Пара общих вопросов —> ты находишься здесь\n"
-                    "2️⃣ У моей спутницы Chloe нужно будет заполнить небольшую анкету о себе\n"
-                    "3️⃣ По желанию предвыбор интересных собеседников, включая dating, а также будет доступен мой словарик\n\n"
+                    "2️⃣ Нужно будет заполнить небольшую анкету о себе\n"
+                    "3️⃣ По желанию предвыбор интересных собеседников, включая dating\n\n"
                 "А в ближайший понедельник я подберу тебе задания на закрепрение новых слов\n\n"
                 "👀 Подскажи, откуда ты обо мне узнал?\n"
             ),
@@ -239,3 +231,66 @@ WEEKLY_QUIZ = dict(
         },
     }
 )
+
+TRANSCRIPTIONS = dict({
+    "languages": {
+        "russian": {
+            "en": "Russian",
+            "ru": "Русский",
+        },
+        "english": {
+            "en": "English",
+            "ru": "Русский",
+        },
+    },
+    "fluency": {
+        "beginer": {
+            "en": "beginer",
+            "ru": "начальный",
+        },
+        "intermediate": {
+            "en": "intermediate",
+            "ru": "средний",
+        },
+        "advanced": {
+            "en": "advanced",
+            "ru": "продвинутый",
+        },
+        "native": {
+            "en": "native",
+            "ru": "родной",
+        }
+    },
+    "topics": {
+        "general": {
+            "en": "general",
+            "ru": "обо всем",
+        },
+        "music": {
+            "en": "music",
+            "ru": "музыка",
+        },
+        "sports": {
+            "en": "sports",
+            "ru": "спорт",
+        },
+        "technology": {
+            "en": "technology",
+            "ru": "технологии",
+        },
+        "travel": {
+            "en": "travel",
+            "ru": "путешествия",
+        },
+        "games": {
+            "en": "video games",
+            "ru": "видео-игры"
+        }
+    },
+    "status": {
+        "rookie": {
+            "en": "rookie",
+            "ru": "зеленый",
+        }
+    }
+})

@@ -7,7 +7,7 @@ from aiogram.types import Message
 
 from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
 
-from app.bots.main_bot.translations import QUESTIONARY
+from app.bots.main_bot.translations import QUESTIONARY, MESSAGES
 from config import config, LOG_CONFIG
 from app.bots.main_bot.keyboards.inline_keyboards import show_where_from_keyboard
 from app.bots.main_bot.routers.commands.menu_commands import show_main_menu
@@ -53,8 +53,11 @@ async def start_with_polling(
         lang_code=lang_code,
     )
 
+    msg = f"{MESSAGES['hello'][lang_code]} <b>{first_name}</b>!\n\n" \
+          f"{QUESTIONARY["intro"][lang_code]}"
+
     await message.bot.send_message(
         chat_id=message.chat.id,
-        text=QUESTIONARY["intro"][lang_code],
+        text=msg,
         reply_markup=show_where_from_keyboard(lang_code),
     )
