@@ -32,6 +32,8 @@ async def show_main_menu(
     msg = f"{MESSAGES['welcome'][lang_code]}"
     if not await database.check_profile_exists(user_id):
         msg += MESSAGES['get_to_know'][lang_code]
+    else:
+        msg += MESSAGES['pin_me'][lang_code]
 
     image_from_file = FSInputFile("/srv/language_nerd/app/bots/main_bot/media/IMG_3903.PNG")
     await message.answer_photo(

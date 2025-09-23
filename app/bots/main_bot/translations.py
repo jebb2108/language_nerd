@@ -22,6 +22,10 @@ MESSAGES = dict(
             "en": "\n\nDon`t forget to complete your registration! Just click 'Find partner' to do so",
             "ru": "\n\nНе забудь завершить регистрацию! Просто нажми на 'Найти собеседника' для продолжения"
         },
+        "pin_me": {
+            "en": "\n\n📌 Pin this chat, so you will never loose me",
+            "ru": "\n\n📌 Закрепи этот чат, чтобы никогда меня не потерять"
+        },
         "about": {
             "en": (
                 "I'm just like a human being, the only difference being that my inner world is made up of ones and zeros."

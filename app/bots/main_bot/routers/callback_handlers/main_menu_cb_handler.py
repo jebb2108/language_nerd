@@ -59,7 +59,10 @@ async def go_back(
         f"{MESSAGES['welcome'][lang_code]}"
     )
 
-    if not await database.check_profile_exists(user_id): msg += MESSAGES['get_to_know'][lang_code]
+    if not await database.check_profile_exists(user_id):
+        msg += MESSAGES['get_to_know'][lang_code]
+    else:
+        msg += MESSAGES['pin_me'][lang_code]
 
     await callback.message.edit_caption(
         caption=msg,
