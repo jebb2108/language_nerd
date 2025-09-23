@@ -168,8 +168,8 @@ BUTTONS = dict(
             "ru": "👾 Основое меню",
         },
         "profile": {
-            "en": "👤 Your profile",
-            "ru": "👤 Твой профиль",
+            "en": "👤 Profile",
+            "ru": "👤 Профиль",
         },
         "search": {
             "en": "🔍 Search partner",
