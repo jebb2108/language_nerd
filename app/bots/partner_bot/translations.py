@@ -43,7 +43,7 @@ MESSAGES = dict(
                     "About you: {about}",
 
                 "ru": "=== <b>{nickname}</b> ===\n\n"
-                    "Твой возраст: <b>{age}\n"
+                    "Твой возраст: <b>{age}</b>\n"
                     "Выбранный язык: <b>{language}</b>\n"
                     "Уровень владения: <b>{fluency}</b>\n"
                     "Тема для разговора: <b>{topic}</b>\n\n"
