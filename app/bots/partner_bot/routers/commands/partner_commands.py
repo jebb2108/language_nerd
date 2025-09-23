@@ -36,12 +36,13 @@ async def show_main_menu(
     user_id = message.from_user.id
     data = await data_storage.get_storage_data(user_id, state, database)
     prefered_name = data.get("pref_name", None)
+    language = data.get("language")
     lang_code = data.get("lang_code")
 
     if prefered_name is None:
         return
 
-    greeting = MESSAGES["hello"][lang_code] + " <b>" + prefered_name + "</b>!"
+    greeting = MESSAGES["hello"][language] + " <b>" + prefered_name + "</b>!"
     intro = MESSAGES["intro"][lang_code]
     await state.update_data(
         user_id=user_id,

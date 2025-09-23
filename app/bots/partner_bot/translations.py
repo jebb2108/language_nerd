@@ -1,32 +1,59 @@
 MESSAGES = dict(
     {
         "hello": {
-            "en": "👋 Hello, ",
-            "ru": "👋 Привет, ",
+            "english": "👋 Hey, ",
+            "russian": "👋 Привет, ",
+            "german": "👋 Hallo, ",
+            "spanish": "👋Hola, ",
+            "chineese": "👋 Nǐ hǎo, ",
         },
         "intro": {
-            "en": "I`m a bot to help you find a partner for communication\n",
-            "ru": "Я бот, чтобы помочь тебе найти собеседника для общения\n",
+            "en": "Hi again! Here, I'll be looking for a partner, so you can chat with them\n",
+            # "ru": "Я бот, чтобы помочь тебе найти собеседника для общения\n",
+            "ru": "Снова привет, в этом месте я буду искать тебе собеседника\n"
         },
         "full_intro": {
-            "en": "I`m here to help us find a partner and "
-            "practice your communication skills on the selected language",
-            "ru": "Я здесь, чтобы помочь нам найти собеседника и "
-            "попрактиковать твои навыки общения на выбранном языке",
+            "en": "Don`t you want to talk to someone real? Tap 'Search partner', "
+                  "and I'll find a person for you",
+            "ru": "Не хочешь поговорить с кем-нибудь реальным? Жми 'Искать партнера', "
+                  "и я подберу тебе человека",
         },
         "about": {
-            "en": "You can use the following commands:\n\n"
-            "\t/menu - return to the main menu\n"
-            "\t/location - see your location\n"
-            "\t/new_session - start a new conversation\n"
-            "\t/restart - restart the bot\n\n"
-            "if you have any questions, please contact the support",
-            "ru": "Ты можешь использовать следующие команды:\n\n"
-            "\t/menu - вернуться в главное меню\n"
-            "\t/location - увидеть свою геолокацию\n"
-            "\t/new_session - начать новое общение\n"
-            "\t/restart - перезапустить бота\n\n"
-            "Если у тебя есть вопросы, пожалуйста, обратись в поддержку",
+            "en": "You may ask me whatever you want by tapping one of these options::\n\n"
+                "\t/menu - return to the main menu\n"
+                "\t/location - see your location\n"
+                "\t/new_session - start a new conversation\n"
+                "\t/restart - restart the bot\n\n"
+                "if you see me weid or not answering you, contact support. They`ll be glad to help",
+
+            "ru": "Ты можешь попросить меня о чем угодно, использовав следующие команды:\n\n"
+                    "\t/menu - вернуться в главное меню\n"
+                    "\t/location - увидеть свою геолокацию\n"
+                    "\t/new_session - начать новое общение\n"
+                    "\t/restart - перезапустить бота\n\n"
+                "Если ты видишь, что я не отвечаю или отвечаю странно, "
+                "пожалуйста, напиши в тех. поддержку. Они с радостью помогут!",
+        },
+        "user_info": {
+                "en": "=== {nickname} ===\n\n"
+                    "{level_status}\n"
+                    "Till next level: {percentage}\n\n"
+                    "Your age: {age}\n"
+                    "Chosen language: {language}\n"
+                    "Fluency: {fluency}\n"
+                    "Topic: {topic}\n"
+                    "Status: {status}\n\n"
+                    "About you: {about}",
+
+                "ru": "=== {nickname} ===\n\n"
+                    "{level_status}\n"
+                    "До следующего уровня: {percentage}\n\n"
+                    "Твой возраст: {age}\n"
+                    "Выбранный язык: {language}\n"
+                    "Уровень владения: {fluency}\n"
+                    "Тема для разговора: {topic}\n"
+                    "Статус: {status}\n\n"
+                    "О себе: {about}",
         },
         "wrong_name": {
             "en": "There is either space or too many characters in your name (max 50)",
@@ -98,7 +125,7 @@ QUESTIONARY = dict(
             "Okay, so what name do you want to be seen by others?\n",
             "ru": "Давайте познакомимся немного ближе\n\n"
             "Мне нужна информация для твоего профиля, чтобы начать общение с другими\n\n"
-            "Сначала, я бы хотел попросить тебя <b>выключить VPN</b> (если он у тебя есть), "
+            "Сначала, я бы хотела попросить тебя <b>выключить VPN</b> (если он у тебя есть), "
             "так я смогу обработать информацию правильно\n\n"
             "Хорошо, под каким именем ты хочешь, чтобы другие люди видели тебя?\n",
         },
@@ -116,9 +143,9 @@ QUESTIONARY = dict(
             "en": "For the correct work of the application, your location is needed, please provide it by the button below.\n\n"
             "All your information is confidential. Your location will be stored in encrypted form.\n\n"
             "If you do not want us to use your location, click the 'Decline' button",
-            "ru": "Для корректной работы приложения нужна твоя геолокация, пожалуйста, предоставь ее по кнопке ниже.\n\n"
+            "ru": "Мне нужна твоя геолокация, чтобы я в дальнейшем могла подбирать партнеров из твоего города, пожалуйста, предоставь ее по кнопке ниже.\n\n"
             "Вся твоя информация является конфидициальной. Геолокация будет хранится в зашифрованном виде.\n\n"
-            "Если ты не хочешь, чтобы мы использовали твою геолокацию, просто нажми кнопку 'Отказаться'",
+            "Если ты не хочешь, чтобы я пользовалась твоей геолокацией, просто нажми кнопку 'Отказаться'",
         },
         "need_dating": {
             "en": "Do you want to find a partner for a date?",
@@ -185,3 +212,67 @@ BUTTONS = dict(
         },
     }
 )
+
+
+TRANSCRIPTIONS = dict({
+    "languages": {
+        "russian": {
+            "en": "Russian",
+            "ru": "Русский",
+        },
+        "english": {
+            "en": "English",
+            "ru": "Русский",
+        },
+    },
+    "fluency": {
+        "beginer": {
+            "en": "beginer",
+            "ru": "начальный",
+        },
+        "intermediate": {
+            "en": "intermediate",
+            "ru": "средний",
+        },
+        "advanced": {
+            "en": "advanced",
+            "ru": "продвинутый",
+        },
+        "native": {
+            "en": "native",
+            "ru": "родной",
+        }
+    },
+    "topics": {
+        "general": {
+            "en": "general",
+            "ru": "Обо всем",
+        },
+        "music": {
+            "en": "music",
+            "ru": "музыка",
+        },
+        "sports": {
+            "en": "sports",
+            "ru": "спорт",
+        },
+        "technology": {
+            "en": "technology",
+            "ru": "технологии",
+        },
+        "travel": {
+            "en": "travel",
+            "ru": "путешествия",
+        },
+        "games": {
+            "en": "video games",
+            "ru": "видео-игры"
+        }
+    },
+    "status": {
+        "rookie": {
+            "en": "rookie",
+            "ru": "зеленый",
+        }
+    }
+})

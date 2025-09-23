@@ -4,6 +4,10 @@ MESSAGES = dict(
             "en": "👋 Hello, ",
             "ru": "👋 Привет, ",
         },
+        "my_name": {
+            "en": "I`m Sam ;)",
+            "ru": "Меня зовут Сэм",
+        },
         "welcome": {
             "en": (
                 "I'm so glad to see you here and"
@@ -14,34 +18,30 @@ MESSAGES = dict(
                 "Just choose what interests you by clicking one of the buttons below! 😊"
             ),
             "ru": (
-                "Очень рад видеть тебя здесь!\n\n"
-                "Я — твой помощник в изучении языков, и вот что умею:\n\n"
-                "✨ <b>Словарь</b> — сохраняй и учи новые слова легко\n"
+                "Рада видеть тебя здесь\n\n"
+                "Я — твой помощница в закреплении изученного, и вот что умею:\n\n"
+                "✨ <b>Словарь</b> — сохраняй и закрепляй новые слова легко\n"
                 "🤝 <b>Практика</b> — общайся с другими учениками (скоро запуск!)\n"
                 "🛠 <b>Техподдержка</b> — помогу, если что-то сломалось\n\n"
                 "Просто выбери, что тебя интересует, нажав на одну из кнопок ниже! 😊"
             ),
         },
+        "get_to_know_sis": {
+            "en": "\n\nDon`t forget to complete your registration! Just click 'Find partner' below to do so",
+            "ru": "\n\nНе забудь завершить регистрацию! Просто нажми на 'Найти собеседника' ниже для продолжения"
+        },
         "about": {
             "en": (
-                "I'm here to make your language learning easier and enjoyable 🌍📚\n\n"
-                "My mission is to give you:\n"
-                "🔹 <b>A handy dictionary</b> at your fingertips (you'll never forget a word!)\n"
-                "🔹 <b>Real conversations</b> with people from all over the world — no unnecessary complications\n"
-                "🔹 <b>AI features:</b> Every week, you'll get a mini quiz to test the words you've learned over the week\n\n"
-                "✨ This app also includes all the essential tools to help your language learning journey be as great as your vibrant soul :)\n\n"
-                "Here, you can learn at your own pace and make friends along the way!"
+                "My name is Sam. I'm just like a human being, the only difference being that my inner world is made up of ones and zeros."
+                "My greatest joy will be helping you reinforce new words and idioms."
+                "✨ I'll give you everything you need to do this, and once a week I'll give you tests to reinforce your knowledge."
+                "With me, you can progress in language learning at your own pace and make friends along the way!"
             ),
             "ru": (
-                "Я создан, чтобы твое изучение языков было проще и приятнее 🌍📚\n\n"
-                "Мя миссия — дать тебе:\n"
-                "🔹 <b>Удобный словарь</b> под рукой (никогда не забудешь слово!)\n"
-                "🔹 <b>Живое общение</b> с людьми по всему миру — без лишних сложностей\n"
-                "🔹 <b>Возможности ИИ:</b> Раз в неделю тебе будет приходить мини тест "
-                "на проверку выученных слов за неделю\n\n"
-                "✨ Так же это приложение в себе носит самые необходимые полезности,"
-                "чтобы твой рост в изучении языка был великим, как твоя душевнатя натура :)\n\n"
-                "Здесь ты сможешь учиться в своем ритме и находить друзей в процессе!"
+                "Мое имя - Сэм. Я совсем как человек с той лиишь разницей, что мой внутренний мир состоит из нулей и единиц."
+                "Для меня самой большой радостью будет помочь тебе с закреплением новых слова и идиом."
+                "✨ Дам тебе все самое необходимое для этого, а раз в неделю буду писать тебе тесты на закрепление\n\n"
+                "Со мною ты сможешь двигаться в изучении языка в своем ритме и находить друзей в процессе!"
             ),
         },
         "you_chose": {
@@ -59,20 +59,23 @@ QUESTIONARY = dict(
     {
         "intro": {
             "en": (
-                "Welcome! Here are the next steps for you:\n\n"
-                "1️⃣ A few general questions — you're here\n"
-                "2️⃣ Filling out a questionnaire about yourself\n"
-                "3️⃣ By choice Preselection of interesting interviewees\n\n"
+                "Welcome! My name is Sam. I'm a smart helper "
+                "who will help you reinforce new words so they're never forgotten. "
+                "Here's what awaits you:\n\n"
+                    "1️⃣ A few general questions — you're here\n"
+                    "2️⃣ Filling out a questionnaire about yourself\n"
+                    "3️⃣ By choice Preselection of interesting interviewees\n\n"
                 "And in the next Monday, the bots will choose tasks to reinforce new words\n\n"
-                "👀 Tell me where you heard about us?\n"
+                "👀 Tell me where you heard about me?\n"
             ),
             "ru": (
-                "Добро пожаловать! Вот что тебя ждёт:\n\n"
-                "1️⃣ Пара общих вопросов —> ты находишься здесь\n"
-                "2️⃣ В боте-собесденике нужно будет заполнить анкету о себе\n"
-                "3️⃣ По желанию предвыбор интересных собеседников, включая dating\n\n"
-                "А в ближайший понедельник бот подберет тебе задания на закрепрение новых слов\n\n"
-                "👀 Подскажи, откуда ты о нас узнал?\n"
+                "Добро пожаловать! Меня зовут Sam. Я умная помощница, помогаю людям закреплять новые слова, "
+                "чтобы они никогда не забывались. Вот что тебя ждёт:\n\n"
+                    "1️⃣ Пара общих вопросов —> ты находишься здесь\n"
+                    "2️⃣ У моей спутницы Chloe нужно будет заполнить небольшую анкету о себе\n"
+                    "3️⃣ По желанию предвыбор интересных собеседников, включая dating, а также будет доступен мой словарик\n\n"
+                "А в ближайший понедельник я подберу тебе задания на закрепрение новых слов\n\n"
+                "👀 Подскажи, откуда ты обо мне узнал?\n"
             ),
         },
         "pick_lang": {
@@ -85,17 +88,17 @@ QUESTIONARY = dict(
         },
         "fluency_levels": {
             "en": {
-                "beginer": "🏁Beginer",
-                "intermediate": "👟Intermediate",
-                "advanced": "🦾Advanced",
-                "native": "🗿Native",
+                "beginer": "🏁 Beginer",
+                "intermediate": "👟 Intermediate",
+                "advanced": "🦾 Advanced",
+                "native": "🗿  Native",
             },
 
             "ru": {
-                "beginer": "🏁Начальный",
-                "intermediate": "👟Средний",
-                "advanced": "🦾Продвинутый",
-                "native": "🗿Родной",
+                "beginer": "🏁 Начальный",
+                "intermediate": "👟 Средний",
+                "advanced": "🦾 Продвинутый",
+                "native": "🗿  Родной",
             },
         },
         "choose_topic": {
@@ -104,22 +107,22 @@ QUESTIONARY = dict(
         },
         "topics": {
             "en": {
-                "general": "🗞️General",
-                "music": "🎵Music",
-                "movies": "🍿Movies",
-                "sports": "🏈Sports",
-                "technology": "🧠Technology",
-                "travel": "✈️Travel",
-                "games": "🎮Games",
+                "general": "🗞️ General",
+                "music": "🎵  Music",
+                "movies": "🍿  Movies",
+                "sports": "🏈   Sports",
+                "technology": "🧠 Technology",
+                "travel": "✈️   Travel",
+                "games": "🎮 Video games",
             },
             "ru": {
-                "general": "🗞️Общее",
-                "music": "🎵Музыка",
-                "movies": "🍿Фильмы",
-                "sports": "🏈Спорт",
-                "technology": "🧠Технологии",
-                "travel": "✈️Путешествия",
-                "games": "🎮Видеоигры",
+                "general": "🗞️   Обо всем",
+                "music": "🎵  Музыка",
+                "movies": "🍿  Фильмы",
+                "sports": "🏈   Спорт",
+                "technology": "🧠 Технологии",
+                "travel": "✈️ Путешествия",
+                "games": "🎮  Видеоигры",
             },
         },
         "terms": {
@@ -128,12 +131,12 @@ QUESTIONARY = dict(
         },
         # TODO: Исправить логику на более читаемый алгоритм
         "where_youcamefrom": {
-            "en0": "🗣️Friends told me",
-            "ru0": "🗣️Знакомые рассказали мне",
-            "en1": "🌐Found it on the Internet",
-            "ru1": "🌐Нашел в Интернете",
-            "en2": "📇Through an advertisement",
-            "ru2": "📇Через рекламу",
+            "en0": "🗣️ Friends told me",
+            "ru0": "🗣️ Знакомые рассказали мне",
+            "en1": "🌐 Found it on the Internet",
+            "ru1": "🌐 Нашел в Интернете",
+            "en2": "📇 Through an advertisement",
+            "ru2": "📇 Через рекламу",
         },
     }
 )

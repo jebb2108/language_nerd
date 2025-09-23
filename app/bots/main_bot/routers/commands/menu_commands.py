@@ -31,9 +31,12 @@ async def show_main_menu(
     lang_code = data.get("lang_code")
 
     msg = (
-        f"{MESSAGES['hello'][lang_code]} <b>{first_name}</b>!\n\n"
+        f"{MESSAGES['hello'][lang_code]} <b>{first_name}</b>! "
+        f"{MESSAGES['my_name'][lang_code]}\n\n"
         f"{MESSAGES['welcome'][lang_code]}"
     )
+
+    if not await database.check_profile_exists(user_id): msg += MESSAGES['get_to_know_sis'][lang_code]
 
     await message.answer(
         text=msg,

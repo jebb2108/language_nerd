@@ -15,7 +15,7 @@ from app.bots.partner_bot.keyboards.regular_keyboards import (
 )
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.partner_bot.routers.commands.partner_commands import show_main_menu
-from app.bots.partner_bot.translations import MESSAGES, QUESTIONARY, BUTTONS
+from app.bots.partner_bot.translations import MESSAGES, QUESTIONARY, BUTTONS, TRANSCRIPTIONS
 from app.bots.partner_bot.utils.access_data import data_storage
 from config import config, LOG_CONFIG
 
@@ -42,14 +42,21 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
 
     user_id = message.from_user.id
 
-    if await database.check_profile_exists(user_id): return
+    if not await database.check_profile_exists(user_id):
+        await message.answer(
+            text="I can`t seem to know my sister met you before :( Check her out @lllangbot"
+        )
 
-    data = await data_storage.get_storage_data(user_id=user_id, state=state, database=database)
-    lang_code = data.get('lang_code')
+    data = await data_storage.get_storage_data(
+        user_id=user_id, state=state, database=database
+    )
+    first_name = data.get("first_name")
+    language = data.get("language")
+    lang_code = data.get("lang_code")
 
     greeting = (
-        f"{MESSAGES['hello'][lang_code]} <b>{message.from_user.first_name}</b>!\n\n"
-        f"{MESSAGES['intro'][lang_code]}\n"
+        f"{MESSAGES['hello'][language]} <b>{first_name}</b>!\n\n"
+        f"{MESSAGES['intro'][lang_code].format(language=TRANSCRIPTIONS["languages"][language][lang_code])}\n"
     )
     await message.answer(text=greeting, parse_mode=ParseMode.HTML)
 
@@ -88,7 +95,11 @@ async def process_age(
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
 
-    if datetime.now(tz=config.TZINFO).date().year >= int(message.text.split('.')[2]) > 1900:
+    if (
+        datetime.now(tz=config.TZINFO).date().year
+        >= int(message.text.split(".")[2])
+        > 1900
+    ):
         if re.match(r"\d{1,2}\.\d{1,2}\.\d{4}", message.text):
             try:
                 datetime.strptime(message.text, "%d.%m.%Y")
@@ -99,7 +110,8 @@ async def process_age(
                 await state.set_state(PollingState.waiting_for_intro)
                 return
 
-            except ValueError: pass
+            except ValueError:
+                pass
 
     msg = MESSAGES["wrong_birthday"][lang_code]
     await message.answer(text=msg, parse_mode=ParseMode.HTML)
@@ -127,7 +139,6 @@ async def process_intro(
     msg = MESSAGES["wrong_intro"][lang_code]
     await message.answer(text=msg, parse_mode=ParseMode.HTML)
     await state.set_state(PollingState.waiting_for_intro)
-
 
 
 @router.message(
@@ -188,9 +199,7 @@ async def disagreed_to_dating_handler(
     await state.clear()
 
 
-@router.message(
-    PollingState.waiting_for_location, F.location
-)
+@router.message(PollingState.waiting_for_location, F.location)
 async def process_location(
     message: Message, state: FSMContext, database: ResourcesMiddleware
 ):
