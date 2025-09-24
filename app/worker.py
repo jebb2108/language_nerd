@@ -2,12 +2,11 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 
-from app.main import redis
 from config import config, LOG_CONFIG
 from faststream import FastStream
 from faststream.rabbit import RabbitBroker
 from faststream.rabbit.annotations import RabbitMessage
-from app.dependencies import get_match, get_notification
+from app.dependencies import get_match, get_notification, get_redis
 
 from typing import TYPE_CHECKING
 
@@ -72,6 +71,7 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
 
     matcher = await get_match()
     notifier = await get_notification()
+    redis = await get_redis()
     
     # Оцениваю сообщение по определенным параметрам
     should_ack = await elevate_user(data, matcher)

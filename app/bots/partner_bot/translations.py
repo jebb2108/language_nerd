@@ -146,6 +146,13 @@ MESSAGES = dict(
             "es": "¡Entendido! Te encontraremos un nuevo amigo.\nPresiona /menu para ir al menú principal",
             "zh": "明白了！我们会为您找到新朋友。\n按 /menu 返回主菜单"
         },
+        "search_began": {
+            "en": "🔍 Looking for a partner",
+            "ru": "🔍 Ищем партнера для общения",
+            "de": "🔍 Suche einen Partner für die Kommunikation",
+            "es": "🔍 Buscando un socio para comunicarse",
+            "zh": "🔍 寻找沟通伙伴",
+        },
         "match_found": {
             "en": "Match has been found! Their nickname is <b>{nickname}</b>\n\nTap this button to start chat: ",
             "ru": "Мы нашли вам собеседника! Его псевдоним: <b>{nickname}</b>\n\nНажмите по кнопке ниже, чтобы перейти в чат: ",
@@ -421,7 +428,7 @@ TRANSCRIPTIONS = dict({
         }
     },
     "fluency": {
-        "beginner": {
+        "beginer": {
             "en": "beginner",
             "ru": "начальный",
             "de": "anfänger",

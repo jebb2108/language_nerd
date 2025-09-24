@@ -53,7 +53,7 @@ async def show_main_menu(
         first_name=message.from_user.first_name,
     )
 
-    image_from_file = FSInputFile("/srv/language_nerd/app/bots/partner_bot/media/IMG_3904.jpg")
+    image_from_file = FSInputFile(config.ABS_PATH_TO_IMG_TWO)
     await message.answer_photo(
         photo=image_from_file,
         caption=greeting + "\n\n" + intro,
@@ -90,13 +90,15 @@ async def new_session_handler(
 ):
     """Обработчик команды /new_session - запускает поиск партнера"""
 
-    data = await data_storage.get_storage_data(message.from_user.id, state, database)
-    user_id = data.get("user_id", 0)
-    username = data.get("username", "daniel")
-    language = data.get("language", "english")
-    dating = data.get("dating", "false")
-    topic = data.get("topic", "general")
-    lang_code = data.get("lang_code", "en")
+    data = await data_storage.get_storage_data(
+        message.from_user.id, state, database
+    )
+    user_id = data.get("user_id")
+    username = data.get("username")
+    language = data.get("language")
+    dating = data.get("dating")
+    topic = data.get("topic")
+    lang_code = data.get("lang_code")
 
     if username == "NO USERNAME":
         msg = MESSAGES["no_username"][message.from_user.language_code]
@@ -113,19 +115,19 @@ async def new_session_handler(
     logger.debug(f"Создана сессия поиска для пользователя {user_id}")
 
     await message.answer(
-        f"🔍 Ищем партнера для общения - <b>{language}</b>\n\n",
+        text=MESSAGES["search_began"][lang_code],
         parse_mode=ParseMode.HTML,
         reply_markup=get_search_keyboard(lang_code),
     )
 
     # Отправляю запрос на сервер
-    url = "{DOMAIN}/match".format(DOMAIN=f"{config.BASE_URL}{config.BASE_PORT}")
+    url = "{DOMAIN}/api/match".format(DOMAIN=f"{config.BASE_URL}:{config.CHAT_SERVER_PORT}")
 
     payload = {
         "user_id": int(user_id),
         "username": username,
         "criteria": {
-            "dating": dating,
+            "dating": str(dating),
             "language": language,
             "topic": topic,
         },

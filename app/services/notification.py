@@ -18,8 +18,8 @@ class NotificationService:
         async with self.lock:
             async with aiohttp.ClientSession() as session:
                 json_data = {
-                    "user1_id": int(user1_id),
-                    "user2_id": int(user2_id),
+                    "user_id": int(user1_id),
+                    "partner_id": int(user2_id),
                     "room_id": str(room_id),
                 }
 
@@ -27,7 +27,7 @@ class NotificationService:
 
                 try:
                     resp = await session.post(
-                        url=config.NOTIFICATION_URL,
+                        url=config.BASE_URL+config.CHAT_SERVER_PORT,
                         json=json_data,
                     )
 

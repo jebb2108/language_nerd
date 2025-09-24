@@ -1,5 +1,6 @@
 import json
 import logging
+
 import uvicorn
 import jwt
 import socketio
@@ -13,7 +14,7 @@ from fastapi.responses import FileResponse
 from app.dependencies import get_rabbitmq, get_db, get_redis
 from config import LOG_CONFIG, config
 
-from app.api.endpoints import router
+from app.api.endpoints.matchmaking import router as match_router
 
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name="fastAPI_main")
@@ -23,6 +24,7 @@ origins = [
     "http://localhost:4000",
 ]
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Инициализация ресурсов"""
@@ -30,6 +32,7 @@ async def lifespan(app: FastAPI):
     await get_redis()
     await get_db()
     yield
+
 
 # Создаем единственный экземпляр FastAPI
 app = FastAPI(lifespan=lifespan)
@@ -43,8 +46,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Подключаем роутер
-app.include_router(router)
+# Подключаем роутеры
+app.include_router(match_router)
 
 # Инициализация Socket.IO
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
@@ -165,6 +168,10 @@ def convert_token(token: str):
     return jwt.decode(jwt=token, key=config.SECRET_KEY, algorithms=["HS236"])
 
 
-
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host='localhost', port=config.BASE_PORT, reload=True)
+    uvicorn.run(
+        "app.chat_server:app",
+        host="localhost",
+        port=config.CHAT_SERVER_PORT,
+        reload=True,
+    )

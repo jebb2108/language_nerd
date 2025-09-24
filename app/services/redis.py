@@ -1,4 +1,7 @@
+import json
 import logging
+import uuid
+from datetime import datetime, timedelta
 from typing import Union
 import redis.asyncio as redis
 
@@ -52,21 +55,6 @@ class RedisService:
         await self.redis_client.lrem("waiting_queue", 1, partner_id)
         await self.redis_client.delete(f"searching:{partner_id}")
         return logger.info(f"Users {user_id} and {partner_id} removed from queue")
-
-    async def create_chat_session(self, room_id, user1_id, user2_id):
-        """Создание сессии чата в Redis"""
-        if not self.redis_client:
-            await self.connect()
-
-        room_data = {
-            "user1_id": user1_id,
-            "user2_id": user2_id,
-            "room_id": room_id,
-        }
-
-        await self.redis_client.hset(f"chat_session:{room_id}", mapping=room_data)
-        # Устанавливаем TTL для сессии (например, 30 минут)
-        await self.redis_client.expire(f"chat_session:{room_id}", 1800)
 
 
 # Глобальный экземпляр сервиса

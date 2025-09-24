@@ -185,7 +185,7 @@ async def disagreed_to_dating_handler(
     intro = data.get("intro", "non-existent")
     lang_code = data.get("lang_code", "en")
     # Сохраняем профиль
-    await database.add_users_profile(user_id, name, birthday, about=intro)
+    await database.add_users_profile(user_id, name, birthday, about=intro, dating=False)
     msg = MESSAGES["no_worries_dating"][lang_code]
     await message.answer(
         text=msg, parse_mode=ParseMode.HTML, reply_markup=ReplyKeyboardRemove()

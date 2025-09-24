@@ -35,7 +35,7 @@ async def show_main_menu(
     else:
         msg += MESSAGES['pin_me'][lang_code]
 
-    image_from_file = FSInputFile("/srv/language_nerd/app/bots/main_bot/media/IMG_3903.PNG")
+    image_from_file = FSInputFile(config.ABS_PATH_TO_IMG_ONE)
     await message.answer_photo(
         photo=image_from_file,
         caption=msg,

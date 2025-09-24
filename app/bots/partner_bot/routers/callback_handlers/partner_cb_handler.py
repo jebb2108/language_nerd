@@ -1,4 +1,5 @@
 import logging
+from pyexpat.errors import messages
 
 from aiogram import F, Router
 from aiogram.enums import ParseMode
@@ -137,18 +138,17 @@ async def cancel_search(
 ):
     await callback.answer()
 
-    message = callback.message
-
     redis = await get_redis(call_client=True)
 
     """Обработчик callback(а) отменяет поиск партнера"""
 
-    data = await data_storage.get_storage_data(message.from_user.id, state, database)
-    user_id = data.get("user_id", 0)
-    username = data.get("username", "daniel")
-    language = data.get("language", "english")
-    dating = data.get("dating", "false")
-    lang_code = data.get("lang_code", "en")
+    data = await data_storage.get_storage_data(callback.from_user.id, state, database)
+    user_id = data.get("user_id")
+    username = data.get("username")
+    language = data.get("language")
+    topic = data.get("topic")
+    dating = data.get("dating")
+    lang_code = data.get("lang_code")
 
     # Отменяем предыдущий поиск, если он был
     is_searching = await redis.get(f"searching:{user_id}")
@@ -156,18 +156,18 @@ async def cancel_search(
         await redis.delete(f"searching:{user_id}")
         logger.debug(f"Отменен предыдущий поиск для пользователя {user_id}")
 
-    await message.edit_text(text=MESSAGES["cancel_search"][lang_code])
+    await callback.message.edit_text(text=MESSAGES["cancel_search"][lang_code])
 
     # Отправляю запрос на сервер
-    url = "{DOMAIN}/cancel".format(DOMAIN=f"{config.BASE_URL}{config.BASE_PORT}")
+    url = "{DOMAIN}/api/cancel".format(DOMAIN=f"{config.BASE_URL}:{config.CHAT_SERVER_PORT}")
 
     payload = {
         "user_id": int(user_id),
         "username": username,
         "criteria": {
-            "dating": dating,
+            "dating": str(dating),
             "language": language,
-            "topic": "general",
+            "topic": topic,
         },
     }
 
@@ -203,10 +203,11 @@ async def new_session_handler(
     await callback.answer()
 
     data = await data_storage.get_storage_data(callback.from_user.id, state, database)
-    user_id = data.get("user_id", 0)
-    username = data.get("username", "daniel")
-    language = data.get("language", "english")
-    dating = data.get("dating", "false")
+    user_id = data.get("user_id")
+    username = data.get("username")
+    language = data.get("language")
+    dating = data.get("dating")
+    topic = data.get("topic")
     lang_code = data.get("lang_code", "en")
 
     if username == "NO USERNAME":
@@ -224,21 +225,21 @@ async def new_session_handler(
     logger.debug(f"Создана сессия поиска для пользователя {user_id}")
 
     await callback.message.answer(
-        f"🔍 Ищем партнера для общения - <b>{language}</b>\n\n",
+        text=MESSAGES["search_began"][lang_code],
         parse_mode=ParseMode.HTML,
         reply_markup=get_search_keyboard(lang_code),
     )
 
     # Отправляю запрос на сервер
-    url = "{DOMAIN}/match".format(DOMAIN=f"{config.BASE_URL}{config.BASE_PORT}")
+    url = "{DOMAIN}/api/match".format(DOMAIN=f"{config.BASE_URL}:{config.CHAT_SERVER_PORT}")
 
     payload = {
         "user_id": int(user_id),
         "username": username,
         "criteria": {
-            "dating": dating,
+            "dating": str(dating),
             "language": language,
-            "topic": "general",
+            "topic": topic,
         },
     }
 

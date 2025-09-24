@@ -45,13 +45,6 @@ async def start_with_polling(
         # если пользователь есть — сразу меню
         return await show_main_menu(message, state, database)
 
-    # Обновляем данные в state
-    await state.update_data(
-        user_id=user_id,
-        username=username,
-        first_name=first_name,
-        lang_code=lang_code,
-    )
 
     msg = f"{MESSAGES['hello'][lang_code]} <b>{first_name}</b>!\n\n" \
           f"{QUESTIONARY["intro"][lang_code]}"

@@ -31,16 +31,16 @@ class Config:
 
     RABBITMQ_DELAYED_EXCHANGE: str = os.getenv("RABBITMQ_DELAYED_EXCHANGE", "none")
     RABBITMQ_DELAYED_QUEUE: str = os.getenv("RABBITMQ_DELAYED_QUEUE", "none")
-
-    # URL разных запросов
-    NOTIFICATION_URL: str = os.getenv("NOTIFICATION_URL", "0.0.0.0:8080")
     # PostgreSQL
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL", "postgresql://user:pass@localhost:5432/db"
     )
 
     BASE_URL: str = os.getenv("BASE_DOMAIN", "localhost")
-    BASE_PORT: int = int(os.getenv("BASE_PORT", 0000))
+    # BASE_PORT: int = int(os.getenv("BASE_PORT", 1000))
+    WEB_SERVER_PORT: int = int(os.getenv("WEB_SERVER_PORT", 2000))
+    CHAT_SERVER_PORT: int = int(os.getenv("CHAT_SERVER_PORT", 3000))
+
 
     # Redis
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
@@ -76,6 +76,9 @@ class Config:
     SEARCH_STARTED = 'search_started'
     SEARCH_CANCELED = 'search_canceled'
     SEARCH_COMPLETED = 'search_completed'
+
+    ABS_PATH_TO_IMG_ONE: str = os.getenv("ABS_PATH_TO_IMG_ONE", '/')
+    ABS_PATH_TO_IMG_TWO: str = os.getenv("ABS_PATH_TO_IMG_TWO", '/')
 
 
 config = Config()

@@ -30,9 +30,10 @@ async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
     camefrom = callback.data.split("_", 1)[1]
-
-    data = await state.get_data()
-    lang_code = data.get("lang_code", "en")
+    user_id = callback.from_user.id
+    username = callback.from_user.username
+    first_name = callback.from_user.first_name
+    lang_code = callback.from_user.language_code
     users_choice = callback.data.split("_", 1)[1]
 
     msg = f"{MESSAGES["you_chose"][lang_code]} {TRANSCRIPTIONS["came_from"][users_choice][lang_code]}\n\n" \
@@ -43,7 +44,7 @@ async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
         reply_markup=show_language_keyboard(),
     )
 
-    await state.update_data(user_id=callback.from_user.id, camefrom=camefrom)
+    await state.update_data(user_id=user_id, username=username, first_name=first_name, camefrom=camefrom)
 
 
 @router.callback_query(F.data.startswith("lang_"))

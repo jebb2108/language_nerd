@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Union
 from datetime import datetime
 from enum import Enum
 
@@ -25,6 +25,16 @@ class Topic(str, Enum):
     TRAVEL = "travel"
     GAMES = "games"
 
+
+class UserDictionaryRequest(BaseModel):
+    user_id: int = Field(..., description="Уникальный идентификатор пользователя")
+    word: Union[str, None] = Field(None, description="Слово, которое нужно добавить в словарь")
+    part_of_speech: Union[str, None] = Field(None, description="Часть речи слова")
+    translation: Union[str, None] = Field(None, description="Перевод слова")
+
+    source: Optional[str] = Field(
+        default="api", description="Источник запроса (api, bot, etc)"
+    )
 
 class UserMatchRequest(BaseModel):
     """
@@ -76,9 +86,9 @@ class UserMatchResponse(BaseModel):
 
 
 class ChatSessionRequest(BaseModel):
-    user1_id: int
-    user2_id: int
-    room_id: str
+    user_id: int = Field(..., description="ID первого пользователя")
+    partner_id: int = Field(..., description="ID второго пользователя")
+    room_id: str = Field(..., description="Уникальный ключ для комнаты")
 
 
 class UserProfile(BaseModel):

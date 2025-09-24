@@ -12,7 +12,6 @@ from app.bots.partner_bot.routers import router as main_router
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
 
-from app.bots.partner_bot.api.chat_launcher import start_server
 from app.dependencies import get_redis
 
 # Импорт функций БД
@@ -49,7 +48,6 @@ async def run():
     disp.callback_query.middleware(resources)
     disp.message.middleware(RateLimitMiddleware())
 
-    server = await start_server(resources.redis)
 
     try:
 
@@ -59,7 +57,6 @@ async def run():
     finally:
         await bot.session.close()
         await resources.on_shutdown()
-        await server.cleanup()
 
 
 # Точка входа в программу

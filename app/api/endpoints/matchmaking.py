@@ -3,8 +3,6 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from app.bots.partner_bot.api.chat_launcher import redis_client
-# from app.main import redis
 from app.services.rabbitmq import RabbitMQService
 from app.dependencies import get_rabbitmq, get_db, get_redis
 from app.models import UserMatchRequest, ChatSessionRequest
@@ -14,7 +12,8 @@ from config import LOG_CONFIG, config
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger("endpoints")
 
-router = APIRouter()
+
+router = APIRouter(prefix='/api')
 
 
 @router.post("/match")
@@ -49,6 +48,34 @@ async def request_match(
     }
 
     await rabbitmq.publish_message(message)
+    return {"status": "user added to queue"}
+
+
+@router.post("/cancel")
+async def request_match(
+    request: UserMatchRequest,
+    rabbitmq: RabbitMQService = Depends(get_rabbitmq),
+    db=Depends(get_db),
+    redis=Depends(get_redis),
+):
+    # Проверяем пользователя в БД
+    user = await db.check_user_exists(request.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    time_str = datetime.now(tz=config.TZINFO).isoformat()
+    # Отправляем запрос в очередь
+    message = {
+        "user_id": request.user_id,
+        "username": request.username,
+        "criteria": request.criteria,
+        "current_time": time_str,
+        "created_at": time_str,
+        "status": config.SEARCH_CANCELED,
+    }
+
+    await rabbitmq.publish_message(message)
+    await redis.remove_from_queue(request.user_id)
+    return {"status": "User deleted from queue"}
 
 
 @router.post("/notify")
@@ -123,29 +150,4 @@ async def notify_users_re_match(
 
     return {"status": "notification_sent"}
 
-
-@router.post("/cancel")
-async def request_match(
-    request: UserMatchRequest,
-    rabbitmq: RabbitMQService = Depends(get_rabbitmq),
-    db=Depends(get_db),
-    redis=Depends(get_redis),
-):
-    # Проверяем пользователя в БД
-    user = await db.check_user_exists(request.user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    time_str = datetime.now(tz=config.TZINFO).isoformat()
-    # Отправляем запрос в очередь
-    message = {
-        "user_id": request.user_id,
-        "username": request.username,
-        "criteria": request.criteria,
-        "current_time": time_str,
-        "created_at": time_str,
-        "status": config.SEARCH_CANCELED,
-    }
-
-    await rabbitmq.publish_message(message)
-    await redis.remove_from_queue(request.user_id)
 

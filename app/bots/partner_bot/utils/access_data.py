@@ -17,8 +17,8 @@ class DataStorage:
             s_data = await state.get_data()
 
             # Проверяем наличие необходимых ключей
-            keys = ["user_id", "username", "first_name", "lang_code"]
-            if all(key in s_data for key in keys):
+            keys = ["user_id", "first_name", "dating", "lang_code"]
+            if all(s_data.get(key, False) for key in keys):
                 return s_data
 
             # Если данных нет в Redis, получаем из базы и сохраняем в Redis
@@ -58,6 +58,7 @@ class DataStorage:
                 {
                     "age": (datetime.now() - birthday).days // 365,
                     "pref_name": profile_info["prefered_name"],
+                    "dating": profile_info["dating"],
                     "status": profile_info["status"],
                     "about": profile_info["about"],
                 }

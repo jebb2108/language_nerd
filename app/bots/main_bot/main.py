@@ -11,7 +11,6 @@ from typing import Optional
 
 from asyncpg.pgproto.pgproto import timedelta
 
-from app.bots.main_bot.api.web_launcher import start_web_app
 from app.dependencies import get_db, get_redis
 from config import LOG_CONFIG, config
 from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
@@ -80,8 +79,6 @@ async def run():
     scheduler = AsyncIOScheduler()
     # Подключаем задачи для планировщика
     setup_scheduler(scheduler, bot, db)
-    # Запуск веб-сервера
-    web_runner = await start_web_app(db)
 
     # Регистрация middleware
     # Messages
@@ -98,7 +95,6 @@ async def run():
     disp.include_router(main_router)
 
     try:
-        logger.info("Starting scheduler...")
         scheduler.start()
         logger.info("Starting main bot (polling)…")
         await disp.start_polling(bot)
