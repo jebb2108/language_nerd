@@ -454,6 +454,27 @@ TRANSCRIPTIONS = dict({
             "es": "Inglés",
             "zh": "英语",
         },
+        "german": {
+            "en": "German",
+            "ru": "Немецкий",
+            "de": "Deutsch",
+            "es": "Alemán",
+            "zh": "德语",
+        },
+        "spanish": {
+            "en": "Spanish",
+            "ru": "Испанский",
+            "de": "Spanisch",
+            "es": "Español",
+            "zh": "西班牙语",
+        },
+        "chinese": {
+            "en": "Chinese",
+            "ru": "Китайский",
+            "de": "Chinesisch",
+            "es": "Chino",
+            "zh": "中文",
+        },
     },
     "fluency": {
         "beginer": {
@@ -466,21 +487,21 @@ TRANSCRIPTIONS = dict({
         "intermediate": {
             "en": "intermediate",
             "ru": "средний",
-            "de": "Mittelstufe",
+            "de": "mittelstufe",
             "es": "intermedio",
             "zh": "中级",
         },
         "advanced": {
             "en": "advanced",
             "ru": "продвинутый",
-            "de": "Fortgeschritten",
+            "de": "fortgeschritten",
             "es": "avanzado",
             "zh": "高级",
         },
         "native": {
             "en": "native",
             "ru": "родной",
-            "de": "Muttersprachler",
+            "de": "muttersprachler",
             "es": "nativo",
             "zh": "母语",
         }
@@ -496,35 +517,35 @@ TRANSCRIPTIONS = dict({
         "music": {
             "en": "music",
             "ru": "музыка",
-            "de": "Musik",
+            "de": "musik",
             "es": "música",
             "zh": "音乐",
         },
         "sports": {
             "en": "sports",
             "ru": "спорт",
-            "de": "Sport",
+            "de": "sport",
             "es": "deportes",
             "zh": "体育",
         },
         "technology": {
             "en": "technology",
             "ru": "технологии",
-            "de": "Technologie",
+            "de": "technologie",
             "es": "tecnología",
             "zh": "技术",
         },
         "travel": {
             "en": "travel",
             "ru": "путешествия",
-            "de": "Reisen",
+            "de": "reisen",
             "es": "viajes",
             "zh": "旅行",
         },
         "games": {
             "en": "video games",
             "ru": "видео-игры",
-            "de": "Videospiele",
+            "de": "videospiele",
             "es": "videojuegos",
             "zh": "视频游戏"
         }
@@ -533,7 +554,7 @@ TRANSCRIPTIONS = dict({
         "rookie": {
             "en": "rookie",
             "ru": "зеленый",
-            "de": "Anfänger",
+            "de": "anfänger",
             "es": "novato",
             "zh": "新手",
         }
