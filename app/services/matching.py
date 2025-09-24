@@ -1,11 +1,9 @@
 import logging
 from datetime import datetime
-from typing import Any, Dict, Set, Tuple, Optional, Union
+from typing import Any, Dict, Set, Tuple, Union
 from uuid import uuid4
 
-from psutil import users
 from redis import asyncio as aioredis
-from collections import defaultdict
 
 from config import LOG_CONFIG, config
 
