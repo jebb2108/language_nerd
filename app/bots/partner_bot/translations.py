@@ -154,11 +154,11 @@ MESSAGES = dict(
             "zh": "🔍 寻找沟通伙伴",
         },
         "match_found": {
-            "en": "Match has been found! Their nickname is <b>{nickname}</b>\n\nTap this button to start chat: ",
-            "ru": "Мы нашли вам собеседника! Его псевдоним: <b>{nickname}</b>\n\nНажмите по кнопке ниже, чтобы перейти в чат: ",
-            "de": "Ein Match wurde gefunden! Ihr Spitzname ist <b>{nickname}</b>\n\nTippen Sie auf diese Schaltfläche, um den Chat zu starten: ",
-            "es": "¡Se ha encontrado una coincidencia! Su apodo es <b>{nickname}</b>\n\nPulsa este botón para comenzar a chatear: ",
-            "zh": "已找到匹配！他们的昵称是 <b>{nickname}</b>\n\n点击此按钮开始聊天："
+            "en": "Match has been found! Their nickname is <b>{nickname}</b>\n\nTheir intro: {about}\n\nTap this button to start chat: ",
+            "ru": "Мы нашли вам собеседника! Его псевдоним: <b>{nickname}</b>\n\nВкратце о нём: {about}\n\nНажмите по кнопке ниже, чтобы перейти в чат: ",
+            "de": "Ein Match wurde gefunden! Ihr Spitzname ist <b>{nickname}</b>\n\nIhr intro: {about}\n\nTippen Sie auf diese Schaltfläche, um den Chat zu starten: ",
+            "es": "¡Se ha encontrado una coincidencia! Su apodo es <b>{nickname}</b>\n\nSu intro: {about}\n\nPulsa este botón para comenzar a chatear: ",
+            "zh": "已找到匹配！他们的昵称是 <b>{nickname}</b>\n\n他们的介绍：{about}\n\n点击此按钮开始聊天："
         },
         "show_queue_info": {
             "en": "Total in search: {total}\n\nMost spoken languages at the moment: {lans}",

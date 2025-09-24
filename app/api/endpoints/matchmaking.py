@@ -117,19 +117,21 @@ async def notify_users_re_match(
 
         msg1 = MESSAGES["match_found"][lang_code1]
         msg2 = MESSAGES["match_found"][lang_code2]
-        user_nickname = user_profile.get("prefered_name")
-        partner_nickname = partner_profile.get("prefered_name")
+        users_nickname = user_profile.get("prefered_name")
+        users_about = user_profile.get("about")
+        partners_nickname = partner_profile.get("prefered_name")
+        partners_about = partner_profile.get("about")
 
 
         await bot.send_message(
             chat_id=request.user_id,
-            text=msg1.format(nickname=partner_nickname),
+            text=msg1.format(nickname=partners_nickname, about=partners_about),
             reply_markup=create_start_chat_button(lang_code1, link1),
             parse_mode=ParseMode.HTML,
         )
         await bot.send_message(
             chat_id=request.partner_id,
-            text=msg2.format(nickname=user_nickname),
+            text=msg2.format(nickname=users_nickname, about=users_about),
             reply_markup=create_start_chat_button(lang_code2, link2),
             parse_mode=ParseMode.HTML,
         )
