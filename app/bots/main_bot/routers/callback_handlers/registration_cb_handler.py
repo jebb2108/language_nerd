@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
 from app.bots.partner_bot.translations import TRANSCRIPTIONS
-from config import LOG_CONFIG
+from config import LOG_CONFIG, config, LANG_CODE_LIST
 from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.main_bot.keyboards.inline_keyboards import (
     show_language_keyboard,
@@ -125,6 +125,7 @@ async def go_to_main_menu(
     fluency = data.get("fluency", "in_making")
     topic = data.get("topic", "general")
     lang_code = data.get("lang_code", "en")
+    if lang_code not in LANG_CODE_LIST: lang_code = "en"
 
     gratitude_msg = MESSAGES["gratitude"][lang_code]
 

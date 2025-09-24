@@ -19,6 +19,8 @@ LOG_CONFIG = {
     "format": "%(asctime)s - %(levelname)s - %(name)s - %(message)s",
 }
 
+LANG_CODE_LIST: list = list(["en", "ru", "de", "es", "zh"])
+
 
 @dataclass
 class Config:
