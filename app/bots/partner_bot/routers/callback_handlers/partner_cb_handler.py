@@ -119,10 +119,15 @@ async def change_topic_handler(callback: CallbackQuery, state: FSMContext, datab
 
 
 @router.callback_query(F.data == 'cancel_topic')
-async def cancel_choosing_topic(callback: CallbackQuery):
+async def cancel_choosing_topic(callback: CallbackQuery, state: FSMContext, database: ResourcesMiddleware):
     await callback.answer()
     await callback.message.delete()
-    await callback.message.answer(text=MESSAGES["topic_change_canceled"])
+    user_id = callback.from_user.id
+    data = await data_storage.get_storage_data(
+        user_id=user_id, state=state, database=database
+    )
+    lang_code = data.get("lang_code")
+    await callback.message.answer(text=MESSAGES["topic_change_canceled"][lang_code])
 
 
 
