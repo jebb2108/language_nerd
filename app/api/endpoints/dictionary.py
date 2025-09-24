@@ -74,12 +74,9 @@ async def api_search_word_handler(request: UserDictionaryRequest, db=Depends(get
 
 
 @router.delete("/words/{word_id}")
-async def api_delete_word_handler(
-    word_id: int, request: UserDictionaryRequest, db=Depends(get_db)
-):
-    user_id = request.user_id
-    if not user_id:
-        raise HTTPException(status_code=400, detail="User ID is required")
+async def api_delete_word_handler(word_id: int, user_id: int, db=Depends(get_db)):
+    if not user_id or not word_id:
+        raise HTTPException(status_code=400, detail="Missing parameters")
 
     await db.delete_word(user_id, word_id)
     return {"status": "deleted"}
