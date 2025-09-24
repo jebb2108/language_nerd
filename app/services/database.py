@@ -243,9 +243,16 @@ class DatabaseService:
     async def get_criteria(self, user_id: int) -> dict:
         async with self.acquire_connection() as conn:
             row = await conn.fetchrow(
-                "SELECT language, fluency FROM users WHERE user_id = $1", user_id
+                "SELECT language, fluency, dating FROM users WHERE user_id = $1", user_id
             )
             return dict(row) if row else None
+
+    async def change_topic(self, user_id: int, new_topic: str) -> None:
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+                """UPDATE users SET topic = $1 WHERE user_id = $2""",
+                new_topic, user_id
+            )
 
     async def get_users_location(self, user_id: int) -> dict:
         async with self.acquire_connection() as conn:

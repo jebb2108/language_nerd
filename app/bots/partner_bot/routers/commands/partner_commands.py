@@ -8,6 +8,7 @@ from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import Command
 from aiogram.enums import ParseMode
 
+from app.bots.partner_bot.keyboards.inline_keyboards import show_topic_keyboard
 from config import config, LOG_CONFIG
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 
@@ -78,6 +79,16 @@ async def get_my_location(message: Message, database: ResourcesMiddleware):
         text=f"{msg}: <b>{latitude}</b>, <b>{longitude}</b>",
         parse_mode=ParseMode.HTML,
     )
+
+@router.message(Command("change_topic", prefix='!/'))
+async def change_topic(message: Message, state: FSMContext, database: ResourcesMiddleware):
+    user_id = message.from_user.id
+    user_info = await database.get_user_info(user_id)
+    lang_code = user_info.get("lang_code")
+    topic = user_info.get("topic")
+    msg = MESSAGES["current_topic"][lang_code].format(topic=topic)
+    await message.answer(text=msg, reply_markup=show_topic_keyboard(lang_code), parse_mode=ParseMode.HTML)
+
 
 
 @router.message(Command("new_session", prefix="!/"))

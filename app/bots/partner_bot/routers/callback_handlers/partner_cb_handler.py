@@ -97,6 +97,33 @@ async def go_back_handler(
         parse_mode=ParseMode.HTML,
     )
 
+@router.callback_query(F.data.startswith('chtopic_'))
+async def change_topic_handler(callback: CallbackQuery, state: FSMContext, database: ResourcesMiddleware):
+
+    await callback.answer()
+    await callback.message.delete()
+
+    user_id = callback.from_user.id
+    users_choice = callback.data.split('_')[1]
+    data = await data_storage.get_storage_data(user_id=user_id, state=state, database=database)
+    lang_code = data.get("lang_code")
+    if data.get('topic') != users_choice:
+        database.change_topic(user_id, users_choice)
+        msg = MESSAGES["topic_changed"][lang_code]
+        await callback.message.answer(text=msg)
+        await state.update_data(topic=users_choice)
+        return
+
+    await callback.message.answer(text=MESSAGES["fail_to_change"][lang_code])
+    await state.update_data(topic=users_choice)
+
+@router.callback_query(F.data == 'cancel_topic')
+async def cancel_choosing_topic(callback: CallbackQuery):
+    await callback.answer()
+    await callback.message.delete()
+
+
+
 
 @router.callback_query(F.data == "queue_info")
 async def show_queue_info(

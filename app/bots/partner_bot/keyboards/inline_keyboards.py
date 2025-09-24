@@ -1,7 +1,15 @@
 from aiogram.types import InlineKeyboardButton, WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from app.bots.partner_bot.translations import BUTTONS
+from app.bots.partner_bot.translations import BUTTONS, QUESTIONARY
+
+
+def show_topic_keyboard(lang_code):
+    builder = InlineKeyboardBuilder()
+    for key, value in BUTTONS["topics"][lang_code].items():
+        builder.row(InlineKeyboardButton(text=value, callback_data=f"chtopic_{key}"))
+    builder.row(InlineKeyboardButton(text=BUTTONS["cancel"][lang_code], callback_data="cancel_topic"))
+    return builder.as_markup(resize_keyboard=True)
 
 
 def get_go_back_keyboard(lang_code):

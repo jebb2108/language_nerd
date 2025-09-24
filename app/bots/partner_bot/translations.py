@@ -29,12 +29,14 @@ MESSAGES = dict(
             "en": "You may ask me by tapping one of these options::\n\n"
                 "\t/menu - return to the main menu\n"
                 "\t/location - see your location\n"
+                "\t/change_topic - change your topic"
                 "\t/new_session - start a new conversation\n"
                 "\t/restart - restart the bot\n\n"
                 "if you see me I`m not answering or anything else, contact support. They`ll help",
             "ru": "Ты можешь попросить меня, выбрав следующие команды:\n\n"
                     "\t/menu - вернуться в главное меню\n"
                     "\t/location - увидеть свою геолокацию\n"
+                    "\t/change_topic - смените тему"
                     "\t/new_session - начать новое общение\n"
                     "\t/restart - перезапустить бота\n\n"
                 "Если ты видишь, что я не отвечаю или что-то пошло не так, "
@@ -42,21 +44,45 @@ MESSAGES = dict(
             "de": "Sie können mich durch Antippen einer dieser Optionen bitten::\n\n"
                 "\t/menu - zum Hauptmenü zurückkehren\n"
                 "\t/location - Ihren Standort anzeigen\n"
+                "\t/change_topic - Ändern Sie Ihr Thema"
                 "\t/new_session - ein neues Gespräch beginnen\n"
                 "\t/restart - den Bot neu starten\n\n"
                 "Wenn Sie sehen, dass ich nicht antworte oder sonst etwas, kontaktieren Sie den Support. Sie werden helfen",
             "es": "Puedes pedirme pulsando una de estas opciones::\n\n"
                 "\t/menu - volver al menú principal\n"
                 "\t/location - ver tu ubicación\n"
+                "\t/change_topic - cambia tu tema"
                 "\t/new_session - comenzar una nueva conversación\n"
                 "\t/restart - reiniciar el bot\n\n"
                 "Si ves que no respondo o algo más, contacta con soporte. Ellos ayudarán",
             "zh": "您可以通过点击以下选项之一来请求我：：\n\n"
                 "\t/menu - 返回主菜单\n"
                 "\t/location - 查看您的位置\n"
+                "\t/change_topic - 改变你的话题"
                 "\t/new_session - 开始新的对话\n"
                 "\t/restart - 重新启动机器人\n\n"
                 "如果您发现我没有回答或其他问题，请联系支持人员。他们会帮助您"
+        },
+        "current_topic": {
+            "en": "Current topic - <b>{topic}</b>\n\nChoose one of the options below to change it",
+            "ru": "Текущая тема - <b>{topic}</b>\n\nВыберите новую тему для разговора из предложенного ниже выбора",
+            "de": "Aktuelles Thema - <b>{topic}</b>\n\nWählen Sie eine der folgenden Optionen, um es zu ändern",
+            "es": "Tema actual - <b>{topic}</b>\n\nElija una de las opciones a continuación para cambiarla",
+            "zh": "当前主题 - <b>{topic}</b>\n\n选择以下选项之一进行更改",
+        },
+        "topic_changed": {
+            "en": "Topic has been successfully changed",
+            "ru": "Тема была успешно заменена",
+            "de": "Thema wurde erfolgreich geändert",
+            "es": "El tema se ha cambiado correctamente",
+            "zh": "主题已成功更改",
+        },
+        "fail_to_change": {
+            "en": "You chose the same topic you alreade have",
+            "ru": "Ты выбрал тему, которая уже установлена",
+            "de": "Sie haben dasselbe Thema gewählt, das Sie bereits haben",
+            "es": "Elegiste el mismo tema que ya tienes",
+            "zh": "你选择了与已有主题相同的主题",
         },
         "user_info": {
             "en": "=== <b>{nickname}</b> ===\n\n"
@@ -278,6 +304,53 @@ QUESTIONARY = dict(
 
 BUTTONS = dict(
     {
+        "topics": {
+            "en": {
+                "general": "🗞️ General",
+                "music": "🎵  Music",
+                "movies": "🍿  Movies",
+                "sports": "🏈   Sports",
+                "technology": "🧠 Technology",
+                "travel": "✈️   Travel",
+                "games": "🎮 Video games",
+            },
+            "ru": {
+                "general": "🗞️   Обо всем",
+                "music": "🎵  Музыка",
+                "movies": "🍿  Фильмы",
+                "sports": "🏈   Спорт",
+                "technology": "🧠 Технологии",
+                "travel": "✈️ Путешествия",
+                "games": "🎮  Видеоигры",
+            },
+            "de": {
+                "general": "🗞️ Allgemeines",
+                "music": "🎵  Musik",
+                "movies": "🍿  Filme",
+                "sports": "🏈   Sport",
+                "technology": "🧠 Technologie",
+                "travel": "✈️   Reisen",
+                "games": "🎮 Videospiele",
+            },
+            "es": {
+                "general": "🗞️ General",
+                "music": "🎵  Música",
+                "movies": "🍿  Películas",
+                "sports": "🏈   Deportes",
+                "technology": "🧠 Tecnología",
+                "travel": "✈️   Viajes",
+                "games": "🎮 Videojuegos",
+            },
+            "zh": {
+                "general": "🗞️ 一般",
+                "music": "🎵  音乐",
+                "movies": "🍿  电影",
+                "sports": "🏈   体育",
+                "technology": "🧠 技术",
+                "travel": "✈️   旅行",
+                "games": "🎮 视频游戏",
+            },
+
         "about_bot": {
             "en": "ℹ️ About me",
             "ru": "ℹ️ Обо мне",
@@ -363,7 +436,7 @@ BUTTONS = dict(
             "zh": "❌ 拒绝"
         },
     }
-)
+})
 
 
 TRANSCRIPTIONS = dict({
