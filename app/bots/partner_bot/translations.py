@@ -350,6 +350,7 @@ BUTTONS = dict(
                 "travel": "✈️   旅行",
                 "games": "🎮 视频游戏",
             },
+        },
 
         "about_bot": {
             "en": "ℹ️ About me",
@@ -435,7 +436,6 @@ BUTTONS = dict(
             "es": "❌ Rechazar",
             "zh": "❌ 拒绝"
         },
-    }
 })
 
 

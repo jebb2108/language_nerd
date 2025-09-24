@@ -12,7 +12,6 @@ from app.bots.partner_bot.keyboards.inline_keyboards import show_topic_keyboard
 from config import config, LOG_CONFIG
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 
-# from app.bots.main_bot.utils.filters import IsBotFilter
 from app.bots.partner_bot.translations import MESSAGES
 
 from app.bots.partner_bot.keyboards.inline_keyboards import (
