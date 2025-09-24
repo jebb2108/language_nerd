@@ -33,12 +33,12 @@ async def start_with_polling(
     # Проверяем, есть ли запись в users
     user_id = message.from_user.id
     username = message.from_user.username
+    first_name = message.from_user.first_name
+    lang_code = message.from_user.language_code
 
     if not username:
         username = "NO USERNAME"
 
-    first_name = message.from_user.first_name
-    lang_code = message.from_user.language_code or "en"
     user_exists = await database.check_user_exists(user_id)
 
     if user_exists:
@@ -53,4 +53,8 @@ async def start_with_polling(
         chat_id=message.chat.id,
         text=msg,
         reply_markup=show_where_from_keyboard(lang_code),
+    )
+
+    await state.update_data(
+        user_id=user_id, username=username, first_name=first_name, lang_code=lang_code
     )

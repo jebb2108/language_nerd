@@ -29,11 +29,9 @@ async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
     """
     await callback.answer()
 
-    camefrom = callback.data.split("_", 1)[1]
-    user_id = callback.from_user.id
-    username = callback.from_user.username
-    first_name = callback.from_user.first_name
-    lang_code = callback.from_user.language_code
+    data = await state.get_data()
+    lang_code = data.get("lang_code")
+
     users_choice = callback.data.split("_", 1)[1]
 
     msg = f"{MESSAGES["you_chose"][lang_code]} {TRANSCRIPTIONS["came_from"][users_choice][lang_code]}\n\n" \
@@ -44,7 +42,7 @@ async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
         reply_markup=show_language_keyboard(),
     )
 
-    await state.update_data(user_id=user_id, username=username, first_name=first_name, camefrom=camefrom)
+    await state.update_data(camefrom=users_choice)
 
 
 @router.callback_query(F.data.startswith("lang_"))
@@ -52,7 +50,7 @@ async def handle_fluency_choice(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
     data = await state.get_data()
-    lang_code = data.get("lang_code", "en")
+    lang_code = data.get("lang_code")
 
     users_choice = callback.data.split("_", 1)[1]
     msg = f"{MESSAGES["you_chose"][lang_code]} {TRANSCRIPTIONS["languages"][users_choice][lang_code]}\n\n" \
@@ -73,7 +71,7 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
     data = await state.get_data()
-    lang_code = data.get("lang_code", "en")
+    lang_code = data.get("lang_code")
     users_choice = callback.data.split("_", 1)[1]
 
     # Отправляем сообщение с подтверждением
@@ -94,7 +92,7 @@ async def handle_topic_choice(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
     data = await state.get_data()
-    lang_code = data.get("lang_code", "en")
+    lang_code = data.get("lang_code")
     users_choice = callback.data.split('_', 1)[1]
 
     # Отправляем сообщение с подтверждением
@@ -118,14 +116,14 @@ async def go_to_main_menu(
     await callback.message.delete()
 
     data = await state.get_data()
-    user_id = int(data.get("user_id", 0))
-    username = data.get("username", "")
-    first_name = data.get("first_name", "")
-    camefrom = data.get("camefrom", "")
-    language = data.get("language", "")
-    fluency = data.get("fluency", "in_making")
+    user_id = int(data.get("user_id"))
+    username = data.get("username")
+    first_name = data.get("first_name")
+    camefrom = data.get("camefrom")
+    language = data.get("language")
+    fluency = data.get("fluency")
     topic = data.get("topic", "general")
-    lang_code = data.get("lang_code", "en")
+    lang_code = data.get("lang_code")
     if lang_code not in LANG_CODE_LIST: lang_code = "en"
 
     gratitude_msg = MESSAGES["gratitude"][lang_code]

@@ -1,11 +1,14 @@
 import logging
 from datetime import datetime
 
+from aiogram.enums import ParseMode
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.services.rabbitmq import RabbitMQService
 from app.dependencies import get_rabbitmq, get_db, get_redis
 from app.models import UserMatchRequest, ChatSessionRequest
+from app.bots.partner_bot.keyboards.inline_keyboards import create_start_chat_button
+from app.bots.partner_bot.translations import MESSAGES
 from app.validators.create_token import create_token
 from config import LOG_CONFIG, config
 
@@ -82,37 +85,31 @@ async def request_match(
 async def notify_users_re_match(
     request: ChatSessionRequest,
     db=Depends(get_db),
-    redis=Depends(get_redis),
-    rabbitmq=Depends(get_rabbitmq)
 ):
-    await redis.create_chat_session(request.user1_id, request.user2_id, request.room_id)
-    logger.info(
-        f"Создана сессия чата для пользователей {request.user1_id} и {request.user2_id}"
-    )
-    from aiogram import Bot
-    from app.bots.partner_bot.keyboards.inline_keyboards import create_start_chat_button
-    from app.bots.partner_bot.translations import MESSAGES
 
-    users_exists = await db.check_user_exists(
-        request.user1_id
-    ) and await db.check_user_exists(request.user2_id)
-    if users_exists:
+    from aiogram import Bot
+
+    users_exists = await db.check_user_exists(request.user_id)
+    partner_exists = await db.check_user_exists(request.partner_id)
+    if users_exists and partner_exists:
 
         room_id = request.room_id
         link = "https://chat.lllang.site/enter/{room_id}?token={token}"
 
         bot = Bot(token=config.BOT_TOKEN_PARTNER)
 
-        user1_data = await db.get_user_info(request.user1_id)
-        lang_code1 = user1_data["lang_code"]
-        user2_data = await db.get_user_info(request.user2_id)
-        lang_code2 = user2_data["lang_code"]
+        user_data = await db.get_user_info(request.user_id)
+        user_profile = await db.get_users_profile(request.user_id)
+        lang_code1 = user_data.get("lang_code")
+        partner_data = await db.get_user_info(request.partner_id)
+        partner_profile = await db.get_users_profile(request.partner_id)
+        lang_code2 = partner_data.get("lang_code")
 
         link1 = link.format(
-            room_id=room_id, token=await create_token(request.user1_id, room_id)
+            room_id=room_id, token=await create_token(request.user_id, room_id)
         )
         link2 = link.format(
-            room_id=room_id, token=await create_token(request.user2_id, room_id)
+            room_id=room_id, token=await create_token(request.partner_id, room_id)
         )
 
         logger.warning("first_link: %s", link1)
@@ -120,33 +117,22 @@ async def notify_users_re_match(
 
         msg1 = MESSAGES["match_found"][lang_code1]
         msg2 = MESSAGES["match_found"][lang_code2]
+        user_nickname = user_profile.get("prefered_name")
+        partner_nickname = partner_profile.get("prefered_name")
+
 
         await bot.send_message(
-            chat_id=request.user1_id,
-            text=msg1.format(nickname=user2_data["username"]),
+            chat_id=request.user_id,
+            text=msg1.format(nickname=partner_nickname),
             reply_markup=create_start_chat_button(lang_code1, link1),
-            parse_mode="HTML",
+            parse_mode=ParseMode.HTML,
         )
         await bot.send_message(
-            chat_id=request.user2_id,
-            text=msg2.format(nickname=user1_data["username"]),
+            chat_id=request.partner_id,
+            text=msg2.format(nickname=user_nickname),
             reply_markup=create_start_chat_button(lang_code2, link2),
-            parse_mode="HTML",
+            parse_mode=ParseMode.HTML,
         )
-        time_str = datetime.now(tz=config.TZINFO).isoformat()
-        # Отправляем запрос в очередь
-        message = {
-            "user_id": request.user_id,
-            "username": request.username,
-            "criteria": request.criteria,
-            "current_time": time_str,
-            "created_at": time_str,
-            "status": config.SEARCH_COMPLETED,
-        }
-
-        await rabbitmq.publish_message(message)
-
-
 
     return {"status": "notification_sent"}
 

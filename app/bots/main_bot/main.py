@@ -103,7 +103,6 @@ async def run():
         # Корректное завершение
         scheduler.shutdown()
         await bot.session.close()
-        await web_runner.cleanup()
         await resources.on_shutdown()
 
 

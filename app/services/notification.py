@@ -24,10 +24,11 @@ class NotificationService:
                 }
 
                 logger.warning(f"Sending notification: {json_data}")
+                url = f"{config.BASE_URL}:{config.CHAT_SERVER_PORT}/api/notify"
 
                 try:
                     resp = await session.post(
-                        url=config.BASE_URL+config.CHAT_SERVER_PORT,
+                        url=url,
                         json=json_data,
                     )
 

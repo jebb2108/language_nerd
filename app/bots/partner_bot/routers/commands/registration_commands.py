@@ -42,12 +42,12 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
 
     user_id = message.from_user.id
 
-    data = await data_storage.get_storage_data(
+    user_data = await data_storage.get_storage_data(
         user_id=user_id, state=state, database=database
     )
-    first_name = data.get("first_name")
-    language = data.get("language")
-    lang_code = data.get("lang_code")
+
+    language = user_data.get("language")
+    lang_code = user_data.get("lang_code")
 
     greeting = (
         f"{MESSAGES['intro'][lang_code].format(language=TRANSCRIPTIONS["languages"][language][lang_code])}\n"
@@ -55,7 +55,7 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
     await message.answer(text=greeting, parse_mode=ParseMode.HTML)
 
     # Обновляем user_id в состоянии
-    await state.update_data(user_id=user_id, lang_code=lang_code)
+    await state.update_data(**user_data)
     # Отправляем приветственное сообщение
     txt = QUESTIONARY["need_profile"][lang_code]
     await message.answer(text=txt, parse_mode=ParseMode.HTML)

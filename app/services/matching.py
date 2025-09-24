@@ -2,7 +2,10 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Set, Tuple, Optional, Union
 from uuid import uuid4
+
+from psutil import users
 from redis import asyncio as aioredis
+from collections import defaultdict
 
 from config import LOG_CONFIG, config
 
@@ -21,18 +24,25 @@ class MatchingService:
         self.user_status[user_id] = data
         self.user_status[user_id].update(acked=acked)
 
+
+
     async def find_match(
         self, user_id: Union[int, str]
     ) -> Union[Tuple[str, int, int], Tuple[None, None, None]]:
 
         """Поиск пары пользователей"""
-        user_id = int(user_id)
-        queue_length, cnt = await self.redis.llen("waiting_queue"), 0
+        user_id, cnt = int(user_id), 0
+        queue = await self.redis.lrange("waiting_queue", 0, -1)
         user_crit = await self.redis.hgetall(f"user:{user_id}")
+
+        user_cnt = queue.count(str(user_id).encode())
+        if user_cnt > 1:
+            await self.redis.lrem("waiting_queue", user_cnt-1, user_id)
+            queue = await self.redis.lrange("waiting_queue", 0, -1)
 
         user_status = True if await self.redis.get(f"searching:{user_id}") else False
 
-        while queue_length >= 2 and cnt < queue_length and user_status:
+        while user_status and len(queue) >= 2 and cnt < len(queue):
             # Достаем двух пользователей из очереди
             # (один из них с нужным ID)
             cnt += 1
@@ -41,13 +51,13 @@ class MatchingService:
             partner_status = True if await self.redis.get(f"searching:{partner_id}") else False
 
             # Если partner id - user id
-            if user_id == partner_id:
-                await self.redis.rpush("waiting_queue", user_id)
-                continue
+            if user_cnt := queue.count(user_id) > 1:
+                await self.redis.lrem("waiting_queue", user_cnt-1, user_id)
+                break
 
             # Смотрим, не истекло ли TTL одного из участников
-            if not partner_status:
-                return None, None, None
+            # и не одинаковые ли ID обоих пользователей
+            if not partner_status or user_id == partner_id: break
 
             criteria_match = True
             for key in user_crit.keys():
