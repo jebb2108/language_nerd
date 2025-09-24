@@ -542,6 +542,13 @@ TRANSCRIPTIONS = dict({
             "es": "viajes",
             "zh": "旅行",
         },
+        "movies": {
+            "en": "movies",
+            "ru": "фильмы",
+            "de": "filme",
+            "es": "cine",
+            "zh": "电影",
+        },
         "games": {
             "en": "video games",
             "ru": "видео-игры",
