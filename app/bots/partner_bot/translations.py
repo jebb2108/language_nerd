@@ -1,11 +1,11 @@
 MESSAGES = dict(
     {
         "hello": {
-            "en": "👋 Hey, ",
-            "ru": "👋 Привет, ",
-            "de": "👋 Hallo, ",
-            "es": "👋 Hola, ",
-            "zh": "👋 你好, ",
+            "english": "👋 Hey, ",
+            "russian": "👋 Привет, ",
+            "german": "👋 Hallo, ",
+            "spanish": "👋 Hola, ",
+            "chinese": "👋 你好, ",
         },
         "intro": {
             "en": "Hi again! Here, I'll be looking for a partner, so you can chat with them\n",
