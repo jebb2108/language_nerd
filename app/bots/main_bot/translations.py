@@ -6,21 +6,21 @@ MESSAGES = dict(
         },
         "welcome": {
             "en": (
-                "I`m Sam. Your language learning assistant. Here's what I can do:\n\n"
+                "I`m Sam! Your language learning assistant. Here's what I can do:\n\n"
                 "✨ <b>Dictionary</b> — save and learn new words easily\n"
                 "🤝 <b>Practice</b> — chat with other students (coming soon!)\n"
                 "🛠 <b>Technical support</b> — I'll help if something breaks\n\n"
             ),
             "ru": (
-                "Я Сэм. Помогу тебе в закреплении изученного. Вот что я умею:\n\n"
+                "Я Сэм! Помогу тебе в закреплении изученного. Вот что я умею:\n\n"
                 "✨ <b>Словарь</b> — сохраняй и закрепляй новые слова легко\n"
                 "🤝 <b>Практика</b> — общайся с другими учениками\n"
                 "🛠 <b>Техподдержка</b> — помогу, если что-то сломалось\n\n"
             ),
         },
         "get_to_know": {
-            "en": "\n\nDon`t forget to complete your registration! Just click 'Find partner' to do so",
-            "ru": "\n\nНе забудь завершить регистрацию! Просто нажми на 'Найти собеседника' для продолжения"
+            "en": "Don`t forget to complete your registration! Just click 'Find partner' to do so",
+            "ru": "Не забудь завершить регистрацию! Просто нажми на 'Найти собеседника' для продолжения"
         },
         "pin_me": {
             "en": "📌 Pin this chat, so you will never loose me",
@@ -29,15 +29,15 @@ MESSAGES = dict(
         "about": {
             "en": (
                 "I'm just like a human being, the only difference being that my inner world is made up of ones and zeros."
-                "My greatest joy will be helping you reinforce new words and idioms."
+                "🌱 My greatest joy will be helping you reinforce new words and idioms."
                 "✨ I'll give you everything you need to do this, and once a week I'll give you tests to reinforce your knowledge."
-                "With me, you can progress in language learning at your own pace and make friends along the way!"
+                "🧘 With me, you can progress in language learning at your own pace and make friends along the way!"
             ),
             "ru": (
                 "Я совсем как человек с той лишь разницей, что мой внутренний мир состоит из нулей и единиц\n\n"
-                "Для меня самой большой радостью будет помочь тебе с закреплением новых слов и идиом\n\n"
+                "🌱 Для меня самой большой радостью будет помочь тебе с закреплением новых слов и идиом\n\n"
                 "✨ Дам тебе все самое необходимое для этого, а раз в неделю буду писать тебе тесты на закрепление\n\n"
-                "Со мною ты сможешь двигаться в изучении языка в своем ритме и находить друзей в процессе!"
+                "🧘 Со мною ты сможешь двигаться в изучении языка в своем ритме и находить друзей в процессе!"
             ),
         },
         "you_chose": {

@@ -13,9 +13,9 @@ MESSAGES = dict(
             "ru": "Снова привет, в этом месте я буду искать тебе собеседника\n"
         },
         "full_intro": {
-            "en": "Don`t you want to talk to anyone? Tap <i>Search partner</i>, "
+            "en": "Don`t you want to talk to anyone? Tap <b>Search partner</b>, "
                   "and I'll find a person for you",
-            "ru": "Не хочешь поговорить с кем-нибудь? Жми <i>Искать партнера</i>, "
+            "ru": "Не хочешь поговорить с кем-нибудь? Жми <b>Искать партнера</b>, "
                   "чтобы я подобрала тебе собеседника",
         },
         "about": {
@@ -229,7 +229,7 @@ TRANSCRIPTIONS = dict({
         },
         "english": {
             "en": "English",
-            "ru": "Русский",
+            "ru": "Английский",
         },
     },
     "fluency": {
