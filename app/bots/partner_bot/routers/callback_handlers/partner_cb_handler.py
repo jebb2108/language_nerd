@@ -117,10 +117,12 @@ async def change_topic_handler(callback: CallbackQuery, state: FSMContext, datab
     await callback.message.answer(text=MESSAGES["fail_to_change"][lang_code])
     await state.update_data(topic=users_choice)
 
+
 @router.callback_query(F.data == 'cancel_topic')
 async def cancel_choosing_topic(callback: CallbackQuery):
     await callback.answer()
     await callback.message.delete()
+    await callback.message.answer(text=MESSAGES["topic_change_canceled"])
 
 
 

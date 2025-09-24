@@ -12,7 +12,7 @@ from app.bots.partner_bot.keyboards.inline_keyboards import show_topic_keyboard
 from config import config, LOG_CONFIG
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 
-from app.bots.partner_bot.translations import MESSAGES
+from app.bots.partner_bot.translations import MESSAGES, TRANSCRIPTIONS
 
 from app.bots.partner_bot.keyboards.inline_keyboards import (
     show_partner_menu_keyboard,
@@ -85,7 +85,7 @@ async def change_topic(message: Message, state: FSMContext, database: ResourcesM
     user_info = await database.get_user_info(user_id)
     lang_code = user_info.get("lang_code")
     topic = user_info.get("topic")
-    msg = MESSAGES["current_topic"][lang_code].format(topic=topic)
+    msg = MESSAGES["current_topic"][lang_code].format(topic=TRANSCRIPTIONS["topics"][topic][lang_code])
     await message.answer(text=msg, reply_markup=show_topic_keyboard(lang_code), parse_mode=ParseMode.HTML)
 
 

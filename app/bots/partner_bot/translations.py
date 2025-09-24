@@ -29,14 +29,14 @@ MESSAGES = dict(
             "en": "You may ask me by tapping one of these options::\n\n"
                 "\t/menu - return to the main menu\n"
                 "\t/location - see your location\n"
-                "\t/change_topic - change your topic"
+                "\t/change_topic - change your topic\n"
                 "\t/new_session - start a new conversation\n"
                 "\t/restart - restart the bot\n\n"
                 "if you see me I`m not answering or anything else, contact support. They`ll help",
             "ru": "Ты можешь попросить меня, выбрав следующие команды:\n\n"
                     "\t/menu - вернуться в главное меню\n"
                     "\t/location - увидеть свою геолокацию\n"
-                    "\t/change_topic - смените тему"
+                    "\t/change_topic - смените тему\n"
                     "\t/new_session - начать новое общение\n"
                     "\t/restart - перезапустить бота\n\n"
                 "Если ты видишь, что я не отвечаю или что-то пошло не так, "
@@ -44,21 +44,21 @@ MESSAGES = dict(
             "de": "Sie können mich durch Antippen einer dieser Optionen bitten::\n\n"
                 "\t/menu - zum Hauptmenü zurückkehren\n"
                 "\t/location - Ihren Standort anzeigen\n"
-                "\t/change_topic - Ändern Sie Ihr Thema"
+                "\t/change_topic - Ändern Sie Ihr Thema\n"
                 "\t/new_session - ein neues Gespräch beginnen\n"
                 "\t/restart - den Bot neu starten\n\n"
                 "Wenn Sie sehen, dass ich nicht antworte oder sonst etwas, kontaktieren Sie den Support. Sie werden helfen",
             "es": "Puedes pedirme pulsando una de estas opciones::\n\n"
                 "\t/menu - volver al menú principal\n"
                 "\t/location - ver tu ubicación\n"
-                "\t/change_topic - cambia tu tema"
+                "\t/change_topic - cambia tu tema\n"
                 "\t/new_session - comenzar una nueva conversación\n"
                 "\t/restart - reiniciar el bot\n\n"
                 "Si ves que no respondo o algo más, contacta con soporte. Ellos ayudarán",
             "zh": "您可以通过点击以下选项之一来请求我：：\n\n"
                 "\t/menu - 返回主菜单\n"
                 "\t/location - 查看您的位置\n"
-                "\t/change_topic - 改变你的话题"
+                "\t/change_topic - 改变你的话题\n"
                 "\t/new_session - 开始新的对话\n"
                 "\t/restart - 重新启动机器人\n\n"
                 "如果您发现我没有回答或其他问题，请联系支持人员。他们会帮助您"
@@ -83,6 +83,13 @@ MESSAGES = dict(
             "de": "Sie haben dasselbe Thema gewählt, das Sie bereits haben",
             "es": "Elegiste el mismo tema que ya tienes",
             "zh": "你选择了与已有主题相同的主题",
+        },
+        "topic_change_canceled": {
+            "en": "Change of topic canceled",
+            "ru": "Смена темы отменена",
+            "de": "Themenwechsel abgesagt",
+            "es": "Cambio de tema cancelado",
+            "zh": "话题变更已取消",
         },
         "user_info": {
             "en": "=== <b>{nickname}</b> ===\n\n"
