@@ -26,11 +26,10 @@ LANG_CODE_LIST: list = list(["en", "ru", "de", "es", "zh"])
 class Config:
     # RabbitMQ
     RABBITMQ_URL: str = os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/")
-    RABBITMQ_QUEUE: str = os.getenv("RABBITMQ_QUEUE", "default")
-    RABBITMQ_EXCHANGE: str = os.getenv("RABBITMQ_EXCHANGE", "users")
+    # RABBITMQ_QUEUE: str = os.getenv("RABBITMQ_QUEUE", "default")
+    RABBITMQ_QUEUE: str = os.getenv("RABBITMQ_ROUTING_KEY", "queue")
+    RABBITMQ_EXCHANGE: str = os.getenv("RABBITMQ_EXCHANGE", "exchange")
 
-    RABBITMQ_DELAYED_EXCHANGE: str = os.getenv("RABBITMQ_DELAYED_EXCHANGE", "none")
-    RABBITMQ_DELAYED_QUEUE: str = os.getenv("RABBITMQ_DELAYED_QUEUE", "none")
     # PostgreSQL
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL", "postgresql://user:pass@localhost:5432/db"
@@ -79,6 +78,9 @@ class Config:
 
     ABS_PATH_TO_IMG_ONE: str = os.getenv("ABS_PATH_TO_IMG_ONE", '/')
     ABS_PATH_TO_IMG_TWO: str = os.getenv("ABS_PATH_TO_IMG_TWO", '/')
+
+    WAIT_TIMER: int = 150
+    SLEEP_TIME: int = 5
 
 
 config = Config()

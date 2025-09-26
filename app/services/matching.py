@@ -17,11 +17,6 @@ class MatchingService:
         self.user_status: Dict[int, Dict[str, Any]] = {}
         self.acked_users: Set[int] = set()
 
-    def set_status(self, data: dict, acked=False) -> None:
-        user_id = int(data["user_id"])
-        self.user_status[user_id] = data
-        self.user_status[user_id].update(acked=acked)
-
 
 
     async def find_match(
@@ -55,7 +50,7 @@ class MatchingService:
 
             # Смотрим, не истекло ли TTL одного из участников
             # и не одинаковые ли ID обоих пользователей
-            if not partner_status or user_id == partner_id: break
+            if not partner_status: break
 
             criteria_match = True
             for key in user_crit.keys():

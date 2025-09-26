@@ -45,16 +45,12 @@ class RedisService:
 
         logger.info(f"User {user_id} added to queue")
 
-    async def remove_from_queue(self, user_id: int, partner_id: Union[int, None] = None) -> None:
+    async def remove_from_queue(self, user_id: int) -> None:
         """Удаление пользователя из очереди"""
         await self.redis_client.lrem("waiting_queue", 1, user_id)
         await self.redis_client.delete(f"searching:{user_id}")
-        # Если только одного человека удаляем
-        if not partner_id: return logger.info(f"Users {user_id} removed from queue")
-        # Удаляем второго пользователя из очереди
-        await self.redis_client.lrem("waiting_queue", 1, partner_id)
-        await self.redis_client.delete(f"searching:{partner_id}")
-        return logger.info(f"Users {user_id} and {partner_id} removed from queue")
+
+        return logger.info(f"User {user_id} removed from queue")
 
 
 # Глобальный экземпляр сервиса

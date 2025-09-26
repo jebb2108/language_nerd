@@ -20,75 +20,116 @@ broker = RabbitBroker(config.RABBITMQ_URL, logger=logger)
 
 
 async def elevate_user(user_data: dict, matcher: "MatchingService") -> bool:
-    """ Функция, для обработки состояния пользовательского инфо в очереди ожидания """
-    user_id, to_ack = int(user_data["user_id"]), False
+    """Функция для обработки состояния пользовательского инфо в очереди ожидания"""
+    user_id = int(user_data["user_id"])
 
-    if user_data['status'] in [
-        config.SEARCH_CANCELED, 
-        config.SEARCH_COMPLETED
-        ]:
-
-        matcher.set_status(data=user_data, acked=True)
+    if user_data["status"] in [config.SEARCH_CANCELED, config.SEARCH_COMPLETED]:
+        del matcher.user_status[user_id]
         return True
 
-    """ Ситуация, когда пользователь находится в словаре """
-    if int(user_data["user_id"]) in matcher.user_status:
-        # Определяю, не просрочен ли таймер в информации о пользователе
-        orig_time = datetime.fromisoformat(
-            matcher.user_status[user_id]['created_at']
-        )
-        # Проверка на просроченность
-        time_period = datetime.now(tz=config.TZINFO) - orig_time
-        if time_period > timedelta(minutes=3): 
-            del matcher.user_status[user_id]
-            to_ack = True
-        # Глобальный параметр acked нужно только для тех сообщений,
-        # когда пользователь нажал кнопку отмены в чате с ботом или нашел партнера
-        elif matcher.user_status[user_id]['acked']: to_ack = True
-    
-        logger.debug("User has been processed")
-        if to_ack: return True
+    # Ситуация, когда пользователь находится в словаре
+    if user_id in matcher.user_status:
 
-    """ Ситуация, когда пользователь НЕ аходится в словаре """
-    matcher.set_status(data=user_data)
+        # Пользователю найдена пара
+        if matcher.user_status[user_id]["acked"]:
+            del matcher.user_status[user_id]
+            logger.debug("User has been processed")
+            return True
+
+        return False
+
+    # Ситуация, когда пользователь НЕ находится в словаре
+    matcher.user_status[user_id] = user_data
+    matcher.user_status[user_id]["acked"] = False
     logger.debug("user has been set up in matcher's dict")
     return False
 
 
 @broker.subscriber(config.RABBITMQ_QUEUE)
 async def handle_match_request(data: dict, msg: RabbitMessage):
-
-    current_time = datetime.now(tz=config.TZINFO)
-    message_time = datetime.fromisoformat(data.get("current_time", datetime.now(tz=config.TZINFO).isoformat()))
-    if current_time - message_time < timedelta(seconds=1):
-        return await msg.nack()
-    
-    updated_data = data.copy()
-    updated_data["current_time"] = current_time.isoformat()
-        
-    logger.warning(f"Received message: {data}")
-    logger.warning(f"Message after processing: {updated_data}")
+    """Основной обработчик с встроенной задержкой"""
+    logger.debug(f"Received message: {data}")
 
     matcher = await get_match()
     notifier = await get_notification()
     redis = await get_redis()
-    
-    # Оцениваю сообщение по определенным параметрам
+
+    # Оцениваем сообщение по определенным параметрам
     should_ack = await elevate_user(data, matcher)
-    if should_ack: return await msg.ack()
+    if should_ack:
+        return await msg.ack()
+
+    user_id = data.get("user_id")
+    current_time = datetime.now(tz=config.TZINFO)
+    message_time = datetime.fromisoformat(
+        data.get("current_time", current_time.isoformat())
+    )
+    diff = current_time - message_time
+
+    # Если прошло меньше 5 секунд, откладываем обработку
+    if diff < timedelta(seconds=config.SLEEP_TIME):
+        remaining_delay = config.SLEEP_TIME - diff.total_seconds()
+        logger.debug(
+            f"Delaying processing for {remaining_delay:.2f} seconds for user {user_id}"
+        )
+
+        # Откладываем ack и публикуем сообщение снова через задержку
+        await asyncio.sleep(remaining_delay)
+
+        logger.info(f"User {data["username"]} with ID {data["user_id"]} has the following criteria: "
+                    f"Language - {data["criteria"]["language"]}, "
+                    f"Dating - {data["criteria"]["dating"]}, "
+                    f"Topic - {data["criteria"]["topic"]} ")
+
+        # Публикуем сообщение снова с оригинальным временем создания
+        await broker.publish(
+            data,
+            queue=config.RABBITMQ_QUEUE,
+        )
+        return await msg.ack()
 
     # Поиск подходящей пары в Redis
-    room_id, user1_id, user2_id = await matcher.find_match(updated_data["user_id"])
+    room_id, user1_id, user2_id = await matcher.find_match(user_id)
 
     if room_id:
         # Пара найдена: уведомляем обоих пользователей
-        matcher.set_status(data=data, acked=True)
-        matcher.set_status(data=data, acked=True)
+        matcher.user_status[user1_id]["acked"] = True
+        matcher.user_status[user2_id]["acked"] = True
         await notifier.notify_match(user1_id, user2_id, room_id)
-        await redis.remove_from_queue(user1_id, user2_id)
+        await redis.remove_from_queue(user1_id)
+        await redis.remove_from_queue(user2_id)
+        return await msg.ack()
 
-    await msg.nack()
-    return updated_data
+    # Если пара не найдена, отправляем сообщение снова
+    # с задержкой для повторной попытки
+    retry_count = data.get("retry_count", 0)
+    # Понижаем критерии поиска для участника в очереди,
+    # где нет подходящей пары
+    if retry_count == 5: data["criteria"]["dating"] = "False"
+    elif retry_count == 10: data["criteria"]["topic"] = "general"
+
+    orig_time = datetime.fromisoformat(data["created_at"])
+    curr_time = datetime.fromisoformat(data["current_time"])
+
+    # Таймер на две минуты поиска
+    if curr_time - orig_time  <= timedelta(seconds=config.WAIT_TIMER):
+
+        logger.info(f"Retry {retry_count + 1} for user {user_id}")
+        data["retry_count"] = retry_count + 1
+        data["current_time"] = datetime.now(tz=config.TZINFO)
+
+        await broker.publish(
+            data,
+            queue=config.RABBITMQ_QUEUE,
+        )
+
+    else:
+        logger.info(f"User {user_id} has run out of time")
+        # Очищаем timestamp при превышении лимита попыток
+        await redis.remove_from_queue(user_id=user_id)
+
+    return await msg.ack()
+
 
 
 async def main():
