@@ -20,11 +20,11 @@ class MatchingService:
 
 
     async def find_match(
-        self, user_id: Union[int, str]
+        self, user_id: int
     ) -> Union[Tuple[str, int, int], Tuple[None, None, None]]:
 
         """Поиск пары пользователей"""
-        user_id, cnt = int(user_id), 0
+        cnt = 0
         queue = await self.redis.lrange("waiting_queue", 0, -1)
         user_crit = await self.redis.hgetall(f"user:{user_id}")
 
@@ -33,24 +33,12 @@ class MatchingService:
             await self.redis.lrem("waiting_queue", user_cnt-1, user_id)
             queue = await self.redis.lrange("waiting_queue", 0, -1)
 
-        user_status = True if await self.redis.get(f"searching:{user_id}") else False
-
-        while user_status and len(queue) >= 2 and cnt < len(queue):
+        while len(queue) >= 2 and cnt < len(queue):
             # Достаем двух пользователей из очереди
             # (один из них с нужным ID)
             cnt += 1
             partner_id = int( await self.redis.lpop("waiting_queue") )
             partner_crit = await self.redis.hgetall(f"user:{partner_id}")
-            partner_status = True if await self.redis.get(f"searching:{partner_id}") else False
-
-            # Если partner id - user id
-            if user_cnt := queue.count(user_id) > 1:
-                await self.redis.lrem("waiting_queue", user_cnt-1, user_id)
-                break
-
-            # Смотрим, не истекло ли TTL одного из участников
-            # и не одинаковые ли ID обоих пользователей
-            if not partner_status: break
 
             criteria_match = True
             for key in user_crit.keys():
@@ -58,24 +46,25 @@ class MatchingService:
                     criteria_match = False
                     break
 
-            if criteria_match:
+            if not partner_id == user_id:
+                if criteria_match:
 
-                # Создаем комнату чата
-                room_id = str(uuid4())
+                    # Создаем комнату чата
+                    room_id = str(uuid4())
 
-                # Сохраняем информацию о комнате
-                room_data = {
-                    "user_id": user_id,
-                    "partner_id": partner_id,
-                    "created_at": datetime.now().isoformat(),
-                }
-                await self.redis.lrem("waiting_queue", 1, user_id)
-                await self.redis.hset(f"room:{room_id}", mapping=room_data)
-                await self.redis.expire(f"room:{room_id}", 3600)  # 1 час
+                    # Сохраняем информацию о комнате
+                    room_data = {
+                        "user_id": user_id,
+                        "partner_id": partner_id,
+                        "created_at": datetime.now(tz=config.TZINFO).isoformat(),
+                    }
+                    await self.redis.lrem("waiting_queue", 1, user_id)
+                    await self.redis.hset(f"room:{room_id}", mapping=room_data)
+                    await self.redis.expire(f"room:{room_id}", 3600)  # 1 час
 
-                logger.info(f"Match found: {user_id} and {partner_id}, room: {room_id}")
+                    logger.info(f"Match found: {user_id} and {partner_id}, room: {room_id}")
 
-                return room_id, user_id, partner_id
+                    return room_id, user_id, partner_id
 
             self.redis.rpush("waiting_queue", partner_id)
 
