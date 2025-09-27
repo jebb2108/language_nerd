@@ -30,6 +30,14 @@ class RedisService:
             logger.debug(f"Redis connection error: {e}")
             self.redis_client = None
 
+    async def update_user(self, user_id: int, user_data: dict) -> None:
+        await self.redis_client.delete(f"user:{user_id}")
+        # Сохраняем данные пользователя в Redis
+        await self.redis_client.hset(f"user:{user_id}", mapping=user_data)
+        # Указываем TTL для этого пользователя
+        await self.redis_client.expire(f"user:{user_id}", 300, nx=True)
+        logger.info("User`s data has been updated on Redis side")
+
 
     async def add_to_queue(self, user_id: int, user_data: dict) -> None:
         """Добавление пользователя в очередь поиска"""

@@ -53,7 +53,7 @@ async def elevate_user(user_data: dict, matcher: "MatchingService") -> bool:
             saved_orig_time = datetime.fromisoformat(matcher.user_status[user_id]["created_at"])
             users_cancel_time = datetime.fromisoformat(users_to_delete[user_id])
             if saved_orig_time == users_cancel_time:
-                logger.info("User has either canceled or completed search")
+                logger.info(f"User {user_id} has either canceled or completed search")
                 return True
 
         # Пользователю найдена пара
@@ -136,11 +136,19 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
     retry_count = data.get("retry_count", 0)
     # Понижаем критерии поиска для участника в очереди,
     # где нет подходящей пары
-    if retry_count == 5: data["criteria"]["dating"] = "False"
-    elif retry_count == 10: data["criteria"]["topic"] = "general"
+    if retry_count == 5:
+        data["criteria"]["dating"] = "False"
+        await redis.update_user(user_id=user_id, user_data=data)
+
+    elif retry_count == 10:
+        data["criteria"]["topic"] = "general"
+        await redis.update_user(user_id=user_id, user_data=data)
+
     elif retry_count == 15:
         indx = int(data["criteria"]["fluency"])
-        if indx > 0: data["criteria"]["fluency"] = str(indx - 1)
+        if indx > 0:
+            data["criteria"]["fluency"] = str(indx - 1)
+            await redis.update_user(user_id=user_id, user_data=data)
 
     orig_time = datetime.fromisoformat(data["created_at"])
     curr_time = datetime.fromisoformat(data["current_time"])
