@@ -60,13 +60,22 @@ redis = aioredis.from_url(config.REDIS_URL, decode_responses=True)
 @app.get("/enter/{room_id}")
 async def enter_chat(room_id: str):
     """Страница чата для конкретной комнаты"""
-    return FileResponse("static/index.html")
+    logger.warning(f"Entered room: {room_id}")
+    return FileResponse(config.ABS_PATH_TO_CHAT_INDX)
 
 
 @sio.event
 async def connect(sid, environ):
     """Обработчик подключения клиента"""
+
+    """Обработчик подключения клиента"""
+    logger.warning(f"=== NEW CONNECTION ATTEMPT ===")
+    logger.warning(f"SID: {sid}")
+    logger.warning(f"Environ: {environ}")
+
     query_string = environ.get("QUERY_STRING", "")
+    logger.warning(f"Query string: {query_string}")
+
     query_params = dict(
         param.split("=") for param in query_string.split("&") if "=" in param
     )
@@ -156,16 +165,17 @@ async def get_message_history(room_id: str) -> list:
 async def validate_access(token: str, room_id: str) -> bool:
     user_data = convert_token(token)
     logger.debug(f"user data {user_data}")
-    if user_data["room_id"] == room_id:
+    logger.debug(f"room_id from token: {user_data.get('room_id')}, room_id from query: {room_id}")
+    if user_data.get("room_id") == room_id:
         logger.debug("Аутентификация прошла успешно")
-        return True  # Заглушка
+        return True
     logger.debug("Некоректный token!")
     return False
 
 
 def convert_token(token: str):
     """Декодирует токен по секретному ключу"""
-    return jwt.decode(jwt=token, key=config.SECRET_KEY, algorithms=["HS236"])
+    return jwt.decode(jwt=token, key=config.SECRET_KEY, algorithms=["HS256"])
 
 
 if __name__ == "__main__":

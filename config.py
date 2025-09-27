@@ -78,6 +78,7 @@ class Config:
 
     ABS_PATH_TO_IMG_ONE: str = os.getenv("ABS_PATH_TO_IMG_ONE", '/')
     ABS_PATH_TO_IMG_TWO: str = os.getenv("ABS_PATH_TO_IMG_TWO", '/')
+    ABS_PATH_TO_CHAT_INDX: str = os.getenv("ABS_PATH_TO_CHAT_INDX", '/')
 
     WAIT_TIMER: int = 150
     SLEEP_TIME: int = 5
