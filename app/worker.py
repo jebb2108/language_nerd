@@ -38,10 +38,13 @@ async def elevate_user(user_data: dict, matcher: "MatchingService") -> bool:
     if user_id in matcher.user_status:
 
         # # Пользователь завершил поиск
-        if user_id in users_to_delete:
-            del matcher.user_status[user_id]
-            del users_to_delete[user_id]
-            return True
+        if user_data["status"] != config.SEARCH_STARTED:
+            if user_id in users_to_delete:
+
+                del matcher.user_status[user_id]
+                del users_to_delete[user_id]
+                logger.info("deleted all info")
+                return True
 
         # Пользователю найдена пара
         if matcher.user_status[user_id]["acked"]:
