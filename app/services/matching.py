@@ -62,7 +62,7 @@ class MatchingService:
                     await self.redis.hset(f"room:{room_id}", mapping=room_data)
                     await self.redis.expire(f"room:{room_id}", 3600)  # 1 час
 
-                    logger.info(f"Match found: {user_id} and {partner_id}, room: {room_id}")
+                    logger.warning(f"Match found: {user_id} and {partner_id}, room: {room_id}")
 
                     return room_id, user_id, partner_id
 
