@@ -1,5 +1,7 @@
+import asyncio
 import logging
 from pyexpat.errors import messages
+from time import sleep
 
 from aiogram import F, Router
 from aiogram.enums import ParseMode
@@ -239,6 +241,7 @@ async def new_session_handler(
     user_id = data.get("user_id")
     username = data.get("username")
     language = data.get("language")
+    fluency = data.get("fluency")
     dating = data.get("dating")
     topic = data.get("topic")
     lang_code = data.get("lang_code", "en")
@@ -250,9 +253,7 @@ async def new_session_handler(
 
     # Отменяем предыдущий поиск, если он был
     is_searching = await redis.get(f"searching:{user_id}")
-    if is_searching:
-        await redis.delete(f"searching:{user_id}")
-        logger.debug(f"Отменен предыдущий поиск для пользователя {user_id}")
+    if is_searching: return logger.info(f"Уже существует поиск для пользователя {user_id}")
 
     await redis.setex(f"searching:{user_id}", 150, username)
     logger.debug(f"Создана сессия поиска для пользователя {user_id}")
@@ -270,8 +271,9 @@ async def new_session_handler(
         "user_id": int(user_id),
         "username": username,
         "criteria": {
-            "dating": str(dating),
             "language": language,
+            "fluency": str(fluency),
+            "dating": str(dating),
             "topic": topic,
         },
     }

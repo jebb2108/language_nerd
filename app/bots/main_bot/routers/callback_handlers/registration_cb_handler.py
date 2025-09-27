@@ -72,7 +72,7 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
 
     data = await state.get_data()
     lang_code = data.get("lang_code")
-    users_choice = callback.data.split("_", 1)[1]
+    users_choice = int(callback.data.split("_", 1)[1])
 
     # Отправляем сообщение с подтверждением
     msg = f"{MESSAGES["you_chose"][lang_code]} {TRANSCRIPTIONS["fluency"][users_choice][lang_code]}\n\n" \
@@ -121,7 +121,7 @@ async def go_to_main_menu(
     first_name = data.get("first_name")
     camefrom = data.get("camefrom")
     language = data.get("language")
-    fluency = data.get("fluency")
+    fluency = int(data.get("fluency"))
     topic = data.get("topic", "general")
     lang_code = data.get("lang_code")
     if lang_code not in LANG_CODE_LIST: lang_code = "en"
@@ -132,7 +132,14 @@ async def go_to_main_menu(
 
     # Сохраняем нового пользователя в БД
     await database.create_user(
-        user_id, username, first_name, camefrom, language, fluency, topic, lang_code
+        user_id=user_id,
+        username=username,
+        first_name=first_name,
+        camefrom=camefrom,
+        language=language,
+        fluency=fluency,
+        topic=topic,
+        lang_code=lang_code
     )
 
     # После сохранения сразу показываем главное меню

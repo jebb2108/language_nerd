@@ -508,28 +508,28 @@ TRANSCRIPTIONS = dict({
         }
     },
     "fluency": {
-        "beginer": {
+        0: {
             "en": "beginner",
             "ru": "начальный",
             "de": "anfänger",
             "es": "principiante",
             "zh": "初级"
         },
-        "intermediate": {
+        1: {
             "en": "intermediate",
             "ru": "средний",
             "de": "fortgeschritten",
             "es": "intermedio",
             "zh": "中级"
         },
-        "advanced": {
+        2: {
             "en": "advanced",
             "ru": "продвинутый",
             "de": "weit fortgeschritten",
             "es": "avanzado",
             "zh": "高级"
         },
-        "native": {
+        3: {
             "en": "native",
             "ru": "родной",
             "de": "muttersprache",

@@ -72,7 +72,7 @@ class DatabaseService:
                             first_name TEXT NOT NULL,
                             camefrom TEXT NOT NULL,
                             language TEXT NOT NULL,
-                            fluency TEXT NOT NULL,
+                            fluency SMALLINT NOT NULL,
                             topic TEXT NOT NULL,
                             lang_code TEXT NOT NULL,
                             is_active BOOLEAN DEFAULT TRUE,
@@ -149,8 +149,17 @@ class DatabaseService:
             await self._pool.release(conn)
 
     async def create_user(
-        self, user_id, username, first_name, camefrom, language, fluency, topic, lang_code
+        self,
+        user_id: int,
+        username: str,
+        first_name: str,
+        camefrom: str,
+        language: str,
+        fluency: int,
+        topic: str,
+        lang_code: str
     ):
+
         try:
             async with self.acquire_connection() as conn:
                 result = await conn.execute(
@@ -162,7 +171,7 @@ class DatabaseService:
                         camefrom = EXCLUDED.camefrom,
                         first_name = EXCLUDED.first_name,
                         language = EXCLUDED.language,
-                        fluency = EXCLUDED.language,
+                        fluency = EXCLUDED.fluency,
                         topic = EXCLUDED.topic,
                         lang_code = EXCLUDED.lang_code
                 """,

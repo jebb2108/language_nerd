@@ -18,31 +18,49 @@ logger = logging.getLogger("worker")
 
 broker = RabbitBroker(config.RABBITMQ_URL, logger=logger)
 
+users_to_delete = {}
 
 async def elevate_user(user_data: dict, matcher: "MatchingService") -> bool:
     """Функция для обработки состояния пользовательского инфо в очереди ожидания"""
+    global users_to_delete
+
     user_id = int(user_data["user_id"])
 
-    if user_data["status"] in [config.SEARCH_CANCELED, config.SEARCH_COMPLETED]:
-        del matcher.user_status[user_id]
+    if user_data["status"] in [
+        config.SEARCH_CANCELED,
+        config.SEARCH_COMPLETED
+    ]:
+        users_to_delete[user_id] = datetime.now(tz=config.TZINFO)
+        # matcher.user_status[user_id]["status"] = user_data["status"]
         return True
 
     # Ситуация, когда пользователь находится в словаре
     if user_id in matcher.user_status:
 
+        # # Пользователь завершил поиск
+        if user_id in users_to_delete:
+            time_interval = datetime.now(tz=config.TZINFO) - users_to_delete[user_id]
+            if time_interval > timedelta(seconds=config.SLEEP_TIME):
+                logger.info("User has either canceled or completed search")
+                del matcher.user_status[user_id]
+                del users_to_delete[user_id]
+                return True
+
         # Пользователю найдена пара
         if matcher.user_status[user_id]["acked"]:
-            del matcher.user_status[user_id]
-            logger.debug("User has been processed")
+            logger.info("User has been processed")
             return True
 
-        return False
+
+        return False # Статус сообщения - простое ожидание
 
     # Ситуация, когда пользователь НЕ находится в словаре
-    matcher.user_status[user_id] = user_data
-    matcher.user_status[user_id]["acked"] = False
-    logger.debug("user has been set up in matcher's dict")
-    return False
+    else:
+
+        matcher.user_status[user_id] = user_data
+        matcher.user_status[user_id]["acked"] = False
+        logger.debug("user has been set up in matcher's dict")
+        return False
 
 
 @broker.subscriber(config.RABBITMQ_QUEUE)
@@ -64,22 +82,23 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
     message_time = datetime.fromisoformat(
         data.get("current_time", current_time.isoformat())
     )
-    diff = current_time - message_time
+    time_interval = current_time - message_time
 
     # Если прошло меньше 5 секунд, откладываем обработку
-    if diff < timedelta(seconds=config.SLEEP_TIME):
-        remaining_delay = config.SLEEP_TIME - diff.total_seconds()
+    if time_interval < timedelta(seconds=config.SLEEP_TIME):
+        remaining_delay = config.SLEEP_TIME - time_interval.total_seconds()
         logger.debug(
             f"Delaying processing for {remaining_delay:.2f} seconds for user {user_id}"
         )
 
-        # Откладываем ack и публикуем сообщение снова через задержку
-        await asyncio.sleep(remaining_delay)
-
         logger.info(f"User {data["username"]} with ID {data["user_id"]} has the following criteria: "
                     f"Language - {data["criteria"]["language"]}, "
+                    f"Fluency = {data["criteria"]["fluency"]}, "
                     f"Dating - {data["criteria"]["dating"]}, "
                     f"Topic - {data["criteria"]["topic"]} ")
+
+        # Откладываем ack и публикуем сообщение снова через задержку
+        await asyncio.sleep(remaining_delay)
 
         # Публикуем сообщение снова с оригинальным временем создания
         await broker.publish(
@@ -107,6 +126,9 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
     # где нет подходящей пары
     if retry_count == 5: data["criteria"]["dating"] = "False"
     elif retry_count == 10: data["criteria"]["topic"] = "general"
+    elif retry_count == 15:
+        indx = int(data["criteria"]["fluency"])
+        if indx > 0: data["criteria"]["fluency"] = str(indx - 1)
 
     orig_time = datetime.fromisoformat(data["created_at"])
     curr_time = datetime.fromisoformat(data["current_time"])
@@ -133,6 +155,7 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
 
 
 async def main():
+    # Запуск основной программы
     app = FastStream(broker, logger=logger)
     await app.run()
 
