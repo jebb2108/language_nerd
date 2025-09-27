@@ -8,21 +8,11 @@ from datetime import datetime
 import redis.asyncio as aioredis
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
 
 from app.dependencies import get_rabbitmq, get_db, get_redis
 from config import LOG_CONFIG, config
 
 from app.api.endpoints.matchmaking import router as match_router
-
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="fastAPI_main")
-
-# Настройки CORS
-origins = [
-    "http://localhost:4000",
-]
 
 
 @asynccontextmanager
@@ -37,15 +27,6 @@ async def lifespan(app: FastAPI):
 # Создаем единственный экземпляр FastAPI
 app = FastAPI(lifespan=lifespan)
 
-# Добавляем middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # Подключаем роутеры
 app.include_router(match_router)
 
@@ -57,24 +38,16 @@ socket_app = socketio.ASGIApp(sio, app)
 redis = aioredis.from_url(config.REDIS_URL, decode_responses=True)
 
 
-@app.get("/enter/{room_id}")
-async def enter_chat(room_id: str):
-    """Страница чата для конкретной комнаты"""
-    logger.warning(f"Entered room: {room_id}")
-    return FileResponse(config.ABS_PATH_TO_CHAT_INDX)
-
-
 @sio.event
 async def connect(sid, environ):
-    """Обработчик подключения клиента"""
 
     """Обработчик подключения клиента"""
-    logger.warning(f"=== NEW CONNECTION ATTEMPT ===")
-    logger.warning(f"SID: {sid}")
-    logger.warning(f"Environ: {environ}")
+    print(f"=== NEW CONNECTION ATTEMPT ===")
+    print(f"SID: {sid}")
+    print(f"Environ: {environ}")
 
     query_string = environ.get("QUERY_STRING", "")
-    logger.warning(f"Query string: {query_string}")
+    print(f"Query string: {query_string}")
 
     query_params = dict(
         param.split("=") for param in query_string.split("&") if "=" in param
@@ -84,7 +57,7 @@ async def connect(sid, environ):
     token = query_params.get("token")
     userdata = convert_token(token)
     username = userdata["username"]
-    logger.info("room id: %s, token: %s", room_id, token)
+    print("room id: %s, token: %s", room_id, token)
 
     if not room_id or not token:
         raise ConnectionRefusedError("Authentication failed")
@@ -164,12 +137,12 @@ async def get_message_history(room_id: str) -> list:
 
 async def validate_access(token: str, room_id: str) -> bool:
     user_data = convert_token(token)
-    logger.debug(f"user data {user_data}")
-    logger.debug(f"room_id from token: {user_data.get('room_id')}, room_id from query: {room_id}")
+    print(f"user data {user_data}")
+    print(f"room_id from token: {user_data.get('room_id')}, room_id from query: {room_id}")
     if user_data.get("room_id") == room_id:
-        logger.debug("Аутентификация прошла успешно")
+        print("Аутентификация прошла успешно")
         return True
-    logger.debug("Некоректный token!")
+    print("Некоректный token!")
     return False
 
 
@@ -180,7 +153,7 @@ def convert_token(token: str):
 
 if __name__ == "__main__":
     uvicorn.run(
-        "app.chat_server:app",
+        "app.chat_server:socket_app",
         host="localhost",
         port=config.CHAT_SERVER_PORT,
         reload=True,
