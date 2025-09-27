@@ -138,17 +138,17 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
     # где нет подходящей пары
     if retry_count == 5:
         data["criteria"]["dating"] = "False"
-        await redis.update_user(user_id=user_id, user_data=data)
+        await redis.update_user(user_id=user_id, user_data=data["criteria"])
 
     elif retry_count == 10:
         data["criteria"]["topic"] = "general"
-        await redis.update_user(user_id=user_id, user_data=data)
+        await redis.update_user(user_id=user_id, user_data=data["criteria"])
 
     elif retry_count == 15:
         indx = int(data["criteria"]["fluency"])
         if indx > 0:
             data["criteria"]["fluency"] = str(indx - 1)
-            await redis.update_user(user_id=user_id, user_data=data)
+            await redis.update_user(user_id=user_id, user_data=data["criteria"])
 
     orig_time = datetime.fromisoformat(data["created_at"])
     curr_time = datetime.fromisoformat(data["current_time"])
