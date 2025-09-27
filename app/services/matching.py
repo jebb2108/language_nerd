@@ -46,7 +46,7 @@ class MatchingService:
                     criteria_match = False
                     break
 
-            if not partner_id == user_id:
+            if partner_id != user_id:
                 if criteria_match:
 
                     # Создаем комнату чата
@@ -66,7 +66,7 @@ class MatchingService:
 
                     return room_id, user_id, partner_id
 
-            self.redis.rpush("waiting_queue", partner_id)
+            await self.redis.rpush("waiting_queue", partner_id)
 
         return None, None, None
 
