@@ -29,12 +29,13 @@ async def elevate_user(user_data: dict, matcher: "MatchingService") -> bool:
         config.SEARCH_CANCELED,
         config.SEARCH_COMPLETED
     ]:
+        # Привязываем время удалений всех последующих сообщений
+        # с временем первого запроса на поиск собеседника
         if user_id in matcher.user_status:
-            # Привязываем время удалений с временем
-            # первого запроса на поиск собеседника
-            users_orig_time = matcher.user_status[user_id]["created_at"]
-            users_to_delete[user_id] = users_orig_time
-            return True
+            orig_time = matcher.user_status[user_id]["created_at"]
+            users_to_delete[user_id] = orig_time
+
+        return True
 
     else:
         # Обрабатываем новые сигналы на поиск партнера
@@ -42,14 +43,16 @@ async def elevate_user(user_data: dict, matcher: "MatchingService") -> bool:
             # Проверяем, новый ли это участник?
             if users_to_delete[user_id] != user_data["created_at"]:
                 del users_to_delete[user_id]
+                if user_id in matcher.user_status:
+                    del matcher.user_status[user_id]
 
     # Ситуация, когда пользователь находится в словаре
     if user_id in matcher.user_status:
 
         if user_id in users_to_delete:
-            saved_users_orig_time = datetime.fromisoformat(matcher.user_status[user_id]["created_at"])
+            saved_orig_time = datetime.fromisoformat(matcher.user_status[user_id]["created_at"])
             users_cancel_time = datetime.fromisoformat(users_to_delete[user_id])
-            if saved_users_orig_time == users_cancel_time:
+            if saved_orig_time == users_cancel_time:
                 logger.info("User has either canceled or completed search")
                 return True
 
