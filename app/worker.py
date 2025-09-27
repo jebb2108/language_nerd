@@ -39,12 +39,9 @@ async def elevate_user(user_data: dict, matcher: "MatchingService") -> bool:
 
         # # Пользователь завершил поиск
         if user_id in users_to_delete:
-            time_interval = datetime.now(tz=config.TZINFO) - users_to_delete[user_id]
-            if time_interval > timedelta(seconds=config.SLEEP_TIME):
-                logger.info("User has either canceled or completed search")
-                del matcher.user_status[user_id]
-                del users_to_delete[user_id]
-                return True
+            del matcher.user_status[user_id]
+            del users_to_delete[user_id]
+            return True
 
         # Пользователю найдена пара
         if matcher.user_status[user_id]["acked"]:
