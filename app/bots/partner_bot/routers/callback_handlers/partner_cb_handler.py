@@ -37,7 +37,7 @@ async def profile_handler(
 ):
 
     await callback.answer()
-    user_id = callback.message.from_user.id
+    user_id = callback.from_user.id
     data = await data_storage.get_storage_data(
         user_id=user_id, state=state, database=database
     )
@@ -65,7 +65,6 @@ async def about_handler(
 ):
 
     await callback.answer()
-
     user_id = callback.from_user.id
     data = await data_storage.get_storage_data(user_id, state, database)
     lang_code = data.get("lang_code", "en")
