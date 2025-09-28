@@ -716,7 +716,7 @@ class ReportSender:
 
             await self.bot.send_message(
                 chat_id=user_report.user_id,
-                text=WEEKLY_QUIZ["weekly_report"].format(
+                text=WEEKLY_QUIZ["weekly_report"][user_report.user_info["lang_code"]].format(
                     total=len(user_report.words)
                 ),
                 reply_markup=begin_weekly_quiz_keyboard(lang_code, user_report.report_id),

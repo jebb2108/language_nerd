@@ -481,9 +481,10 @@ class DatabaseService:
 
     async def get_weekly_words(self, report_id):
         async with self.acquire_connection() as conn:
-            return await conn.fetch(
+            result = await conn.fetch(
                 "SELECT * FROM report_words WHERE report_id = $1", report_id
             )
+            return [dict(row) for row in result]
 
     async def get_words_ids(self, report_id):
         async with self.acquire_connection() as conn:

@@ -17,8 +17,6 @@ from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddlewa
 from app.bots.main_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
 from app.bots.main_bot.middlewares.quiz_middleware import QuizMiddleware
 
-from app.api.schedulers.ai_quiz_sender import send_pending_reports
-
 from routers import router as main_router
 
 logging.basicConfig(**LOG_CONFIG)
