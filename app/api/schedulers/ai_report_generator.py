@@ -10,7 +10,7 @@ logger = logging.getLogger(name="schedulers")
 
 
 async def main() -> None:
-    weekly_report_scheduler = get_report_processer()
+    weekly_report_scheduler = await get_report_processer()
     await weekly_report_scheduler.generate_weekly_reports()
     return
 
