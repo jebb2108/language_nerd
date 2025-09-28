@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.dependencies import get_db
-from app.models import UserDictionaryRequest
+from app.models.dict_models import UserDictionaryRequest
 from config import LOG_CONFIG
 
 logging.basicConfig(**LOG_CONFIG)

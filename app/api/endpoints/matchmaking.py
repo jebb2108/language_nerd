@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.services.rabbitmq import RabbitMQService
 from app.dependencies import get_rabbitmq, get_db, get_redis
-from app.models import UserMatchRequest, ChatSessionRequest
+from app.models.chat_models import UserMatchRequest, ChatSessionRequest
 from app.bots.partner_bot.keyboards.inline_keyboards import create_start_chat_button
 from app.bots.partner_bot.translations import MESSAGES
 from app.validators.create_token import create_token

@@ -8,7 +8,7 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from app.dependencies import get_redis
+from app.dependencies import get_redis, get_redis_client
 from config import LOG_CONFIG, config
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.partner_bot.utils.access_data import data_storage
@@ -173,7 +173,7 @@ async def cancel_search(
 ):
     await callback.answer()
 
-    redis = await get_redis(call_client=True)
+    redis = await get_redis_client()
 
     """Обработчик callback(а) отменяет поиск партнера"""
 

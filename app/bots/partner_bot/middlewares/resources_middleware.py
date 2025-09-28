@@ -7,7 +7,7 @@ from aiogram.types import TelegramObject
 from aiohttp import ClientSession
 
 
-from app.dependencies import get_db, get_redis
+from app.dependencies import get_db, get_redis, get_redis_client
 from config import LOG_CONFIG
 
 logging.basicConfig(**LOG_CONFIG)
@@ -48,7 +48,7 @@ class ResourcesMiddleware(BaseMiddleware):
             # Инициализируем БД
             self.db = await get_db()
             # Создаем клиент Redis с пулом подключений
-            self.redis = await get_redis(call_client=True)
+            self.redis = await get_redis_client()
             # Инициализация других ресурсов
             # TODO: Вынести session в dependencies
             self.session = ClientSession()

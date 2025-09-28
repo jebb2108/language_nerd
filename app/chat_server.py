@@ -1,5 +1,4 @@
 import json
-import logging
 
 import uvicorn
 import jwt
@@ -10,7 +9,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.dependencies import get_rabbitmq, get_db, get_redis
-from config import LOG_CONFIG, config
+from config import config
 
 from app.api.endpoints.matchmaking import router as match_router
 

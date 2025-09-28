@@ -1,11 +1,11 @@
-import json
 import logging
-import uuid
-from datetime import datetime, timedelta
-from typing import Union
 import redis.asyncio as redis
+from typing import TYPE_CHECKING, Optional
 
 from config import config, LOG_CONFIG
+
+if TYPE_CHECKING:
+    from redis.asyncio import Redis
 
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='redis')
@@ -15,9 +15,9 @@ logger = logging.getLogger(name='redis')
 class RedisService:
 
     def __init__(self):
-        self.redis_client: redis = None
+        self.redis_client: Optional["Redis"] = None
 
-    def get_client(self):
+    def get_client(self) -> "Redis":
         return self.redis_client
 
     async def connect(self):
@@ -55,7 +55,7 @@ class RedisService:
 
     async def remove_from_queue(self, user_id: int) -> None:
         """Удаление пользователя из очереди"""
-        await self.redis_client.lrem("waiting_queue", 1, user_id)
+        await self.redis_client.lrem("waiting_queue", 1, str(user_id))
         await self.redis_client.delete(f"searching:{user_id}")
 
         return logger.info(f"User {user_id} removed from queue")

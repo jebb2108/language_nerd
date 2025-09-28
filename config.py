@@ -40,13 +40,18 @@ class Config:
     WEB_SERVER_PORT: int = int(os.getenv("WEB_SERVER_PORT", 2000))
     CHAT_SERVER_PORT: int = int(os.getenv("CHAT_SERVER_PORT", 3000))
 
-
     # Redis
     REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
     # Telegram Bot
     BOT_TOKEN_MAIN: str = os.getenv("BOT_TOKEN_MAIN")
     BOT_TOKEN_PARTNER: str = os.getenv("BOT_TOKEN_PARTNER")
+
+    # AI tokens
+    AI_API_URL: str = os.getenv("AI_API_URL")
+    AI_API_KEY: str = os.getenv("AI_API_KEY")
+
+    DEFAULT_DEEPSEEK_URL: str = os.getenv("DEFAULT_DEEPSEEK_URL","https://api.deepseek.com/v1/chat/completions")
 
     # Глобальные переменные для ограничения запросов
     REQUEST_SEMAPHORE = Semaphore(3)
@@ -82,6 +87,9 @@ class Config:
 
     WAIT_TIMER: int = 150
     SLEEP_TIME: int = 5
+
+    VERIFY_SSL = False
+
 
 
 config = Config()

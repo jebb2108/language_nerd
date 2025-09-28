@@ -12,7 +12,7 @@ from app.bots.partner_bot.routers import router as main_router
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
 
-from app.dependencies import get_redis
+from app.dependencies import get_redis, get_redis_client
 
 # Импорт функций БД
 from config import config, LOG_CONFIG
@@ -39,7 +39,7 @@ async def run():
         token=config.BOT_TOKEN_PARTNER,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
-    redis = await get_redis(call_client=True)
+    redis = await get_redis_client()
     storage = RedisStorage(redis, state_ttl=timedelta(minutes=10), data_ttl=timedelta(minutes=60))
     disp = Dispatcher(storage=storage)
 

@@ -1,40 +1,9 @@
-from pydantic import BaseModel, Field
-from typing import Dict, Optional, List, Union
 from datetime import datetime
-from enum import Enum
+from typing import Dict, Optional
+from pydantic import BaseModel, Field
 
+from app.models import Language, Topic
 
-class Language(str, Enum):
-    """Поддерживаемые языки"""
-
-    RU = "ru"
-    EN = "en"
-    ES = "es"
-    FR = "fr"
-    DE = "de"
-
-
-class Topic(str, Enum):
-    """Темы для общения"""
-
-    GENERAL = "general"
-    MUSIC = "music"
-    MOVIES = "movies"
-    SPORTS = "sports"
-    TECHNOLOGY = "technology"
-    TRAVEL = "travel"
-    GAMES = "games"
-
-
-class UserDictionaryRequest(BaseModel):
-    user_id: int = Field(..., description="Уникальный идентификатор пользователя")
-    word: Union[str, None] = Field(None, description="Слово, которое нужно добавить в словарь")
-    part_of_speech: Union[str, None] = Field(None, description="Часть речи слова")
-    translation: Union[str, None] = Field(None, description="Перевод слова")
-
-    source: Optional[str] = Field(
-        default="api", description="Источник запроса (api, bot, etc)"
-    )
 
 class UserMatchRequest(BaseModel):
     """
@@ -50,6 +19,21 @@ class UserMatchRequest(BaseModel):
     )
     source: Optional[str] = Field(
         default="bot", description="Источник запроса (api, bot, etc)"
+    )
+
+
+class UserMatchResponse(BaseModel):
+    """
+    Модель ответа после успешного добавления в очередь.
+    """
+
+    status: str = Field(..., description="Статус операции")
+    user_id: int = Field(..., description="ID пользователя")
+    queue_position: Optional[int] = Field(
+        None, description="Позиция в очереди (если применимо)"
+    )
+    estimated_wait: Optional[int] = Field(
+        None, description="Примерное время ожидания в секундах"
     )
 
 
@@ -70,40 +54,10 @@ class MatchCriteria(BaseModel):
     gender: Optional[str] = Field(None, description="Предпочтительный пол собеседника")
 
 
-class UserMatchResponse(BaseModel):
-    """
-    Модель ответа после успешного добавления в очередь.
-    """
-
-    status: str = Field(..., description="Статус операции")
-    user_id: int = Field(..., description="ID пользователя")
-    queue_position: Optional[int] = Field(
-        None, description="Позиция в очереди (если применимо)"
-    )
-    estimated_wait: Optional[int] = Field(
-        None, description="Примерное время ожидания в секундах"
-    )
-
-
 class ChatSessionRequest(BaseModel):
     user_id: int = Field(..., description="ID первого пользователя")
     partner_id: int = Field(..., description="ID второго пользователя")
     room_id: str = Field(..., description="Уникальный ключ для комнаты")
-
-
-class UserProfile(BaseModel):
-    """
-    Модель профиля пользователя (для базы данных).
-    """
-
-    user_id: str
-    username: Optional[str]
-    age: Optional[int]
-    gender: Optional[str]
-    languages: List[Language]
-    interests: List[Topic]
-    created_at: datetime
-    is_active: bool = True
 
 
 class MatchFoundEvent(BaseModel):

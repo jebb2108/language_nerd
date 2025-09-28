@@ -11,7 +11,7 @@ from typing import Optional
 
 from asyncpg.pgproto.pgproto import timedelta
 
-from app.dependencies import get_db, get_redis
+from app.dependencies import get_db, get_redis, get_redis_client
 from config import LOG_CONFIG, config
 from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.main_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
@@ -40,28 +40,12 @@ async def init_resources() -> None:
     quiz_middleware = QuizMiddleware()
     await resources.on_startup()
 
-
-def setup_scheduler(scheduler, bot, db) -> None:
-    # Отправляет их каждому пользователю
-    scheduler.add_job(
-        lambda: send_pending_reports(bot, db),
-        trigger=CronTrigger(
-            day_of_week='sun',
-            hour=12,
-            minute=0,
-            timezone=config.TZINFO
-        ),
-        id='sending_reports',
-        replace_existing=True
-    )
-
-
 # noinspection PyUnresolvedReferences
 async def run():
     """Запуск бота и веб-сервера в одном event loop"""
 
     await init_resources()
-    redis = await get_redis(call_client=True)
+    redis = await get_redis_client()
     storage = RedisStorage(redis, state_ttl=timedelta(minutes=10), data_ttl=timedelta(minutes=60))
 
     # Инициализация диспетчера
@@ -73,15 +57,7 @@ async def run():
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
 
-    # Инициализация БД
-    db = await get_db()
-    # Создаем планировщик задач
-    scheduler = AsyncIOScheduler()
-    # Подключаем задачи для планировщика
-    setup_scheduler(scheduler, bot, db)
-
-    # Регистрация middleware
-    # Messages
+    #  Регистрация middleware -> Messages
     disp.message.middleware(resources)
     disp.message.middleware(rate_limit_middleware)
     disp.message.middleware(quiz_middleware)
@@ -95,13 +71,11 @@ async def run():
     disp.include_router(main_router)
 
     try:
-        scheduler.start()
         logger.info("Starting main bot (polling)…")
         await disp.start_polling(bot)
 
     finally:
         # Корректное завершение
-        scheduler.shutdown()
         await bot.session.close()
         await resources.on_shutdown()
 
