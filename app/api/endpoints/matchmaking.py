@@ -9,7 +9,7 @@ from app.dependencies import get_rabbitmq, get_db, get_redis
 from app.models.chat_models import UserMatchRequest, ChatSessionRequest
 from app.bots.partner_bot.keyboards.inline_keyboards import create_start_chat_button
 from app.bots.partner_bot.translations import MESSAGES
-from app.validators.create_token import create_token
+from app.validators.tokens import create_token
 from config import LOG_CONFIG, config
 
 logging.basicConfig(**LOG_CONFIG)
