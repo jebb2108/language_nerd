@@ -122,9 +122,6 @@ async def handle_topic_choice(callback: CallbackQuery, state: FSMContext):
         reply_markup=confirm_choice_keyboard(lang_code),
     )
 
-    await state.update_data(topic=users_choice)
-
-
 @router.callback_query(F.data == "action_confirm")
 async def go_to_main_menu(
     callback: CallbackQuery, state: FSMContext, database: ResourcesMiddleware
