@@ -2,7 +2,6 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from app.bots.partner_bot.routers.commands.registration_commands import PollingState
 from app.bots.partner_bot.translations import ERROR_MESSAGES
 from app.validators.exc import EmptySpaceError, AlreadyExistsError, TooShortError, TooLongError, InvalidCharactersError
 
@@ -27,11 +26,9 @@ async def nickname_exception_handler(
         msg_key = error_messages[error_type]
         msg = ERROR_MESSAGES[msg_key][lang_code]
         await message.reply(text=msg, parse_mode=ParseMode.HTML)
-        await state.set_state(PollingState.waiting_for_name)
 
     else:
         await message.reply(
             text=ERROR_MESSAGES["unknown_error"][lang_code],
             parse_mode=ParseMode.HTML
         )
-        await state.set_state(PollingState.waiting_for_name)
