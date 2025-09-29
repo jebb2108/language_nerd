@@ -33,6 +33,7 @@ class DatabaseService:
             # Создаем таблицы
             await self.__create_words()
             await self.__create_users()
+            await self.__create_transactions()
             await self.__create_users_profile()
             await self.__create_locations()
             await self.__create_weekly_reports()
