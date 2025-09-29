@@ -246,8 +246,15 @@ async def new_session_handler(
     lang_code = data.get("lang_code", "en")
 
     if username == "NO USERNAME":
-        msg = MESSAGES["no_username"][callback.from_user.language_code]
+        msg = MESSAGES["no_username"][lang_code]
         await callback.message.answer(text=msg, parse_mode=ParseMode.HTML)
+        return
+
+    if not await database.check_profile_exists(user_id):
+        await callback.message.answer(
+            text=MESSAGES["not_registered"][lang_code],
+            parse_mode=ParseMode.HTML,
+        )
         return
 
     # Отменяем предыдущий поиск, если он был

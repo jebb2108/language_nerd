@@ -39,7 +39,7 @@ async def show_main_menu(
     language = data.get("language")
     lang_code = data.get("lang_code")
 
-    if not await database.check_profile_exists(user_id):
+    if not await database.check_user_exists(user_id):
         await message.answer(
             text="I can`t seem to know you :( Go to @lllangbot"
         )
@@ -112,8 +112,15 @@ async def new_session_handler(
     lang_code = data.get("lang_code")
 
     if username == "NO USERNAME":
-        msg = MESSAGES["no_username"][message.from_user.language_code]
+        msg = MESSAGES["no_username"][lang_code]
         await message.answer(text=msg, parse_mode=ParseMode.HTML)
+        return
+
+    if not await database.check_profile_exists(user_id):
+        await message.answer(
+            text=MESSAGES["not_registered"][lang_code],
+            parse_mode=ParseMode.HTML,
+        )
         return
 
     # Отменяем предыдущий поиск, если он был

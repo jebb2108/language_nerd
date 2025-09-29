@@ -123,6 +123,13 @@ MESSAGES = dict(
                 "话题: <b>{topic}</b>\n\n"
                 "关于您: {about}"
         },
+        "not_registered": {
+            "en": "You're not registered. Please, enter /start command to proceed",
+            "ru": "Ты не зарегистрирован. Пожалуйста, нажми на /start команду, чтобы начать",
+            "de": "Sie sind nicht registriert. Bitte geben Sie den Befehl /start ein, um fortzufahren",
+            "es": "No estás registrado. Por favor, introduce el comando /start para continuar.",
+            "zh": "您尚未注册。请输入 /start 命令继续",
+        },
         "wrong_name": {
             "en": "There is either space or too many characters in your name (max 50)",
             "ru": "Есть пробел или слишком много символов в вашем имени (максимум 50)",
