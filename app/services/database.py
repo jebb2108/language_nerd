@@ -122,8 +122,11 @@ class DatabaseService:
                             CREATE TABLE IF NOT EXISTS locations (
                             id SERIAL PRIMARY KEY,
                             user_id BIGINT NOT NULL,
-                            latitude TEXT NOT NULL,
-                            longitude TEXT NOT NULL,
+                            latitude TEXT NULL,
+                            longitude TEXT NULL,
+                            city TEXT NULL,
+                            country TEXT NULL,
+                            timezone TEXT NULL,
                             UNIQUE (user_id)
                             ); """
             )
@@ -255,22 +258,28 @@ class DatabaseService:
             return dict(row) if row else None
 
     async def add_users_location(
-        self, user_id: int, latitude: str, longitude: str
+        self, user_id: int, latitude: str, longitude: str, city: str, country: str, tzone: str
     ) -> None:
         async with self.acquire_connection() as conn:
             await conn.execute(
                 """
-                INSERT INTO locations (user_id, latitude, longitude)
-                VALUES ($1,$2,$3)
+                INSERT INTO locations (user_id, latitude, longitude, city, country, timezone)
+                VALUES ($1,$2,$3,$4,$5,$6)
                 ON CONFLICT (user_id) DO UPDATE
                 SET latitude = EXCLUDED.latitude,
-                    longitude = EXCLUDED.longitude
+                    longitude = EXCLUDED.longitude,
+                    city = EXCLUDED.city,
+                    country = EXCLUDED.country,
+                    timezone = EXCLUDED.timezone
                 """,
                 user_id,
                 latitude,
                 longitude,
+                city,
+                country,
+                tzone
             )
-            logger.info(f"User {user_id} location added: {latitude}, {longitude}")
+            logger.info(f"User {user_id} location added: {latitude}, {longitude}, {city}, {country}, {tzone}")
             return
 
     async def get_criteria(self, user_id: int) -> dict:

@@ -160,7 +160,7 @@ MESSAGES = dict(
         },
         "your_location": {
             "en": "🌎 Your location",
-            "ru": "🌎 Твои гео-координаты",
+            "ru": "🌎 Твое местоположение",
             "de": "🌎 Ihr Standort",
             "es": "🌎 Tu ubicación",
             "zh": "🌎 您的位置",
@@ -172,6 +172,13 @@ MESSAGES = dict(
             "es": "No tienes un nombre de usuario, por favor, establece uno",
             "zh": "您没有用户名，请设置一个",
         },
+        "no_location": {
+            "en": "You didn't share your location",
+            "ru": "Ты не стал делиться своей геолокацией",
+            "de": "Du hast deinen Standort nicht geteilt",
+            "es": "No compartiste tu ubicación",
+            "zh": "你没有分享你的位置",
+            },
         "no_worries": {
             "en": "No worries 🫶 We won't use your location\nPress /menu to go to the main menu",
             "ru": "Ничего страшного 🫶 Мы не будем использовать твою геолокацию\nНажми /menu, чтобы перейти в главное меню",
@@ -261,8 +268,8 @@ QUESTIONARY = dict(
             "Maybe you have a cool hobby, favorite TV show or\n"
             "place for walks? Any small details are welcome\n\n",
             "ru": "Расскажи пару фактов о себе:\n\n"
-            "Например, чем ты занимаешься в свободное время?"
-            "Может, у тебя есть крутое хобби, любимый сериал или"
+            "Например, чем ты занимаешься в свободное время? "
+            "Может, у тебя есть крутое хобби, любимый сериал или "
             "место для прогулок? Любые мелочи приветствуются\n\n",
             "de": "Erzählen Sie mir ein paar Fakten über sich:\n\n"
             "Zum Beispiel, was machen Sie in Ihrer Freizeit?\n"

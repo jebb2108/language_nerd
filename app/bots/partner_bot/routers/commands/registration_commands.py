@@ -2,6 +2,7 @@ import logging
 import re
 from datetime import datetime
 
+import aiohttp
 from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
@@ -216,14 +217,38 @@ async def process_location(
     data = await state.get_data()
     user_id = data.get("user_id", 0)
     lang_code = data.get("lang_code", "en")
+
     # Сохраняем координаты в БД
-    lattitude = str(message.location.latitude)
-    longitude = str(message.location.longitude)
-    await database.add_users_location(user_id, lattitude, longitude)
-    # Выводим благодарное сообщение
-    msg = MESSAGES["success"][lang_code]
-    await message.answer(text=msg, reply_markup=ReplyKeyboardRemove())
-    await state.clear()
+    lattitude = str(message.location.latitude) or None
+    longitude = str(message.location.longitude) or None
+    city, country, tzone = None, None, None
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            url = config.GEO_API_URL.format(lattitude, longitude, config.GEO_API_KEY)
+            headers = {'Content-Type': 'application/json'}
+            async with session.get(url=url, headers=headers, ssl=config.VERIFY_SSL) as resp:
+
+                if resp.status != 200:
+                    return logger.warning("there was an issue with geo site")
+
+                result: dict = await resp.json()
+                formated_result = result["features"][0]["properties"]
+                city = formated_result["city"]
+                country = formated_result["country"]
+                tzone = formated_result["timezone"]["name"]
+
+                logger.debug("Exrtacting address from geo coordinates went successful")
+
+    except Exception as e:
+        logger.error(f"There was an error occuring: {e}")
+
+    finally:
+        await database.add_users_location(user_id, lattitude, longitude, city, country, tzone)
+        # Выводим благодарное сообщение
+        msg = MESSAGES["success"][lang_code]
+        await message.answer(text=msg, reply_markup=ReplyKeyboardRemove())
+        await state.clear()
 
 
 @router.message(

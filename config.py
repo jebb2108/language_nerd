@@ -1,9 +1,11 @@
 import os
 import sys
 import logging
+import pytz
 from asyncio import Semaphore
 from dataclasses import dataclass
 from datetime import timezone, timedelta
+from pprint import pprint
 
 from dotenv import load_dotenv
 
@@ -51,6 +53,10 @@ class Config:
     AI_API_URL: str = os.getenv("AI_API_URL")
     AI_API_KEY: str = os.getenv("AI_API_KEY")
 
+    GEO_API_KEY: str = os.getenv("GEO_API_KEY")
+    GEO_API_URL: str = os.getenv("GEO_API_URL")
+
+
     DEFAULT_DEEPSEEK_URL: str = os.getenv("DEFAULT_DEEPSEEK_URL","https://api.deepseek.com/v1/chat/completions")
 
     # Глобальные переменные для ограничения запросов
@@ -88,7 +94,7 @@ class Config:
     WAIT_TIMER: int = 150
     SLEEP_TIME: int = 5
 
-    VERIFY_SSL = True
+    VERIFY_SSL = False
 
 
 

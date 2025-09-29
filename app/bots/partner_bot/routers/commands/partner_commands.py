@@ -63,19 +63,23 @@ async def show_main_menu(
 
 
 @router.message(Command("location", prefix="!/"))
-async def get_my_location(message: Message, database: ResourcesMiddleware):
+async def get_my_location(message: Message, state: FSMContext, database: ResourcesMiddleware):
     """Обработчик команды /location"""
-    lang_code = message.from_user.language_code
+    data = await data_storage.get_storage_data(message.from_user.id, state, database)
+
+    lang_code = data.get("lang_code")
+
     result = await database.get_users_location(message.from_user.id)
     if result is None or result["latitude"] == "refused":
-        await message.answer(text="You didn't share your location")
+        await message.answer(text=MESSAGES["no_location"][lang_code])
         return
-    latitude = result["latitude"]
-    longitude = result["longitude"]
+
+    city = result["city"]
+    country = result["country"]
 
     msg = MESSAGES["your_location"][lang_code]
     await message.answer(
-        text=f"{msg}: <b>{latitude}</b>, <b>{longitude}</b>",
+        text=f"{msg}: <b>{city}</b>, <b>{country}</b>",
         parse_mode=ParseMode.HTML,
     )
 
