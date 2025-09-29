@@ -44,9 +44,9 @@ MESSAGES = dict(
             "zh": "📌 置顶此聊天，这样你就永远不会丢失我",
         },
         "about": {
-            "en": "I'm just like a human being, the only difference being that my inner world is made up of ones and zeros."
-            "🌱 My greatest joy will be helping you reinforce new words and idioms."
-            "✨ I'll give you everything you need to do this, and once a week I'll give you tests to reinforce your knowledge."
+            "en": "I'm just like a human being, the only difference being that my inner world is made up of ones and zeros\n\n"
+            "🌱 My greatest joy will be helping you reinforce new words and idioms\n\n"
+            "✨ I'll give you everything you need to do this, and once a week I'll give you tests to reinforce your knowledge\n\n"
             "🧘 With me, you can progress in language learning at your own pace and make friends along the way!",
             "ru": "Я совсем как человек с той лишь разницей, что мой внутренний мир состоит из нулей и единиц\n\n"
             "🌱 Для меня самой большой радостью будет помочь тебе с закреплением новых слов и идиом\n\n"
