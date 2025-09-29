@@ -19,7 +19,12 @@ from app.bots.partner_bot.translations import MESSAGES, QUESTIONARY, BUTTONS, TR
 from app.bots.partner_bot.utils.exc_handlers import nickname_exception_handler
 from app.bots.partner_bot.utils.access_data import data_storage
 from app.validators.validation import validate_name
-from app.validators.exc import *
+from app.validators.exc import (
+    EmptySpaceError, AlreadyExistsError,
+    TooShortError, TooLongError,
+    InvalidCharactersError
+)
+
 from config import config, LOG_CONFIG
 
 
@@ -78,8 +83,8 @@ async def process_name(
             # Этот блок выполняется только если исключений не было
             msg = QUESTIONARY["need_age"][lang_code]
             await message.answer(text=msg, parse_mode=ParseMode.HTML)
-            await state.set_state(PollingState.waiting_for_bday)
             await state.update_data(name=message.text)
+            await state.set_state(PollingState.waiting_for_bday)
 
 
     except (EmptySpaceError, AlreadyExistsError, TooShortError, TooLongError, InvalidCharactersError) as e:
