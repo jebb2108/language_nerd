@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
@@ -11,7 +12,7 @@ from app.bots.main_bot.keyboards.inline_keyboards import (
     show_language_keyboard,
     show_fluency_keyboard,
     show_topic_keyboard,
-    confirm_choice_keyboard,
+    confirm_choice_keyboard, payment_keyboard,
 )
 from app.bots.main_bot.translations import MESSAGES, QUESTIONARY
 from app.bots.main_bot.routers.commands.menu_commands import show_main_menu
@@ -85,8 +86,26 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
 
     await state.update_data(fluency=users_choice)
 
-
 @router.callback_query(F.data.startswith("topic_"))
+async def handle_transaction_offer(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+
+    data = await state.get_data()
+    lang_code = data.get("lang_code")
+    users_choice = callback.data.split("_", 1)[1]
+    msg = f"{MESSAGES["you_chose"][lang_code]} {TRANSCRIPTIONS["topics"][users_choice][lang_code]}\n\n" \
+          f"{QUESTIONARY['payment_offer'][lang_code]}"
+
+    await callback.message.edit_text(
+        text=msg,
+        reply_markup=payment_keyboard(lang_code),
+    )
+
+    await state.update_data(topic=users_choice)
+
+
+
+@router.callback_query(F.data == "start_trial")
 async def handle_topic_choice(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
@@ -141,6 +160,7 @@ async def go_to_main_menu(
         topic=topic,
         lang_code=lang_code
     )
+    await database.create_transaction(user_id=user_id)
 
     # После сохранения сразу показываем главное меню
     await show_main_menu(callback.message, state, database)

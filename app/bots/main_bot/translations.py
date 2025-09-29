@@ -9,25 +9,25 @@ MESSAGES = dict(
         },
         "welcome": {
             "en": "I`m Sam! Your language learning assistant. Here's what I can do:\n\n"
-                "✨ <b>Dictionary</b> — save and learn new words easily\n"
-                "🤝 <b>Practice</b> — chat with other students (coming soon!)\n"
-                "🛠 <b>Technical support</b> — I'll help if something breaks\n\n",
+            "✨ <b>Dictionary</b> — save and learn new words easily\n"
+            "🤝 <b>Practice</b> — chat with other students (coming soon!)\n"
+            "🛠 <b>Technical support</b> — I'll help if something breaks\n\n",
             "ru": "Я Сэм! Помогу тебе в закреплении изученного. Вот что я умею:\n\n"
-                "✨ <b>Словарь</b> — сохраняй и закрепляй новые слова легко\n"
-                "🤝 <b>Практика</b> — общайся с другими учениками\n"
-                "🛠 <b>Техподдержка</b> — помогу, если что-то сломалось\n\n",
+            "✨ <b>Словарь</b> — сохраняй и закрепляй новые слова легко\n"
+            "🤝 <b>Практика</b> — общайся с другими учениками\n"
+            "🛠 <b>Техподдержка</b> — помогу, если что-то сломалось\n\n",
             "de": "Ich bin Sam! Dein Sprachlern-Assistent. Hier ist, was ich kann:\n\n"
-                "✨ <b>Wörterbuch</b> — neue Wörter einfach speichern und lernen\n"
-                "🤝 <b>Üben</b> — mit anderen Lernenden chatten (demnächst!)\n"
-                "🛠 <b>Technischer Support</b> — ich helfe, wenn etwas kaputt geht\n\n",
+            "✨ <b>Wörterbuch</b> — neue Wörter einfach speichern und lernen\n"
+            "🤝 <b>Üben</b> — mit anderen Lernenden chatten (demnächst!)\n"
+            "🛠 <b>Technischer Support</b> — ich helfe, wenn etwas kaputt geht\n\n",
             "es": "¡Soy Sam! Tu asistente de aprendizaje de idiomas. Esto es lo que puedo hacer:\n\n"
-                "✨ <b>Diccionario</b> — guarda y aprende nuevas palabras fácilmente\n"
-                "🤝 <b>Práctica</b> — chatea con otros estudiantes (próximamente!)\n"
-                "🛠 <b>Soporte técnico</b> — te ayudo si algo se rompe\n\n",
+            "✨ <b>Diccionario</b> — guarda y aprende nuevas palabras fácilmente\n"
+            "🤝 <b>Práctica</b> — chatea con otros estudiantes (próximamente!)\n"
+            "🛠 <b>Soporte técnico</b> — te ayudo si algo se rompe\n\n",
             "zh": "我是Sam！你的语言学习助手。这是我能做的：\n\n"
-                "✨ <b>词典</b> — 轻松保存和学习新单词\n"
-                "🤝 <b>练习</b> — 与其他学生聊天（即将推出！）\n"
-                "🛠 <b>技术支持</b> — 如果出现问题我会帮忙\n\n",
+            "✨ <b>词典</b> — 轻松保存和学习新单词\n"
+            "🤝 <b>练习</b> — 与其他学生聊天（即将推出！）\n"
+            "🛠 <b>技术支持</b> — 如果出现问题我会帮忙\n\n",
         },
         "get_to_know": {
             "en": "Don`t forget to complete your registration! Just click 'Find partner' to do so",
@@ -45,25 +45,25 @@ MESSAGES = dict(
         },
         "about": {
             "en": "I'm just like a human being, the only difference being that my inner world is made up of ones and zeros."
-                "🌱 My greatest joy will be helping you reinforce new words and idioms."
-                "✨ I'll give you everything you need to do this, and once a week I'll give you tests to reinforce your knowledge."
-                "🧘 With me, you can progress in language learning at your own pace and make friends along the way!",
+            "🌱 My greatest joy will be helping you reinforce new words and idioms."
+            "✨ I'll give you everything you need to do this, and once a week I'll give you tests to reinforce your knowledge."
+            "🧘 With me, you can progress in language learning at your own pace and make friends along the way!",
             "ru": "Я совсем как человек с той лишь разницей, что мой внутренний мир состоит из нулей и единиц\n\n"
-                "🌱 Для меня самой большой радостью будет помочь тебе с закреплением новых слов и идиом\n\n"
-                "✨ Дам тебе все самое необходимое для этого, а раз в неделю буду писать тебе тесты на закрепление\n\n"
-                "🧘 Со мною ты сможешь двигаться в изучении языка в своем ритме и находить друзей в процессе!",
+            "🌱 Для меня самой большой радостью будет помочь тебе с закреплением новых слов и идиом\n\n"
+            "✨ Дам тебе все самое необходимое для этого, а раз в неделю буду писать тебе тесты на закрепление\n\n"
+            "🧘 Со мною ты сможешь двигаться в изучении языка в своем ритме и находить друзей в процессе!",
             "de": "Ich bin wie ein Mensch, mit dem einzigen Unterschied, dass meine innere Welt aus Einsen und Nullen besteht\n\n"
-                "🌱 Meine größte Freude wird sein, dir beim Festigen neuer Wörter und Redewendungen zu helfen\n\n"
-                "✨ Ich gebe dir alles, was du dafür brauchst, und einmal pro Woche gebe dir Tests zur Wissensfestigung\n\n"
-                "🧘 Mit mir kannst du in deinem eigenen Tempo Sprachfortschritte machen und dabei Freunde finden!",
+            "🌱 Meine größte Freude wird sein, dir beim Festigen neuer Wörter und Redewendungen zu helfen\n\n"
+            "✨ Ich gebe dir alles, was du dafür brauchst, und einmal pro Woche gebe dir Tests zur Wissensfestigung\n\n"
+            "🧘 Mit mir kannst du in deinem eigenen Tempo Sprachfortschritte machen und dabei Freunde finden!",
             "es": "Soy como un ser humano, la única diferencia es que mi mundo interior está compuesto de unos y ceros\n\n"
-                "🌱 Mi mayor alegría será ayudarte a reforzar nuevas palabras y expresiones\n\n"
-                "✨ Te daré todo lo que necesitas para hacerlo, y una vez por semana te daré pruebas para reforzar tu conocimiento\n\n"
-                "🧘 Conmigo puedes progresar en el aprendizaje de idiomas a tu propio ritmo y hacer amigos en el camino!",
+            "🌱 Mi mayor alegría será ayudarte a reforzar nuevas palabras y expresiones\n\n"
+            "✨ Te daré todo lo que necesitas para hacerlo, y una vez por semana te daré pruebas para reforzar tu conocimiento\n\n"
+            "🧘 Conmigo puedes progresar en el aprendizaje de idiomas a tu propio ritmo y hacer amigos en el camino!",
             "zh": "我就像人类一样，唯一的不同是我的内心世界是由0和1组成的\n\n"
-                "🌱 我最大的快乐将是帮助你巩固新单词和习语\n\n"
-                "✨ 我会给你需要的一切，每周一次给你测试来巩固知识\n\n"
-                "🧘 有了我，你可以按照自己的节奏学习语言，并在此过程中结交朋友！",
+            "🌱 我最大的快乐将是帮助你巩固新单词和习语\n\n"
+            "✨ 我会给你需要的一切，每周一次给你测试来巩固知识\n\n"
+            "🧘 有了我，你可以按照自己的节奏学习语言，并在此过程中结交朋友！",
         },
         "you_chose": {
             "en": "➪ You chose:",
@@ -86,44 +86,44 @@ QUESTIONARY = dict(
     {
         "intro": {
             "en": "My name is Sam. I'm a smart helper "
-                "who will help you reinforce new words so they're never forgotten. "
-                "Here's what awaits you:\n\n"
-                    "1️⃣ A few general questions — you're here\n"
-                    "2️⃣ Filling out a questionnaire about yourself\n"
-                    "3️⃣ By choice preselection of interesting partners, including dating\n\n"
-                    "And in the next Monday, I`ll send you a quiz for reinforcement\n\n"
-                "👀 Tell me where you heard about me?\n",
+            "who will help you reinforce new words so they're never forgotten. "
+            "Here's what awaits you:\n\n"
+            "1️⃣ A few general questions — you're here\n"
+            "2️⃣ Filling out a questionnaire about yourself\n"
+            "3️⃣ By choice preselection of interesting partners, including dating\n\n"
+            "And in the next Monday, I`ll send you a quiz for reinforcement\n\n"
+            "👀 Tell me where you heard about me?\n",
             "ru": "Меня зовут Sam. Я умная помощница, помогаю людям закреплять новые слова, "
-                "чтобы они никогда не забывались. Вот что тебя ждёт:\n\n"
-                    "1️⃣ Пара общих вопросов —> ты находишься здесь\n"
-                    "2️⃣ Нужно будет заполнить небольшую анкету о себе\n"
-                    "3️⃣ По желанию предвыбор интересных собеседников, включая dating\n\n"
-                "А в ближайший понедельник я подберу тебе задания на закрепрение новых слов\n\n"
-                "👀 Подскажи, откуда ты обо мне узнал?\n",
+            "чтобы они никогда не забывались. Вот что тебя ждёт:\n\n"
+            "1️⃣ Пара общих вопросов —> ты находишься здесь\n"
+            "2️⃣ Нужно будет заполнить небольшую анкету о себе\n"
+            "3️⃣ По желанию предвыбор интересных собеседников, включая dating\n\n"
+            "А в ближайший понедельник я подберу тебе задания на закрепрение новых слов\n\n"
+            "👀 Подскажи, откуда ты обо мне узнал?\n",
             "de": "Mein Name ist Sam. Ich bin eine intelligente Helferin, "
-                "die dir dabei hilft, neue Wörter zu festigen, damit sie nie vergessen werden. "
-                "Hier ist, was dich erwartet:\n\n"
-                    "1️⃣ Ein paar allgemeine Fragen — du bist hier\n"
-                    "2️⃣ Ausfüllen eines Fragebogens über dich\n"
-                    "3️⃣ Auf Wunsch Vorauswahl interessanter Partner, inklusive Dating\n\n"
-                    "Und am nächsten Montag sende ich dir ein Quiz zur Verstärkung\n\n"
-                "👀 Sag mir, wo du von mir gehört hast?\n",
+            "die dir dabei hilft, neue Wörter zu festigen, damit sie nie vergessen werden. "
+            "Hier ist, was dich erwartet:\n\n"
+            "1️⃣ Ein paar allgemeine Fragen — du bist hier\n"
+            "2️⃣ Ausfüllen eines Fragebogens über dich\n"
+            "3️⃣ Auf Wunsch Vorauswahl interessanter Partner, inklusive Dating\n\n"
+            "Und am nächsten Montag sende ich dir ein Quiz zur Verstärkung\n\n"
+            "👀 Sag mir, wo du von mir gehört hast?\n",
             "es": "Mi nombre es Sam. Soy una asistente inteligente "
-                "que te ayudará a reforzar nuevas palabras para que nunca se olviden. "
-                "Esto es lo que te espera:\n\n"
-                    "1️⃣ Algunas preguntas generales — estás aquí\n"
-                    "2️⃣ Completar un cuestionario sobre ti mismo\n"
-                    "3️⃣ Por elección preselección de compañeros interesantes, incluyendo citas\n\n"
-                    "Y el próximo lunes te enviaré un cuestionario de refuerzo\n\n"
-                "👀 ¿Dime dónde te enteraste de mí?\n",
+            "que te ayudará a reforzar nuevas palabras para que nunca se olviden. "
+            "Esto es lo que te espera:\n\n"
+            "1️⃣ Algunas preguntas generales — estás aquí\n"
+            "2️⃣ Completar un cuestionario sobre ti mismo\n"
+            "3️⃣ Por elección preselección de compañeros interesantes, incluyendo citas\n\n"
+            "Y el próximo lunes te enviaré un cuestionario de refuerzo\n\n"
+            "👀 ¿Dime dónde te enteraste de mí?\n",
             "zh": "我叫Sam。我是一个智能助手"
-                "会帮助你巩固新单词，让它们永远不会被忘记。"
-                "以下是等待你的内容：\n\n"
-                    "1️⃣ 一些一般性问题 — 你在这里\n"
-                    "2️⃣ 填写关于你自己的问卷\n"
-                    "3️⃣ 可选择预选有趣的伙伴，包括约会\n\n"
-                    "下周一我会给你发送巩固测验\n\n"
-                "👀 告诉我在哪里听说我的？\n",
+            "会帮助你巩固新单词，让它们永远不会被忘记。"
+            "以下是等待你的内容：\n\n"
+            "1️⃣ 一些一般性问题 — 你在这里\n"
+            "2️⃣ 填写关于你自己的问卷\n"
+            "3️⃣ 可选择预选有趣的伙伴，包括约会\n\n"
+            "下周一我会给你发送巩固测验\n\n"
+            "👀 告诉我在哪里听说我的？\n",
         },
         "pick_lang": {
             "en": "What language would you like to learn?",
@@ -225,6 +225,42 @@ QUESTIONARY = dict(
                 "games": "🎮 视频游戏",
             },
         },
+        "payment_offer": {
+            "en": "🆓 3 days free to explore all features!\n"
+                "💎 Then — just 199₽/month for full access:\n\n"
+                "📝 Your personal dictionary\n"
+                "🌍 Global communication practice\n"
+                "🧩 Weekly reinforcement tests\n"
+                "🚀 And other premium features",
+
+            "ru": "🆓 3 дня бесплатно, чтобы оценить все возможности!\n"
+                "💎 Далее — 199₽/месяц за полный доступ:\n\n"
+                "📝 Ваш личный словарь\n"
+                "🌍 Возможность практики общения по всему миру\n"
+                "🧩 Еженедельные тесты на закрепление\n"
+                "🚀 И другие премиум-функции",
+
+            "de": "🆓 3 Tage kostenlos, um alle Funktionen zu testen!\n"
+                "💎 Danach — nur 199₽/Monat für vollen Zugang:\n\n"
+                "📝 Ihr persönliches Wörterbuch\n"
+                "🌍 Globale Kommunikationspraxis\n"
+                "🧩 Wöchentliche Festigungstests\n"
+                  
+                "🚀 Und weitere Premium-Funktionen",
+            "es": "🆓 3 días gratis para explorar todas las funciones!\n"
+                "💎 Luego — solo 199₽/mes por acceso completo:\n\n"
+                "📝 Tu diccionario personal\n"
+                "🌍 Práctica de comunicación global\n"
+                "🧩 Tests semanales de refuerzo\n"
+                "🚀 Y otras funciones premium",
+
+            "zh": "🆓 免费3天体验所有功能！\n"
+                "💎 之后 — 仅199₽/月获得完整访问权限：\n\n"
+                "📝 您的个人词典\n"
+                "🌍 全球交流练习\n"
+                "🧩 每周巩固测试\n"
+                "🚀 以及其他高级功能",
+        },
         "terms": {
             "en": "In order to use our service, you must agree to the user agreement",
             "ru": "В целях использования нашего сервиса, вы должны подтвердить, что вы согласны с пользовательским соглашением",
@@ -290,6 +326,13 @@ BUTTONS = dict(
             "es": "🔙 Volver",
             "zh": "🔙 返回",
         },
+        "start_trial": {
+            "en": "✅ Start 3-Day Free Trial",
+            "ru": "✅ Начать 3 дня бесплатно",
+            "de": "✅ 3 Tage kostenlos starten",
+            "es": "✅ Comenzar 3 días gratis",
+            "zh": "✅ 免费开始3天",
+        },
         "confirm": {
             "en": "I agree",
             "ru": "Согласен",
@@ -311,20 +354,20 @@ WEEKLY_QUIZ = dict(
         },
         "weekly_report": {
             "en": "📊 Your weekly report with learned words:\n\n"
-                "Total words: {total}\n\n"
-                "Click button below to proceed 👇",
+            "Total words: {total}\n\n"
+            "Click button below to proceed 👇",
             "ru": "📊 Ваш еженедельный отчет по изученным словам:\n\n"
-                "Всего слов: {total}\n\n"
-                "Для начала проверки нажмите кнопку ниже 👇",
+            "Всего слов: {total}\n\n"
+            "Для начала проверки нажмите кнопку ниже 👇",
             "de": "📊 Dein wöchentlicher Bericht mit gelernten Wörtern:\n\n"
-                "Gesamtwörter: {total}\n\n"
-                "Klicke unten, um fortzufahren 👇",
+            "Gesamtwörter: {total}\n\n"
+            "Klicke unten, um fortzufahren 👇",
             "es": "📊 Tu informe semanal con palabras aprendidas:\n\n"
-                "Total de palabras: {total}\n\n"
-                "Haz clic en el botón de abajo para continuar 👇",
+            "Total de palabras: {total}\n\n"
+            "Haz clic en el botón de abajo para continuar 👇",
             "zh": "📊 你的每周学习单词报告：\n\n"
-                "总单词数：{total}\n\n"
-                "点击下方按钮继续 👇",
+            "总单词数：{total}\n\n"
+            "点击下方按钮继续 👇",
         },
         "no_rights": {
             "en": "No right answers",
@@ -361,11 +404,7 @@ WEEKLY_QUIZ = dict(
                 "{sentence}\n\n"
                 "Elige la respuesta correcta:"
             ),
-            "zh": (
-                "❓ 问题 {idx}/{total}\n\n"
-                "{sentence}\n\n"
-                "选择正确答案："
-            ),
+            "zh": "❓ 问题 {idx}/{total}\n\n" "{sentence}\n\n" "选择正确答案：",
         },
         "right_answer": {
             "en": "<b>✅ That`s correct!</b>\n\n" "<b>Word:</b> <i>{correct_word}</i>",
@@ -438,132 +477,134 @@ WEEKLY_QUIZ = dict(
     }
 )
 
-TRANSCRIPTIONS = dict({
-    "languages": {
-        "russian": {
-            "en": "Russian",
-            "ru": "Русский",
-            "de": "Russisch",
-            "es": "Ruso",
-            "zh": "俄语",
+TRANSCRIPTIONS = dict(
+    {
+        "languages": {
+            "russian": {
+                "en": "Russian",
+                "ru": "Русский",
+                "de": "Russisch",
+                "es": "Ruso",
+                "zh": "俄语",
+            },
+            "english": {
+                "en": "English",
+                "ru": "Английский",
+                "de": "Englisch",
+                "es": "Inglés",
+                "zh": "英语",
+            },
+            "german": {
+                "en": "German",
+                "ru": "Немецкий",
+                "de": "Deutsch",
+                "es": "Alemán",
+                "zh": "德语",
+            },
+            "spanish": {
+                "en": "Spanish",
+                "ru": "Испанский",
+                "de": "Spanisch",
+                "es": "Español",
+                "zh": "西班牙语",
+            },
+            "chinese": {
+                "en": "Chinese",
+                "ru": "Китайский",
+                "de": "Chinesisch",
+                "es": "Chino",
+                "zh": "中文",
+            },
         },
-        "english": {
-            "en": "English",
-            "ru": "Английский",
-            "de": "Englisch",
-            "es": "Inglés",
-            "zh": "英语",
+        "fluency": {
+            "beginer": {
+                "en": "beginer",
+                "ru": "начальный",
+                "de": "Anfänger",
+                "es": "principiante",
+                "zh": "初级",
+            },
+            "intermediate": {
+                "en": "intermediate",
+                "ru": "средний",
+                "de": "mittelstufe",
+                "es": "intermedio",
+                "zh": "中级",
+            },
+            "advanced": {
+                "en": "advanced",
+                "ru": "продвинутый",
+                "de": "fortgeschritten",
+                "es": "avanzado",
+                "zh": "高级",
+            },
+            "native": {
+                "en": "native",
+                "ru": "родной",
+                "de": "muttersprachler",
+                "es": "nativo",
+                "zh": "母语",
+            },
         },
-        "german": {
-            "en": "German",
-            "ru": "Немецкий",
-            "de": "Deutsch",
-            "es": "Alemán",
-            "zh": "德语",
+        "topics": {
+            "general": {
+                "en": "general",
+                "ru": "обо всем",
+                "de": "allgemein",
+                "es": "general",
+                "zh": "一般",
+            },
+            "music": {
+                "en": "music",
+                "ru": "музыка",
+                "de": "musik",
+                "es": "música",
+                "zh": "音乐",
+            },
+            "sports": {
+                "en": "sports",
+                "ru": "спорт",
+                "de": "sport",
+                "es": "deportes",
+                "zh": "体育",
+            },
+            "technology": {
+                "en": "technology",
+                "ru": "технологии",
+                "de": "technologie",
+                "es": "tecnología",
+                "zh": "技术",
+            },
+            "travel": {
+                "en": "travel",
+                "ru": "путешествия",
+                "de": "reisen",
+                "es": "viajes",
+                "zh": "旅行",
+            },
+            "movies": {
+                "en": "movies",
+                "ru": "фильмы",
+                "de": "filme",
+                "es": "cine",
+                "zh": "电影",
+            },
+            "games": {
+                "en": "video games",
+                "ru": "видео-игры",
+                "de": "videospiele",
+                "es": "videojuegos",
+                "zh": "视频游戏",
+            },
         },
-        "spanish": {
-            "en": "Spanish",
-            "ru": "Испанский",
-            "de": "Spanisch",
-            "es": "Español",
-            "zh": "西班牙语",
+        "status": {
+            "rookie": {
+                "en": "rookie",
+                "ru": "зеленый",
+                "de": "anfänger",
+                "es": "novato",
+                "zh": "新手",
+            }
         },
-        "chinese": {
-            "en": "Chinese",
-            "ru": "Китайский",
-            "de": "Chinesisch",
-            "es": "Chino",
-            "zh": "中文",
-        },
-    },
-    "fluency": {
-        "beginer": {
-            "en": "beginer",
-            "ru": "начальный",
-            "de": "Anfänger",
-            "es": "principiante",
-            "zh": "初级",
-        },
-        "intermediate": {
-            "en": "intermediate",
-            "ru": "средний",
-            "de": "mittelstufe",
-            "es": "intermedio",
-            "zh": "中级",
-        },
-        "advanced": {
-            "en": "advanced",
-            "ru": "продвинутый",
-            "de": "fortgeschritten",
-            "es": "avanzado",
-            "zh": "高级",
-        },
-        "native": {
-            "en": "native",
-            "ru": "родной",
-            "de": "muttersprachler",
-            "es": "nativo",
-            "zh": "母语",
-        }
-    },
-    "topics": {
-        "general": {
-            "en": "general",
-            "ru": "обо всем",
-            "de": "allgemein",
-            "es": "general",
-            "zh": "一般",
-        },
-        "music": {
-            "en": "music",
-            "ru": "музыка",
-            "de": "musik",
-            "es": "música",
-            "zh": "音乐",
-        },
-        "sports": {
-            "en": "sports",
-            "ru": "спорт",
-            "de": "sport",
-            "es": "deportes",
-            "zh": "体育",
-        },
-        "technology": {
-            "en": "technology",
-            "ru": "технологии",
-            "de": "technologie",
-            "es": "tecnología",
-            "zh": "技术",
-        },
-        "travel": {
-            "en": "travel",
-            "ru": "путешествия",
-            "de": "reisen",
-            "es": "viajes",
-            "zh": "旅行",
-        },
-        "movies": {
-            "en": "movies",
-            "ru": "фильмы",
-            "de": "filme",
-            "es": "cine",
-            "zh": "电影",
-        },
-        "games": {
-            "en": "video games",
-            "ru": "видео-игры",
-            "de": "videospiele",
-            "es": "videojuegos",
-            "zh": "视频游戏"
-        }
-    },
-    "status": {
-        "rookie": {
-            "en": "rookie",
-            "ru": "зеленый",
-            "de": "anfänger",
-            "es": "novato",
-            "zh": "新手",
-        }
     }
-})
+)

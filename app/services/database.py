@@ -7,6 +7,7 @@ from typing import Dict, Tuple, List, Optional
 from collections import defaultdict
 from contextlib import asynccontextmanager
 
+from app.services.ai_modules import weekly_report_service
 from config import LOG_CONFIG, config
 
 logging.basicConfig(**LOG_CONFIG)
@@ -79,6 +80,21 @@ class DatabaseService:
                             blocked_bot BOOLEAN DEFAULT FALSE,
                             UNIQUE (user_id)
                             ); """
+            )
+
+    async def __create_transactions(self):
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS transactions (
+                id SERIAL PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                amount NUMERIC NULL,
+                period TEXT NULL,
+                trial BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT NOW(),
+                UNIQUE (user_id)
+                ); """
             )
 
     async def __create_users_profile(self):
@@ -189,6 +205,13 @@ class DatabaseService:
         except Exception as e:
             logger.error(f"Error creating/updating user {user_id}: {e}")
             return False
+
+
+    async def create_transaction(self, user_id: int) -> None:
+        async with self.acquire_connection() as conn:
+            await conn.execute("""INSERT INTO transactions (user_id) VALUES ($1)""", user_id)
+            return
+
 
     async def add_users_profile(
         self,

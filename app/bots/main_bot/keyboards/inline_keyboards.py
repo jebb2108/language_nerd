@@ -78,6 +78,15 @@ def show_topic_keyboard(lang_code):
 
     return builder.as_markup(resize_keyboard=True)
 
+def payment_keyboard(lang_code):
+    builder = InlineKeyboardBuilder()
+    start_trial = InlineKeyboardButton(
+        text=BUTTONS["start_trial"][lang_code],
+        callback_data="start_trial",
+    )
+    builder.add(start_trial)
+    return builder.as_markup(resize_keyboard=True)
+
 
 def confirm_choice_keyboard(lang_code):
     # Обновляем текст с подтверждением выбора
