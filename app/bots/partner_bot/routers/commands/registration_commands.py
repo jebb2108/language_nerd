@@ -15,8 +15,10 @@ from app.bots.partner_bot.keyboards.regular_keyboards import (
 )
 from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.partner_bot.routers.commands.partner_commands import show_main_menu
-from app.bots.partner_bot.translations import MESSAGES, QUESTIONARY, BUTTONS, TRANSCRIPTIONS
+from app.bots.partner_bot.translations import MESSAGES, QUESTIONARY, BUTTONS, ERROR_MESSAGES, TRANSCRIPTIONS
 from app.bots.partner_bot.utils.access_data import data_storage
+from app.validators.validation import validate_name
+from app.validators.exc import *
 from config import config, LOG_CONFIG
 
 
@@ -33,6 +35,36 @@ router = Router(name=__name__)
 
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name="registration_commands")
+
+
+async def exception_handler(
+        message: Message,
+        state: FSMContext,
+        error: Exception,
+        lang_code: str
+):
+    """Обработчик исключений для валидации имени"""
+    error_messages = {
+        EmptySpaceError: "empty_space_error",
+        AlreadyExistsError: "already_exists_error",
+        TooShortError: "too_short_error",
+        TooLongError: "too_long_error",
+        InvalidCharactersError: "invalid_characters_error"
+    }
+
+    error_type = type(error)
+    if error_type in error_messages:
+        msg_key = error_messages[error_type]
+        msg = ERROR_MESSAGES[msg_key][lang_code]
+        await message.reply(text=msg, parse_mode=ParseMode.HTML)
+        await state.set_state(PollingState.waiting_for_name)
+
+    else:
+        await message.reply(
+            text=ERROR_MESSAGES["unknown_error"][lang_code],
+            parse_mode=ParseMode.HTML
+        )
+
 
 
 @router.message(Command("start", prefix="!/"))
@@ -65,21 +97,23 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
 
 @router.message(PollingState.waiting_for_name)
 async def process_name(
-    message: Message, state: FSMContext
+    message: Message, state: FSMContext, database: ResourcesMiddleware
 ):
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
 
-    if len(message.text) <= 50 and re.sub(r"\s", "", message.text) == message.text:
-        await state.update_data(name=message.text)
-        msg = QUESTIONARY["need_age"][lang_code]
-        await message.answer(text=msg, parse_mode=ParseMode.HTML)
-        await state.set_state(PollingState.waiting_for_bday)
-        return
+    try:
+        if await validate_name(message.text, database):
+            # Этот блок выполняется только если исключений не было
+            msg = QUESTIONARY["need_age"][lang_code]
+            await message.answer(text=msg, parse_mode=ParseMode.HTML)
+            await state.set_state(PollingState.waiting_for_bday)
+            await state.update_data(name=message.text)
 
-    msg = MESSAGES["wrong_name"][lang_code]
-    await message.reply(text=msg, parse_mode=ParseMode.HTML)
-    await state.set_state(PollingState.waiting_for_name)
+
+    except (EmptySpaceError, AlreadyExistsError, TooShortError, TooLongError, InvalidCharactersError) as e:
+        await exception_handler(message, state, e, lang_code)
+        return state.set_state(PollingState.waiting_for_name)
 
 
 @router.message(PollingState.waiting_for_bday)
