@@ -437,9 +437,9 @@ class DatabaseService:
 
     async def check_nickname_exists(self, nickname: str):
         async with self.acquire_connection() as conn:
-            return conn.fetchrow(
+            return bool(conn.fetchrow(
                 "SELECT 1 FROM users_profile WHERE prefered_name = $1", nickname
-            )
+            ))
 
     async def get_weekly_words_by_user(self) -> List[Dict]:
         week_ago = datetime.now() - timedelta(days=7)
