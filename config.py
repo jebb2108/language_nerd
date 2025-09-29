@@ -88,7 +88,7 @@ class Config:
     WAIT_TIMER: int = 150
     SLEEP_TIME: int = 5
 
-    VERIFY_SSL = False
+    VERIFY_SSL = True
 
 
 
