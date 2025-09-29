@@ -115,8 +115,7 @@ async def handle_topic_choice(callback: CallbackQuery, state: FSMContext):
     users_choice = callback.data.split('_', 1)[1]
 
     # Отправляем сообщение с подтверждением
-    msg = f"{MESSAGES["you_chose"][lang_code]} {TRANSCRIPTIONS["topics"][users_choice][lang_code]}\n\n" \
-          f"{QUESTIONARY['terms'][lang_code]}"
+    msg = f"{QUESTIONARY['terms'][lang_code]}"
 
     await callback.message.edit_text(
         text=msg,

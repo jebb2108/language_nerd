@@ -226,40 +226,36 @@ QUESTIONARY = dict(
             },
         },
         "payment_offer": {
-            "en": "🆓 3 days free to explore all features!\n"
-                "💎 Then — just 199₽/month for full access:\n\n"
-                "📝 Your personal dictionary\n"
-                "🌍 Global communication practice\n"
-                "🧩 Weekly reinforcement tests\n"
-                "🚀 And other premium features",
-
-            "ru": "🆓 3 дня бесплатно, чтобы оценить все возможности!\n"
-                "💎 Далее — 199₽/месяц за полный доступ:\n\n"
-                "📝 Ваш личный словарь\n"
-                "🌍 Возможность практики общения по всему миру\n"
-                "🧩 Еженедельные тесты на закрепление\n"
-                "🚀 И другие премиум-функции",
-
-            "de": "🆓 3 Tage kostenlos, um alle Funktionen zu testen!\n"
-                "💎 Danach — nur 199₽/Monat für vollen Zugang:\n\n"
-                "📝 Ihr persönliches Wörterbuch\n"
-                "🌍 Globale Kommunikationspraxis\n"
-                "🧩 Wöchentliche Festigungstests\n"
-                  
-                "🚀 Und weitere Premium-Funktionen",
-            "es": "🆓 3 días gratis para explorar todas las funciones!\n"
-                "💎 Luego — solo 199₽/mes por acceso completo:\n\n"
-                "📝 Tu diccionario personal\n"
-                "🌍 Práctica de comunicación global\n"
-                "🧩 Tests semanales de refuerzo\n"
-                "🚀 Y otras funciones premium",
-
-            "zh": "🆓 免费3天体验所有功能！\n"
-                "💎 之后 — 仅199₽/月获得完整访问权限：\n\n"
-                "📝 您的个人词典\n"
-                "🌍 全球交流练习\n"
-                "🧩 每周巩固测试\n"
-                "🚀 以及其他高级功能",
+            "en": "🎯 3-day free trial with all features\n"
+                "Then — full access for 199₽ per month:\n\n"
+                "• Your personal dictionary\n"
+                "• Communication practice with users worldwide\n"
+                "• Regular tests to reinforce material\n"
+                "All this and more with subscription",
+            "ru": "🎯 Бесплатный 3-дневный пробный период со всеми функциями\n"
+                "Затем — полный доступ за 199₽ в месяц:\n\n"
+                "• Персональный словарь для ваших слов\n"
+                "• Практика общения с пользователями по всему миру\n"
+                "• Регулярные тесты для закрепления материала\n"
+                "Все это и многое другое по подписке",
+            "de": "🎯 3-tägige kostenlose Testversion mit allen Funktionen\n"
+                "Dann — voller Zugang für 199₽ pro Monat:\n\n"
+                "• Ihr persönliches Wörterbuch\n"
+                "• Kommunikationspraxis mit Nutzern weltweit\n"
+                "• Regelmäßige Tests zur Wissensfestigung\n"
+                "All dies und mehr mit dem Abonnement",
+            "es": "🎯 Prueba gratuita de 3 días con todas las funciones\n"
+                "Luego — acceso completo por 199₽ al mes:\n\n"
+                "• Tu diccionario personal\n"
+                "• Práctica de comunicación con usuarios worldwide\n"
+                "• Tests regulares para reforzar el material\n"
+                "Todo esto y más con la suscripción",
+            "zh": "🎯 包含所有功能的3天免费试用\n"
+                "然后 — 每月199₽获得完整访问权限：\n\n"
+                "• 您的个人词典\n"
+                "• 与全球用户的交流练习\n"
+                "• 巩固知识的定期测试\n"
+                "订阅即可获得所有这些及更多功能",
         },
         "terms": {
             "en": "In order to use our service, you must agree to the user agreement",
