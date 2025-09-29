@@ -727,7 +727,7 @@ class ReportSender:
         except (TelegramForbiddenError, TelegramBadRequest):
             # Пробрасываем специфические ошибки для обработки на верхнем уровне
             logger.error(f"User {user_report.user_id} has blocked this bot")
-            return False
+            raise
 
         except Exception as e:
             logger.error(
@@ -814,6 +814,10 @@ class ReportDeliveryManager:
 
             if not report or not words:
                 logger.warning(f"No report data found for report_id: {pending_report.report_id}")
+                return None
+
+            elif not user_info:
+                logger.warning(f"User does not exist anymore: {pending_report.user_id}")
                 return None
 
             return UserReport(

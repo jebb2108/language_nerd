@@ -32,7 +32,7 @@ class UserReport(BaseModel):
     report_id: int
     user_id: int
     words: List[dict[str, Any]]
-    user_info: Optional[dict[str, Any]] = None
+    user_info: dict[str, Any]
 
 
 class PendingReport(BaseModel):
