@@ -437,7 +437,8 @@ class DatabaseService:
 
     async def check_nickname_exists(self, nickname: str):
         async with self.acquire_connection() as conn:
-            return bool(conn.fetchrow(
+            return bool(
+                await conn.fetchrow(
                 "SELECT 1 FROM users_profile WHERE prefered_name = $1", nickname
             ))
 
