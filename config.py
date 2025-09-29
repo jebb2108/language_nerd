@@ -1,7 +1,6 @@
 import os
 import sys
 import logging
-import pytz
 from asyncio import Semaphore
 from dataclasses import dataclass
 from datetime import timezone, timedelta
