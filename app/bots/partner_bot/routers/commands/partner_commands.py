@@ -84,7 +84,7 @@ async def get_my_location(message: Message, state: FSMContext, database: Resourc
     )
 
 @router.message(Command("change_topic", prefix='!/'))
-async def change_topic(message: Message, state: FSMContext, database: ResourcesMiddleware):
+async def change_topic(message: Message, database: ResourcesMiddleware):
     user_id = message.from_user.id
     user_info = await database.get_user_info(user_id)
     lang_code = user_info.get("lang_code")

@@ -235,6 +235,13 @@ MESSAGES = dict(
             "es": "Búsqueda terminada",
             "zh": "搜索已结束",
         },
+        "get_help": {
+            "en": "press /help to get help",
+            "ru": "Нажмите /help, чтобы получить список команд",
+            "de": "Drücken Sie /help, um Hilfe zu erhalten",
+            "es": "Presiona /help para obtener ayuda",
+            "zh": "按 /help 获取帮助",
+        },
     }
 )
 

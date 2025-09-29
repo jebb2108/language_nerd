@@ -58,7 +58,3 @@ async def get_redis_client() -> "Redis":
 
 async def get_report_processer() -> "WeeklyReportScheduler":
     return weekly_report_service
-
-
-async def get_pending_processer() -> "PendingReportsProcessor":
-    return pending_service

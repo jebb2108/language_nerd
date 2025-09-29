@@ -1,7 +1,6 @@
 import json
 
 import uvicorn
-import jwt
 import socketio
 from datetime import datetime
 import redis.asyncio as aioredis
@@ -9,6 +8,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.dependencies import get_rabbitmq, get_db, get_redis
+from app.validators.tokens import convert_token
+from app.validators.validation import validate_access
 from config import config
 
 from app.api.endpoints.matchmaking import router as match_router
@@ -132,22 +133,6 @@ async def get_message_history(room_id: str) -> list:
     key = f"chat:{room_id}:messages"
     messages = await redis.lrange(key, 0, -1)
     return [json.loads(msg) for msg in messages]
-
-
-async def validate_access(token: str, room_id: str) -> bool:
-    user_data = convert_token(token)
-    print(f"user data {user_data}")
-    print(f"room_id from token: {user_data.get('room_id')}, room_id from query: {room_id}")
-    if user_data.get("room_id") == room_id:
-        print("Аутентификация прошла успешно")
-        return True
-    print("Некоректный token!")
-    return False
-
-
-def convert_token(token: str):
-    """Декодирует токен по секретному ключу"""
-    return jwt.decode(jwt=token, key=config.SECRET_KEY, algorithms=["HS256"])
 
 
 if __name__ == "__main__":

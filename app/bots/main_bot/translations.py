@@ -65,6 +65,13 @@ MESSAGES = dict(
             "✨ 我会给你需要的一切，每周一次给你测试来巩固知识\n\n"
             "🧘 有了我，你可以按照自己的节奏学习语言，并在此过程中结交朋友！",
         },
+        "get_help": {
+            "en": "press /help to get help",
+            "ru": "Нажмите /help, чтобы получить список команд",
+            "de": "Drücken Sie /help, um Hilfe zu erhalten",
+            "es": "Presiona /help para obtener ayuda",
+            "zh": "按 /help 获取帮助",
+        },
         "you_chose": {
             "en": "➪ You chose:",
             "ru": "➪ Ты выбрал:",
