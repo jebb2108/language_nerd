@@ -64,6 +64,7 @@ async def exception_handler(
             text=ERROR_MESSAGES["unknown_error"][lang_code],
             parse_mode=ParseMode.HTML
         )
+        await state.set_state(PollingState.waiting_for_name)
 
 
 
@@ -114,6 +115,11 @@ async def process_name(
     except (EmptySpaceError, AlreadyExistsError, TooShortError, TooLongError, InvalidCharactersError) as e:
         await exception_handler(message, state, e, lang_code)
         return state.set_state(PollingState.waiting_for_name)
+
+    except Exception as e:
+        await exception_handler(message, state, e, lang_code)
+        return state.set_state(PollingState.waiting_for_name)
+
 
 
 @router.message(PollingState.waiting_for_bday)
