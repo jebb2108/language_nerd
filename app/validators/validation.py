@@ -1,6 +1,6 @@
 import re
 from typing import TYPE_CHECKING
-from exc import *
+from .exc import EmptySpaceError, TooShortError, TooLongError, AlreadyExistsError, InvalidCharactersError
 
 if TYPE_CHECKING:
     from app.services.database import DatabaseService
