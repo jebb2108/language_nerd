@@ -153,3 +153,11 @@ def begin_weekly_quiz_keyboard(lang_code, report_id):
     )
     builder.add(begin_quiz_button)
     return builder.as_markup(resize_keyboard=True)
+
+def get_payment_keyboard(lang_code, url):
+    builder = InlineKeyboardBuilder()
+    payment_button = InlineKeyboardButton(
+        text=BUTTONS["payment"][lang_code], url=url
+    )
+    builder.add(payment_button)
+    return builder.as_markup(resize_keyboard=True)

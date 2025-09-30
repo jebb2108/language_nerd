@@ -14,3 +14,4 @@ PyJWT~=2.10.1
 pycparser~=2.23
 tenacity~=9.1.2
 apscheduler~=3.11.0
+yookassa~=3.7.1

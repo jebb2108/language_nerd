@@ -65,6 +65,37 @@ MESSAGES = dict(
             "✨ 我会给你需要的一切，每周一次给你测试来巩固知识\n\n"
             "🧘 有了我，你可以按照自己的节奏学习语言，并在此过程中结交朋友！",
         },
+        "payment_needed": {
+            "en": "\t🛎 Friendly Reminder\n"
+                  "=========================================\n"
+                  "• <b>Trial Subscription Has Expired</b> •\n"
+                  "=========================================\n"
+                  "I would appreciate it if you shared your impressions of me with your friends ;)",
+
+            "ru": "\t🛎 Дружеское уведомление\n"
+                  "===================================\n"
+                  "• <b>Пробная подписка истекла</b> •\n"
+                  "===================================\n"
+                  "Буду благодарна, если поделишься впечатлениями со своими друзьями обо мне ;)",
+
+            "de": "\t🛎 Freundliche Erinnerung\n"
+                  "========================================\n"
+                  "• <b>Testabonnement ist abgelaufen</b> •\n"
+                  "========================================\n"
+                  "Ich würde mich freuen, wenn du deine Eindrücke von mir mit deinen Freunden teilst ;)",
+
+            "es": "\t🛎 Recordatorio Amistoso\n"
+                  "===============================================\n"
+                  "• <b>La Suscripción de Prueba Ha Expirado</b> •\n"
+                  "===============================================\n"
+                  "Te agradecería si compartieras tus impresiones sobre mí con tus amigos ;)",
+
+            "zh": "\t🛎 友好提醒\n"
+                  "=======================\n"
+                  "• <b>试用订阅已结束</b> •\n"
+                  "=======================\n"
+                  "如果您能向您的朋友分享对我的使用感受，我将不胜感激 ;)"
+        },
         "get_help": {
             "en": "press /help to get help",
             "ru": "Нажмите /help, чтобы получить список команд",
@@ -342,6 +373,13 @@ BUTTONS = dict(
             "de": "Ich stimme zu",
             "es": "Estoy de acuerdo",
             "zh": "我同意",
+        },
+        "payment": {
+            "en": "💳 Renew your subscription",
+            "ru": "💳 Продлить подписку",
+            "de": "💳 Verlängern sie ihr abonnement",
+            "es": "💳 Renueva tu suscripción",
+            "zh": "💳 续订"
         },
     }
 )

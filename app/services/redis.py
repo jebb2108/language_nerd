@@ -31,15 +31,24 @@ class RedisService:
             logger.debug(f"Redis connection error: {e}")
             self.redis_client = None
 
-    async def save_sent_message(self, key: str, message_info: "SentMessage", ttl: int):
+    async def save_sent_message(self, chat_id: int, message_info: "SentMessage", ttl: int):
         # Сохряняет сообщения, которые нужно удалить через некоторое время
-        await self.redis_client.hset(key, mapping=message_info)
+        key = f"search_message:{chat_id}"
+        logger.warning(f"Data: {message_info}")
+        await self.redis_client.hset(key, mapping=message_info.model_dump())
         # Устанавливает время жизни для сообщения
         await self.redis_client.expire(key, ttl)
         # Добавляет в очередь сообщения
         await self.redis_client.rpush("sent_messages", message_info.message_id)
 
-        logger.debug(f"Message {message_info.message_id} has been saved on Redis side")
+        logger.warning(f"Message {message_info.message_id} has been saved on Redis side")
+
+    async def get_search_message_id(self, chat_id: int):
+        # Достает определенное сообщение
+        key = f"search_message:{chat_id}"
+        res =  await self.redis_client.hget(key, "message_id")
+        logger.warning(f"Search message id for user {chat_id}: {res}")
+        return res
 
     async def exists(self, *kwargs: str) -> bool:
         # Проверяет наличие ключей в Redis

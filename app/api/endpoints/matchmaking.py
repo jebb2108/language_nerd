@@ -23,9 +23,6 @@ logger = logging.getLogger("endpoints")
 
 router = APIRouter(prefix="/api")
 
-sent_one, sent_two = None, None
-
-
 @router.post("/match")
 async def request_match(
     request: UserMatchRequest,
@@ -95,7 +92,6 @@ async def notify_users_re_match(
     redis=Depends(get_redis)
 ):
 
-    global sent_one, sent_two
     from aiogram import Bot
 
     users_exists = await db.check_user_exists(request.user_id)
@@ -126,34 +122,36 @@ async def notify_users_re_match(
 
         msg1 = MESSAGES["match_found"][lang_code1]
         msg2 = MESSAGES["match_found"][lang_code2]
+
         users_nickname = user_profile.get("prefered_name")
         users_about = user_profile.get("about")
         partners_nickname = partner_profile.get("prefered_name")
         partners_about = partner_profile.get("about")
 
-        sent_one: "Message" = await bot.send_message(
+        prev_users_search_msg_id = await redis.get_search_message_id(request.user_id)
+        prev_partners_msg_id = await redis.get_search_message_id(request.partner_id)
+
+        logger.warning("users chat id %s", request.user_id)
+        logger.warning("users search msg id: %s", int(prev_users_search_msg_id))
+
+        logger.warning("partners chat id %s", request.partner_id)
+        logger.warning("partners search msg id: %s", int(prev_partners_msg_id))
+
+        await bot.edit_message_text(
+            text = msg1.format(nickname=partners_nickname, about=partners_about),
             chat_id=request.user_id,
-            text=msg1.format(nickname=partners_nickname, about=partners_about),
-            reply_markup=create_start_chat_button(lang_code1, link1),
+            message_id=prev_users_search_msg_id.decode(),
+            reply_markup=create_start_chat_button(lang_code=lang_code1, link=link1),
             parse_mode=ParseMode.HTML,
         )
-        sent_two: "Message" = await bot.send_message(
-            chat_id=request.partner_id,
+
+        await bot.edit_message_text(
             text=msg2.format(nickname=users_nickname, about=users_about),
-            reply_markup=create_start_chat_button(lang_code2, link2),
+            chat_id=request.partner_id,
+            message_id=prev_partners_msg_id.decode(),
+            reply_markup=create_start_chat_button(lang_code=lang_code2, link=link2),
             parse_mode=ParseMode.HTML,
         )
-
-        sent_messages = list(
-            SentMessage(
-                chat_id=sent.chat.id,
-                message_id=sent.message_id,
-                text=sent.text,
-                web_app="true",
-        ) for  sent in [sent_one, sent_two])
-
-        await redis.save_sent_message_id(sent_messages[0])
-        await redis.save_sent_message_id(sent_messages[1])
 
 
     return {"status": "notification_sent"}

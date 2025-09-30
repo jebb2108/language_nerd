@@ -216,6 +216,12 @@ class DatabaseService:
             await conn.execute("""INSERT INTO transactions (user_id) VALUES ($1)""", user_id)
             return
 
+    async def get_users_created_at(self, user_id: int) -> datetime:
+        async with self.acquire_connection() as conn:
+            row = await conn.fetchrow("SELECT created_at FROM users WHERE user_id = $1", user_id)
+            return row['created_at']
+
+
 
     async def add_users_profile(
         self,

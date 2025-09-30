@@ -86,10 +86,8 @@ class Config:
     SEARCH_CANCELED = 'search_canceled'
     SEARCH_COMPLETED = 'search_completed'
 
-    DEFAULT_MESSAGE_TYPE = 'plain_text'
-    SEARCH_BEGAN_MESSAGE_TYPE = 'search_began_type'
-    SEARCH_CANCELED_MESSAGE_TYPE = 'search_canceled_message_type'
-    SEARCH_COMPLETED_MESSAGE_TYPE = 'search_completed_message_type'
+    YOOKASSA_SHOP_ID: int = int(os.getenv("YOOKASSA_SHOP_ID"))
+    YOOKASSA_SECRET_KEY: str = os.getenv("YOOKASSA_SECRET_KEY")
 
     ABS_PATH_TO_IMG_ONE: str = os.getenv("ABS_PATH_TO_IMG_ONE", '/')
     ABS_PATH_TO_IMG_TWO: str = os.getenv("ABS_PATH_TO_IMG_TWO", '/')
