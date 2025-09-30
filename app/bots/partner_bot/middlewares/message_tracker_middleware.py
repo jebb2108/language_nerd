@@ -94,6 +94,7 @@ class MessageTrackerMiddleware(BaseMiddleware):
                     # Рредактируем сообщение вместо удаления,
                     # чтобы сохранить историю переписки
                     if message_id != curr_mid:
+                        await asyncio.sleep(0.5)
                         await self.bot.delete_message(chat_id, message_id)
                         self.search_messages[chat_id].remove(message_id)
                 self.active_searches[chat_id] = False
