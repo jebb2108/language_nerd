@@ -7,7 +7,6 @@ from typing import Dict, Tuple, List, Optional
 from collections import defaultdict
 from contextlib import asynccontextmanager
 
-from app.services.ai_modules import weekly_report_service
 from config import LOG_CONFIG, config
 
 logging.basicConfig(**LOG_CONFIG)
@@ -210,24 +209,24 @@ class DatabaseService:
             logger.error(f"Error creating/updating user {user_id}: {e}")
             return False
 
-    async def create_payment(self, user_id: int, period: str='none', amount: int=199, trial: bool=True) -> None:
+    async def create_payment(self, user_id: int, period: str="", amount: int=199, trial: bool=True) -> None:
         offset = {
             config.MONTH: timedelta(days=31),
             config.YEAR: timedelta(days=365),
         }
         async with self.acquire_connection() as conn:
-            new_created_at = datetime.now() + offset.get(period, timedelta(days=7))
+            new_created_at = datetime.now() + offset.get(period, timedelta(days=3))
             await conn.execute(
                 """
-                INSERT INTO transactions (user_id) 
+                INSERT INTO transactions (user_id, period, amount, trial, untill) 
                 VALUES ($1, $2, $3, $4, $5)
                 ON CONFLICT (user_id) DO UPDATE 
-                SET period = period.EXCLUDED, 
-                amount = amount.EXCLUDED, 
-                trial = trial.EXCLUDED,
-                untill = untill.EXCLUDED 
+                SET period = EXCLUDED.period, 
+                amount = EXCLUDED.amount, 
+                trial = EXCLUDED.trial,
+                untill = EXCLUDED.untill 
                 """,
-                user_id, period, amount, trial, new_created_at.date()
+                user_id, period, amount, trial, new_created_at
             )
 
     async def get_users_due_to(self, user_id: int) -> datetime:

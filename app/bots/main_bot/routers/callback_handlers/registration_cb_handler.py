@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
 from app.bots.partner_bot.translations import TRANSCRIPTIONS
+from app.dependencies import get_db
 from config import LOG_CONFIG, config, LANG_CODE_LIST
 from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.main_bot.keyboards.inline_keyboards import (
@@ -123,12 +124,12 @@ async def handle_topic_choice(callback: CallbackQuery, state: FSMContext):
     )
 
 @router.callback_query(F.data == "action_confirm")
-async def go_to_main_menu(
-    callback: CallbackQuery, state: FSMContext, database: ResourcesMiddleware
-):
+async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
     await callback.message.delete()
+
+    database = await get_db()
 
     data = await state.get_data()
     user_id = int(data.get("user_id"))
@@ -143,8 +144,6 @@ async def go_to_main_menu(
 
     gratitude_msg = MESSAGES["gratitude"][lang_code]
 
-    await callback.answer(text=gratitude_msg)
-
     # Сохраняем нового пользователя в БД
     await database.create_user(
         user_id=user_id,
@@ -158,5 +157,7 @@ async def go_to_main_menu(
     )
     await database.create_payment(user_id=user_id, amount=0)
 
+    await callback.answer(text=gratitude_msg)
+
     # После сохранения сразу показываем главное меню
-    await show_main_menu(callback.message, state)
+    return await show_main_menu(callback.message, state)

@@ -5,9 +5,9 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
 
 from app.bots.main_bot.translations import QUESTIONARY, MESSAGES
+from app.dependencies import get_db
 from config import config, LOG_CONFIG
 from app.bots.main_bot.keyboards.inline_keyboards import show_where_from_keyboard
 from app.bots.main_bot.routers.commands.menu_commands import show_main_menu
@@ -20,11 +20,7 @@ router = Router(name=__name__)
 
 
 @router.message(Command("start", prefix="!/"))
-async def start_with_polling(
-    message: Message,
-    state: FSMContext,
-    database: ResourcesMiddleware,
-):
+async def start_with_polling(message: Message,state: FSMContext):
     """
     Стартовая команда: проверяем в БД существование пользователя,
     сохраняем основные поля в state и либо идём в show_main_menu, либо стартуем опрос.
@@ -39,6 +35,7 @@ async def start_with_polling(
     if not username:
         username = "NO USERNAME"
 
+    database = await get_db()
     user_exists = await database.check_user_exists(user_id)
 
     if user_exists:

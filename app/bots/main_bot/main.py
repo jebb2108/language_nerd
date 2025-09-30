@@ -9,7 +9,7 @@ from typing import Optional
 
 from asyncpg.pgproto.pgproto import timedelta
 
-from app.dependencies import get_db, get_redis, get_redis_client
+from app.dependencies import get_redis_client
 from config import LOG_CONFIG, config
 from app.bots.main_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
 from app.bots.main_bot.middlewares.quiz_middleware import QuizMiddleware
@@ -49,8 +49,8 @@ async def run():
     )
 
     #  Регистрация middleware -> Messages
-    disp.message.middleware(rate_limit_middleware)
     disp.message.middleware(quiz_middleware)
+    disp.message.middleware(rate_limit_middleware)
     # Callbacks
     disp.callback_query.middleware(quiz_middleware)
 
