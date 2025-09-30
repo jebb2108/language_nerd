@@ -52,11 +52,9 @@ async def show_main_menu(message: Message, state: FSMContext):
     )
 
 
-@router.message(
-    Command("pay", prefix="!/"),
-    lambda message: paytime(message.from_user.id)
-)
+@router.message(Command("pay", prefix="!/"),)
 async def pay_cmd(message: Message, state: FSMContext):
+    if not await paytime(message.from_user.id): return
 
     user_id = message.from_user.id
     data = await data_storage.get_storage_data(user_id, state)
@@ -86,7 +84,7 @@ async def pay_cmd(message: Message, state: FSMContext):
 
 
 @router.message(lambda message: message.content_type == ContentType.WEB_APP_DATA)
-async def handle_payment(message: Message, state: FSMContext):
+async def handle_payment(message: Message):
     payment_id = message.web_app_data.data  # Пример получения ID платежа
     payment = Payment.find_one(payment_id)
     user_id = message.from_user.id
