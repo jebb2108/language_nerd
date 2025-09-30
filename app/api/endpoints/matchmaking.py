@@ -1,22 +1,29 @@
 import logging
 from datetime import datetime
 
+from typing import TYPE_CHECKING
 from aiogram.enums import ParseMode
 from fastapi import APIRouter, Depends, HTTPException
 
+from app.models import SentMessage
 from app.services.rabbitmq import RabbitMQService
-from app.dependencies import get_rabbitmq, get_db, get_redis
+from app.dependencies import get_rabbitmq, get_db, get_redis, get_redis_client
 from app.models.chat_models import UserMatchRequest, ChatSessionRequest
 from app.bots.partner_bot.keyboards.inline_keyboards import create_start_chat_button
 from app.bots.partner_bot.translations import MESSAGES
 from app.validators.tokens import create_token
 from config import LOG_CONFIG, config
 
+if TYPE_CHECKING:
+    from aiogram.types import Message
+
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger("endpoints")
 
 
-router = APIRouter(prefix='/api')
+router = APIRouter(prefix="/api")
+
+sent_one, sent_two = None, None
 
 
 @router.post("/match")
@@ -85,8 +92,10 @@ async def request_match(
 async def notify_users_re_match(
     request: ChatSessionRequest,
     db=Depends(get_db),
+    redis=Depends(get_redis)
 ):
 
+    global sent_one, sent_two
     from aiogram import Bot
 
     users_exists = await db.check_user_exists(request.user_id)
@@ -122,20 +131,29 @@ async def notify_users_re_match(
         partners_nickname = partner_profile.get("prefered_name")
         partners_about = partner_profile.get("about")
 
-
-        await bot.send_message(
+        sent_one: "Message" = await bot.send_message(
             chat_id=request.user_id,
             text=msg1.format(nickname=partners_nickname, about=partners_about),
             reply_markup=create_start_chat_button(lang_code1, link1),
             parse_mode=ParseMode.HTML,
         )
-        await bot.send_message(
+        sent_two: "Message" = await bot.send_message(
             chat_id=request.partner_id,
             text=msg2.format(nickname=users_nickname, about=users_about),
             reply_markup=create_start_chat_button(lang_code2, link2),
             parse_mode=ParseMode.HTML,
         )
 
+        sent_messages = list(
+            SentMessage(
+                chat_id=sent.chat.id,
+                message_id=sent.message_id,
+                text=sent.text,
+                web_app="true",
+        ) for  sent in [sent_one, sent_two])
+
+        await redis.save_sent_message_id(sent_messages[0])
+        await redis.save_sent_message_id(sent_messages[1])
+
+
     return {"status": "notification_sent"}
-
-

@@ -1,6 +1,6 @@
 import sys
 import logging
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery
 from collections import defaultdict
 from pathlib import Path
 

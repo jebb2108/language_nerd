@@ -2,6 +2,7 @@ import logging
 
 from typing import Union
 
+import aiohttp
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, FSInputFile
@@ -9,8 +10,8 @@ from aiogram.filters import Command
 from aiogram.enums import ParseMode
 
 from app.bots.partner_bot.keyboards.inline_keyboards import show_topic_keyboard
+from app.dependencies import get_db, get_redis_client
 from config import config, LOG_CONFIG
-from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 
 from app.bots.partner_bot.translations import MESSAGES, TRANSCRIPTIONS
 
@@ -30,11 +31,11 @@ logger = logging.getLogger(name="partner_commands")
 
 @router.message(Command("menu", prefix="!/"))
 async def show_main_menu(
-    message: Message, state: FSMContext, database: ResourcesMiddleware
-):
+    message: Message, state: FSMContext):
     """Главное меню бота"""
     user_id = message.from_user.id
-    data = await data_storage.get_storage_data(user_id, state, database)
+    database = await get_db()
+    data = await data_storage.get_storage_data(user_id, state)
     prefered_name = data.get("pref_name", None)
     language = data.get("language")
     lang_code = data.get("lang_code")
@@ -63,10 +64,11 @@ async def show_main_menu(
 
 
 @router.message(Command("location", prefix="!/"))
-async def get_my_location(message: Message, state: FSMContext, database: ResourcesMiddleware):
+async def get_my_location(message: Message, state: FSMContext):
     """Обработчик команды /location"""
-    data = await data_storage.get_storage_data(message.from_user.id, state, database)
+    database = await get_db()
 
+    data = await data_storage.get_storage_data(message.from_user.id, state)
     lang_code = data.get("lang_code")
 
     result = await database.get_users_location(message.from_user.id)
@@ -84,8 +86,9 @@ async def get_my_location(message: Message, state: FSMContext, database: Resourc
     )
 
 @router.message(Command("change_topic", prefix='!/'))
-async def change_topic(message: Message, database: ResourcesMiddleware):
+async def change_topic(message: Message):
     user_id = message.from_user.id
+    database = await get_db()
     user_info = await database.get_user_info(user_id)
     lang_code = user_info.get("lang_code")
     topic = user_info.get("topic")
@@ -97,12 +100,12 @@ async def change_topic(message: Message, database: ResourcesMiddleware):
 @router.message(Command("new_session", prefix="!/"))
 async def new_session_handler(
     message: Union[Message, CallbackQuery],
-    state: FSMContext,
-    redis: ResourcesMiddleware,
-    http_session: ResourcesMiddleware,
-    database: ResourcesMiddleware,
+    state: FSMContext
 ):
     """Обработчик команды /new_session - запускает поиск партнера"""
+
+    database = await get_db()
+    redis_client = await get_redis_client()
 
     data = await data_storage.get_storage_data(
         message.from_user.id, state, database
@@ -128,10 +131,10 @@ async def new_session_handler(
         return
 
     # Отменяем предыдущий поиск, если он был
-    is_searching = await redis.get(f"searching:{user_id}")
+    is_searching = await redis_client.get(f"searching:{user_id}")
     if is_searching: return logger.info(f"Уже существует поиск для пользователя {user_id}")
 
-    await redis.setex(f"searching:{user_id}", 150, username)
+    await redis_client.setex(f"searching:{user_id}", 150, username)
     logger.debug(f"Создана сессия поиска для пользователя {user_id}")
 
     await message.answer(
@@ -158,19 +161,20 @@ async def new_session_handler(
     logger.warning(f"Данные запроса: {payload}")
 
     try:
-        async with http_session.post(
-            url=url, json=payload, headers={"Content-Type": "application/json"}
-        ) as response:
-            response_text = await response.text()
-            logger.warning(f"Статус ответа: {response.status}")
-            logger.warning(f"Тело ответа: {response_text}")
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url=url, json=payload, headers={"Content-Type": "application/json"}
+            ) as response:
+                response_text = await response.text()
+                logger.warning(f"Статус ответа: {response.status}")
+                logger.warning(f"Тело ответа: {response_text}")
 
-            if response.status != 200:
-                logger.error(
-                    f"Ошибка при запросе к API: {response.status}. Ответ: {response_text}"
-                )
-            else:
-                logger.info("Запрос успешно обработан")
+                if response.status != 200:
+                    logger.error(
+                        f"Ошибка при запросе к API: {response.status}. Ответ: {response_text}"
+                    )
+                else:
+                    logger.info("Запрос успешно обработан")
 
     except Exception as e:
         logger.error(f"Исключение при выполнении запроса: {e}")

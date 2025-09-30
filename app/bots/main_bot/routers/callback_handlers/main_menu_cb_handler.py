@@ -4,7 +4,7 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
+from app.dependencies import get_db
 from config import LOG_CONFIG
 from app.bots.main_bot.translations import MESSAGES
 from app.bots.main_bot.utils.access_data import data_storage
@@ -20,16 +20,14 @@ router = Router(name=__name__)
 
 
 @router.callback_query(F.data == "about")
-async def about(
-    callback: CallbackQuery, state: FSMContext, database: ResourcesMiddleware
-):
+async def about(callback: CallbackQuery, state: FSMContext):
     """
     Обработчик нажатия кнопки "О боте".
     Берём текст из QUESTIONARY, ничего не храним в state.
     """
     await callback.answer()  # убираем "часики" на кнопке
     user_id = callback.from_user.id
-    data = await data_storage.get_storage_data(user_id, state, database)
+    data = await data_storage.get_storage_data(user_id, state)
     lang_code = data.get("lang_code")
 
     msg = MESSAGES["about"][lang_code]
@@ -44,15 +42,14 @@ async def about(
 
 
 @router.callback_query(F.data == "go_back")
-async def go_back(
-    callback: CallbackQuery, state: FSMContext, database: ResourcesMiddleware
-):
+async def go_back(callback: CallbackQuery, state: FSMContext):
     """
     Возвращает пользователя назад в главное меню, повторно вызывая те же кнопки.
     """
     await callback.answer()
+    database = await get_db()
     user_id = callback.from_user.id
-    data = await data_storage.get_storage_data(user_id, state, database)
+    data = await data_storage.get_storage_data(user_id, state)
     lang_code = data.get("lang_code")
 
     msg = (

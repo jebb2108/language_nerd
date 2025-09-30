@@ -229,11 +229,11 @@ MESSAGES = dict(
             "zh": "只有您一个人",
         },
         "cancel_search": {
-            "en": "Ended search",
-            "ru": "Поиск завершен",
-            "de": "Suche beendet",
-            "es": "Búsqueda terminada",
-            "zh": "搜索已结束",
+            "en": "⚠️Ended search",
+            "ru": "⚠️Поиск завершен",
+            "de": "⚠️Suche beendet",
+            "es": "⚠️Búsqueda terminada",
+            "zh": "⚠️搜索已结束",
         },
         "get_help": {
             "en": "press /help to get help",

@@ -10,8 +10,8 @@ router = Router(name=__name__)
 
 
 @router.message()
-async def get_help_handler(message: Message, state: FSMContext, database: ResourcesMiddleware):
-    data = await data_storage.get_storage_data(message.from_user.id, state, database)
+async def get_help_handler(message: Message, state: FSMContext):
+    data = await data_storage.get_storage_data(message.from_user.id, state)
     lang_code = data.get("lang_code")
     await message.bot.send_message(
         chat_id=message.chat.id, text=MESSAGES["get_help"][lang_code]

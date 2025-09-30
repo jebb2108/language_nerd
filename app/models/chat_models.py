@@ -71,3 +71,5 @@ class MatchFoundEvent(BaseModel):
     match_criteria: Dict[str, str]
     matched_at: datetime
     chat_room_id: str
+
+

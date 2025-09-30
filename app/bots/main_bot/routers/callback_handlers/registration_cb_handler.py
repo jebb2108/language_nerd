@@ -159,4 +159,4 @@ async def go_to_main_menu(
     await database.create_transaction(user_id=user_id)
 
     # После сохранения сразу показываем главное меню
-    await show_main_menu(callback.message, state, database)
+    await show_main_menu(callback.message, state)

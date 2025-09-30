@@ -14,11 +14,11 @@ from app.bots.partner_bot.keyboards.regular_keyboards import (
     show_dating_keyboard,
     show_location_keyboard,
 )
-from app.bots.partner_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.partner_bot.routers.commands.partner_commands import show_main_menu
 from app.bots.partner_bot.translations import MESSAGES, QUESTIONARY, BUTTONS, TRANSCRIPTIONS
 from app.bots.partner_bot.utils.exc_handlers import nickname_exception_handler
 from app.bots.partner_bot.utils.access_data import data_storage
+from app.dependencies import get_db
 from app.validators.validation import validate_name
 from app.validators.exc import (
     EmptySpaceError, AlreadyExistsError,
@@ -45,14 +45,17 @@ logger = logging.getLogger(name="registration_commands")
 
 
 @router.message(Command("start", prefix="!/"))
-async def start(message: Message, state: FSMContext, database: ResourcesMiddleware):
+async def start(message: Message, state: FSMContext):
+
+    database = await get_db()
+
     if await database.check_profile_exists(message.from_user.id):
         return await show_main_menu(message, state, database)
 
     user_id = message.from_user.id
 
     user_data = await data_storage.get_storage_data(
-        user_id=user_id, state=state, database=database
+        user_id=user_id, state=state
     )
 
     language = user_data.get("language")
@@ -73,9 +76,9 @@ async def start(message: Message, state: FSMContext, database: ResourcesMiddlewa
 
 
 @router.message(PollingState.waiting_for_name)
-async def process_name(
-    message: Message, state: FSMContext, database: ResourcesMiddleware
-):
+async def process_name(message: Message, state: FSMContext):
+
+    database = await get_db()
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
 
@@ -156,9 +159,8 @@ async def process_intro(
     lambda message: message.text
     == BUTTONS["yes_to_dating"][message.from_user.language_code],
 )
-async def agreed_to_dating_handler(
-    message: Message, state: FSMContext, database: ResourcesMiddleware
-):
+async def agreed_to_dating_handler(message: Message, state: FSMContext):
+    database = await get_db()
     data = await state.get_data()
     # Достаем нужные данные о пользователе
     user_id = data.get("user_id", 0)
@@ -190,9 +192,8 @@ async def agreed_to_dating_handler(
     lambda message: message.text
     == BUTTONS["no_to_dating"][message.from_user.language_code],
 )
-async def disagreed_to_dating_handler(
-    message: Message, state: FSMContext, database: ResourcesMiddleware
-):
+async def disagreed_to_dating_handler(message: Message, state: FSMContext):
+    database = await get_db()
     data = await state.get_data()
     # Достаем нужные данные о пользователе
     user_id = data.get("user_id", 0)
@@ -210,10 +211,9 @@ async def disagreed_to_dating_handler(
 
 
 @router.message(PollingState.waiting_for_location, F.location)
-async def process_location(
-    message: Message, state: FSMContext, database: ResourcesMiddleware
-):
+async def process_location(message: Message, state: FSMContext):
     """Обработчик локации"""
+    database = await get_db()
     data = await state.get_data()
     user_id = data.get("user_id", 0)
     lang_code = data.get("lang_code", "en")
@@ -256,7 +256,8 @@ async def process_location(
     lambda message: message.text
     == BUTTONS["cancel"].get(message.from_user.language_code, BUTTONS["cancel"]["en"]),
 )
-async def cancel(message: Message, state: FSMContext, database: ResourcesMiddleware):
+async def cancel(message: Message, state: FSMContext):
+    database = await get_db()
     msg = MESSAGES["no_worries"][message.from_user.language_code]
     await database.add_users_location(message.from_user.id, "refused", "refused")
     await message.reply(text=msg, reply_markup=ReplyKeyboardRemove())

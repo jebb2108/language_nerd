@@ -13,7 +13,6 @@ from asyncpg.pgproto.pgproto import timedelta
 
 from app.dependencies import get_db, get_redis, get_redis_client
 from config import LOG_CONFIG, config
-from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.main_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
 from app.bots.main_bot.middlewares.quiz_middleware import QuizMiddleware
 
@@ -23,20 +22,16 @@ logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name="main_bot")
 
 # Глобальная переменная с ресурсами бота
-resources: Optional["ResourcesMiddleware"] = None
 rate_limit_middleware: Optional["RateLimitMiddleware"] = None
 quiz_middleware: Optional["QuizMiddleware"] = None
 
 
 async def init_resources() -> None:
-    global resources, rate_limit_middleware, quiz_middleware
+    global rate_limit_middleware, quiz_middleware
     """Запуск глобальных ресурсов """
-    # Аргументы к on_startup - время в минутах
     # Создаю менеджера сообщений
-    resources = ResourcesMiddleware()
     rate_limit_middleware = RateLimitMiddleware()
     quiz_middleware = QuizMiddleware()
-    await resources.on_startup()
 
 # noinspection PyUnresolvedReferences
 async def run():
@@ -56,14 +51,10 @@ async def run():
     )
 
     #  Регистрация middleware -> Messages
-    disp.message.middleware(resources)
     disp.message.middleware(rate_limit_middleware)
     disp.message.middleware(quiz_middleware)
     # Callbacks
     disp.callback_query.middleware(quiz_middleware)
-    disp.callback_query.middleware(resources)
-    # Inline buttons
-    disp.inline_query.middleware(resources)
 
     # Добавление роутеров
     disp.include_router(main_router)
@@ -75,7 +66,6 @@ async def run():
     finally:
         # Корректное завершение
         await bot.session.close()
-        await resources.on_shutdown()
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ from config import config, LOG_CONFIG
 
 if TYPE_CHECKING:
     from redis.asyncio import Redis
+    from app.models import SentMessage
 
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='redis')
@@ -29,6 +30,21 @@ class RedisService:
         except Exception as e:
             logger.debug(f"Redis connection error: {e}")
             self.redis_client = None
+
+    async def save_sent_message(self, key: str, message_info: "SentMessage", ttl: int):
+        # Сохряняет сообщения, которые нужно удалить через некоторое время
+        await self.redis_client.hset(key, mapping=message_info)
+        # Устанавливает время жизни для сообщения
+        await self.redis_client.expire(key, ttl)
+        # Добавляет в очередь сообщения
+        await self.redis_client.rpush("sent_messages", message_info.message_id)
+
+        logger.debug(f"Message {message_info.message_id} has been saved on Redis side")
+
+    async def exists(self, *kwargs: str) -> bool:
+        # Проверяет наличие ключей в Redis
+        return bool(await self.redis_client.exists(kwargs) > 0)
+
 
     async def update_user(self, user_id: int, user_data: dict) -> None:
         await self.redis_client.delete(f"user:{user_id}")

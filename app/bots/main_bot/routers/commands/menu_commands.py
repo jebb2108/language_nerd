@@ -6,6 +6,7 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, InputMediaPhoto, FSInputFile
 
+from app.dependencies import get_db
 from config import config, LOG_CONFIG
 from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.main_bot.keyboards.inline_keyboards import get_on_main_menu_keyboard
@@ -20,12 +21,11 @@ router = Router(name=__name__)
 
 
 @router.message(Command("menu", prefix="!/"))
-async def show_main_menu(
-    message: Message, state: FSMContext, database: ResourcesMiddleware
-):
+async def show_main_menu(message: Message, state: FSMContext):
 
     # Получаем данные из состояния
-    data = await data_storage.get_storage_data(message.from_user.id, state, database)
+    database = await get_db()
+    data = await data_storage.get_storage_data(message.from_user.id, state)
     user_id = data.get("user_id")
     lang_code = data.get("lang_code")
 

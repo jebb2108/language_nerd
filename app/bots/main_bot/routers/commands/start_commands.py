@@ -43,7 +43,7 @@ async def start_with_polling(
 
     if user_exists:
         # если пользователь есть — сразу меню
-        return await show_main_menu(message, state, database)
+        return await show_main_menu(message, state)
 
 
     msg = f"{MESSAGES['hello'][lang_code]} <b>{first_name}</b>!\n\n" \
