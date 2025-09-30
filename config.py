@@ -87,7 +87,7 @@ class Config:
     SEARCH_COMPLETED = 'search_completed'
 
     YOOKASSA_SHOP_ID: int = int(os.getenv("YOOKASSA_SHOP_ID"))
-    YOOKASSA_SECRET_KEY: str = os.getenv("YOOKASSA_SECRET_KEY")
+    YOOKASSA_SECRET_KEY: str = os.getenv("YOOKASSA_SHOP_KEY")
 
     ABS_PATH_TO_IMG_ONE: str = os.getenv("ABS_PATH_TO_IMG_ONE", '/')
     ABS_PATH_TO_IMG_TWO: str = os.getenv("ABS_PATH_TO_IMG_TWO", '/')
@@ -95,6 +95,9 @@ class Config:
 
     WAIT_TIMER: int = 150
     SLEEP_TIME: int = 5
+
+    MONTH: str = 'month'
+    YEAR: str = 'year'
 
     VERIFY_SSL = False
 

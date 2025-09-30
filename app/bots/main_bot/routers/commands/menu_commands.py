@@ -1,7 +1,7 @@
 import logging
 import uuid
 
-from yookassa import Payment
+from yookassa import Payment, Configuration
 from aiogram import Router
 
 from aiogram.filters import Command
@@ -21,6 +21,9 @@ logger = logging.getLogger(name="menu_commands")
 
 # Инициализируем роутер
 router = Router(name=__name__)
+
+Configuration.account_id = config.YOOKASSA_SHOP_ID
+Configuration.secret_key = config.YOOKASSA_SECRET_KEY
 
 
 @router.message(Command("menu", prefix="!/"))
@@ -81,11 +84,13 @@ async def pay_cmd(message: Message, state: FSMContext):
 
 
 @router.message(lambda message: message.content_type == ContentType.WEB_APP_DATA)
-async def handle_payment(message: Message):
+async def handle_payment(message: Message, state: FSMContext):
     payment_id = message.web_app_data.data  # Пример получения ID платежа
     payment = Payment.find_one(payment_id)
-
+    user_id = message.from_user.id
+    database = await get_db()
     if payment.status == "succeeded":
+        await database.create_payment(user_id, config.MONTH, trial=False)
         await message.answer("Платеж прошел успешно!")
     else:
         await message.answer("Ошибка оплаты.")

@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from yookassa import Configuration
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -48,9 +47,6 @@ async def run():
         token=config.BOT_TOKEN_MAIN,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
-
-    Configuration.account_id = config.YOOKASSA_SHOP_ID
-    Configuration.secret_key = config.YOOKASSA_SECRET_KEY
 
     #  Регистрация middleware -> Messages
     disp.message.middleware(rate_limit_middleware)

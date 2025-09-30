@@ -156,7 +156,7 @@ async def go_to_main_menu(
         topic=topic,
         lang_code=lang_code
     )
-    await database.create_transaction(user_id=user_id)
+    await database.create_payment(user_id=user_id, amount=0)
 
     # После сохранения сразу показываем главное меню
     await show_main_menu(callback.message, state)

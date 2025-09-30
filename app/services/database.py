@@ -93,7 +93,7 @@ class DatabaseService:
                 amount NUMERIC NULL,
                 period TEXT NULL,
                 trial BOOLEAN DEFAULT TRUE,
-                created_at TIMESTAMP DEFAULT NOW(),
+                untill TIMESTAMP DEFAULT NOW(),
                 UNIQUE (user_id)
                 ); """
             )
@@ -210,17 +210,32 @@ class DatabaseService:
             logger.error(f"Error creating/updating user {user_id}: {e}")
             return False
 
-
-    async def create_transaction(self, user_id: int) -> None:
+    async def create_payment(self, user_id: int, period: str='none', amount: int=199, trial: bool=True) -> None:
+        offset = {
+            config.MONTH: timedelta(days=31),
+            config.YEAR: timedelta(days=365),
+        }
         async with self.acquire_connection() as conn:
-            await conn.execute("""INSERT INTO transactions (user_id) VALUES ($1)""", user_id)
-            return
+            new_created_at = datetime.now() + offset.get(period, timedelta(days=7))
+            await conn.execute(
+                """
+                INSERT INTO transactions (user_id) 
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (user_id) DO UPDATE 
+                SET period = period.EXCLUDED, 
+                amount = amount.EXCLUDED, 
+                trial = trial.EXCLUDED,
+                untill = untill.EXCLUDED 
+                """,
+                user_id, period, amount, trial, new_created_at.date()
+            )
 
-    async def get_users_created_at(self, user_id: int) -> datetime:
+    async def get_users_due_to(self, user_id: int) -> datetime:
         async with self.acquire_connection() as conn:
-            row = await conn.fetchrow("SELECT created_at FROM users WHERE user_id = $1", user_id)
-            return row['created_at']
-
+            row = await conn.fetchrow("""
+                SELECT untill FROM transactions WHERE user_id = $1""", user_id
+            )
+            return row['untill']
 
 
     async def add_users_profile(

@@ -66,31 +66,31 @@ MESSAGES = dict(
             "🧘 有了我，你可以按照自己的节奏学习语言，并在此过程中结交朋友！",
         },
         "payment_needed": {
-            "en": "\t🛎 Friendly Reminder\n"
+            "en": " 🛎 Friendly Reminder\n"
                   "=========================================\n"
                   "• <b>Trial Subscription Has Expired</b> •\n"
                   "=========================================\n"
                   "I would appreciate it if you shared your impressions of me with your friends ;)",
 
-            "ru": "\t🛎 Дружеское уведомление\n"
-                  "===================================\n"
+            "ru": " 🛎 Дружеское уведомление\n"
+                  "=============================\n"
                   "• <b>Пробная подписка истекла</b> •\n"
-                  "===================================\n"
-                  "Буду благодарна, если поделишься впечатлениями со своими друзьями обо мне ;)",
+                  "=============================\n"
+                  "Буду благодарна, если поделишься впечатлениями с другими обо мне ;)",
 
-            "de": "\t🛎 Freundliche Erinnerung\n"
-                  "========================================\n"
+            "de": " 🛎 Freundliche Erinnerung\n"
+                  "==============================\n"
                   "• <b>Testabonnement ist abgelaufen</b> •\n"
-                  "========================================\n"
+                  "==============================\n"
                   "Ich würde mich freuen, wenn du deine Eindrücke von mir mit deinen Freunden teilst ;)",
 
-            "es": "\t🛎 Recordatorio Amistoso\n"
-                  "===============================================\n"
+            "es": " 🛎 Recordatorio Amistoso\n"
+                  "==============================\n"
                   "• <b>La Suscripción de Prueba Ha Expirado</b> •\n"
-                  "===============================================\n"
+                  "==============================\n"
                   "Te agradecería si compartieras tus impresiones sobre mí con tus amigos ;)",
 
-            "zh": "\t🛎 友好提醒\n"
+            "zh": " 🛎 友好提醒\n"
                   "=======================\n"
                   "• <b>试用订阅已结束</b> •\n"
                   "=======================\n"
