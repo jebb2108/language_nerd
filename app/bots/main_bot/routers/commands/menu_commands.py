@@ -31,7 +31,9 @@ async def show_main_menu(message: Message, state: FSMContext):
 
     # Получаем данные из состояния
     database = await get_db()
-    data = await data_storage.get_storage_data(message.from_user.id, state)
+    data = await data_storage.get_storage_data(
+        message.from_user.id, state
+    )
     user_id = data.get("user_id")
     lang_code = data.get("lang_code")
 

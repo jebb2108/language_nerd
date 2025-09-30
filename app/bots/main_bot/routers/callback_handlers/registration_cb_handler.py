@@ -1,22 +1,21 @@
 import logging
-from datetime import datetime
-
 from aiogram import Router, F
+from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, FSInputFile
 
 from app.bots.partner_bot.translations import TRANSCRIPTIONS
 from app.dependencies import get_db
 from config import LOG_CONFIG, config, LANG_CODE_LIST
-from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
 from app.bots.main_bot.keyboards.inline_keyboards import (
     show_language_keyboard,
     show_fluency_keyboard,
     show_topic_keyboard,
-    confirm_choice_keyboard, payment_keyboard,
+    confirm_choice_keyboard,
+    payment_keyboard,
+    get_on_main_menu_keyboard
 )
 from app.bots.main_bot.translations import MESSAGES, QUESTIONARY
-from app.bots.main_bot.routers.commands.menu_commands import show_main_menu
 
 logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name="registration_cb_handler")
@@ -142,7 +141,19 @@ async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
     lang_code = data.get("lang_code")
     if lang_code not in LANG_CODE_LIST: lang_code = "en"
 
-    gratitude_msg = MESSAGES["gratitude"][lang_code]
+    msg = f"{MESSAGES['welcome'][lang_code]}"
+    if not await database.check_profile_exists(user_id):
+        msg += MESSAGES['get_to_know'][lang_code]
+    else:
+        msg += MESSAGES['pin_me'][lang_code]
+
+    image_from_file = FSInputFile(config.ABS_PATH_TO_IMG_ONE)
+    await callback.message.answer_photo(
+        photo=image_from_file,
+        caption=msg,
+        reply_markup=get_on_main_menu_keyboard(user_id, lang_code),
+        parse_mode=ParseMode.HTML,
+    )
 
     # Сохраняем нового пользователя в БД
     await database.create_user(
@@ -156,8 +167,3 @@ async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
         lang_code=lang_code
     )
     await database.create_payment(user_id=user_id, amount=0)
-
-    await callback.answer(text=gratitude_msg)
-
-    # После сохранения сразу показываем главное меню
-    return await show_main_menu(callback.message, state)
