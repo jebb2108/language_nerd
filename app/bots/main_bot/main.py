@@ -1,5 +1,5 @@
 import asyncio
-import logging
+from logging_config import setup_logger
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -10,14 +10,13 @@ from typing import Optional
 from asyncpg.pgproto.pgproto import timedelta
 
 from app.dependencies import get_redis_client
-from config import LOG_CONFIG, config
+from config import config
 from app.bots.main_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
 from app.bots.main_bot.middlewares.quiz_middleware import QuizMiddleware
 
 from routers import router as main_router
 
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="main_bot")
+logger = setup_logger('main bot', config.LOG_LEVEL)
 
 # Глобальная переменная с ресурсами бота
 rate_limit_middleware: Optional["RateLimitMiddleware"] = None

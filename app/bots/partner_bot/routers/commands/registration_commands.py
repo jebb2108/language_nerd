@@ -1,4 +1,3 @@
-import logging
 import re
 from datetime import datetime
 
@@ -27,7 +26,8 @@ from app.validators.exc import (
     InvalidCharactersError
 )
 
-from config import config, LOG_CONFIG
+from config import config
+from logging_config import setup_logger
 
 
 class PollingState(StatesGroup):
@@ -42,8 +42,7 @@ class PollingState(StatesGroup):
 # Инициализируем роутер
 router = Router(name=__name__)
 
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="registration_commands")
+logger = setup_logger('registration_commands', config.LOG_LEVEL)
 
 
 @router.message(Command("start", prefix="!/"))
@@ -189,6 +188,7 @@ async def process_gender(message: Message, state: FSMContext):
     # Сохраняем профиль
     if gender in BUTTONS["cancel"].values():
         await database.add_users_profile(user_id=user_id, prefered_name=name, birthday=birthday, about=intro)
+        await database.add_users_location(user_id=user_id)
         await message.answer(text=MESSAGES["no_worries_dating"][lang_code], reply_markup=ReplyKeyboardRemove())
         return
 

@@ -7,10 +7,10 @@ from typing import Dict, Tuple, List, Optional
 from collections import defaultdict
 from contextlib import asynccontextmanager
 
-from config import LOG_CONFIG, config
+from config import config
+from logging_config import setup_logger
 
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="database")
+logger = setup_logger('database')
 
 
 # = КЛАСС ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ =
@@ -280,6 +280,21 @@ class DatabaseService:
         async with self.acquire_connection() as conn:
             row = await conn.fetchrow(
                 "SELECT * FROM users_profile WHERE user_id = $1", user_id
+            )
+            return dict(row) if row else None
+
+    async def get_all_user_info(self, user_id: int):
+        async with self.acquire_connection() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT u.*, up.* 
+                FROM users u 
+                LEFT JOIN users_profile up 
+                    ON u.user_id = up.user_id 
+                WHERE u.user_id = $1
+                """
+                ,
+                user_id
             )
             return dict(row) if row else None
 

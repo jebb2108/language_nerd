@@ -4,7 +4,6 @@ from aiogram.types import Message
 
 from app.bots.partner_bot.translations import MESSAGES
 from app.bots.partner_bot.utils.access_data import data_storage
-from app.dependencies import get_db
 
 router = Router(name=__name__)
 

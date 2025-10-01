@@ -3,7 +3,10 @@ from datetime import datetime, time
 from aiogram.fsm.context import FSMContext
 from app.bots.partner_bot.utils.exc import StorageDataException
 from app.dependencies import get_db
+from config import config
+from logging_config import setup_logger
 
+logger = setup_logger('partner_data_storage', config.LOG_LEVEL)
 
 class DataStorage:
     def __init__(self):

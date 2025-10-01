@@ -1,11 +1,11 @@
-import logging
+from config import config
+from logging_config import setup_logger
 from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
 from app.dependencies import get_db
-from config import LOG_CONFIG
 from app.bots.main_bot.translations import MESSAGES
 from app.bots.main_bot.utils.access_data import data_storage
 from app.bots.main_bot.keyboards.inline_keyboards import (
@@ -13,8 +13,7 @@ from app.bots.main_bot.keyboards.inline_keyboards import (
     get_go_back_keyboard,
 )
 
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="main_menu_cb_handler")
+logger = setup_logger('main_menu_cb_handler', config.LOG_LEVEL)
 
 router = Router(name=__name__)
 

@@ -1,13 +1,11 @@
-import logging
-
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.dependencies import get_db
 from app.models.dict_models import UserDictionaryRequest
-from config import LOG_CONFIG
+from config import config
+from logging_config import setup_logger
 
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="dictionary-endpoints")
+logger = setup_logger('dictionary_endpoints', config.LOG_LEVEL)
 
 router = APIRouter(prefix="/api")
 

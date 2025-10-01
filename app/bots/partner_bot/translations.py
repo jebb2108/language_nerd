@@ -228,6 +228,13 @@ MESSAGES = dict(
             "es": "Eres solo tú",
             "zh": "只有您一个人",
         },
+        "timed_out": {
+            "en": "⏳ Timed out. Sorry, didn't find you a partner :(",
+            "ru": "⏳ Время истекло. Прости, не нашла тебе партнера :(",
+            "de": "⏳ Zeit abgelaufen. Tut mir leid, ich habe keinen Partner für dich gefunden :(",
+            "es": "⏳ Tiempo agotado. Lo siento, no te encontré un compañero :(",
+            "zh": "⏳ 超时了。抱歉，没有为你找到伙伴 :(",
+        },
         "cancel_search": {
             "en": "⚠️ Ended search",
             "ru": "⚠️ Поиск завершен",

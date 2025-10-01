@@ -1,12 +1,10 @@
-import logging
 import asyncio
-
-from config import LOG_CONFIG
 from app.dependencies import get_report_processer
+from config import config
+from logging_config import setup_logger
 
 # Настройка логирования
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="schedulers")
+logger = setup_logger('schedulers', config.LOG_LEVEL)
 
 
 async def main() -> None:

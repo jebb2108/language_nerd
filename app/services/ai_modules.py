@@ -27,17 +27,15 @@ from tenacity import (
 )
 
 from app.models import DeliveryResult, UserReport, PendingReport
-from config import LOG_CONFIG, config
-
+from config import config
+from logging_config import setup_logger
 
 if TYPE_CHECKING:
     from aiogram import Bot
     from app.services.database import DatabaseService
 
 # Настройка логирования
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="ai_modules")
-
+logger = setup_logger('ai modules')
 # ========== ERROR HANDLING ==========
 class APIErrorHandler:
     """Обработчик ошибок API"""

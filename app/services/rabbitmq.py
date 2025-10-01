@@ -2,17 +2,17 @@ import json
 import logging
 
 import aio_pika
-from config import config, LOG_CONFIG
+from config import config
 
 from typing import TYPE_CHECKING, Optional
+
+from logging_config import setup_logger
 
 if TYPE_CHECKING:
     from aio_pika.abc import AbstractChannel
     from aio_pika.abc import AbstractRobustConnection
 
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="rabbitmq")
-
+logger = setup_logger('rabbitmq')
 
 class RabbitMQService:
     def __init__(self):

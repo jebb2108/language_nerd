@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from collections import defaultdict
 from typing import Callable, Any, Dict, TYPE_CHECKING
 from aiogram import BaseMiddleware
@@ -7,13 +6,13 @@ from aiogram.types import CallbackQuery, Message
 
 from app.dependencies import get_redis
 from app.models import SentMessage
-from config import LOG_CONFIG, config
+from config import config
+from logging_config import setup_logger
 
 if TYPE_CHECKING:
     from aiogram import Bot
 
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="message_tracker_middleware")
+logger = setup_logger('message_tracker', config.LOG_LEVEL)
 
 class MessageTrackerMiddleware(BaseMiddleware):
     def __init__(self, bot: "Bot"):

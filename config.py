@@ -1,26 +1,17 @@
-import os
-import sys
 import logging
+import os
+import logging_config
 from asyncio import Semaphore
 from dataclasses import dataclass
 from datetime import timezone, timedelta
-from pprint import pprint
 
 from dotenv import load_dotenv
+
 
 # Определите путь относительно текущего файла
 base_dir = os.path.dirname(os.path.abspath(__file__))
 env_path = os.path.join(base_dir, ".env")
 load_dotenv(env_path)
-
-# Logging configurations
-LOG_CONFIG = {
-    "level": logging.INFO,
-    "stream": sys.stdout,
-    "format": "%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-}
-
-LANG_CODE_LIST: list = list(["en", "ru", "de", "es", "zh"])
 
 
 @dataclass
@@ -100,6 +91,10 @@ class Config:
     YEAR: str = 'year'
 
     VERIFY_SSL = False
+
+    LOG_LEVEL = logging.DEBUG
+
+    WAITING_TIME_EXPIRED = 'waiting time expired'
 
 
 

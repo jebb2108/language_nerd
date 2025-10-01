@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from typing import Optional
+from logging_config import setup_logger
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -15,10 +16,9 @@ from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitMidd
 from app.dependencies import get_redis_client
 
 # Импорт функций БД
-from config import config, LOG_CONFIG
+from config import config
 
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="partner_bot")
+logger = setup_logger("partner_bot", config.LOG_LEVEL)
 
 # Глобальные переменные
 rate_limit_middleware: Optional["RateLimitMiddleware"] = None

@@ -1,8 +1,10 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta
+from logging_config import setup_logger
 
-from config import config, LOG_CONFIG
+from app.models import UserMatchResponse
+from config import config
 from faststream import FastStream
 from faststream.rabbit import RabbitBroker
 from faststream.rabbit.annotations import RabbitMessage
@@ -13,8 +15,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app.services.matching import MatchingService
 
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger("worker")
+logger = setup_logger('worker')
 
 broker = RabbitBroker(config.RABBITMQ_URL, logger=logger)
 
@@ -23,6 +24,8 @@ users_to_delete = {}
 async def elevate_user(user_data: dict, matcher: "MatchingService") -> bool:
     """Функция для обработки состояния пользовательского инфо в очереди ожидания"""
     global users_to_delete
+
+    logger.info(f"users_to_delete: {users_to_delete}")
 
     user_id = int(user_data["user_id"])
     if user_data["status"] in [
@@ -84,6 +87,10 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
     notifier = await get_notification()
     redis = await get_redis()
 
+    # Проверка, что user_id присутствует в очереди
+    queue = await redis.redis_client.lrange(f"waiting_queue", 0, -1)
+    if data["user_id"] not in [uid.decode() for uid in queue]: await msg.ack()
+
     # Оцениваем сообщение по определенным параметрам
     should_ack = await elevate_user(data, matcher)
     if should_ack:
@@ -103,11 +110,13 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
             f"Delaying processing for {remaining_delay:.2f} seconds for user {user_id}"
         )
 
-        logger.info(f"User {data["username"]} with ID {data["user_id"]} has the following criteria: "
+        logger.info(f"User {data["username"]} with ID {data["user_id"]} has the following criteria:\n"
+                    f"Status - {data["status"]}, "
                     f"Language - {data["criteria"]["language"]}, "
                     f"Fluency = {data["criteria"]["fluency"]}, "
                     f"Dating - {data["criteria"]["dating"]}, "
-                    f"Topic - {data["criteria"]["topic"]} ")
+                    f"Gender - {data["gender"]}, "
+                    f"Topic - {data["criteria"]["topic"]}, ")
 
         # Откладываем ack и публикуем сообщение снова через задержку
         await asyncio.sleep(remaining_delay)
@@ -120,15 +129,15 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
         return await msg.ack()
 
     # Поиск подходящей пары в Redis
-    room_id, user1_id, user2_id = await matcher.find_match(user_id)
+    room_id, user, partner = await matcher.find_match(user_id)
 
     if room_id:
         # Пара найдена: уведомляем обоих пользователей
-        matcher.user_status[user1_id]["acked"] = True
-        matcher.user_status[user2_id]["acked"] = True
-        await notifier.notify_match(user1_id, user2_id, room_id)
-        await redis.remove_from_queue(user1_id)
-        await redis.remove_from_queue(user2_id)
+        matcher.user_status[user.user_id]["acked"] = True
+        matcher.user_status[partner.user_id]["acked"] = True
+        await notifier.notify_match(room_id, user, partner)
+        await redis.remove_from_queue(user.user_id)
+        await redis.remove_from_queue(partner.user_id)
         return await msg.ack()
 
     # Если пара не найдена, отправляем сообщение снова
@@ -138,17 +147,17 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
     # где нет подходящей пары
     if retry_count == 5:
         data["criteria"]["dating"] = "False"
-        await redis.update_user(user_id=user_id, user_data=data["criteria"])
+        await redis.update_user(user_id=user_id, user_data=data)
 
     elif retry_count == 10:
         data["criteria"]["topic"] = "general"
-        await redis.update_user(user_id=user_id, user_data=data["criteria"])
+        await redis.update_user(user_id=user_id, user_data=data)
 
     elif retry_count == 15:
         indx = int(data["criteria"]["fluency"])
         if indx > 0:
             data["criteria"]["fluency"] = str(indx - 1)
-            await redis.update_user(user_id=user_id, user_data=data["criteria"])
+            await redis.update_user(user_id=user_id, user_data=data)
 
     orig_time = datetime.fromisoformat(data["created_at"])
     curr_time = datetime.fromisoformat(data["current_time"])
@@ -166,10 +175,15 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
         )
 
     else:
+        user_data = UserMatchResponse(
+            status=config.WAITING_TIME_EXPIRED,
+            user_id=data["user_id"],
+            lang_code=data["lang_code"]
+        )
         logger.info(f"User {user_id} has run out of time")
         # Очищаем timestamp при превышении лимита попыток
         await redis.remove_from_queue(user_id=user_id)
-        await notifier.execute_time_out(user_data=data)
+        await notifier.execute_time_out(user_data=user_data)
 
     return await msg.ack()
 
@@ -177,7 +191,8 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
 
 async def main():
     # Запуск основной программы
-    app = FastStream(broker, logger=logger)
+    logger.info('Starting worker ...')
+    app = FastStream(broker, logger=None)
     await app.run()
 
 

@@ -5,8 +5,9 @@ from aiogram.types import Message
 from aiogram.filters import Command
 
 from app.dependencies import get_db
-from config import LOG_CONFIG, config
+from config import config
 from app.services.ai_modules import ReportDeliveryManager, TelegramRateLimiter, PendingReportsProcessor
+from logging_config import setup_logger
 
 
 # ========== COMPATIBILITY FUNCTIONS ==========
@@ -20,8 +21,7 @@ async def send_pending_reports(bot, db) -> None:
     pending_report_processer = PendingReportsProcessor(delivery_manager)
     await pending_report_processer.process_all_pending_reports()
 
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="send_pending_handler")
+logger = setup_logger('send_pending_handler', config.LOG_LEVEL)
 
 router = Router(name=__name__)
 

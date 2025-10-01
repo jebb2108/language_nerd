@@ -6,7 +6,7 @@ from aiogram.types import CallbackQuery, FSInputFile
 
 from app.bots.partner_bot.translations import TRANSCRIPTIONS
 from app.dependencies import get_db
-from config import LOG_CONFIG, config, LANG_CODE_LIST
+from config import config
 from app.bots.main_bot.keyboards.inline_keyboards import (
     show_language_keyboard,
     show_fluency_keyboard,
@@ -16,10 +16,9 @@ from app.bots.main_bot.keyboards.inline_keyboards import (
     get_on_main_menu_keyboard
 )
 from app.bots.main_bot.translations import MESSAGES, QUESTIONARY
+from logging_config import setup_logger
 
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="registration_cb_handler")
-
+logger = setup_logger('registration_cb_handler', config.LOG_LEVEL)
 router = Router(name=__name__)
 
 
@@ -139,7 +138,7 @@ async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
     fluency = int(data.get("fluency"))
     topic = data.get("topic", "general")
     lang_code = data.get("lang_code")
-    if lang_code not in LANG_CODE_LIST: lang_code = "en"
+    if lang_code not in ["en", "ru", "de", "es", "zh"]: lang_code = "en"
 
     msg = f"{MESSAGES['welcome'][lang_code]}"
     if not await database.check_profile_exists(user_id):

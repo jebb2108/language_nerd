@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
 from pydantic import BaseModel, Field
 
 from app.models import Language, Topic
+from config import config
 
 
 class UserMatchRequest(BaseModel):
@@ -10,13 +11,19 @@ class UserMatchRequest(BaseModel):
     Модель запроса на поиск собеседника.
     Содержит user_id и критерии поиска.
     """
-
     user_id: int = Field(..., description="Уникальный идентификатор пользователя")
     username: str = Field(..., description="Никнейм пользователя")
-    criteria: Dict[str, str] = Field(..., description="Критерии поиска собеседника")
-    lang_code: Optional[str] = Field(..., description="Код языка пользователя")
-    timestamp: Optional[datetime] = Field(
-        default_factory=datetime.now, description="Время создания запроса"
+    criteria: Dict[str, Any] = Field(..., description="Критерии поиска собеседника")
+    gender: str = Field(..., description="Пол пользователя")
+    lang_code: str = Field(..., description="Код языка пользователя")
+    status: str = Field(default=config.SEARCH_STARTED, description="Статус запроса")
+    created_at: Optional[str] = Field(
+        default_factory=lambda: datetime.now(tz=config.TZINFO).isoformat(),
+        description="Время создания запроса"
+    )
+    current_time: Optional[str] = Field(
+        default_factory=lambda: datetime.now(tz=config.TZINFO).isoformat(),
+        description="Время создания запроса"
     )
     source: Optional[str] = Field(
         default="bot", description="Источник запроса (api, bot, etc)"
@@ -30,6 +37,7 @@ class UserMatchResponse(BaseModel):
 
     status: str = Field(..., description="Статус операции")
     user_id: int = Field(..., description="ID пользователя")
+    lang_code: str = Field(..., description="Код языка пользователя")
     queue_position: Optional[int] = Field(
         None, description="Позиция в очереди (если применимо)"
     )
@@ -56,9 +64,10 @@ class MatchCriteria(BaseModel):
 
 
 class ChatSessionRequest(BaseModel):
+    room_id: str = Field(..., description="Уникальный ключ для комнаты")
     user_id: int = Field(..., description="ID первого пользователя")
     partner_id: int = Field(..., description="ID второго пользователя")
-    room_id: str = Field(..., description="Уникальный ключ для комнаты")
+    matched_at: str = Field(..., description="Время создания пары")
 
 
 class MatchFoundEvent(BaseModel):
@@ -66,11 +75,10 @@ class MatchFoundEvent(BaseModel):
     Модель события найденного совпадения.
     Используется потребителем очереди для уведомления пользователей.
     """
-
-    user_id_1: str
-    user_id_2: str
-    match_criteria: Dict[str, str]
-    matched_at: datetime
-    chat_room_id: str
+    user_id: int = Field(..., description="User ID участника")
+    username: str = Field(..., description="Username участника")
+    gender: str = Field(..., description="Пол участника")
+    lang_code: str = Field(..., description="Языковой код участника")
+    match_criteria: Dict[str, str] = Field(..., description="Критерии найденной пары")
 
 

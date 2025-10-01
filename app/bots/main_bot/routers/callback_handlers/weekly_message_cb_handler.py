@@ -1,21 +1,17 @@
-import logging
-
+from config import config
+from logging_config import setup_logger
 from aiogram import Router, types
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
-
-from config import LOG_CONFIG
-from app.bots.main_bot.middlewares.resources_middleware import ResourcesMiddleware
-
 from app.bots.main_bot.translations import WEEKLY_QUIZ
 from app.bots.main_bot.keyboards.inline_keyboards import (
     show_word_options_keyboard,
     get_finish_button,
 )
+from app.dependencies import get_db
 
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="weekly_message_cb_handler")
+logger = setup_logger('weekly_message_cb_handler', config.LOG_LEVEL)
 
 router = Router(name=__name__)
 
@@ -24,11 +20,10 @@ router = Router(name=__name__)
 async def start_report_handler(
     callback: types.CallbackQuery,
     state: FSMContext,
-    database: ResourcesMiddleware,
 ):
 
     await callback.answer()
-
+    database = await get_db()
     data = await state.get_data()
 
     try:
@@ -68,13 +63,11 @@ async def start_report_handler(
 
 
 @router.callback_query(lambda callback: callback.data.startswith("quiz:"))
-async def handle_word_quiz(
-    callback: CallbackQuery,
-    state: FSMContext,
-    database: ResourcesMiddleware,
-):
+async def handle_word_quiz(callback: CallbackQuery, state: FSMContext):
+
     await callback.answer()
 
+    database = await get_db()
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
 

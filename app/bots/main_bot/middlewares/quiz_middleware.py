@@ -5,9 +5,7 @@ from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import LOG_CONFIG # noqa
 
-logging.basicConfig(**LOG_CONFIG)
 logger = logging.getLogger(name='message_mgr')
 
 

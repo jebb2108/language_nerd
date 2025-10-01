@@ -1,5 +1,3 @@
-import logging
-import sys
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
@@ -9,15 +7,14 @@ from aiogram import BaseMiddleware
 from aiogram.types import Message
 from asyncpg.pgproto.pgproto import timedelta
 
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from config import config
+from logging_config import setup_logger
+
 
 from app.bots.partner_bot.utils.async_timed_queue import AsyncTimedQueue
-from config import LOG_CONFIG
 
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="rate_limit_middleware")
+logger = setup_logger('rate_limit_middleware', config.LOG_LEVEL)
 
 
 @dataclass(frozen=False)

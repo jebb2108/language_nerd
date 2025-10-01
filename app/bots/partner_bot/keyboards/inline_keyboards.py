@@ -1,7 +1,7 @@
 from aiogram.types import InlineKeyboardButton, WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from app.bots.partner_bot.translations import BUTTONS, QUESTIONARY
+from app.bots.partner_bot.translations import BUTTONS
 
 
 def show_topic_keyboard(lang_code):

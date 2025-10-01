@@ -1,7 +1,4 @@
 import asyncio
-import logging
-from pyexpat.errors import messages
-from time import sleep
 
 import aiohttp
 from aiogram import F, Router
@@ -9,8 +6,9 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from app.dependencies import get_redis, get_redis_client, get_db
-from config import LOG_CONFIG, config
+from app.dependencies import get_redis_client, get_db
+from app.models import UserMatchRequest
+from config import config
 from app.bots.partner_bot.utils.access_data import data_storage
 from app.bots.partner_bot.translations import MESSAGES, TRANSCRIPTIONS
 
@@ -19,11 +17,11 @@ from app.bots.partner_bot.keyboards.inline_keyboards import (
     show_partner_menu_keyboard,
     get_search_keyboard,
 )
+from logging_config import setup_logger
 
 router = Router(name=__name__)
 
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="partner_cb_handler")
+logger = setup_logger('partner_cb_handler', config.LOG_LEVEL)
 
 
 @router.callback_query(F.data == "main_bot")
@@ -64,8 +62,7 @@ async def about_handler(
 
     await callback.answer()
 
-    database = await get_db()
-    user_id = callback.from_user.id
+    user_id = callback.message.from_user.id
     data = await data_storage.get_storage_data(user_id, state)
     lang_code = data.get("lang_code", "en")
 
@@ -126,7 +123,6 @@ async def cancel_choosing_topic(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
 
-    database = await get_db()
     await callback.message.delete()
     user_id = callback.from_user.id
     data = await data_storage.get_storage_data(user_id=user_id, state=state)
@@ -177,7 +173,7 @@ async def cancel_search(
     await callback.answer()
 
 
-    redis = await get_redis_client()
+    redis_client = await get_redis_client()
 
     """Обработчик callback(а) отменяет поиск партнера"""
 
@@ -185,40 +181,52 @@ async def cancel_search(
     user_id = data.get("user_id")
     username = data.get("username")
     language = data.get("language")
+    fluency = data.get("fluency")
     topic = data.get("topic")
-    dating = data.get("dating")
+    dating = str(data.get("dating"))
+    gender = data.get("gender") or "unknown"
     lang_code = data.get("lang_code")
 
     # Отменяем предыдущий поиск, если он был
-    is_searching = await redis.get(f"searching:{user_id}")
+    is_searching = await redis_client.get(f"searching:{user_id}")
     if is_searching:
-        await redis.delete(f"searching:{user_id}")
+        await redis_client.delete(f"searching:{user_id}")
         logger.debug(f"Отменен предыдущий поиск для пользователя {user_id}")
 
     await callback.message.edit_text(text=MESSAGES["cancel_search"][lang_code])
 
     # Отправляю запрос на сервер
-    url = "{DOMAIN}/api/cancel".format(DOMAIN=f"{config.BASE_URL}:{config.CHAT_SERVER_PORT}")
-
-    payload = {
-        "user_id": int(user_id),
-        "username": username,
-        "criteria": {
-            "dating": str(dating),
+    headers = {"Content-Type": "application/json"}
+    payload = UserMatchRequest(
+        status=config.SEARCH_CANCELED,
+        user_id=user_id,
+        username=username,
+        gender=gender,
+        criteria={
             "language": language,
+            "fluency": fluency,
+            "dating": dating,
             "topic": topic,
         },
-    }
+        lang_code=lang_code,
+    )
+
+    url = "{DOMAIN}/api/match".format(
+        DOMAIN=f"{config.BASE_URL}:{config.CHAT_SERVER_PORT}"
+    )
+
+    logger.info(f"Отправка запроса на: {url}")
+    logger.debug(f"Данные запроса: {payload}")
 
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                    url=url, json=payload, headers={"Content-Type": "application/json"}
+                    url=url, json=payload.model_dump(), headers=headers
              ) as response:
 
                 response_text = await response.text()
-                logger.warning(f"Статус ответа: {response.status}")
-                logger.warning(f"Тело ответа: {response_text}")
+                logger.debug(f"Статус ответа: {response.status}")
+                logger.debug(f"Тело ответа: {response_text}")
 
                 if response.status != 200:
                     logger.error(
@@ -226,6 +234,7 @@ async def cancel_search(
                     )
                 else:
                     logger.info("Запрос успешно обработан")
+                    await asyncio.sleep(1)
 
     except Exception as e:
         logger.error(f"Исключение при выполнении запроса: {e}")
@@ -240,6 +249,8 @@ async def new_session_handler(
 
     await callback.answer()
 
+
+
     database = await get_db()
     redis_client = await get_redis_client()
 
@@ -248,7 +259,8 @@ async def new_session_handler(
     username = data.get("username")
     language = data.get("language")
     fluency = data.get("fluency")
-    dating = data.get("dating")
+    dating = str(data.get("dating"))
+    gender = data.get("gender") or "unknown"
     topic = data.get("topic")
     lang_code = data.get("lang_code", "en")
 
@@ -272,31 +284,35 @@ async def new_session_handler(
     logger.debug(f"Создана сессия поиска для пользователя {user_id}")
 
     # Отправляю запрос на сервер
-    url = "{DOMAIN}/api/match".format(DOMAIN=f"{config.BASE_URL}:{config.CHAT_SERVER_PORT}")
-
-    payload = {
-        "user_id": int(user_id),
-        "username": username,
-        "criteria": {
+    headers = {"Content-Type": "application/json"}
+    payload = UserMatchRequest(
+        user_id=user_id,
+        username=username,
+        gender=gender,
+        criteria={
             "language": language,
-            "fluency": str(fluency),
-            "dating": str(dating),
+            "fluency": fluency,
+            "dating": dating,
             "topic": topic,
         },
-        "lang_code": lang_code,
-    }
+        lang_code=lang_code,
+    )
 
-    logger.warning(f"Отправка запроса на: {url}")
-    logger.warning(f"Данные запроса: {payload}")
+    url = "{DOMAIN}/api/match".format(
+        DOMAIN=f"{config.BASE_URL}:{config.CHAT_SERVER_PORT}"
+    )
+
+    logger.info(f"Отправка запроса на: {url}")
+    logger.debug(f"Данные запроса: {payload}")
 
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                    url=url, json=payload, headers={"Content-Type": "application/json"}
+                    url=url, json=payload.model_dump(), headers=headers
                 ) as response:
                 response_text = await response.text()
-                logger.warning(f"Статус ответа: {response.status}")
-                logger.warning(f"Тело ответа: {response_text}")
+                logger.debug(f"Статус ответа: {response.status}")
+                logger.debug(f"Тело ответа: {response_text}")
 
                 if response.status != 200:
                     logger.error(

@@ -14,6 +14,10 @@ from config import config
 
 from app.api.endpoints.matchmaking import router as match_router
 
+from logging_config import setup_logger
+
+logger = setup_logger('chat server')
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

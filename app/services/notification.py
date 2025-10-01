@@ -3,20 +3,23 @@ import logging
 import aiohttp
 
 from typing import TYPE_CHECKING
-from config import LOG_CONFIG, config
+
+from app.models import MatchFoundEvent
+from app.models import UserMatchResponse
+from config import config
+from logging_config import setup_logger
 
 if TYPE_CHECKING:
     from app.models import UserMatchRequest
 
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="notification")
+logger = setup_logger('notification')
 
 
 class NotificationService:
     def __init__(self):
         self.lock = asyncio.Lock()
 
-    async def execute_time_out(self, user_data: "UserMatchRequest") -> None:
+    async def execute_time_out(self, user_data: "UserMatchResponse") -> None:
         url = f"{config.BASE_URL}:{config.CHAT_SERVER_PORT}/api/timed_out"
         async with self.lock:
                 async with aiohttp.ClientSession() as session:
@@ -37,17 +40,16 @@ class NotificationService:
                         logger.error(f"Exception during notification: {e}")
 
 
-    async def notify_match(self, user1_id, user2_id, room_id) -> None:
+    async def notify_match(self, room_id: str, user_event: "MatchFoundEvent", partner_event: "MatchFoundEvent") -> None:
         async with self.lock:
             async with aiohttp.ClientSession() as session:
-                json_data = {
-                    "user_id": int(user1_id),
-                    "partner_id": int(user2_id),
-                    "room_id": str(room_id),
-                }
 
-                logger.warning(f"Sending notification: {json_data}")
                 url = f"{config.BASE_URL}:{config.CHAT_SERVER_PORT}/api/notify"
+                json_data = {
+                    "room_id": room_id,
+                    "user": user_event.model_dump(),
+                    "partner": partner_event.model_dump(),
+                }
 
                 try:
                     resp = await session.post(

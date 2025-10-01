@@ -1,5 +1,3 @@
-import logging
-
 from typing import Union
 
 import aiohttp
@@ -11,8 +9,8 @@ from aiogram.enums import ParseMode
 
 from app.bots.partner_bot.keyboards.inline_keyboards import show_topic_keyboard
 from app.dependencies import get_db, get_redis_client
-from config import config, LOG_CONFIG
-
+from app.models import UserMatchRequest
+from config import config
 from app.bots.partner_bot.translations import MESSAGES, TRANSCRIPTIONS
 
 from app.bots.partner_bot.keyboards.inline_keyboards import (
@@ -21,20 +19,20 @@ from app.bots.partner_bot.keyboards.inline_keyboards import (
 )
 
 from app.bots.partner_bot.utils.access_data import data_storage
+from logging_config import setup_logger
 
 # Инициализируем роутер
 router = Router(name=__name__)
 
-logging.basicConfig(**LOG_CONFIG)
-logger = logging.getLogger(name="partner_commands")
+logger = setup_logger('partner_commands', config.LOG_LEVEL)
 
 
 @router.message(Command("menu", prefix="!/"))
 async def show_main_menu(
     message: Message, state: FSMContext):
     """Главное меню бота"""
-    user_id = message.from_user.id
     database = await get_db()
+    user_id = message.from_user.id
     data = await data_storage.get_storage_data(user_id, state)
     prefered_name = data.get("pref_name", None)
     language = data.get("language")
@@ -43,6 +41,13 @@ async def show_main_menu(
     if not await database.check_user_exists(user_id):
         await message.answer(
             text="I can`t seem to know you :( Go to @lllangbot"
+        )
+        return
+
+    elif prefered_name is None:
+        await message.answer(
+            text=MESSAGES["not_registered"][lang_code],
+            parse_mode=ParseMode.HTML,
         )
         return
 
@@ -115,7 +120,8 @@ async def new_session_handler(
     username = data.get("username")
     language = data.get("language")
     fluency = data.get("fluency")
-    dating = data.get("dating")
+    dating = str(data.get("dating"))
+    gender = data.get("gender") or "unknown"
     topic = data.get("topic")
     lang_code = data.get("lang_code")
 
@@ -145,27 +151,30 @@ async def new_session_handler(
     )
 
     # Отправляю запрос на сервер
-    url = "{DOMAIN}/api/match".format(DOMAIN=f"{config.BASE_URL}:{config.CHAT_SERVER_PORT}")
-
-    payload = {
-        "user_id": int(user_id),
-        "username": username,
-        "criteria": {
+    url = "{DOMAIN}/api/match".format(
+        DOMAIN=f"{config.BASE_URL}:{config.CHAT_SERVER_PORT}"
+    )
+    headers = {"Content-Type": "application/json"}
+    payload = UserMatchRequest(
+        user_id=user_id,
+        username=username,
+        gender=gender,
+        criteria={
             "language": language,
-            "fluenct": str(fluency),
-            "dating": str(dating),
+            "fluency": fluency,
+            "dating": dating,
             "topic": topic,
         },
-        "lang_code": lang_code,
-    }
+        lang_code = lang_code,
+    )
 
-    logger.warning(f"Отправка запроса на: {url}")
-    logger.warning(f"Данные запроса: {payload}")
+    logger.info(f"Отправка запроса на: {url}")
+    logger.debug(f"Данные запроса: {payload}")
 
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                url=url, json=payload, headers={"Content-Type": "application/json"}
+                url=url, json=payload.model_dump(), headers=headers
             ) as response:
                 response_text = await response.text()
                 logger.warning(f"Статус ответа: {response.status}")
