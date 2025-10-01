@@ -73,7 +73,7 @@ async def get_my_location(message: Message, state: FSMContext):
     lang_code = data.get("lang_code")
 
     result = await database.get_users_location(user_id)
-    if result is None:
+    if not result or result["latitude"] is None:
         await message.answer(text=MESSAGES["no_location"][lang_code])
         return
 
