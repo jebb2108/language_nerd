@@ -108,6 +108,7 @@ class DatabaseService:
                             prefered_name VARCHAR(50) NOT NULL,
                             birthday DATE NOT NULL,
                             dating BOOLEAN DEFAULT FALSE,
+                            gender VARCHAR(50) NOT NULL,
                             is_active BOOLEAN DEFAULT TRUE,
                             about TEXT NULL,
                             UNIQUE (user_id)
@@ -243,19 +244,21 @@ class DatabaseService:
         prefered_name: str,
         birthday: datetime,
         about: str,
+        gender: bool = None,
         dating: bool = False,
         status: str = "rookie",
     ) -> None:
         async with self.acquire_connection() as conn:
             await conn.execute(
                 """
-            INSERT INTO users_profile (user_id, status, prefered_name, birthday, dating, about)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO users_profile (user_id, status, prefered_name, birthday, dating, gender, about)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             ON CONFLICT (user_id) DO UPDATE
             SET status = EXCLUDED.status,
                 prefered_name = EXCLUDED.prefered_name,
                 birthday = EXCLUDED.birthday,
                 dating = EXCLUDED.dating,
+                gender = EXCLUDED.gender,
                 about = EXCLUDED.about
             """,
                 user_id,
@@ -263,10 +266,13 @@ class DatabaseService:
                 prefered_name,
                 birthday,
                 dating,
+                gender,
                 about,
             )
             logger.info(
-                f"User {user_id} profile added. Their name: {prefered_name}, birthday: {birthday}, dating paramm: {dating}, status: {status},\n intro: {about}"
+                f"User {user_id} profile added. Their name: {prefered_name},"
+                f" birthday: {birthday}, dating paramm: {dating}, gender: {gender}, "
+                f"status: {status},\n intro: {about}"
             )
             return
 

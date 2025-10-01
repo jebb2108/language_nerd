@@ -269,6 +269,17 @@ QUESTIONARY = dict(
             "这样我就能正确处理您的个人资料信息\n\n"
             "好的，您希望别人看到什么名字？\n",
         },
+        "need_age": {
+            "en": "How old are you?\n\n"
+                  "Please, enter birth date in format: <b>DD.MM.YYYY</b>\n\n",
+            "ru": "Сколько тебе лет?\n\n"
+                  "Пожалуйста, введи дату рождения в формате: <b>ДД.ММ.ГГГГ</b>\n\n",
+            "de": "Wie alt sind Sie?\n\n"
+                  "Bitte geben Sie das Geburtsdatum im Format ein: <b>TT.MM.JJJJ</b>\n\n",
+            "es": "¿Cuántos años tienes?\n\n"
+                  "Por favor, introduce la fecha de nacimiento en formato: <b>DD.MM.AAAA</b>\n\n",
+            "zh": "您多大了？\n\n" "请输入出生日期，格式为：<b>DD.MM.YYYY</b>\n\n",
+        },
         "need_intro": {
             "en": "Tell me a few facts about yourself:\n\n"
             "For example, what do you do in your free time?\n"
@@ -291,6 +302,20 @@ QUESTIONARY = dict(
             "也许您有很酷的爱好、最喜欢的电视节目或\n"
             "散步的地方？欢迎任何小细节\n\n",
         },
+        "need_dating": {
+            "en": "Do you want to find a partner for a date?",
+            "ru": "Ты хочешь найти вторую половинку?",
+            "de": "Möchten Sie einen Partner für ein Date finden?",
+            "es": "¿Quieres encontrar una pareja para una cita?",
+            "zh": "您想找约会对象吗？",
+        },
+        "need_gender": {
+            "en": "What is your gender?",
+            "ru": "Какой твой пол?",
+            "de": "Was ist dein Geschlecht?",
+            "es": "¿Cuál es tu género?",
+            "zh": "你的性别是什么？",
+        },
         "need_location": {
             "en": "For the correct work of the application, your location is needed, please provide it by the button below.\n\n"
             "All your information is confidential. Your location will be stored in encrypted form.\n\n"
@@ -307,24 +332,6 @@ QUESTIONARY = dict(
             "zh": "为了应用程序的正常工作，需要您的位置，请通过下面的按钮提供。\n\n"
             "您的所有信息都是保密的。您的位置将以加密形式存储。\n\n"
             "如果您不希望我们使用您的位置，请点击'拒绝'按钮",
-        },
-        "need_dating": {
-            "en": "Do you want to find a partner for a date?",
-            "ru": "Ты хочешь найти вторую половинку?",
-            "de": "Möchten Sie einen Partner für ein Date finden?",
-            "es": "¿Quieres encontrar una pareja para una cita?",
-            "zh": "您想找约会对象吗？",
-        },
-        "need_age": {
-            "en": "How old are you?\n\n"
-            "Please, enter birth date in format: <b>DD.MM.YYYY</b>\n\n",
-            "ru": "Сколько тебе лет?\n\n"
-            "Пожалуйста, введи дату рождения в формате: <b>ДД.ММ.ГГГГ</b>\n\n",
-            "de": "Wie alt sind Sie?\n\n"
-            "Bitte geben Sie das Geburtsdatum im Format ein: <b>TT.MM.JJJJ</b>\n\n",
-            "es": "¿Cuántos años tienes?\n\n"
-            "Por favor, introduce la fecha de nacimiento en formato: <b>DD.MM.AAAA</b>\n\n",
-            "zh": "您多大了？\n\n" "请输入出生日期，格式为：<b>DD.MM.YYYY</b>\n\n",
         },
     }
 )
@@ -447,6 +454,22 @@ BUTTONS = dict(
             "de": "🍻🤜🤛 Nein, ich möchte einen Freund finden",
             "es": "🍻🤜🤛 No, quiero encontrar un amigo",
             "zh": "🍻🤜🤛 不，我想找个朋友",
+        },
+        "gender": {
+            "male": {
+                "en": "♂ Male",
+                "ru": "♂ Мужской",
+                "de": "♂ Männlich",
+                "es": "♂ Masculino",
+                "zh": "♂ 男",
+            },
+            "female": {
+                "en": "♀ Female",
+                "ru": "♀ Женский",
+                "de": "♀ Weiblich",
+                "es": "♀ Femenino",
+                "zh": "♀ 女",
+            },
         },
         "location": {
             "en": "📍 Send location",

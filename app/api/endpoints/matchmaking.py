@@ -23,6 +23,7 @@ logger = logging.getLogger("endpoints")
 
 router = APIRouter(prefix="/api")
 
+
 @router.post("/match")
 async def request_match(
     request: UserMatchRequest,
@@ -52,14 +53,38 @@ async def request_match(
         "current_time": time_str,
         "created_at": time_str,
         "status": config.SEARCH_STARTED,
+        "lang_code": request.lang_code,
     }
 
     await rabbitmq.publish_message(message)
     return {"status": "user added to queue"}
 
 
+@router.post("/timed_out")
+async def exit_match(data: dict, db=Depends(get_db), redis=Depends(get_redis)):
+    user_id = data.get("user_id")
+    lang_code = data.get("lang_code")
+    user = await db.check_user_exists(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    from aiogram import Bot
+    bot = Bot(token=config.BOT_TOKEN_PARTNER)
+
+    curr_msg = await redis.get_search_message_id(user_id)
+
+    await bot.edit_message_text(
+        text=MESSAGES["search_canceled"][lang_code],
+        chat_id=user_id,
+        message_id=curr_msg.decode(),
+        reply_markup=None,
+        parse_mode=ParseMode.HTML,
+    )
+
+
+
 @router.post("/cancel")
-async def request_match(
+async def cancel_match(
     request: UserMatchRequest,
     rabbitmq: RabbitMQService = Depends(get_rabbitmq),
     db=Depends(get_db),
@@ -78,6 +103,7 @@ async def request_match(
         "current_time": time_str,
         "created_at": time_str,
         "status": config.SEARCH_CANCELED,
+        "lang_code": request.lang_code
     }
 
     await rabbitmq.publish_message(message)
@@ -87,9 +113,7 @@ async def request_match(
 
 @router.post("/notify")
 async def notify_users_re_match(
-    request: ChatSessionRequest,
-    db=Depends(get_db),
-    redis=Depends(get_redis)
+    request: ChatSessionRequest, db=Depends(get_db), redis=Depends(get_redis)
 ):
 
     from aiogram import Bot
@@ -138,7 +162,7 @@ async def notify_users_re_match(
         logger.warning("partners search msg id: %s", int(prev_partners_msg_id))
 
         await bot.edit_message_text(
-            text = msg1.format(nickname=partners_nickname, about=partners_about),
+            text=msg1.format(nickname=partners_nickname, about=partners_about),
             chat_id=request.user_id,
             message_id=prev_users_search_msg_id.decode(),
             reply_markup=create_start_chat_button(lang_code=lang_code1, link=link1),
@@ -152,6 +176,5 @@ async def notify_users_re_match(
             reply_markup=create_start_chat_button(lang_code=lang_code2, link=link2),
             parse_mode=ParseMode.HTML,
         )
-
 
     return {"status": "notification_sent"}

@@ -34,7 +34,6 @@ class RedisService:
     async def save_sent_message(self, chat_id: int, message_info: "SentMessage", ttl: int):
         # Сохряняет сообщения, которые нужно удалить через некоторое время
         key = f"search_message:{chat_id}"
-        logger.warning(f"Data: {message_info}")
         await self.redis_client.hset(key, mapping=message_info.model_dump())
         # Устанавливает время жизни для сообщения
         await self.redis_client.expire(key, ttl)
@@ -47,7 +46,7 @@ class RedisService:
         # Достает определенное сообщение
         key = f"search_message:{chat_id}"
         res =  await self.redis_client.hget(key, "message_id")
-        logger.warning(f"Search message id for user {chat_id}: {res}")
+        logger.debug(f"Search message id for user {chat_id}: {res}")
         return res
 
     async def exists(self, *kwargs: str) -> bool:

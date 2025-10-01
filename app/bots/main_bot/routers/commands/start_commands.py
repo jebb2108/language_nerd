@@ -20,7 +20,7 @@ router = Router(name=__name__)
 
 
 @router.message(Command("start", prefix="!/"))
-async def start_with_polling(message: Message,state: FSMContext):
+async def start_with_polling(message: Message, state: FSMContext):
     """
     Стартовая команда: проверяем в БД существование пользователя,
     сохраняем основные поля в state и либо идём в show_main_menu, либо стартуем опрос.
@@ -42,9 +42,10 @@ async def start_with_polling(message: Message,state: FSMContext):
         # если пользователь есть — сразу меню
         return await show_main_menu(message, state)
 
-
-    msg = f"{MESSAGES['hello'][lang_code]} <b>{first_name}</b>!\n\n" \
-          f"{QUESTIONARY["intro"][lang_code]}"
+    msg = (
+        f"{MESSAGES['hello'][lang_code]} <b>{first_name}</b>!\n\n"
+        f"{QUESTIONARY["intro"][lang_code]}"
+    )
 
     await message.bot.send_message(
         chat_id=message.chat.id,

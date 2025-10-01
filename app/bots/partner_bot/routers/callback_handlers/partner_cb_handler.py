@@ -283,6 +283,7 @@ async def new_session_handler(
             "dating": str(dating),
             "topic": topic,
         },
+        "lang_code": lang_code,
     }
 
     logger.warning(f"Отправка запроса на: {url}")

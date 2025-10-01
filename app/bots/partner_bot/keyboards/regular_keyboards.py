@@ -9,13 +9,28 @@ def show_location_keyboard(lang_code):
     share_button = KeyboardButton(
         text=BUTTONS["location"][lang_code],
         request_location=True,
-        is_persistent=True,
     )
     cancel_button = KeyboardButton(text=BUTTONS["cancel"][lang_code])
     builder.add(share_button, cancel_button)
     builder.adjust(1)
 
     return builder.as_markup(resize_keyboard=True)
+
+def show_gender_keyboard(lang_code):
+    builder = ReplyKeyboardBuilder()
+    male_button = KeyboardButton(
+        text=BUTTONS["gender"]["male"][lang_code]
+    )
+    female_button = KeyboardButton(
+        text=BUTTONS["gender"]["female"][lang_code]
+    )
+    cancel_button = KeyboardButton(
+        text=BUTTONS["cancel"][lang_code]
+    )
+    builder.add(male_button, female_button, cancel_button)
+    builder.adjust(2, 1)
+    return builder.as_markup(resize_keyboard=True)
+
 
 
 def show_dating_keyboard(lang_code):

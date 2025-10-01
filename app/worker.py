@@ -169,6 +169,7 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
         logger.info(f"User {user_id} has run out of time")
         # Очищаем timestamp при превышении лимита попыток
         await redis.remove_from_queue(user_id=user_id)
+        await notifier.execute_time_out(user_data=data)
 
     return await msg.ack()
 
