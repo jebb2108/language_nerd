@@ -78,7 +78,7 @@ class RedisService:
 
 
 
-        logger.info("User`s data has been updated on Redis side")
+        logger.info("User %s data has been updated on Redis side", user_id)
 
     async def add_to_queue(self, user_data: "UserMatchRequest") -> None:
         """Добавление пользователя в очередь поиска"""
