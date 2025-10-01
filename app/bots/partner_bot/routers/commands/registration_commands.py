@@ -52,7 +52,7 @@ async def start(message: Message, state: FSMContext):
     database = await get_db()
 
     if await database.check_profile_exists(message.from_user.id):
-        return await show_main_menu(message, state, database)
+        return await show_main_menu(message, state)
 
     user_id = message.from_user.id
 
@@ -162,7 +162,6 @@ async def process_intro(
     == BUTTONS["yes_to_dating"][message.from_user.language_code],
 )
 async def agreed_to_dating_handler(message: Message, state: FSMContext):
-    database = await get_db()
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
     msg = QUESTIONARY["need_gender"][lang_code]
@@ -171,7 +170,6 @@ async def agreed_to_dating_handler(message: Message, state: FSMContext):
         parse_mode=ParseMode.HTML,
         reply_markup=show_gender_keyboard(lang_code),
     )
-    await state.update_data(gender=message.text)
     await state.set_state(PollingState.waiting_for_gender)
     return
 
@@ -185,20 +183,17 @@ async def process_gender(message: Message, state: FSMContext):
     name = data.get("name")
     birthday = datetime.strptime(
         data.get("bday", "01.01.1800"), "%d.%m.%Y").date()
-    intro = data.get("intro", "non-existent")
-    gender = data.get("gender")
+    intro = data.get("intro")
+    gender = message.text
     lang_code = data.get("lang_code")
     # Сохраняем профиль
     if gender in BUTTONS["cancel"].values():
         await database.add_users_profile(user_id=user_id, prefered_name=name, birthday=birthday, about=intro)
-        await message.edit_text(
-            text=QUESTIONARY["need_gender"][lang_code],
-            parse_mode=ParseMode.HTML,
-            reply_markup=None,
-        )
-        return await show_main_menu(message, state, database)
+        await message.answer(text=MESSAGES["no_worries_dating"][lang_code], reply_markup=ReplyKeyboardRemove())
+        return
 
-    formated_gender = "male" if gender in BUTTONS["male"].values() else "female"
+    male_gens = BUTTONS["gender"]["male"]
+    formated_gender = "male" if gender in male_gens.values() else "female"
     await database.add_users_profile(
         user_id=user_id, prefered_name=name,
         birthday=birthday, gender=formated_gender,
@@ -216,13 +211,11 @@ async def process_gender(message: Message, state: FSMContext):
         await state.set_state(PollingState.waiting_for_location)
         return
 
-    else:
-        await message.edit_text(
-            text=QUESTIONARY["need_dating"][lang_code],
-            parse_mode=ParseMode.HTML,
-            reply_markup=None,
-        )
-        await show_main_menu(message, state, database)
+    await message.answer(
+        text="Ooops! Looks like you already have some info about you",
+        reply_parameters=ReplyKeyboardRemove()
+    )
+    await show_main_menu(message, state)
 
 
 @router.message(
@@ -245,7 +238,6 @@ async def disagreed_to_dating_handler(message: Message, state: FSMContext):
     await message.answer(
         text=msg, parse_mode=ParseMode.HTML, reply_markup=ReplyKeyboardRemove()
     )
-    await state.clear()
 
 
 @router.message(PollingState.waiting_for_location, F.location)
@@ -286,7 +278,6 @@ async def process_location(message: Message, state: FSMContext):
         # Выводим благодарное сообщение
         msg = MESSAGES["success"][lang_code]
         await message.answer(text=msg, reply_markup=ReplyKeyboardRemove())
-        await state.clear()
 
 
 @router.message(
@@ -294,9 +285,8 @@ async def process_location(message: Message, state: FSMContext):
     lambda message: message.text
     == BUTTONS["cancel"].get(message.from_user.language_code, BUTTONS["cancel"]["en"]),
 )
-async def cancel(message: Message, state: FSMContext):
+async def cancel(message: Message):
     database = await get_db()
     msg = MESSAGES["no_worries"][message.from_user.language_code]
     await database.add_users_location(message.from_user.id, "refused", "refused")
     await message.reply(text=msg, reply_markup=ReplyKeyboardRemove())
-    await state.clear()

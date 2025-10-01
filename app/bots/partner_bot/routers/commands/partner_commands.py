@@ -66,13 +66,14 @@ async def show_main_menu(
 @router.message(Command("location", prefix="!/"))
 async def get_my_location(message: Message, state: FSMContext):
     """Обработчик команды /location"""
-    database = await get_db()
 
-    data = await data_storage.get_storage_data(message.from_user.id, state)
+    database = await get_db()
+    user_id = message.from_user.id
+    data = await data_storage.get_storage_data(user_id, state)
     lang_code = data.get("lang_code")
 
-    result = await database.get_users_location(message.from_user.id)
-    if result is None or result["latitude"] == "refused":
+    result = await database.get_users_location(user_id)
+    if result is None:
         await message.answer(text=MESSAGES["no_location"][lang_code])
         return
 

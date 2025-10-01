@@ -108,7 +108,7 @@ class DatabaseService:
                             prefered_name VARCHAR(50) NOT NULL,
                             birthday DATE NOT NULL,
                             dating BOOLEAN DEFAULT FALSE,
-                            gender VARCHAR(50) NOT NULL,
+                            gender VARCHAR(50) NULL,
                             is_active BOOLEAN DEFAULT TRUE,
                             about TEXT NULL,
                             UNIQUE (user_id)
@@ -284,7 +284,12 @@ class DatabaseService:
             return dict(row) if row else None
 
     async def add_users_location(
-        self, user_id: int, latitude: str, longitude: str, city: str, country: str, tzone: str
+        self, user_id: int,
+            latitude: Optional[str] = None,
+            longitude: Optional[str] = None,
+            city: Optional[str] = None,
+            country: Optional[str] = None,
+            tzone: Optional[str] = None
     ) -> None:
         async with self.acquire_connection() as conn:
             await conn.execute(
