@@ -1,7 +1,5 @@
 from datetime import datetime
 from app.dependencies import get_db, get_redis_client
-from config import config
-
 
 async def paytime(user_id: int):
     """ Проверяет, не истекла ли подписка пользователя """
@@ -11,7 +9,7 @@ async def paytime(user_id: int):
     if due_to and due_to > datetime.now():
             return True
     elif due_to := await db.get_users_due_to(user_id):
-        if due_to > datetime.now(tz=config.TZINFO):
+        if due_to > datetime.now():
             await redis_client.setex(f"user_paid:{user_id}", 3600, due_to)
             return True
 
