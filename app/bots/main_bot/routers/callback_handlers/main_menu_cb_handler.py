@@ -1,3 +1,5 @@
+from aiogram.filters import and_f
+
 from config import config
 from logging_config import opt_logger as log
 from aiogram import F, Router
@@ -20,8 +22,7 @@ router = Router(name=__name__)
 
 
 @router.callback_query(
-    F.data == "about",
-    lambda callback: paytime(user_id=callback.from_user.id)
+    and_f(F.data == "about", paytime)
 )
 async def about(callback: CallbackQuery, state: FSMContext):
     """
@@ -44,8 +45,7 @@ async def about(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(
-    F.data == "go_back",
-    lambda callback: paytime(user_id=callback.from_user.id)
+    and_f(F.data == "go_back", paytime)
 )
 async def go_back(callback: CallbackQuery, state: FSMContext):
     """

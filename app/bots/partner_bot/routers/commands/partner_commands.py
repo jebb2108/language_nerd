@@ -4,7 +4,7 @@ import aiohttp
 from aiogram import Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, FSInputFile
-from aiogram.filters import Command
+from aiogram.filters import Command, and_f
 from aiogram.enums import ParseMode
 
 from app.bots.main_bot.utils.paytime import paytime
@@ -28,10 +28,7 @@ router = Router(name=__name__)
 logger = log.setup_logger("partner_commands", config.LOG_LEVEL)
 
 
-@router.message(
-    Command("menu", prefix="!/"),
-    lambda message: paytime(user_id=message.from_user.id),
-)
+@router.message(and_f(Command("menu", prefix="!/"), paytime))
 async def show_main_menu(message: Message, state: FSMContext):
     """Главное меню бота"""
     database = await get_db()
@@ -69,10 +66,7 @@ async def show_main_menu(message: Message, state: FSMContext):
     )
 
 
-@router.message(
-    Command("location", prefix="!/"),
-    lambda message: paytime(user_id=message.from_user.id),
-)
+@router.message(and_f(Command("location", prefix="!/"), paytime))
 async def get_my_location(message: Message, state: FSMContext):
     """Обработчик команды /location"""
 
@@ -96,10 +90,7 @@ async def get_my_location(message: Message, state: FSMContext):
     )
 
 
-@router.message(
-    Command("change_topic", prefix="!/"),
-    lambda message: paytime(user_id=message.from_user.id),
-)
+@router.message(and_f(Command("change_topic", prefix="!/"), paytime))
 async def change_topic(message: Message):
     user_id = message.from_user.id
     database = await get_db()
@@ -114,10 +105,7 @@ async def change_topic(message: Message):
     )
 
 
-@router.message(
-    Command("new_session", prefix="!/"),
-    lambda message: paytime(user_id=message.from_user.id),
-)
+@router.message(and_f(Command("new_session", prefix="!/"), paytime))
 async def new_session_handler(
     message: Union[Message, CallbackQuery], state: FSMContext
 ):

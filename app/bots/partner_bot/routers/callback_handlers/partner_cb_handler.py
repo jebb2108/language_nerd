@@ -3,6 +3,7 @@ import asyncio
 import aiohttp
 from aiogram import F, Router
 from aiogram.enums import ParseMode
+from aiogram.filters import and_f
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
@@ -25,16 +26,13 @@ router = Router(name=__name__)
 logger = log.setup_logger("partner_cb_handler")
 
 
-@router.callback_query(
-    F.data == "main_bot",
-    lambda callback: paytime(user_id=callback.from_user.id),
-)
+@router.callback_query(and_f(F.data == "main_bot", paytime))
 async def main_menu_handler(callback: CallbackQuery):
     await callback.answer()
 
 
 @router.callback_query(
-    F.data == "profile", lambda callback: paytime(user_id=callback.from_user.id)
+    and_f(F.data == "profile", paytime)
 )
 async def profile_handler(callback: CallbackQuery, state: FSMContext):
     database = await get_db()
@@ -59,9 +57,7 @@ async def profile_handler(callback: CallbackQuery, state: FSMContext):
     )
 
 
-@router.callback_query(
-    F.data == "about", lambda callback: paytime(user_id=callback.from_user.id)
-)
+@router.callback_query(and_f(F.data == "about", paytime))
 async def about_handler(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
@@ -77,14 +73,11 @@ async def about_handler(callback: CallbackQuery, state: FSMContext):
     )
 
 
-@router.callback_query(
-    F.data == "go_back", lambda callback: paytime(user_id=callback.from_user.id)
-)
+@router.callback_query(and_f(F.data == "go_back", paytime))
 async def go_back_handler(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
 
-    database = await get_db()
 
     user_id = callback.from_user.id
     data = await data_storage.get_storage_data(user_id, state)
@@ -102,10 +95,7 @@ async def go_back_handler(callback: CallbackQuery, state: FSMContext):
     )
 
 
-@router.callback_query(
-    F.data.startswith("chtopic_"),
-    lambda callback: paytime(user_id=callback.from_user.id),
-)
+@router.callback_query(and_f(F.data.startswith("chtopic_"), paytime))
 async def change_topic_handler(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
@@ -127,10 +117,7 @@ async def change_topic_handler(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(text=MESSAGES["fail_to_change"][lang_code])
 
 
-@router.callback_query(
-    F.data == "cancel_topic",
-    lambda callback: paytime(user_id=callback.from_user.id),
-)
+@router.callback_query(and_f(F.data == "cancel_topic", paytime))
 async def cancel_choosing_topic(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
@@ -173,9 +160,7 @@ async def show_queue_info(callback: CallbackQuery, state: FSMContext):
     await callback.answer(text=text, show_alert=True)
 
 
-@router.callback_query(
-    F.data == "cancel", lambda callback: paytime(user_id=callback.from_user.id)
-)
+@router.callback_query(and_f(F.data == "cancel", paytime))
 async def cancel_search(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
@@ -247,10 +232,7 @@ async def cancel_search(callback: CallbackQuery, state: FSMContext):
         logger.error(f"Исключение при выполнении запроса: {e}")
 
 
-@router.callback_query(
-    F.data == "begin_search",
-    lambda callback: paytime(user_id=callback.from_user.id),
-)
+@router.callback_query(and_f(F.data == "begin_search", paytime))
 async def new_session_handler(callback: CallbackQuery, state: FSMContext):
     """Обработчик команды /new_session - запускает поиск партнера"""
 

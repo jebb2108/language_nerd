@@ -4,7 +4,7 @@ from datetime import datetime
 import aiohttp
 from aiogram import F, Router
 from aiogram.enums import ParseMode
-from aiogram.filters import Command
+from aiogram.filters import Command, and_f
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove
@@ -53,10 +53,7 @@ router = Router(name=__name__)
 logger = log.setup_logger("registration_commands", config.LOG_LEVEL)
 
 
-@router.message(
-    Command("start", prefix="!/"),
-    lambda message: paytime(user_id=message.from_user.id),
-)
+@router.message(and_f(Command("start", prefix="!/"), paytime))
 async def start(message: Message, state: FSMContext):
 
     database = await get_db()
@@ -83,10 +80,7 @@ async def start(message: Message, state: FSMContext):
     await state.set_state(PollingState.waiting_for_name)
 
 
-@router.message(
-    PollingState.waiting_for_name,
-    lambda message: paytime(user_id=message.from_user.id),
-)
+@router.message(and_f(PollingState.waiting_for_name, paytime))
 async def process_name(message: Message, state: FSMContext):
 
     database = await get_db()
@@ -116,10 +110,7 @@ async def process_name(message: Message, state: FSMContext):
         return state.set_state(PollingState.waiting_for_name)
 
 
-@router.message(
-    PollingState.waiting_for_bday,
-    lambda message: paytime(user_id=message.from_user.id),
-)
+@router.message(and_f(PollingState.waiting_for_bday, paytime))
 async def process_age(message: Message, state: FSMContext):
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
@@ -147,10 +138,7 @@ async def process_age(message: Message, state: FSMContext):
     await state.set_state(PollingState.waiting_for_bday)
 
 
-@router.message(
-    PollingState.waiting_for_intro,
-    lambda message: paytime(user_id=message.from_user.id),
-)
+@router.message(and_f(PollingState.waiting_for_intro, paytime))
 async def process_intro(message: Message, state: FSMContext):
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
@@ -172,9 +160,12 @@ async def process_intro(message: Message, state: FSMContext):
 
 
 @router.message(
-    PollingState.waiting_for_dating,
-    lambda message: message.text == BUTTONS["yes_to_dating"][message.from_user.language_code],
-    lambda message: paytime(user_id=message.from_user.id),
+    and_f(
+        paytime,
+        PollingState.waiting_for_dating,
+        lambda message: message.text
+        == BUTTONS["yes_to_dating"][message.from_user.language_code],
+    )
 )
 async def agreed_to_dating_handler(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -189,10 +180,7 @@ async def agreed_to_dating_handler(message: Message, state: FSMContext):
     return
 
 
-@router.message(
-    PollingState.waiting_for_gender,
-    lambda message: paytime(user_id=message.from_user.id),
-)
+@router.message(and_f(PollingState.waiting_for_gender, paytime))
 async def process_gender(message: Message, state: FSMContext):
     database = await get_db()
     data = await state.get_data()
@@ -245,9 +233,12 @@ async def process_gender(message: Message, state: FSMContext):
 
 
 @router.message(
-    PollingState.waiting_for_dating,
-    lambda message: message.text == BUTTONS["no_to_dating"][message.from_user.language_code],
-    lambda message: paytime(user_id=message.from_user.id),
+    and_f(
+        PollingState.waiting_for_dating,
+        paytime,
+        lambda message: message.text
+        == BUTTONS["no_to_dating"][message.from_user.language_code],
+    )
 )
 async def disagreed_to_dating_handler(message: Message, state: FSMContext):
     database = await get_db()
@@ -266,11 +257,7 @@ async def disagreed_to_dating_handler(message: Message, state: FSMContext):
     )
 
 
-@router.message(
-    PollingState.waiting_for_location,
-    F.location,
-    lambda message: paytime(user_id=message.from_user.id),
-)
+@router.message(and_f(PollingState.waiting_for_location, F.location, paytime))
 async def process_location(message: Message, state: FSMContext):
     """Обработчик локации"""
     database = await get_db()
@@ -315,9 +302,12 @@ async def process_location(message: Message, state: FSMContext):
 
 
 @router.message(
-    PollingState.waiting_for_location,
-    lambda message: message.text == BUTTONS["cancel"].get(message.from_user.language_code, BUTTONS["cancel"]["en"]),
-    lambda message: paytime(user_id=message.from_user.id),
+    and_f(
+        PollingState.waiting_for_location, paytime,
+        lambda message: message.text == BUTTONS["cancel"].get(
+            message.from_user.language_code, BUTTONS["cancel"]["en"]
+        )
+    )
 )
 async def cancel(message: Message):
     database = await get_db()

@@ -3,7 +3,7 @@ import uuid
 from yookassa import Payment, Configuration
 from aiogram import Router
 
-from aiogram.filters import Command
+from aiogram.filters import Command, and_f
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, FSInputFile, ContentType
@@ -29,8 +29,7 @@ Configuration.secret_key = config.YOOKASSA_SECRET_KEY
 
 
 @router.message(
-    Command("menu", prefix="!/"),
-    lambda message: paytime(user_id=message.from_user.id)
+    and_f(Command("menu", prefix="!/"), paytime)
 )
 async def show_main_menu(message: Message, state: FSMContext):
 

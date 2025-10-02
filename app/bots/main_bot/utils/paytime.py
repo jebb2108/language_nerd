@@ -1,10 +1,22 @@
 from datetime import datetime
 from app.dependencies import get_db, get_redis_client
+from logging_config import opt_logger as log
+from typing import TYPE_CHECKING
+from config import config
 
-async def paytime(user_id: int):
+if TYPE_CHECKING:
+    from aiogram.types import CallbackQuery
+
+
+logger = log.setup_logger("paytime", config.LOG_LEVEL)
+
+
+async def paytime(callback: "CallbackQuery"):
     """ Проверяет, не истекла ли подписка пользователя """
+    user_id = callback.from_user.id
     db = await get_db()
     redis_client = await get_redis_client()
+    logger.debug(f"Проверка подписки для пользователя {user_id}")
     due_to = await redis_client.get(f"user_paid:{user_id}")
     if due_to and datetime.fromisoformat(due_to) > datetime.now():
             return True

@@ -1,5 +1,6 @@
 from aiogram import Router, F
 from aiogram.enums import ParseMode
+from aiogram.filters import and_f
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, FSInputFile
 
@@ -23,10 +24,7 @@ logger = log.setup_logger("registration_cb_handler", config.LOG_LEVEL)
 router = Router(name=__name__)
 
 
-@router.callback_query(
-    F.data.startswith("camefrom_"),
-    lambda callback: paytime(user_id=callback.from_user.id),
-)
+@router.callback_query(F.data.startswith("camefrom_"))
 async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
     """
     После вопроса «откуда узнали» переходим к выбору языка.
@@ -51,10 +49,7 @@ async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
     await state.update_data(camefrom=users_choice)
 
 
-@router.callback_query(
-    F.data.startswith("lang_"),
-    lambda callback: paytime(user_id=callback.from_user.id),
-)
+@router.callback_query(F.data.startswith("lang_"))
 async def handle_fluency_choice(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
@@ -74,10 +69,7 @@ async def handle_fluency_choice(callback: CallbackQuery, state: FSMContext):
     await state.update_data(language=users_choice)
 
 
-@router.callback_query(
-    F.data.startswith("fluency_"),
-    lambda callback: paytime(user_id=callback.from_user.id),
-)
+@router.callback_query(F.data.startswith("fluency_"))
 async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
     """
     Сохраняем выбор языка
@@ -101,10 +93,7 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
     await state.update_data(fluency=users_choice)
 
 
-@router.callback_query(
-    F.data.startswith("topic_"),
-    lambda callback: paytime(user_id=callback.from_user.id),
-)
+@router.callback_query(F.data.startswith("topic_"))
 async def handle_transaction_offer(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
@@ -124,10 +113,7 @@ async def handle_transaction_offer(callback: CallbackQuery, state: FSMContext):
     await state.update_data(topic=users_choice)
 
 
-@router.callback_query(
-    F.data == "start_trial",
-    lambda callback: paytime(user_id=callback.from_user.id),
-)
+@router.callback_query(F.data == "start_trial")
 async def handle_topic_choice(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
@@ -145,10 +131,7 @@ async def handle_topic_choice(callback: CallbackQuery, state: FSMContext):
     )
 
 
-@router.callback_query(
-    F.data == "action_confirm",
-    lambda callback: paytime(user_id=callback.from_user.id),
-)
+@router.callback_query(F.data == "action_confirm")
 async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
