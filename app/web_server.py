@@ -21,5 +21,5 @@ if __name__ == "__main__":
         "app.web_server:app",
         host="localhost",
         port=config.WEB_SERVER_PORT,
-        reload=True,
+        reload=True
     )

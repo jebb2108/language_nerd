@@ -1,5 +1,5 @@
 from config import config
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
@@ -13,7 +13,7 @@ from app.bots.main_bot.keyboards.inline_keyboards import (
     get_go_back_keyboard,
 )
 
-logger = setup_logger('main_menu_cb_handler', config.LOG_LEVEL)
+logger = log.setup_logger('main_menu_cb_handler', config.LOG_LEVEL)
 
 router = Router(name=__name__)
 

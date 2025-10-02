@@ -17,11 +17,11 @@ from app.bots.partner_bot.keyboards.inline_keyboards import (
     show_partner_menu_keyboard,
     get_search_keyboard,
 )
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 
 router = Router(name=__name__)
 
-logger = setup_logger('partner_cb_handler', config.LOG_LEVEL)
+logger = log.setup_logger('partner_cb_handler')
 
 
 @router.callback_query(F.data == "main_bot")

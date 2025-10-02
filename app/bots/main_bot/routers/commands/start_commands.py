@@ -1,19 +1,16 @@
-import logging
-
 from aiogram import Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-
 from app.bots.main_bot.translations import QUESTIONARY, MESSAGES
 from app.dependencies import get_db
 from app.bots.main_bot.keyboards.inline_keyboards import show_where_from_keyboard
 from app.bots.main_bot.routers.commands.menu_commands import show_main_menu
+from logging_config import opt_logger as log
 from config import config
-from logging_config import setup_logger
 
-logger = setup_logger('main start commands', config.LOG_LEVEL)
+logger = log.setup_logger('main start commands', config.LOG_LEVEL)
 
 # Инициализируем роутер
 router = Router(name=__name__)

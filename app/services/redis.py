@@ -1,29 +1,34 @@
-import json
-import logging
+from collections import defaultdict
+
 import redis.asyncio as redis
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Awaitable
+
+from asyncpg.pgproto.pgproto import timedelta
 
 from app.models import UserMatchRequest
 from config import config
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 
 if TYPE_CHECKING:
     from redis.asyncio import Redis
-    from app.models import SentMessage
+    from aiogram.types import Message
 
-logger = setup_logger('redis')
+logger = log.setup_logger('redis')
 
 
 class RedisService:
 
     def __init__(self):
         self.redis_client: Optional["Redis"] = None
+        self.q = None
 
     def get_client(self) -> "Redis":
         return self.redis_client
 
     async def connect(self):
         """Установка подключения к Redis"""
+        if not self.q: self.q = defaultdict[int](list)
+
         try:
             self.redis_client = redis.Redis.from_url(url=config.REDIS_URL)
             logger.debug("Connected successfully")
@@ -32,18 +37,29 @@ class RedisService:
             logger.debug(f"Redis connection error: {e}")
             self.redis_client = None
 
-    async def save_sent_message(
-        self, chat_id: int, message_info: "SentMessage", ttl: int
-    ):
-        # Сохряняет сообщения, которые нужно удалить через некоторое время
-        key = f"search_message:{chat_id}"
-        await self.redis_client.hset(key, mapping=message_info.model_dump())
-        # Устанавливает время жизни для сообщения
-        await self.redis_client.expire(key, ttl)
-        # Добавляет в очередь сообщения
-        await self.redis_client.rpush("sent_messages", message_info.message_id)
+    async def get_sent_queue(self, chat_id: int) -> Awaitable[list]:
+        return await self.redis_client.lrange(f"sent_messages:{chat_id}", 0, -1)
 
-        logger.debug(f"Message {message_info.message_id} has been saved on Redis side")
+    async def save_sent_message(self, message: "Message"):
+        # Сохряняет все сообщения пользователя, включая search msg
+        name = f"sent_messages:{message.chat.id}"
+        await self.redis_client.rpush(name, message.message_id)
+        await self.redis_client.expire(name, timedelta(minutes=2))
+        logger.debug(f"Message %s was put to %s queue w/ TTL 2 mins", message.message_id, name)
+
+
+    async def mark_msg_as_search(self, message: "Message") -> None:
+        # Сохраняет сообщения со специальной меткой в ед. экземпляре
+        name = f"search_message:{message.chat.id}"
+        await self.redis_client.setex(name, config.WAIT_TIMER, message.message_id)
+        logger.debug("Message ID %s of user %s masrked as search on Redis", message.message_id, message.chat.id)
+
+    async def check_search_msg(self, chat_id: int, message_id) -> bool:
+        # Проверяет, если это поисковое сообщение, возвращает True, иначе False
+        res = await self.redis_client.get(f"search_message:{chat_id}")
+        logger.debug(f"Checking for chat id %s if msg %s is search active - %s",
+                     chat_id, message_id, res == message_id)
+        return res == message_id
 
     async def get_search_message_id(self, chat_id: int):
         # Достает определенное сообщение

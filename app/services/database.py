@@ -8,9 +8,9 @@ from collections import defaultdict
 from contextlib import asynccontextmanager
 
 from config import config
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 
-logger = setup_logger('database')
+logger = log.setup_logger('database')
 
 
 # = КЛАСС ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ =

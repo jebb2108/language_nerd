@@ -8,9 +8,9 @@ from redis import asyncio as aioredis
 
 from app.models import ChatSessionRequest, MatchFoundEvent
 from config import config
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 
-logger = setup_logger('matching')
+logger = log.setup_logger('matching')
 
 
 class MatchingService:

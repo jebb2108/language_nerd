@@ -14,9 +14,9 @@ from config import config
 
 from app.api.endpoints.matchmaking import router as match_router
 
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 
-logger = setup_logger('chat server')
+logger = log.setup_logger('chat server')
 
 
 @asynccontextmanager

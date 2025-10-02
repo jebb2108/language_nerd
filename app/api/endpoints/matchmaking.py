@@ -11,12 +11,12 @@ from app.bots.partner_bot.keyboards.inline_keyboards import create_start_chat_bu
 from app.bots.partner_bot.translations import MESSAGES
 from app.validators.tokens import create_token
 from config import config
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 
 if TYPE_CHECKING:
     from aiogram.types import Message
 
-logger = setup_logger('endpoints', config.LOG_LEVEL)
+logger = log.setup_logger('endpoints', config.LOG_LEVEL)
 
 
 router = APIRouter(prefix="/api")

@@ -1,11 +1,11 @@
 import asyncio
 from config import config
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 from collections import deque
 from datetime import timedelta, datetime
 
 
-logger = setup_logger('message time queue', config.LOG_LEVEL)
+logger = log.setup_logger('message time queue', config.LOG_LEVEL)
 
 class AsyncTimedQueue[T: datetime]:
     def __init__(self, max_age: timedelta):

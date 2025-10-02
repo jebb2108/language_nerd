@@ -5,14 +5,14 @@ from aiogram import BaseMiddleware
 from aiogram.types import CallbackQuery, Message
 
 from app.dependencies import get_redis
-from app.models import SentMessage
+from app.services.redis import RedisService
 from config import config
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 
 if TYPE_CHECKING:
     from aiogram import Bot
 
-logger = setup_logger('message_tracker', config.LOG_LEVEL)
+logger = log.setup_logger('message_tracker', config.LOG_LEVEL)
 
 class MessageTrackerMiddleware(BaseMiddleware):
     def __init__(self, bot: "Bot"):
@@ -28,13 +28,17 @@ class MessageTrackerMiddleware(BaseMiddleware):
         # Обрабатываем ВХОДЯЩИЕ события ДО handler
         if isinstance(event, CallbackQuery):
             # await self.track_callback(event)
+            logger.debug(f"Message deemed callable b4 processing")
             pass
 
         # Вызываем основной обработчик
         result = await handler(event, data)
 
+
         if isinstance(result, Message):
-            await self.track_message(result)
+            redis = await get_redis()
+            logger.debug(f"Post process of message %s", result.message_id)
+            await self.track_message(result, redis)
 
         # Для перехвата ИСХОДЯЩИХ сообщений используем отдельную стратегию
         # Создаем задачу для мониторинга состояния после обработки
@@ -43,60 +47,43 @@ class MessageTrackerMiddleware(BaseMiddleware):
         return result
 
 
-    async def track_message(self, message: Message):
+    async def track_message(self, message: Message, redis: "RedisService"):
         """Отслеживаем отправленные сообщения"""
         try:
-            chat_id = message.chat.id
-            message_id = message.message_id
-            message_info = SentMessage(
-                chat_id=chat_id,
-                message_id=message_id,
-                text=message.text or message.caption,
-            )
-            # Если это сообщение о начале поиска
-            if message_info.text.startswith("🔍"):
-                await self.start_search(message_info)
+            # Если это сообщение о начале поиска партнера
+            if message.text.startswith("🔍"):
+                await self.start_search(message, redis)
 
         except Exception as e:
             logger.error(f"Error in track_message: {e}")
 
 
-    async def start_search(self, message_info: "SentMessage") -> None:
+    async def start_search(self, message: "Message", redis: "RedisService") -> None:
         """Начинаем отслеживание поиска"""
-        chat_id = message_info.chat_id
-        message_id =  message_info.message_id
-
-        try:
-            redis = await get_redis()
-            # Сохраняем в Redis с TTL
-            await redis.save_sent_message(
-                chat_id,
-                message_info,
-                config.WAIT_TIMER
-            )
-            # Очищаем предыдущие сообщения поиска для этого чата
-            await self.cleanup_previous_searches(chat_id, message_id)
-            # Добавляем в отслеживаемые сообщения
-            self.search_messages[chat_id].append(message_id)
-            self.active_searches[chat_id] = True
-            logger.info(f"Started tracking search: chat={chat_id}, message={message_id}")
-
-        except Exception as e:
-            logger.error(f"Error in start_search_handler: {e}")
+        cid = message.chat.id
+        mid =  message.message_id
+        # Добавляем в отслеживаемые сообщения
+        self.active_searches[cid] = True
+        # Сохраняем в Redis с TTL
+        await redis.mark_msg_as_search(message)
+        await redis.save_sent_message(message)
+        # Очищаем предыдущие сообщения поиска для этого чата
+        await self.cleanup_previous_searches(cid, redis)
+        logger.info(f"Started tracking search: chat={cid}, message={mid}")
 
 
-    async def cleanup_previous_searches(self, chat_id: int, curr_mid):
+    async def cleanup_previous_searches(self, cid: int, redis: "RedisService") -> None:
         """Очищаем предыдущие сообщения поиска"""
-        try:
-            if chat_id in self.search_messages and self.search_messages[chat_id]:
-                for message_id in self.search_messages[chat_id]:
-                    # Рредактируем сообщение вместо удаления,
-                    # чтобы сохранить историю переписки
-                    if message_id != curr_mid:
-                        await asyncio.sleep(0.5)
-                        await self.bot.delete_message(chat_id, message_id)
-                        self.search_messages[chat_id].remove(message_id)
-                self.active_searches[chat_id] = False
+        logger.debug("Starting to clean old messages ...")
+        # Ивзлекаем уникальные ID из очереди сообщений
+        for indx in [i.decode() for i in await redis.get_sent_queue(cid)]:
+            if self.active_searches[cid] and not await redis.check_search_msg(cid, indx):
+                logger.debug("This message %s no longer active", indx)
+                await self.bot.delete_message(cid, indx)
+                continue
+            # Это может происходить только (!) при нажатии Cancel
+            if self.active_searches[cid] and await redis.check_search_msg(cid, indx):
+                logger.debug("User %s canceled search. Stopped on msg %s", cid, indx)
+                self.active_searches[cid] = False
 
-        except Exception as e:
-            logger.error(f"Error in cleanup_previous_searches: {e}")
+        logger.debug("Stopped cleaning old messages")

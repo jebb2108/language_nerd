@@ -1,5 +1,5 @@
 import asyncio
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -16,7 +16,7 @@ from app.bots.main_bot.middlewares.quiz_middleware import QuizMiddleware
 
 from routers import router as main_router
 
-logger = setup_logger('main bot', config.LOG_LEVEL)
+logger = log.setup_logger('main bot', config.LOG_LEVEL)
 
 # Глобальная переменная с ресурсами бота
 rate_limit_middleware: Optional["RateLimitMiddleware"] = None

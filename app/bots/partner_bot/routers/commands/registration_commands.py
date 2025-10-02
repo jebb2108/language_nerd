@@ -27,7 +27,7 @@ from app.validators.exc import (
 )
 
 from config import config
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 
 
 class PollingState(StatesGroup):
@@ -42,7 +42,7 @@ class PollingState(StatesGroup):
 # Инициализируем роутер
 router = Router(name=__name__)
 
-logger = setup_logger('registration_commands', config.LOG_LEVEL)
+logger = log.setup_logger('registration_commands', config.LOG_LEVEL)
 
 
 @router.message(Command("start", prefix="!/"))

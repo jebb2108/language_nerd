@@ -3,9 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.dependencies import get_db
 from app.models.dict_models import UserDictionaryRequest
 from config import config
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 
-logger = setup_logger('dictionary_endpoints', config.LOG_LEVEL)
+logger = log.setup_logger('dictionary_endpoints', config.LOG_LEVEL)
 
 router = APIRouter(prefix="/api")
 

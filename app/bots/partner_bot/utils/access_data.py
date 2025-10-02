@@ -4,9 +4,9 @@ from aiogram.fsm.context import FSMContext
 from app.bots.partner_bot.utils.exc import StorageDataException
 from app.dependencies import get_db
 from config import config
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 
-logger = setup_logger('partner_data_storage', config.LOG_LEVEL)
+logger = log.setup_logger('partner_data_storage')
 
 class DataStorage:
     def __init__(self):

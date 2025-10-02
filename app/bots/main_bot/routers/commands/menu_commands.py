@@ -15,9 +15,9 @@ from config import config
 from app.bots.main_bot.keyboards.inline_keyboards import get_on_main_menu_keyboard, get_payment_keyboard
 from app.bots.main_bot.utils.access_data import data_storage
 from app.bots.main_bot.translations import MESSAGES
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 
-logger = setup_logger('main menu commands', config.LOG_LEVEL)
+logger = log.setup_logger('main menu commands', config.LOG_LEVEL)
 
 # Инициализируем роутер
 router = Router(name=__name__)

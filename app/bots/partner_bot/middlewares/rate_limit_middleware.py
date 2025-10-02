@@ -9,12 +9,12 @@ from asyncpg.pgproto.pgproto import timedelta
 
 
 from config import config
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 
 
 from app.bots.partner_bot.utils.async_timed_queue import AsyncTimedQueue
 
-logger = setup_logger('rate_limit_middleware', config.LOG_LEVEL)
+logger = log.setup_logger('rate_limit_middleware', config.LOG_LEVEL)
 
 
 @dataclass(frozen=False)

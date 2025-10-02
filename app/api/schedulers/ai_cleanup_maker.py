@@ -2,9 +2,9 @@ import asyncio
 import logging
 from app.dependencies import get_db
 from config import config
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 
-logger = setup_logger('ai_cleanup_maker', config.LOG_LEVEL)
+logger = log.setup_logger('ai_cleanup_maker', config.LOG_LEVEL)
 
 
 async def cleanup_old_reports(days: int = 30) -> bool:

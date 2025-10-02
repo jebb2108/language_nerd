@@ -1,6 +1,4 @@
-import logging
 import os
-import logging_config
 from asyncio import Semaphore
 from dataclasses import dataclass
 from datetime import timezone, timedelta
@@ -16,6 +14,11 @@ load_dotenv(env_path)
 
 @dataclass
 class Config:
+
+    DEBUG = False
+
+    LOG_LEVEL = "debug"
+
     # RabbitMQ
     RABBITMQ_URL: str = os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/")
     # RABBITMQ_QUEUE: str = os.getenv("RABBITMQ_QUEUE", "default")
@@ -91,8 +94,6 @@ class Config:
     YEAR: str = 'year'
 
     VERIFY_SSL = False
-
-    LOG_LEVEL = logging.DEBUG
 
     WAITING_TIME_EXPIRED = 'waiting time expired'
 

@@ -1,4 +1,3 @@
-import logging
 import asyncio
 import random
 import re
@@ -28,14 +27,14 @@ from tenacity import (
 
 from app.models import DeliveryResult, UserReport, PendingReport
 from config import config
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 
 if TYPE_CHECKING:
     from aiogram import Bot
     from app.services.database import DatabaseService
 
 # Настройка логирования
-logger = setup_logger('ai modules')
+logger = log.setup_logger('ai modules')
 # ========== ERROR HANDLING ==========
 class APIErrorHandler:
     """Обработчик ошибок API"""

@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta
-from logging_config import setup_logger
+from logging_config import opt_logger
 
 from app.models import UserMatchResponse
 from config import config
@@ -15,7 +15,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app.services.matching import MatchingService
 
-logger = setup_logger('worker')
+
+logger = opt_logger.setup_logger('worker')
 
 broker = RabbitBroker(config.RABBITMQ_URL, logger=logger)
 
@@ -202,7 +203,7 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
 async def main():
     # Запуск основной программы
     logger.info('Starting worker ...')
-    app = FastStream(broker, logger=None)
+    app = FastStream(broker, logger=logger)
     await app.run()
 
 

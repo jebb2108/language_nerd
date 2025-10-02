@@ -19,12 +19,12 @@ from app.bots.partner_bot.keyboards.inline_keyboards import (
 )
 
 from app.bots.partner_bot.utils.access_data import data_storage
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 
 # Инициализируем роутер
 router = Router(name=__name__)
 
-logger = setup_logger('partner_commands', config.LOG_LEVEL)
+logger = log.setup_logger('partner_commands', config.LOG_LEVEL)
 
 
 @router.message(Command("menu", prefix="!/"))

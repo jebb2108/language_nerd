@@ -6,13 +6,13 @@ from config import config
 
 from typing import TYPE_CHECKING, Optional
 
-from logging_config import setup_logger
+from logging_config import opt_logger as log
 
 if TYPE_CHECKING:
     from aio_pika.abc import AbstractChannel
     from aio_pika.abc import AbstractRobustConnection
 
-logger = setup_logger('rabbitmq')
+logger = log.setup_logger('rabbitmq')
 
 class RabbitMQService:
     def __init__(self):
