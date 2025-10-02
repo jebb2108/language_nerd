@@ -1,3 +1,4 @@
+import asyncio
 from typing import TYPE_CHECKING
 from aiogram.enums import ParseMode
 
@@ -139,31 +140,47 @@ async def notify_users_re_match(
     from aiogram import Bot
 
     try:
+
         bot = Bot(token=config.BOT_TOKEN_PARTNER)
 
-        await bot.edit_message_text(
-            text=user_msg.format(nickname=partner_nickname, about=about_partner),
+        await bot.delete_message(
             chat_id=user_id,
-            message_id=prev_users_msg_id,
+            message_id=prev_users_msg_id
+        )
+
+        await bot.delete_message(
+            chat_id=partner_id,
+            message_id=prev_partners_msg_id
+        )
+
+        # Ожидаем некоторое время перед отправкой
+        # для хорошего визуального эффека
+        await asyncio.sleep(0.5)
+
+        await bot.send_message(
+            chat_id=user_id,
+            text=user_msg.format(nickname=partner_nickname, about=about_partner),
             reply_markup=create_start_chat_button(
                 # Отправляем сообщение с клавиатурой
                 # на языке пользователя со ссылкой
-                lang_code=user_data.get("lang_code"), link=user_link
+                user_data.get("lang_code"), link=user_link
             ),
-            parse_mode=ParseMode.HTML,
+            parse_mode=ParseMode.HTML
+
         )
 
-        await bot.edit_message_text(
-            text=partner_msg.format(nickname=user_nickname, about=about_user),
+        await bot.send_message(
             chat_id=partner_id,
-            message_id=prev_partners_msg_id,
+            text=partner_msg.format(nickname=user_nickname, about=about_user),
             reply_markup=create_start_chat_button(
                 # Отправляем сообщение с клавиатурой
                 # на языке пользователя со ссылкой
                 lang_code=partner_data["lang_code"], link=partner_link
             ),
-            parse_mode=ParseMode.HTML,
+            parse_mode=ParseMode.HTML
         )
+
+        await bot.close()
 
     except Exception as e:
         logger.error(f"Error launching chat for users: {e}")
@@ -172,7 +189,6 @@ async def notify_users_re_match(
         )
 
     finally:
-        await bot.close()
         await redis.remove_from_queue(user_id)
         await redis.remove_from_queue(partner_id)
         return {"status": "notification_sent"}
