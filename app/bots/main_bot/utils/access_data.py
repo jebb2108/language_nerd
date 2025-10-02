@@ -1,6 +1,8 @@
 import asyncio
 from datetime import datetime, time
 from aiogram.fsm.context import FSMContext
+
+from app.bots.partner_bot.main import logger
 from app.bots.partner_bot.utils.exc import StorageDataException
 from app.dependencies import get_db
 
@@ -30,9 +32,8 @@ class DataStorage:
             # Если данных нет в Redis, получаем из базы и сохраняем в Redis
             user_data = await self.set_user_info(user_id)
             if not user_data:
-                raise StorageDataException(
-                    "Error while trying to access user data from database"
-                )
+                logger.error("User %s does not have data!", user_id)
+                return {}
 
             await state.update_data(user_data)
             return user_data
