@@ -1,6 +1,7 @@
+from app.bots.main_bot.utils.paytime import paytime
 from config import config
 from logging_config import opt_logger as log
-from aiogram import Router, types
+from aiogram import Router, types, F
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
@@ -11,12 +12,15 @@ from app.bots.main_bot.keyboards.inline_keyboards import (
 )
 from app.dependencies import get_db
 
-logger = log.setup_logger('weekly_message_cb_handler', config.LOG_LEVEL)
+logger = log.setup_logger("weekly_message_cb_handler", config.LOG_LEVEL)
 
 router = Router(name=__name__)
 
 
-@router.callback_query(lambda callback: callback.data.startswith("start_report:"))
+@router.callback_query(
+    F.data.startswith("start_report:"),
+    lambda callback: paytime(user_id=callback.message.from_user.id),
+)
 async def start_report_handler(
     callback: types.CallbackQuery,
     state: FSMContext,
@@ -62,7 +66,10 @@ async def start_report_handler(
         logger.error(f"Ошибка в start_report_handler: {e}", exc_info=True)
 
 
-@router.callback_query(lambda callback: callback.data.startswith("quiz:"))
+@router.callback_query(
+    lambda callback: callback.data.startswith("quiz:"),
+    lambda callback: paytime(user_id=callback.message.from_user.id),
+)
 async def handle_word_quiz(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
@@ -166,7 +173,10 @@ async def send_question(callback, state, database):
     )
 
 
-@router.callback_query(lambda callback: callback.data.startswith("end_quiz"))
+@router.callback_query(
+    lambda callback: callback.data.startswith("end_quiz"),
+    lambda callback: paytime(user_id=callback.message.from_user.id),
+)
 async def do_nothing(callback: CallbackQuery):
     await callback.answer()
     await callback.message.delete()

@@ -7,6 +7,7 @@ from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import Command
 from aiogram.enums import ParseMode
 
+from app.bots.main_bot.utils.paytime import paytime
 from app.bots.partner_bot.keyboards.inline_keyboards import show_topic_keyboard
 from app.dependencies import get_db, get_redis_client
 from app.models import UserMatchRequest
@@ -24,12 +25,14 @@ from logging_config import opt_logger as log
 # Инициализируем роутер
 router = Router(name=__name__)
 
-logger = log.setup_logger('partner_commands', config.LOG_LEVEL)
+logger = log.setup_logger("partner_commands", config.LOG_LEVEL)
 
 
-@router.message(Command("menu", prefix="!/"))
-async def show_main_menu(
-    message: Message, state: FSMContext):
+@router.message(
+    Command("menu", prefix="!/"),
+    lambda message: paytime(user_id=message.from_user.id),
+)
+async def show_main_menu(message: Message, state: FSMContext):
     """Главное меню бота"""
     database = await get_db()
     user_id = message.from_user.id
@@ -39,9 +42,7 @@ async def show_main_menu(
     lang_code = data.get("lang_code")
 
     if not await database.check_user_exists(user_id):
-        await message.answer(
-            text="I can`t seem to know you :( Go to @lllangbot"
-        )
+        await message.answer(text="I can`t seem to know you :( Go to @lllangbot")
         return
 
     elif prefered_name is None:
@@ -68,7 +69,10 @@ async def show_main_menu(
     )
 
 
-@router.message(Command("location", prefix="!/"))
+@router.message(
+    Command("location", prefix="!/"),
+    lambda message: paytime(user_id=message.from_user.id),
+)
 async def get_my_location(message: Message, state: FSMContext):
     """Обработчик команды /location"""
 
@@ -91,31 +95,38 @@ async def get_my_location(message: Message, state: FSMContext):
         parse_mode=ParseMode.HTML,
     )
 
-@router.message(Command("change_topic", prefix='!/'))
+
+@router.message(
+    Command("change_topic", prefix="!/"),
+    lambda message: paytime(user_id=message.from_user.id),
+)
 async def change_topic(message: Message):
     user_id = message.from_user.id
     database = await get_db()
     user_info = await database.get_user_info(user_id)
     lang_code = user_info.get("lang_code")
     topic = user_info.get("topic")
-    msg = MESSAGES["current_topic"][lang_code].format(topic=TRANSCRIPTIONS["topics"][topic][lang_code])
-    await message.answer(text=msg, reply_markup=show_topic_keyboard(lang_code), parse_mode=ParseMode.HTML)
+    msg = MESSAGES["current_topic"][lang_code].format(
+        topic=TRANSCRIPTIONS["topics"][topic][lang_code]
+    )
+    await message.answer(
+        text=msg, reply_markup=show_topic_keyboard(lang_code), parse_mode=ParseMode.HTML
+    )
 
 
-
-@router.message(Command("new_session", prefix="!/"))
+@router.message(
+    Command("new_session", prefix="!/"),
+    lambda message: paytime(user_id=message.from_user.id),
+)
 async def new_session_handler(
-    message: Union[Message, CallbackQuery],
-    state: FSMContext
+    message: Union[Message, CallbackQuery], state: FSMContext
 ):
     """Обработчик команды /new_session - запускает поиск партнера"""
 
     database = await get_db()
     redis_client = await get_redis_client()
 
-    data = await data_storage.get_storage_data(
-        message.from_user.id, state, database
-    )
+    data = await data_storage.get_storage_data(message.from_user.id, state, database)
     user_id = data.get("user_id")
     username = data.get("username")
     language = data.get("language")
@@ -139,7 +150,8 @@ async def new_session_handler(
 
     # Отменяем предыдущий поиск, если он был
     is_searching = await redis_client.get(f"searching:{user_id}")
-    if is_searching: return logger.info(f"Уже существует поиск для пользователя {user_id}")
+    if is_searching:
+        return logger.info(f"Уже существует поиск для пользователя {user_id}")
 
     await redis_client.setex(f"searching:{user_id}", 150, username)
     logger.debug(f"Создана сессия поиска для пользователя {user_id}")
@@ -165,7 +177,7 @@ async def new_session_handler(
             "dating": dating,
             "topic": topic,
         },
-        lang_code = lang_code,
+        lang_code=lang_code,
     )
 
     logger.info(f"Отправка запроса на: {url}")

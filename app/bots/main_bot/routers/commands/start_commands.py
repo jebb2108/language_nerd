@@ -6,7 +6,6 @@ from aiogram.types import Message
 from app.bots.main_bot.translations import QUESTIONARY, MESSAGES
 from app.dependencies import get_db
 from app.bots.main_bot.keyboards.inline_keyboards import show_where_from_keyboard
-from app.bots.main_bot.routers.commands.menu_commands import show_main_menu
 from logging_config import opt_logger as log
 from config import config
 
@@ -14,7 +13,6 @@ logger = log.setup_logger('main start commands', config.LOG_LEVEL)
 
 # Инициализируем роутер
 router = Router(name=__name__)
-
 
 @router.message(Command("start", prefix="!/"))
 async def start_with_polling(message: Message, state: FSMContext):
@@ -37,7 +35,9 @@ async def start_with_polling(message: Message, state: FSMContext):
 
     if user_exists:
         # если пользователь есть — сразу меню
-        return await show_main_menu(message, state)
+        return await message.answer(
+            text="Press /menu to open menu"
+        )
 
     msg = (
         f"{MESSAGES['hello'][lang_code]} <b>{first_name}</b>!\n\n"

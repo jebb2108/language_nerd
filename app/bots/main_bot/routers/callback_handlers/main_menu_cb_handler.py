@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
 from app.dependencies import get_db
+from app.bots.main_bot.utils.paytime import paytime
 from app.bots.main_bot.translations import MESSAGES
 from app.bots.main_bot.utils.access_data import data_storage
 from app.bots.main_bot.keyboards.inline_keyboards import (
@@ -13,12 +14,15 @@ from app.bots.main_bot.keyboards.inline_keyboards import (
     get_go_back_keyboard,
 )
 
-logger = log.setup_logger('main_menu_cb_handler', config.LOG_LEVEL)
+logger = log.setup_logger("main_menu_cb_handler", config.LOG_LEVEL)
 
 router = Router(name=__name__)
 
 
-@router.callback_query(F.data == "about")
+@router.callback_query(
+    F.data == "about",
+    lambda callback: paytime(user_id=callback.message.from_user.id)
+)
 async def about(callback: CallbackQuery, state: FSMContext):
     """
     Обработчик нажатия кнопки "О боте".
@@ -39,8 +43,10 @@ async def about(callback: CallbackQuery, state: FSMContext):
     )
 
 
-
-@router.callback_query(F.data == "go_back")
+@router.callback_query(
+    F.data == "go_back",
+    lambda callback: paytime(user_id=callback.message.from_user.id)
+)
 async def go_back(callback: CallbackQuery, state: FSMContext):
     """
     Возвращает пользователя назад в главное меню, повторно вызывая те же кнопки.
@@ -51,14 +57,12 @@ async def go_back(callback: CallbackQuery, state: FSMContext):
     data = await data_storage.get_storage_data(user_id, state)
     lang_code = data.get("lang_code")
 
-    msg = (
-        f"{MESSAGES['welcome'][lang_code]}"
-    )
+    msg = f"{MESSAGES['welcome'][lang_code]}"
 
     if not await database.check_profile_exists(user_id):
-        msg += MESSAGES['get_to_know'][lang_code]
+        msg += MESSAGES["get_to_know"][lang_code]
     else:
-        msg += MESSAGES['pin_me'][lang_code]
+        msg += MESSAGES["pin_me"][lang_code]
 
     await callback.message.edit_caption(
         caption=msg,

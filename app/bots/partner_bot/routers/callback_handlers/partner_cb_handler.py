@@ -6,6 +6,7 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
+from app.bots.partner_bot.utils.paytime import paytime
 from app.dependencies import get_redis_client, get_db
 from app.models import UserMatchRequest
 from config import config
@@ -21,23 +22,25 @@ from logging_config import opt_logger as log
 
 router = Router(name=__name__)
 
-logger = log.setup_logger('partner_cb_handler')
+logger = log.setup_logger("partner_cb_handler")
 
 
-@router.callback_query(F.data == "main_bot")
+@router.callback_query(
+    F.data == "main_bot",
+    lambda callback: paytime(user_id=callback.message.from_user.id),
+)
 async def main_menu_handler(callback: CallbackQuery):
     await callback.answer()
 
 
-@router.callback_query(F.data == "profile")
-async def profile_handler(
-    callback: CallbackQuery, state: FSMContext):
+@router.callback_query(
+    F.data == "profile", lambda callback: paytime(user_id=callback.message.from_user.id)
+)
+async def profile_handler(callback: CallbackQuery, state: FSMContext):
     database = await get_db()
     await callback.answer()
     user_id = callback.from_user.id
-    data = await data_storage.get_storage_data(
-        user_id=user_id, state=state
-    )
+    data = await data_storage.get_storage_data(user_id=user_id, state=state)
     lang_code = data.get("lang_code", "en")
 
     msg = MESSAGES["user_info"][lang_code].format(
@@ -56,9 +59,10 @@ async def profile_handler(
     )
 
 
-@router.callback_query(F.data == "about")
-async def about_handler(
-    callback: CallbackQuery, state: FSMContext):
+@router.callback_query(
+    F.data == "about", lambda callback: paytime(user_id=callback.message.from_user.id)
+)
+async def about_handler(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
 
@@ -73,9 +77,10 @@ async def about_handler(
     )
 
 
-@router.callback_query(F.data == "go_back")
-async def go_back_handler(
-    callback: CallbackQuery, state: FSMContext):
+@router.callback_query(
+    F.data == "go_back", lambda callback: paytime(user_id=callback.message.from_user.id)
+)
+async def go_back_handler(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
 
@@ -96,7 +101,11 @@ async def go_back_handler(
         parse_mode=ParseMode.HTML,
     )
 
-@router.callback_query(F.data.startswith('chtopic_'))
+
+@router.callback_query(
+    F.data.startswith("chtopic_"),
+    lambda callback: paytime(user_id=callback.message.from_user.id),
+)
 async def change_topic_handler(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
@@ -105,10 +114,10 @@ async def change_topic_handler(callback: CallbackQuery, state: FSMContext):
     database = await get_db()
 
     user_id = callback.from_user.id
-    users_choice = callback.data.split('_')[1]
+    users_choice = callback.data.split("_")[1]
     data = await data_storage.get_storage_data(user_id=user_id, state=state)
     lang_code = data.get("lang_code")
-    if data.get('topic') != users_choice:
+    if data.get("topic") != users_choice:
         await database.change_topic(user_id, users_choice)
         msg = MESSAGES["topic_changed"][lang_code]
         await callback.message.answer(text=msg)
@@ -118,7 +127,10 @@ async def change_topic_handler(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(text=MESSAGES["fail_to_change"][lang_code])
 
 
-@router.callback_query(F.data == 'cancel_topic')
+@router.callback_query(
+    F.data == "cancel_topic",
+    lambda callback: paytime(user_id=callback.message.from_user.id),
+)
 async def cancel_choosing_topic(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
@@ -130,13 +142,11 @@ async def cancel_choosing_topic(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(text=MESSAGES["topic_change_canceled"][lang_code])
 
 
-
-
-@router.callback_query(F.data == "queue_info")
-async def show_queue_info(
-    callback: CallbackQuery,
-    state: FSMContext
-):
+@router.callback_query(
+    F.data == "queue_info",
+    lambda callback: paytime(user_id=callback.message.from_user.id),
+)
+async def show_queue_info(callback: CallbackQuery, state: FSMContext):
 
     database = await get_db()
     redis = await get_redis_client()
@@ -163,14 +173,12 @@ async def show_queue_info(
     await callback.answer(text=text, show_alert=True)
 
 
-@router.callback_query(F.data == "cancel")
-async def cancel_search(
-    callback: CallbackQuery,
-    state: FSMContext
-):
+@router.callback_query(
+    F.data == "cancel", lambda callback: paytime(user_id=callback.message.from_user.id)
+)
+async def cancel_search(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
-
 
     redis_client = await get_redis_client()
 
@@ -220,8 +228,8 @@ async def cancel_search(
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                    url=url, json=payload.model_dump(), headers=headers
-             ) as response:
+                url=url, json=payload.model_dump(), headers=headers
+            ) as response:
 
                 response_text = await response.text()
                 logger.debug(f"Статус ответа: {response.status}")
@@ -239,16 +247,14 @@ async def cancel_search(
         logger.error(f"Исключение при выполнении запроса: {e}")
 
 
-@router.callback_query(F.data == "begin_search")
-async def new_session_handler(
-    callback: CallbackQuery,
-    state: FSMContext
-):
+@router.callback_query(
+    F.data == "begin_search",
+    lambda callback: paytime(user_id=callback.message.from_user.id),
+)
+async def new_session_handler(callback: CallbackQuery, state: FSMContext):
     """Обработчик команды /new_session - запускает поиск партнера"""
 
     await callback.answer()
-
-
 
     database = await get_db()
     redis_client = await get_redis_client()
@@ -277,7 +283,8 @@ async def new_session_handler(
 
     # Отменяем предыдущий поиск, если он был
     is_searching = await redis_client.get(f"searching:{user_id}")
-    if is_searching: return logger.info(f"Уже существует поиск для пользователя {user_id}")
+    if is_searching:
+        return logger.info(f"Уже существует поиск для пользователя {user_id}")
 
     await redis_client.setex(f"searching:{user_id}", 150, username)
     logger.debug(f"Создана сессия поиска для пользователя {user_id}")
@@ -307,8 +314,8 @@ async def new_session_handler(
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                    url=url, json=payload.model_dump(), headers=headers
-                ) as response:
+                url=url, json=payload.model_dump(), headers=headers
+            ) as response:
                 response_text = await response.text()
                 logger.debug(f"Статус ответа: {response.status}")
                 logger.debug(f"Тело ответа: {response_text}")

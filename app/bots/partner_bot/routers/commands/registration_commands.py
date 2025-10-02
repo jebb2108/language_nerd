@@ -9,21 +9,29 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove
 
+from app.bots.main_bot.utils.paytime import paytime
 from app.bots.partner_bot.keyboards.regular_keyboards import (
     show_dating_keyboard,
     show_location_keyboard,
     show_gender_keyboard,
 )
 from app.bots.partner_bot.routers.commands.partner_commands import show_main_menu
-from app.bots.partner_bot.translations import MESSAGES, QUESTIONARY, BUTTONS, TRANSCRIPTIONS
+from app.bots.partner_bot.translations import (
+    MESSAGES,
+    QUESTIONARY,
+    BUTTONS,
+    TRANSCRIPTIONS,
+)
 from app.bots.partner_bot.utils.exc_handlers import nickname_exception_handler
 from app.bots.partner_bot.utils.access_data import data_storage
 from app.dependencies import get_db
 from app.validators.validation import validate_name
 from app.validators.exc import (
-    EmptySpaceError, AlreadyExistsError,
-    TooShortError, TooLongError,
-    InvalidCharactersError
+    EmptySpaceError,
+    AlreadyExistsError,
+    TooShortError,
+    TooLongError,
+    InvalidCharactersError,
 )
 
 from config import config
@@ -42,10 +50,13 @@ class PollingState(StatesGroup):
 # Инициализируем роутер
 router = Router(name=__name__)
 
-logger = log.setup_logger('registration_commands', config.LOG_LEVEL)
+logger = log.setup_logger("registration_commands", config.LOG_LEVEL)
 
 
-@router.message(Command("start", prefix="!/"))
+@router.message(
+    Command("start", prefix="!/"),
+    lambda message: paytime(user_id=message.from_user.id),
+)
 async def start(message: Message, state: FSMContext):
 
     database = await get_db()
@@ -55,16 +66,12 @@ async def start(message: Message, state: FSMContext):
 
     user_id = message.from_user.id
 
-    user_data = await data_storage.get_storage_data(
-        user_id=user_id, state=state
-    )
+    user_data = await data_storage.get_storage_data(user_id=user_id, state=state)
 
     language = user_data.get("language")
     lang_code = user_data.get("lang_code")
 
-    greeting = (
-        f"{MESSAGES['intro'][lang_code].format(language=TRANSCRIPTIONS["languages"][language][lang_code])}\n"
-    )
+    greeting = f"{MESSAGES['intro'][lang_code].format(language=TRANSCRIPTIONS["languages"][language][lang_code])}\n"
     await message.answer(text=greeting, parse_mode=ParseMode.HTML)
 
     # Обновляем user_id в состоянии
@@ -76,7 +83,10 @@ async def start(message: Message, state: FSMContext):
     await state.set_state(PollingState.waiting_for_name)
 
 
-@router.message(PollingState.waiting_for_name)
+@router.message(
+    PollingState.waiting_for_name,
+    lambda message: paytime(user_id=message.from_user.id),
+)
 async def process_name(message: Message, state: FSMContext):
 
     database = await get_db()
@@ -91,8 +101,13 @@ async def process_name(message: Message, state: FSMContext):
             await state.update_data(name=message.text)
             await state.set_state(PollingState.waiting_for_bday)
 
-
-    except (EmptySpaceError, AlreadyExistsError, TooShortError, TooLongError, InvalidCharactersError) as e:
+    except (
+        EmptySpaceError,
+        AlreadyExistsError,
+        TooShortError,
+        TooLongError,
+        InvalidCharactersError,
+    ) as e:
         await nickname_exception_handler(message, state, e, lang_code)
         return state.set_state(PollingState.waiting_for_name)
 
@@ -101,11 +116,11 @@ async def process_name(message: Message, state: FSMContext):
         return state.set_state(PollingState.waiting_for_name)
 
 
-
-@router.message(PollingState.waiting_for_bday)
-async def process_age(
-    message: Message, state: FSMContext
-):
+@router.message(
+    PollingState.waiting_for_bday,
+    lambda message: paytime(user_id=message.from_user.id),
+)
+async def process_age(message: Message, state: FSMContext):
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
 
@@ -132,10 +147,11 @@ async def process_age(
     await state.set_state(PollingState.waiting_for_bday)
 
 
-@router.message(PollingState.waiting_for_intro)
-async def process_intro(
-    message: Message, state: FSMContext
-):
+@router.message(
+    PollingState.waiting_for_intro,
+    lambda message: paytime(user_id=message.from_user.id),
+)
+async def process_intro(message: Message, state: FSMContext):
     data = await state.get_data()
     lang_code = data.get("lang_code", "en")
 
@@ -157,8 +173,8 @@ async def process_intro(
 
 @router.message(
     PollingState.waiting_for_dating,
-    lambda message: message.text
-    == BUTTONS["yes_to_dating"][message.from_user.language_code],
+    lambda message: message.text == BUTTONS["yes_to_dating"][message.from_user.language_code],
+    lambda message: paytime(user_id=message.from_user.id),
 )
 async def agreed_to_dating_handler(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -173,31 +189,41 @@ async def agreed_to_dating_handler(message: Message, state: FSMContext):
     return
 
 
-@router.message(PollingState.waiting_for_gender)
+@router.message(
+    PollingState.waiting_for_gender,
+    lambda message: paytime(user_id=message.from_user.id),
+)
 async def process_gender(message: Message, state: FSMContext):
     database = await get_db()
     data = await state.get_data()
     # Достаем нужные данные о пользователе
     user_id = data.get("user_id")
     name = data.get("name")
-    birthday = datetime.strptime(
-        data.get("bday", "01.01.1800"), "%d.%m.%Y").date()
+    birthday = datetime.strptime(data.get("bday", "01.01.1800"), "%d.%m.%Y").date()
     intro = data.get("intro")
     gender = message.text
     lang_code = data.get("lang_code")
     # Сохраняем профиль
     if gender in BUTTONS["cancel"].values():
-        await database.add_users_profile(user_id=user_id, prefered_name=name, birthday=birthday, about=intro)
+        await database.add_users_profile(
+            user_id=user_id, prefered_name=name, birthday=birthday, about=intro
+        )
         await database.add_users_location(user_id=user_id)
-        await message.answer(text=MESSAGES["no_worries_dating"][lang_code], reply_markup=ReplyKeyboardRemove())
+        await message.answer(
+            text=MESSAGES["no_worries_dating"][lang_code],
+            reply_markup=ReplyKeyboardRemove(),
+        )
         return
 
     male_gens = BUTTONS["gender"]["male"]
     formated_gender = "male" if gender in male_gens.values() else "female"
     await database.add_users_profile(
-        user_id=user_id, prefered_name=name,
-        birthday=birthday, gender=formated_gender,
-        about=intro, dating=True
+        user_id=user_id,
+        prefered_name=name,
+        birthday=birthday,
+        gender=formated_gender,
+        about=intro,
+        dating=True,
     )
 
     location_exists: bool = await database.check_location_exists(user_id)
@@ -213,15 +239,15 @@ async def process_gender(message: Message, state: FSMContext):
 
     await message.answer(
         text="Ooops! Looks like you already have some info about you",
-        reply_parameters=ReplyKeyboardRemove()
+        reply_parameters=ReplyKeyboardRemove(),
     )
     await show_main_menu(message, state)
 
 
 @router.message(
     PollingState.waiting_for_dating,
-    lambda message: message.text
-    == BUTTONS["no_to_dating"][message.from_user.language_code],
+    lambda message: message.text == BUTTONS["no_to_dating"][message.from_user.language_code],
+    lambda message: paytime(user_id=message.from_user.id),
 )
 async def disagreed_to_dating_handler(message: Message, state: FSMContext):
     database = await get_db()
@@ -240,7 +266,11 @@ async def disagreed_to_dating_handler(message: Message, state: FSMContext):
     )
 
 
-@router.message(PollingState.waiting_for_location, F.location)
+@router.message(
+    PollingState.waiting_for_location,
+    F.location,
+    lambda message: paytime(user_id=message.from_user.id),
+)
 async def process_location(message: Message, state: FSMContext):
     """Обработчик локации"""
     database = await get_db()
@@ -256,8 +286,10 @@ async def process_location(message: Message, state: FSMContext):
     try:
         async with aiohttp.ClientSession() as session:
             url = config.GEO_API_URL.format(lattitude, longitude, config.GEO_API_KEY)
-            headers = {'Content-Type': 'application/json'}
-            async with session.get(url=url, headers=headers, ssl=config.VERIFY_SSL) as resp:
+            headers = {"Content-Type": "application/json"}
+            async with session.get(
+                url=url, headers=headers, ssl=config.VERIFY_SSL
+            ) as resp:
 
                 if resp.status != 200:
                     return logger.warning("there was an issue with geo site")
@@ -274,7 +306,9 @@ async def process_location(message: Message, state: FSMContext):
         logger.error(f"There was an error occuring: {e}")
 
     finally:
-        await database.add_users_location(user_id, lattitude, longitude, city, country, tzone)
+        await database.add_users_location(
+            user_id, lattitude, longitude, city, country, tzone
+        )
         # Выводим благодарное сообщение
         msg = MESSAGES["success"][lang_code]
         await message.answer(text=msg, reply_markup=ReplyKeyboardRemove())
@@ -282,8 +316,8 @@ async def process_location(message: Message, state: FSMContext):
 
 @router.message(
     PollingState.waiting_for_location,
-    lambda message: message.text
-    == BUTTONS["cancel"].get(message.from_user.language_code, BUTTONS["cancel"]["en"]),
+    lambda message: message.text == BUTTONS["cancel"].get(message.from_user.language_code, BUTTONS["cancel"]["en"]),
+    lambda message: paytime(user_id=message.from_user.id),
 )
 async def cancel(message: Message):
     database = await get_db()
