@@ -90,6 +90,7 @@ class DatabaseService:
                 id SERIAL PRIMARY KEY,
                 user_id BIGINT NOT NULL,
                 amount NUMERIC NULL,
+                currency VARCHAR(10) NULL,
                 period TEXT NULL,
                 trial BOOLEAN DEFAULT TRUE,
                 untill TIMESTAMP DEFAULT NOW(),
@@ -210,24 +211,21 @@ class DatabaseService:
             logger.error(f"Error creating/updating user {user_id}: {e}")
             return False
 
-    async def create_payment(self, user_id: int, period: str="", amount: int=199, trial: bool=True) -> None:
-        offset = {
-            config.MONTH: timedelta(days=31),
-            config.YEAR: timedelta(days=365),
-        }
+    async def create_payment(self, user_id: int, period, amount, currency, trial, untill) -> None:
         async with self.acquire_connection() as conn:
-            new_created_at = datetime.now() + offset.get(period, timedelta(days=3))
+            untill_obj = datetime.fromisoformat(untill).date()
             await conn.execute(
                 """
-                INSERT INTO transactions (user_id, period, amount, trial, untill) 
-                VALUES ($1, $2, $3, $4, $5)
+                INSERT INTO transactions (user_id, period, amount, currency, trial, untill) 
+                VALUES ($1, $2, $3, $4, $5, $6)
                 ON CONFLICT (user_id) DO UPDATE 
                 SET period = EXCLUDED.period, 
+                currency = EXCLUDED.currency,
                 amount = EXCLUDED.amount, 
                 trial = EXCLUDED.trial,
                 untill = EXCLUDED.untill 
                 """,
-                user_id, period, amount, trial, new_created_at
+                user_id, period, amount, currency, trial, untill_obj
             )
 
     async def get_users_due_to(self, user_id: int) -> datetime:

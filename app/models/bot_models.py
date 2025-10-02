@@ -1,8 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional, List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from config import config
 
 
 class Language(str, Enum):
@@ -27,15 +29,35 @@ class Topic(str, Enum):
     GAMES = "games"
 
 
-class UserProfile(BaseModel):
+class NewUser(BaseModel):
     """
     Модель профиля пользователя (для базы данных).
     """
 
-    user_id: str
+    user_id: int
     username: Optional[str]
-    age: Optional[int]
-    language: List[Language]
-    interests: List[Topic]
-    created_at: datetime
-    is_active: bool = True
+    camefrom: str
+    first_name: str
+    language: str
+    fluency: int
+    topic: str
+    lang_code: str
+
+
+class NewPayment(BaseModel):
+    """
+    Модель платежа (для базы данных).
+    """
+
+    user_id: int = Field(..., description="User ID")
+    amount: Optional[int] = Field(
+        199, description="Amount of payment in rubles user agreed to pay"
+    )
+    period: Optional[str] = Field(
+        "trial", description="Period of payment", examples=["month", "year"]
+    )
+    trial: Optional[bool] = Field(True, description="If it is trial period for user")
+    untill: Optional[str] = (
+        datetime.now(tz=config.TZINFO) + timedelta(days=3)
+    ).isoformat()
+    currency: Optional[str] = Field("RUB", description="Currency of payment")

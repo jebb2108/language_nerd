@@ -24,6 +24,8 @@ class Config:
     # RABBITMQ_QUEUE: str = os.getenv("RABBITMQ_QUEUE", "default")
     RABBITMQ_QUEUE: str = os.getenv("RABBITMQ_ROUTING_KEY", "queue")
     RABBITMQ_EXCHANGE: str = os.getenv("RABBITMQ_EXCHANGE", "exchange")
+    RABBITMQ_NEW_USERS_EXCHANGE: str = os.getenv("RABBITMQ_NEW_USERS_EXCHANGE", "new_exchange")
+    RABBITMQ_NEW_USERS_QUEUE: str = os.getenv("RABBITMQ_NEW_USERS_QUEUE", "new_users")
 
     # PostgreSQL
     DATABASE_URL: str = os.getenv(
@@ -96,6 +98,8 @@ class Config:
     VERIFY_SSL = False
 
     WAITING_TIME_EXPIRED = 'waiting time expired'
+
+    ADD_USER_PURPOSE = "add_user_purpose"
 
 
 

@@ -1,5 +1,5 @@
 import asyncio
-import logging
+import json
 from datetime import datetime, timedelta
 from logging_config import opt_logger
 
@@ -8,7 +8,7 @@ from config import config
 from faststream import FastStream
 from faststream.rabbit import RabbitBroker
 from faststream.rabbit.annotations import RabbitMessage
-from app.dependencies import get_match, get_notification, get_redis
+from app.dependencies import get_match, get_notification, get_redis, get_db
 
 from typing import TYPE_CHECKING
 
@@ -196,6 +196,26 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
         await notifier.execute_time_out(user_data=user_data)
 
     return await msg.ack()
+
+
+@broker.subscriber(config.RABBITMQ_NEW_USERS_QUEUE)
+async def handle_db_requests(data: dict, msg: "RabbitMessage"):
+
+    if data["purpose"] == config.ADD_USER_PURPOSE:
+        database = await get_db()
+        user = json.loads(data["user"])
+        await database.create_user(**user)
+        payment = json.loads(data["payment"])
+        await database.create_payment(**payment)
+        logger.info("New user & payment processed by worker")
+        await msg.ack()
+        return
+
+    await broker.publish(
+        data,
+        queue=config.RABBITMQ_NEW_USERS_QUEUE,
+    )
+    await msg.ack()
 
 
 

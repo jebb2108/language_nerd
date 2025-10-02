@@ -1,7 +1,8 @@
 __all__ = [
-    "Language",
+    "NewUser",
+    "NewPayment",
     "Topic",
-    "UserProfile",
+    "Language",
     "UserMatchRequest",
     "UserMatchResponse",
     "MatchCriteria",

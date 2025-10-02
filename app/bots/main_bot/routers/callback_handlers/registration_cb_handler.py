@@ -4,7 +4,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, FSInputFile
 
 from app.bots.partner_bot.translations import TRANSCRIPTIONS
-from app.dependencies import get_db
+from app.dependencies import get_rabbitmq
+from app.models import NewUser, NewPayment
 from config import config
 from app.bots.main_bot.keyboards.inline_keyboards import (
     show_language_keyboard,
@@ -120,13 +121,14 @@ async def handle_topic_choice(callback: CallbackQuery, state: FSMContext):
         reply_markup=confirm_choice_keyboard(lang_code),
     )
 
+
 @router.callback_query(F.data == "action_confirm")
 async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
     await callback.message.delete()
 
-    database = await get_db()
+    rabbit = await get_rabbitmq()
 
     data = await state.get_data()
     user_id = int(data.get("user_id"))
@@ -140,10 +142,7 @@ async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
     if lang_code not in ["en", "ru", "de", "es", "zh"]: lang_code = "en"
 
     msg = f"{MESSAGES['welcome'][lang_code]}"
-    if not await database.check_profile_exists(user_id):
-        msg += MESSAGES['get_to_know'][lang_code]
-    else:
-        msg += MESSAGES['pin_me'][lang_code]
+    msg += MESSAGES['get_to_know'][lang_code]
 
     image_from_file = FSInputFile(config.ABS_PATH_TO_IMG_ONE)
     await callback.message.answer_photo(
@@ -152,16 +151,20 @@ async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
         reply_markup=get_on_main_menu_keyboard(user_id, lang_code),
         parse_mode=ParseMode.HTML,
     )
-
-    # Сохраняем нового пользователя в БД
-    await database.create_user(
-        user_id=user_id,
-        username=username,
-        first_name=first_name,
-        camefrom=camefrom,
-        language=language,
-        fluency=fluency,
-        topic=topic,
-        lang_code=lang_code
+    # Отправляем нового пользователя и транзакцию в RabbitMQ
+    # на сохранение в основную БД
+    await rabbit.publish_user(
+        NewUser(
+            user_id=user_id,
+            username=username,
+            first_name=first_name,
+            camefrom=camefrom,
+            language=language,
+            fluency=fluency,
+            topic=topic,
+            lang_code=lang_code
+        ),
+        NewPayment(
+            user_id=user_id
+        )
     )
-    await database.create_payment(user_id=user_id, amount=0)
