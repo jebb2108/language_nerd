@@ -3,11 +3,10 @@ import json
 import uvicorn
 import socketio
 from datetime import datetime
-import redis.asyncio as aioredis
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from redis.asyncio import Redis
 
-from app.dependencies import get_rabbitmq, get_db, get_redis
+from app.dependencies import get_redis_client
 from app.validators.tokens import convert_token
 from app.validators.validation import validate_access
 from config import config
@@ -18,18 +17,8 @@ from logging_config import opt_logger as log
 
 logger = log.setup_logger('chat server')
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Инициализация ресурсов"""
-    await get_rabbitmq()
-    await get_redis()
-    await get_db()
-    yield
-
-
 # Создаем единственный экземпляр FastAPI
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 # Подключаем роутеры
 app.include_router(match_router)
@@ -38,8 +27,7 @@ app.include_router(match_router)
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
 socket_app = socketio.ASGIApp(sio, app)
 
-# Подключение к Redis
-redis = aioredis.from_url(config.REDIS_URL, decode_responses=True)
+# Подключение к Redi
 
 
 @sio.event
@@ -127,6 +115,7 @@ async def send_message(sid, message):
 
 async def save_message(room_id: str, message_data: dict):
     """Сохранение сообщения в Redis"""
+    redis: "Redis" = get_redis_client()
     key = f"chat:{room_id}:messages"
     await redis.rpush(key, json.dumps(message_data))
     await redis.expire(key, 900)  # TTL 15 минут
@@ -134,6 +123,7 @@ async def save_message(room_id: str, message_data: dict):
 
 async def get_message_history(room_id: str) -> list:
     """Получение истории сообщений"""
+    redis: "Redis" = get_redis_client()
     key = f"chat:{room_id}:messages"
     messages = await redis.lrange(key, 0, -1)
     return [json.loads(msg) for msg in messages]

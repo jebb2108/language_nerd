@@ -1,10 +1,9 @@
-import logging
 from datetime import datetime
 from typing import Any, Dict, Set, Tuple, Union
+from redis.asyncio import Redis as aioredis
 from uuid import uuid4
 
 from asyncpg.pgproto.pgproto import timedelta
-from redis import asyncio as aioredis
 
 from app.models import ChatSessionRequest, MatchFoundEvent
 from config import config
@@ -15,9 +14,12 @@ logger = log.setup_logger('matching')
 
 class MatchingService:
     def __init__(self):
-        self.redis = aioredis.from_url(config.REDIS_URL)
+        self.redis = None
         self.user_status: Dict[int, Dict[str, Any]] = {}
         self.acked_users: Set[int] = set()
+
+    async def initialize(self):
+            self.redis = aioredis.from_url(config.REDIS_URL, decode_responses=True)
 
     async def find_match(
         self, user_id: int
@@ -26,9 +28,8 @@ class MatchingService:
         cnt = 0
         queue = await self.redis.lrange("waiting_queue", 0, -1)
         user_crit = await self.redis.hgetall(f"criteria:{user_id}")
-        user_crit = { k.decode(): v.decode() for k, v in user_crit.items() }
 
-        user_cnt = queue.count(str(user_id).encode())
+        user_cnt = queue.count(str(user_id))
         if user_cnt > 1:
             await self.redis.lrem("waiting_queue", user_cnt - 1, user_id)
             queue = await self.redis.lrange("waiting_queue", 0, -1)
@@ -39,7 +40,6 @@ class MatchingService:
             cnt += 1
             partner_id = int(await self.redis.lpop("waiting_queue"))
             partner_crit = await self.redis.hgetall(f"criteria:{partner_id}")
-            partner_crit = { k.decode(): v.decode() for k, v in partner_crit.items() }
 
             criteria_match = True
             for key in user_crit.keys():
@@ -62,9 +62,7 @@ class MatchingService:
                     )
 
                     user_data = await self.redis.hgetall(f"user:{user_id}")
-                    user_data = { k.decode(): v.decode() for k, v in user_data.items() }
                     partner_data = await self.redis.hgetall(f"user:{partner_id}")
-                    partner_data = { k.decode(): v.decode() for k, v in partner_data.items() }
 
 
                     user = MatchFoundEvent(

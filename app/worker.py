@@ -35,47 +35,46 @@ async def elevate_user(user_data: dict, matcher: "MatchingService") -> bool:
     ]:
         # Привязываем время удалений всех последующих сообщений
         # с временем первого запроса на поиск собеседника
-        logger.debug(f"Copy of message %s marked as cancel/completed status", user_data["user_id"])
+        logger.debug(f"Request for cancel/complete")
         if user_id in matcher.user_status:
-            logger.debug(
-                f"Copy message %s gets deleted from matcher.user_status", user_data["user_id"]
-            )
             orig_time = matcher.user_status[user_id]["created_at"]
             users_to_delete[user_id] = orig_time
+            logger.debug("Original msg w/ ID %s will be deleted now", user_id)
 
         return True
 
     else:
         # Обрабатываем новые сигналы на поиск партнера
         if user_id in users_to_delete:
-            logger.debug("Message being prepared to be acked")
             # Проверяем, новый ли это участник?
             if users_to_delete[user_id] != user_data["created_at"]:
+                logger.debug(f"Old msg time deleted %s", users_to_delete[user_id])
                 del users_to_delete[user_id]
-                logger.debug(f"Old msg time is deleted %s", users_to_delete[user_id])
+                # Проверяем находится ли все еще учтасник в памяти
                 if user_id in matcher.user_status:
-                    logger.debug(f"... so is matcher.user_status[user_id]")
+                    logger.debug(f"... so is memory 4 this msg")
                     del matcher.user_status[user_id]
 
     # Ситуация, когда пользователь находится в словаре
     if user_id in matcher.user_status:
-        logger.debug("user_id has been in matcher's memory")
+        logger.debug("Message w/ user ID %s is in memory", user_id)
         if user_id in users_to_delete:
             saved_orig_time = datetime.fromisoformat(matcher.user_status[user_id]["created_at"])
             users_cancel_time = datetime.fromisoformat(users_to_delete[user_id])
             if saved_orig_time == users_cancel_time:
-                logger.info(f"Origin msg {user_id} gets to be acked")
+                logger.info(f"Original msg {user_id} being acked")
                 return True
 
         # Пользователю найдена пара
         if matcher.user_status[user_id]["acked"]:
-            logger.info("User %s has been processed", user_data["user_id"])
+            logger.info("Message w/ user ID %s has been processed", user_data["user_id"])
             return True
 
         logger.debug("Msg will go back to queue")
         return False # Статус сообщения - простое ожидание
 
-    # Ситуация, когда пользователь НЕ находится в словаре
+    # Ситуация, когда пользователь
+    # НЕ находится в словаре
     else:
         matcher.user_status[user_id] = user_data
         matcher.user_status[user_id]["acked"] = False
@@ -97,7 +96,7 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
     # Оцениваем сообщение по определенным параметрам
     should_ack = await elevate_user(data, matcher)
     if should_ack:
-        logger.debug("Message with user ID %s acked", data["user_id"])
+        logger.info("Recieved message w/ user ID %s acked", data["user_id"])
         return await msg.ack()
 
     user_id = data.get("user_id")

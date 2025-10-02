@@ -2,6 +2,7 @@ import asyncio
 from collections import defaultdict
 from typing import Callable, Any, Dict, TYPE_CHECKING
 from aiogram import BaseMiddleware
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Message
 
 from app.dependencies import get_redis
@@ -69,20 +70,30 @@ class MessageTrackerMiddleware(BaseMiddleware):
         await redis.save_sent_message(message)
         # Очищаем предыдущие сообщения поиска для этого чата
         await self.cleanup_previous_searches(cid, redis)
-        logger.info(f"Started tracking search: chat={cid}, message={mid}")
+        res = await redis.get_search_message_id(cid)
+        logger.info(f"Started tracking search: chat={cid}, message={mid} -> {res}")
 
 
     async def cleanup_previous_searches(self, cid: int, redis: "RedisService") -> None:
         """Очищаем предыдущие сообщения поиска"""
         logger.debug("Starting to clean old messages ...")
         # Ивзлекаем уникальные ID из очереди сообщений
-        for indx in [i.decode() for i in await redis.get_sent_queue(cid)]:
+        for indx in await redis.get_sent_queue(cid):
             if self.active_searches[cid] and not await redis.check_search_msg(cid, indx):
-                logger.debug("This message %s no longer active", indx)
-                await self.bot.delete_message(cid, indx)
-                continue
+
+                try:
+                    await self.bot.delete_message(cid, int(indx))
+
+                except TelegramBadRequest:
+                    logger.debug("User deleted this message %s on their own", indx)
+
+                else:
+                    logger.debug("This message %s deleted", indx)
+
+                await redis.delete_msg_from_queue(cid, indx)
+
             # Это может происходить только (!) при нажатии Cancel
-            if self.active_searches[cid] and await redis.check_search_msg(cid, indx):
+            elif self.active_searches[cid] and await redis.check_search_msg(cid, indx):
                 logger.debug("User %s canceled search. Stopped on msg %s", cid, indx)
                 self.active_searches[cid] = False
 

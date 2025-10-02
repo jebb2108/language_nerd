@@ -57,22 +57,22 @@ async def request_match(
 async def exit_match(data: "UserMatchResponse", db=Depends(get_db), redis=Depends(get_redis)):
     user_id = data.user_id
     lang_code = data.lang_code
+
     user = await db.check_user_exists(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    from aiogram import Bot
-    bot = Bot(token=config.BOT_TOKEN_PARTNER)
     curr_msg = await redis.get_search_message_id(user_id)
 
+    from aiogram import Bot
+    bot = Bot(token=config.BOT_TOKEN_PARTNER)
     await bot.edit_message_text(
         text=MESSAGES["timed_out"][lang_code],
         chat_id=user_id,
-        message_id=curr_msg.decode(),
+        message_id=curr_msg,
         reply_markup=None,
         parse_mode=ParseMode.HTML,
     )
-
 
 
 @router.post("/cancel")
@@ -138,13 +138,13 @@ async def notify_users_re_match(
 
     from aiogram import Bot
 
-    bot = Bot(token=config.BOT_TOKEN_PARTNER)
-
     try:
+        bot = Bot(token=config.BOT_TOKEN_PARTNER)
+
         await bot.edit_message_text(
             text=user_msg.format(nickname=partner_nickname, about=about_partner),
             chat_id=user_id,
-            message_id=prev_users_msg_id.decode(),
+            message_id=prev_users_msg_id,
             reply_markup=create_start_chat_button(
                 # Отправляем сообщение с клавиатурой
                 # на языке пользователя со ссылкой
@@ -153,11 +153,10 @@ async def notify_users_re_match(
             parse_mode=ParseMode.HTML,
         )
 
-        from aiogram import Bot
         await bot.edit_message_text(
             text=partner_msg.format(nickname=user_nickname, about=about_user),
             chat_id=partner_id,
-            message_id=prev_partners_msg_id.decode(),
+            message_id=prev_partners_msg_id,
             reply_markup=create_start_chat_button(
                 # Отправляем сообщение с клавиатурой
                 # на языке пользователя со ссылкой

@@ -142,13 +142,12 @@ async def show_queue_info(
     redis = await get_redis_client()
 
     queue = await redis.lrange("waiting_queue", 0, -1)
-    queue = [int(user_id.decode()) for user_id in queue]
 
     common_lans = dict()
 
     data = await data_storage.get_storage_data(callback.from_user.id, state)
     lang_code = data.get("lang_code", "en")
-    for user_id in queue:
+    for user_id in map(int, queue):
         user_info = await database.get_user_info(user_id)
         lan = user_info["language"]
         if lan not in common_lans:

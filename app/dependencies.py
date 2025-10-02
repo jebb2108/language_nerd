@@ -34,6 +34,8 @@ async def get_db() -> "DatabaseService":
 
 async def get_match() -> "MatchingService":
     """Зависимость для получения Mathcing Service"""
+    if not matching_service.redis:
+        await matching_service.initialize()
     return matching_service
 
 

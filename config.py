@@ -17,7 +17,7 @@ class Config:
 
     DEBUG = False
 
-    LOG_LEVEL = "debug"
+    LOG_LEVEL = "info"
 
     # RabbitMQ
     RABBITMQ_URL: str = os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/")
