@@ -25,7 +25,7 @@ router = Router(name=__name__)
 
 @router.callback_query(
     F.data.startswith("camefrom_"),
-    lambda callback: paytime(user_id=callback.message.from_user.id),
+    lambda callback: paytime(user_id=callback.from_user.id),
 )
 async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
     """
@@ -53,7 +53,7 @@ async def handle_camefrom(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(
     F.data.startswith("lang_"),
-    lambda callback: paytime(user_id=callback.message.from_user.id),
+    lambda callback: paytime(user_id=callback.from_user.id),
 )
 async def handle_fluency_choice(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
@@ -76,7 +76,7 @@ async def handle_fluency_choice(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(
     F.data.startswith("fluency_"),
-    lambda callback: paytime(user_id=callback.message.from_user.id),
+    lambda callback: paytime(user_id=callback.from_user.id),
 )
 async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
     """
@@ -103,7 +103,7 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(
     F.data.startswith("topic_"),
-    lambda callback: paytime(user_id=callback.message.from_user.id),
+    lambda callback: paytime(user_id=callback.from_user.id),
 )
 async def handle_transaction_offer(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
@@ -126,7 +126,7 @@ async def handle_transaction_offer(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(
     F.data == "start_trial",
-    lambda callback: paytime(user_id=callback.message.from_user.id),
+    lambda callback: paytime(user_id=callback.from_user.id),
 )
 async def handle_topic_choice(callback: CallbackQuery, state: FSMContext):
 
@@ -147,7 +147,7 @@ async def handle_topic_choice(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(
     F.data == "action_confirm",
-    lambda callback: paytime(user_id=callback.message.from_user.id),
+    lambda callback: paytime(user_id=callback.from_user.id),
 )
 async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
 

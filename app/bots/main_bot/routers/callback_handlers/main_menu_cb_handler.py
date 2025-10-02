@@ -21,7 +21,7 @@ router = Router(name=__name__)
 
 @router.callback_query(
     F.data == "about",
-    lambda callback: paytime(user_id=callback.message.from_user.id)
+    lambda callback: paytime(user_id=callback.from_user.id)
 )
 async def about(callback: CallbackQuery, state: FSMContext):
     """
@@ -45,7 +45,7 @@ async def about(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(
     F.data == "go_back",
-    lambda callback: paytime(user_id=callback.message.from_user.id)
+    lambda callback: paytime(user_id=callback.from_user.id)
 )
 async def go_back(callback: CallbackQuery, state: FSMContext):
     """

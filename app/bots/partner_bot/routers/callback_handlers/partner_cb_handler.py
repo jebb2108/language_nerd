@@ -27,14 +27,14 @@ logger = log.setup_logger("partner_cb_handler")
 
 @router.callback_query(
     F.data == "main_bot",
-    lambda callback: paytime(user_id=callback.message.from_user.id),
+    lambda callback: paytime(user_id=callback.from_user.id),
 )
 async def main_menu_handler(callback: CallbackQuery):
     await callback.answer()
 
 
 @router.callback_query(
-    F.data == "profile", lambda callback: paytime(user_id=callback.message.from_user.id)
+    F.data == "profile", lambda callback: paytime(user_id=callback.from_user.id)
 )
 async def profile_handler(callback: CallbackQuery, state: FSMContext):
     database = await get_db()
@@ -60,7 +60,7 @@ async def profile_handler(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(
-    F.data == "about", lambda callback: paytime(user_id=callback.message.from_user.id)
+    F.data == "about", lambda callback: paytime(user_id=callback.from_user.id)
 )
 async def about_handler(callback: CallbackQuery, state: FSMContext):
 
@@ -78,7 +78,7 @@ async def about_handler(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(
-    F.data == "go_back", lambda callback: paytime(user_id=callback.message.from_user.id)
+    F.data == "go_back", lambda callback: paytime(user_id=callback.from_user.id)
 )
 async def go_back_handler(callback: CallbackQuery, state: FSMContext):
 
@@ -104,7 +104,7 @@ async def go_back_handler(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(
     F.data.startswith("chtopic_"),
-    lambda callback: paytime(user_id=callback.message.from_user.id),
+    lambda callback: paytime(user_id=callback.from_user.id),
 )
 async def change_topic_handler(callback: CallbackQuery, state: FSMContext):
 
@@ -129,7 +129,7 @@ async def change_topic_handler(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(
     F.data == "cancel_topic",
-    lambda callback: paytime(user_id=callback.message.from_user.id),
+    lambda callback: paytime(user_id=callback.from_user.id),
 )
 async def cancel_choosing_topic(callback: CallbackQuery, state: FSMContext):
 
@@ -144,7 +144,7 @@ async def cancel_choosing_topic(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(
     F.data == "queue_info",
-    lambda callback: paytime(user_id=callback.message.from_user.id),
+    lambda callback: paytime(user_id=callback.from_user.id),
 )
 async def show_queue_info(callback: CallbackQuery, state: FSMContext):
 
@@ -174,7 +174,7 @@ async def show_queue_info(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(
-    F.data == "cancel", lambda callback: paytime(user_id=callback.message.from_user.id)
+    F.data == "cancel", lambda callback: paytime(user_id=callback.from_user.id)
 )
 async def cancel_search(callback: CallbackQuery, state: FSMContext):
 
@@ -249,7 +249,7 @@ async def cancel_search(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(
     F.data == "begin_search",
-    lambda callback: paytime(user_id=callback.message.from_user.id),
+    lambda callback: paytime(user_id=callback.from_user.id),
 )
 async def new_session_handler(callback: CallbackQuery, state: FSMContext):
     """Обработчик команды /new_session - запускает поиск партнера"""
