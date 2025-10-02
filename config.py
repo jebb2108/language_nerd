@@ -15,7 +15,7 @@ load_dotenv(env_path)
 @dataclass
 class Config:
 
-    DEBUG = False
+    DEBUG = True
 
     LOG_LEVEL = "info"
 

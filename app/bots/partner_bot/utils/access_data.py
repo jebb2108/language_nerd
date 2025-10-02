@@ -33,8 +33,9 @@ class DataStorage:
             # Если данных нет в Redis, получаем из базы и сохраняем в Redis
             user_data = await self.set_user_info(user_id)
             if not user_data:
-                logger.error("User %s does not have data!", user_id)
-                return {}
+                raise StorageDataException(
+                    "Error while trying to access user data from database"
+                )
 
             await state.update_data(user_data)
             return user_data
