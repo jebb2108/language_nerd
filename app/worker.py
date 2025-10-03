@@ -143,8 +143,6 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
         )
         logger.debug("Currently only msg %s will be acked imedietly", data["user_id"])
         await notifier.notify_match(room_id, user, partner)
-        await redis.remove_from_queue(user.user_id)
-        await redis.remove_from_queue(partner.user_id)
         return await msg.ack()
 
     # Если пара не найдена, отправляем сообщение снова
