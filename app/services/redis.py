@@ -127,7 +127,7 @@ class RedisService:
 
     async def remove_from_queue(self, user_id: int) -> None:
         """Удаление пользователя из очереди"""
-        await self.redis_client.setex(f"searching:{user_id}", 60, 0)
+        await self.redis_client.delete(f"searching:{user_id}")
         await self.redis_client.delete(f"user:{user_id}")
         await self.redis_client.delete(f"criteria:{user_id}")
         await self.redis_client.lrem("waiting_queue", 1, str(user_id))

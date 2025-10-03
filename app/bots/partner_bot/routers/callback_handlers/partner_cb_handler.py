@@ -197,6 +197,11 @@ async def cancel_search(callback: CallbackQuery, state: FSMContext):
         DOMAIN=f"{config.BASE_URL}:{config.CHAT_SERVER_PORT}"
     )
 
+    is_searching = await redis_client.get(f"searching:{user_id}")
+    if is_searching:
+        await redis_client.delete(f"searching:{user_id}")
+        logger.debug(f"Отменен поиск для пользователя {user_id}")
+
     logger.info(f"Отправка запроса на: {url}")
     logger.debug(f"Данные запроса: {payload}")
 

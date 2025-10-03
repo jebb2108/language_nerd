@@ -61,10 +61,6 @@ async def cancel_match(
     redis: "RedisService" = Depends(get_redis),
 ):
     logger.info(f"Поступил запрос на выход из очереди от пользователя {request.user_id}")
-    # Проверяем пользователя в Redis
-    searching_user = await redis.get_searching_user(request.user_id)
-    if not searching_user:
-        raise HTTPException(status_code=404, detail=f"User not found {request.user_id}")
 
     logger.debug(
         f"User ID: {request.user_id}, "
@@ -97,13 +93,16 @@ async def exit_match(
 
     await asyncio.sleep(0.5)
 
-    await bot.send_message(
+    message = await bot.send_message(
         chat_id=user_id,
         text=MESSAGES["timed_out"][lang_code],
         parse_mode=ParseMode.HTML,
     )
 
     await redis.remove_from_queue(user_id=user_id)
+    # Сохраняем текущее сообщение в очереди
+    # для последующего удаления при новой сессии поиска
+    await redis.save_sent_message(message)
 
 
 @router.post("/notify")
