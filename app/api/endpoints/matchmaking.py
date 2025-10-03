@@ -13,6 +13,7 @@ from app.bots.partner_bot.translations import MESSAGES
 from app.validators.tokens import create_token
 from config import config
 from logging_config import opt_logger as log
+from aiogram import Bot
 
 if TYPE_CHECKING:
     from aiogram.types import Message
@@ -55,25 +56,31 @@ async def request_match(
 
 
 @router.post("/timed_out")
-async def exit_match(data: "UserMatchResponse", db=Depends(get_db), redis=Depends(get_redis)):
+async def exit_match(data: "UserMatchResponse", redis=Depends(get_redis)):
+
     user_id = data.user_id
     lang_code = data.lang_code
 
-    user = await db.check_user_exists(user_id)
-    if not user:
+    curr_search_msg = await redis.get_search_message_id(user_id)
+    if not curr_search_msg:
         raise HTTPException(status_code=404, detail="User not found")
 
-    curr_msg = await redis.get_search_message_id(user_id)
-
-    from aiogram import Bot
     bot = Bot(token=config.BOT_TOKEN_PARTNER)
-    await bot.edit_message_text(
-        text=MESSAGES["timed_out"][lang_code],
+
+    await bot.delete_message(
         chat_id=user_id,
-        message_id=curr_msg,
-        reply_markup=None,
-        parse_mode=ParseMode.HTML,
+        message_id=curr_search_msg
     )
+
+    await asyncio.sleep(0.5)
+
+    await bot.send_message(
+        chat_id=user_id,
+        text=MESSAGES["timed_out"][lang_code],
+        parse_mode=ParseMode.HTML
+    )
+
+    await bot.close()
 
 
 @router.post("/cancel")
@@ -136,8 +143,6 @@ async def notify_users_re_match(
 
     prev_users_msg_id = await redis.get_search_message_id(user_id)
     prev_partners_msg_id = await redis.get_search_message_id(partner_id)
-
-    from aiogram import Bot
 
     try:
 
