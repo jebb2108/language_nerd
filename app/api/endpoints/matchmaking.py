@@ -30,7 +30,6 @@ async def request_match(
     database: "DatabaseService" = Depends(get_db),
     rabbitmq: "RabbitMQService" = Depends(get_rabbitmq),
 ):
-    logger.info(f"Получен запрос на поиск партнера для пользователя {request.user_id}")
     # Проверяем пользователя в Redis
     user = await database.check_user_exists(user_id=request.user_id)
     if not user:
@@ -48,6 +47,7 @@ async def request_match(
     redis = await get_redis()
     is_searching = True if request.status == config.SEARCH_STARTED else False
     if is_searching:
+        logger.info(f"Получен запрос на поиск партнера для пользователя {request.user_id}")
         await redis.add_to_queue(request)
     # Отправляем запрос в очередь
     await rabbitmq.publish_message(request.model_dump())
