@@ -63,7 +63,7 @@ async def exit_match(data: "UserMatchResponse", redis=Depends(get_redis)):
 
     curr_search_msg = await redis.get_search_message_id(user_id)
     if not curr_search_msg:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail=f"User not found {user_id}")
 
     bot = Bot(token=config.BOT_TOKEN_PARTNER)
 
