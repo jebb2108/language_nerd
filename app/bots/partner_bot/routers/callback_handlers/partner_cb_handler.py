@@ -175,12 +175,6 @@ async def cancel_search(callback: CallbackQuery, state: FSMContext):
     gender = data.get("gender") or "unknown"
     lang_code = data.get("lang_code")
 
-    # Отменяем предыдущий поиск, если он был
-    is_searching = await redis_client.get(f"searching:{user_id}")
-    if is_searching:
-        await redis_client.delete(f"searching:{user_id}")
-        logger.debug(f"Отменен предыдущий поиск для пользователя {user_id}")
-
     await callback.message.edit_text(text=MESSAGES["cancel_search"][lang_code])
 
     # Отправляю запрос на сервер

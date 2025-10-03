@@ -54,6 +54,31 @@ async def request_match(
     return {"status": "user added to queue"}
 
 
+@router.delete("/match")
+async def cancel_match(
+    request: UserMatchRequest,
+    rabbitmq: RabbitMQService = Depends(get_rabbitmq),
+    redis: "RedisService" = Depends(get_redis),
+):
+    logger.info(f"Поступил запрос на выход из очереди от пользователя {request.user_id}")
+    # Проверяем пользователя в Redis
+    searching_user = await redis.get_searching_user(request.user_id)
+    if not searching_user:
+        raise HTTPException(status_code=404, detail=f"User not found {request.user_id}")
+
+    logger.debug(
+        f"User ID: {request.user_id}, "
+        f"criteria: {request.criteria}, "
+        f"gender: {request.gender},"
+        f"lang_code: {request.lang_code}"
+    )
+
+    # Отправляем сообщение в очередь
+    await rabbitmq.publish_message(request.model_dump())
+    await redis.remove_from_queue(request.user_id)
+    return {"status": "User deleted from queue"}
+
+
 @router.post("/timed_out")
 async def exit_match(
     data: "UserMatchResponse", redis: "RedisService" = Depends(get_redis)
@@ -79,31 +104,6 @@ async def exit_match(
     )
 
     await redis.remove_from_queue(user_id=user_id)
-
-
-@router.delete("/cancel")
-async def cancel_match(
-    request: UserMatchRequest,
-    rabbitmq: RabbitMQService = Depends(get_rabbitmq),
-    redis: "RedisService" = Depends(get_redis),
-):
-    logger.info(f"Поступил запрос на выход из очереди от пользователя {request.user_id}")
-    # Проверяем пользователя в Redis
-    searching_user = await redis.get_searching_user(request.user_id)
-    if not searching_user:
-        raise HTTPException(status_code=404, detail=f"User not found {request.user_id}")
-
-    logger.debug(
-        f"User ID: {request.user_id}, "
-        f"criteria: {request.criteria}, "
-        f"gender: {request.gender},"
-        f"lang_code: {request.lang_code}"
-    )
-
-    # Отправляем сообщение в очередь
-    await rabbitmq.publish_message(request.model_dump())
-    await redis.remove_from_queue(request.user_id)
-    return {"status": "User deleted from queue"}
 
 
 @router.post("/notify")
