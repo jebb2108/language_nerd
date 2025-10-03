@@ -11,11 +11,11 @@ from app.validators.tokens import create_token
 from config import config
 from logging_config import opt_logger as log
 from app.models.chat_models import UserMatchRequest
+from app.services.rabbitmq import RabbitMQService
+from app.services.redis import RedisService
 
 if TYPE_CHECKING:
     from aiogram import Bot
-    from app.services.rabbitmq import RabbitMQService
-    from app.services.redis import RedisService
 
 logger = log.setup_logger('endpoints', config.LOG_LEVEL)
 
