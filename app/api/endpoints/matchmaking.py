@@ -78,6 +78,8 @@ async def exit_match(
         parse_mode=ParseMode.HTML,
     )
 
+    await redis.remove_from_queue(user_id=user_id)
+
 
 @router.post("/cancel")
 async def cancel_match(
