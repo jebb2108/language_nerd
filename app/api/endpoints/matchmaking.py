@@ -10,12 +10,12 @@ from app.bots.partner_bot.translations import MESSAGES
 from app.validators.tokens import create_token
 from config import config
 from logging_config import opt_logger as log
+from app.models.chat_models import UserMatchRequest
 
 if TYPE_CHECKING:
     from aiogram import Bot
     from app.services.rabbitmq import RabbitMQService
     from app.services.redis import RedisService
-    from app.models.chat_models import UserMatchRequest
 
 logger = log.setup_logger('endpoints', config.LOG_LEVEL)
 
