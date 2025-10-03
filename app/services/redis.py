@@ -101,7 +101,7 @@ class RedisService:
 
     async def add_to_queue(self, user_data: "UserMatchRequest") -> None:
         """Добавление пользователя в очередь поиска"""
-        logger.info(f"Adding user {user_data.user_id} to queue")
+
         # Сохраняем данные пользователя в Redis
         await self.redis_client.hset(
             f"user:{user_data.user_id}",
@@ -120,7 +120,7 @@ class RedisService:
         # Добавляем в очередь поиска
         await self.redis_client.lpush("waiting_queue", user_data.user_id)
         # Устанавливаем флаг поиска
-        await self.redis_client.setex(f"searching:{user_data.user_id}", 300, "true")
+        await self.redis_client.setex(f"searching:{user_data.user_id}", config.WAIT_TIMER+5, "true")
 
         logger.info(f"User {user_data.user_id} added to queue")
 
@@ -129,7 +129,7 @@ class RedisService:
         """Удаление пользователя из очереди"""
         await self.redis_client.delete(f"searching:{user_id}")
         await self.redis_client.delete(f"user:{user_id}")
-        await self.redis_client.delete(f"criteria{user_id}")
+        await self.redis_client.delete(f"criteria:{user_id}")
         await self.redis_client.lrem("waiting_queue", 1, str(user_id))
 
         return logger.info(f"User {user_id} removed from queue")

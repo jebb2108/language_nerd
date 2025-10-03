@@ -8,17 +8,17 @@ from app.dependencies import get_rabbitmq, get_db, get_redis, get_partner_bot
 from app.bots.partner_bot.keyboards.inline_keyboards import create_start_chat_button
 from app.bots.partner_bot.translations import MESSAGES
 from app.services.database import DatabaseService
+from app.services.redis import RedisService
 from app.validators.tokens import create_token
 from config import config
 from logging_config import opt_logger as log
 from app.models.chat_models import UserMatchRequest
 from app.services.rabbitmq import RabbitMQService
-from app.services.redis import RedisService
 
 if TYPE_CHECKING:
     from aiogram import Bot
 
-logger = log.setup_logger('endpoints', config.LOG_LEVEL)
+logger = log.setup_logger("endpoints", config.LOG_LEVEL)
 
 
 router = APIRouter(prefix="/api")
@@ -29,11 +29,8 @@ async def request_match(
     request: "UserMatchRequest",
     database: "DatabaseService" = Depends(get_db),
     rabbitmq: "RabbitMQService" = Depends(get_rabbitmq),
-    redis: "RedisService" = Depends(get_redis),
 ):
-    logger.info(
-        f"Получен запрос на поиск партнера для пользователя {request.user_id}"
-    )
+    logger.info(f"Получен запрос на поиск партнера для пользователя {request.user_id}")
     # Проверяем пользователя в Redis
     user = await database.check_user_exists(user_id=request.user_id)
     if not user:
@@ -50,14 +47,17 @@ async def request_match(
     # которые ввзаимодействуют с Redis )
     redis = await get_redis()
     is_searching = True if request.status == config.SEARCH_STARTED else False
-    if is_searching: await redis.add_to_queue(request)
+    if is_searching:
+        await redis.add_to_queue(request)
     # Отправляем запрос в очередь
     await rabbitmq.publish_message(request.model_dump())
     return {"status": "user added to queue"}
 
 
 @router.post("/timed_out")
-async def exit_match(data: "UserMatchResponse", redis=Depends(get_redis)):
+async def exit_match(
+    data: "UserMatchResponse", redis: "RedisService" = Depends(get_redis)
+):
 
     user_id = data.user_id
     lang_code = data.lang_code
@@ -68,26 +68,22 @@ async def exit_match(data: "UserMatchResponse", redis=Depends(get_redis)):
 
     bot: "Bot" = await get_partner_bot()
 
-    await bot.delete_message(
-        chat_id=user_id,
-        message_id=curr_search_msg
-    )
+    await bot.delete_message(chat_id=user_id, message_id=curr_search_msg)
 
     await asyncio.sleep(0.5)
 
     await bot.send_message(
         chat_id=user_id,
         text=MESSAGES["timed_out"][lang_code],
-        parse_mode=ParseMode.HTML
+        parse_mode=ParseMode.HTML,
     )
-
 
 
 @router.post("/cancel")
 async def cancel_match(
     request: UserMatchRequest,
     rabbitmq: RabbitMQService = Depends(get_rabbitmq),
-    redis=Depends(get_redis),
+    redis: "RedisService" = Depends(get_redis),
 ):
     # Проверяем пользователя в Redis
     searching_user = await redis.get_searching_user(request.user_id)
@@ -109,7 +105,9 @@ async def cancel_match(
 
 @router.post("/notify")
 async def notify_users_re_match(
-    request: dict, db=Depends(get_db), redis=Depends(get_redis)
+    request: dict,
+    db: "DatabaseService" = Depends(get_db),
+    redis: "RedisService" = Depends(get_redis),
 ):
 
     room_id = request["room_id"]
@@ -124,9 +122,7 @@ async def notify_users_re_match(
     user_profile = await db.get_all_user_info(user_id)
     partner_profile = await db.get_all_user_info(partner_id)
     # Ссылки для подключения
-    user_link = link.format(
-        room_id=room_id, token=await create_token(user_id, room_id)
-    )
+    user_link = link.format(room_id=room_id, token=await create_token(user_id, room_id))
     partner_link = link.format(
         room_id=room_id, token=await create_token(partner_id, room_id)
     )
@@ -147,15 +143,9 @@ async def notify_users_re_match(
 
         bot: "Bot" = await get_partner_bot()
 
-        await bot.delete_message(
-            chat_id=user_id,
-            message_id=prev_users_msg_id
-        )
+        await bot.delete_message(chat_id=user_id, message_id=prev_users_msg_id)
 
-        await bot.delete_message(
-            chat_id=partner_id,
-            message_id=prev_partners_msg_id
-        )
+        await bot.delete_message(chat_id=partner_id, message_id=prev_partners_msg_id)
 
         # Ожидаем некоторое время перед отправкой
         # для хорошего визуального эффека
@@ -167,10 +157,10 @@ async def notify_users_re_match(
             reply_markup=create_start_chat_button(
                 # Отправляем сообщение с клавиатурой
                 # на языке пользователя со ссылкой
-                user_data.get("lang_code"), link=user_link
+                user_data.get("lang_code"),
+                link=user_link,
             ),
-            parse_mode=ParseMode.HTML
-
+            parse_mode=ParseMode.HTML,
         )
 
         await bot.send_message(
@@ -179,11 +169,11 @@ async def notify_users_re_match(
             reply_markup=create_start_chat_button(
                 # Отправляем сообщение с клавиатурой
                 # на языке пользователя со ссылкой
-                lang_code=partner_data["lang_code"], link=partner_link
+                lang_code=partner_data["lang_code"],
+                link=partner_link,
             ),
-            parse_mode=ParseMode.HTML
+            parse_mode=ParseMode.HTML,
         )
-
 
     except Exception as e:
         logger.error(f"Error launching chat for users: {e}")
