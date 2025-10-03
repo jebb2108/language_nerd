@@ -208,7 +208,7 @@ async def cancel_search(callback: CallbackQuery, state: FSMContext):
 
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.post(
+            async with session.delete(
                 url=url, json=payload.model_dump(), headers=headers
             ) as response:
 

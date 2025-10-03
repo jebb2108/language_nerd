@@ -81,12 +81,13 @@ async def exit_match(
     await redis.remove_from_queue(user_id=user_id)
 
 
-@router.post("/cancel")
+@router.delete("/cancel")
 async def cancel_match(
     request: UserMatchRequest,
     rabbitmq: RabbitMQService = Depends(get_rabbitmq),
     redis: "RedisService" = Depends(get_redis),
 ):
+    logger.info(f"Поступил запрос на выход из очереди от пользователя {request.user_id}")
     # Проверяем пользователя в Redis
     searching_user = await redis.get_searching_user(request.user_id)
     if not searching_user:

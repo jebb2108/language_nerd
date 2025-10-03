@@ -123,7 +123,7 @@ async def save_message(room_id: str, message_data: dict):
 
 async def get_message_history(room_id: str) -> list:
     """Получение истории сообщений"""
-    redis: "Redis" = get_redis_client()
+    redis: "Redis" = await get_redis_client()
     key = f"chat:{room_id}:messages"
     messages = await redis.lrange(key, 0, -1)
     return [json.loads(msg) for msg in messages]
