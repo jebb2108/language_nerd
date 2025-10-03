@@ -115,7 +115,7 @@ async def send_message(sid, message):
 
 async def save_message(room_id: str, message_data: dict):
     """Сохранение сообщения в Redis"""
-    redis: "Redis" = get_redis_client()
+    redis: "Redis" = await get_redis_client()
     key = f"chat:{room_id}:messages"
     await redis.rpush(key, json.dumps(message_data))
     await redis.expire(key, 900)  # TTL 15 минут
