@@ -122,7 +122,7 @@ class RedisService:
         # Устанавливаем флаг поиска
         await self.redis_client.setex(f"searching:{user_data.user_id}", config.WAIT_TIMER+5, "true")
 
-        logger.info(f"User {user_data.user_id} added to queue")
+        logger.debug(f"User {user_data.user_id} added to queue")
 
 
     async def remove_from_queue(self, user_id: int) -> None:
