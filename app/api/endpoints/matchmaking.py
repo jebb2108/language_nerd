@@ -7,6 +7,7 @@ from app.models import UserMatchResponse
 from app.dependencies import get_rabbitmq, get_db, get_redis, get_partner_bot
 from app.bots.partner_bot.keyboards.inline_keyboards import create_start_chat_button
 from app.bots.partner_bot.translations import MESSAGES
+from app.services.database import DatabaseService
 from app.validators.tokens import create_token
 from config import config
 from logging_config import opt_logger as log
@@ -26,6 +27,7 @@ router = APIRouter(prefix="/api")
 @router.post("/match")
 async def request_match(
     request: "UserMatchRequest",
+    database: "DatabaseService" = Depends(get_db),
     rabbitmq: "RabbitMQService" = Depends(get_rabbitmq),
     redis: "RedisService" = Depends(get_redis),
 ):
@@ -33,9 +35,9 @@ async def request_match(
         f"Получен запрос на поиск партнера для пользователя {request.user_id}"
     )
     # Проверяем пользователя в Redis
-    searching_user = await redis.get_searching_user(request.user_id)
-    if not searching_user:
-        raise HTTPException(status_code=404, detail=f"User not found {request.user_id}")
+    user = await database.check_user_exists(user_id=request.user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail=f"User not found")
 
     logger.debug(
         f"User ID: {request.user_id}, "
