@@ -58,7 +58,7 @@ async def show_main_menu(message: Message, state: FSMContext):
     Command("pay", prefix="!/"),
 )
 async def pay_cmd(message: Message, state: FSMContext):
-    if not await paytime(message.from_user.id):
+    if not await paytime(message):
         return
 
     user_id = message.from_user.id
