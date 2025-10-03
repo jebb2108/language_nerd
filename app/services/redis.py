@@ -37,6 +37,9 @@ class RedisService:
             logger.debug(f"Redis connection error: {e}")
             self.redis_client = None
 
+    async def get_searching_user(self, user_id: int) -> Awaitable[str] | None:
+        return await self.redis_client.get(f"searching:{user_id}")
+
     async def get_sent_queue(self, chat_id: int) -> Awaitable[list]:
         return await self.redis_client.lrange(f"sent_messages:{chat_id}", 0, -1)
 

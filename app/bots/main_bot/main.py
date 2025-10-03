@@ -1,18 +1,17 @@
 import asyncio
 from logging_config import opt_logger as log
 
-from aiogram import Bot, Dispatcher
-from aiogram.client.default import DefaultBotProperties
+from aiogram import Dispatcher
 from aiogram.fsm.storage.redis import RedisStorage
-from aiogram.enums import ParseMode
 from typing import Optional
 
 from asyncpg.pgproto.pgproto import timedelta
 
-from app.dependencies import get_redis_client
-from config import config
+from app.dependencies import get_redis_client, get_main_bot
 from app.bots.main_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
 from app.bots.main_bot.middlewares.quiz_middleware import QuizMiddleware
+
+from config import config
 
 from routers import router as main_router
 
@@ -42,10 +41,7 @@ async def run():
     disp = Dispatcher(storage=storage)
 
     # Инициализация бота
-    bot = Bot(
-        token=config.BOT_TOKEN_MAIN,
-        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-    )
+    bot = get_main_bot()
 
     #  Регистрация middleware -> Messages
     disp.message.middleware(quiz_middleware)

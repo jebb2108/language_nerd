@@ -1,10 +1,9 @@
 import asyncio
 from typing import Optional
+
 from logging_config import opt_logger as log
 
-from aiogram import Bot, Dispatcher
-from aiogram.client.default import DefaultBotProperties
-from aiogram.enums import ParseMode
+from aiogram import Dispatcher
 from aiogram.fsm.storage.redis import RedisStorage
 from asyncpg.pgproto.pgproto import timedelta
 
@@ -12,7 +11,7 @@ from app.bots.partner_bot.middlewares.message_tracker_middleware import MessageT
 from app.bots.partner_bot.routers import router as main_router
 from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
 
-from app.dependencies import get_redis_client
+from app.dependencies import get_redis_client, partner_bot
 
 # Импорт функций БД
 from config import config
@@ -32,10 +31,8 @@ async def init_resources(bot):
 
 
 async def run():
-    bot = Bot(
-        token=config.BOT_TOKEN_PARTNER,
-        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-    )
+
+    bot = partner_bot()
 
     redis = await get_redis_client()
     storage = RedisStorage(redis, state_ttl=timedelta(minutes=10), data_ttl=timedelta(minutes=60))

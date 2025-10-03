@@ -6,15 +6,30 @@ from app.services.database import database_service
 from app.services.matching import matching_service
 from app.services.notification import notification_service
 from app.services.redis import redis_service
+from app.services.main_bot import main_bot
+from app.services.partner_bot import partner_bot
 
 if TYPE_CHECKING:
     from redis.asyncio import Redis
     from app.services.database import DatabaseService
-    from app.services.ai_modules import WeeklyReportScheduler, PendingReportsProcessor
+    from app.services.ai_modules import WeeklyReportScheduler
     from app.services.redis import RedisService
     from app.services.rabbitmq import RabbitMQService
     from app.services.matching import MatchingService
     from app.services.notification import NotificationService
+    from app.services.main_bot import MainBot
+    from app.services.partner_bot import PartnerBot
+
+
+async def get_main_bot() -> "MainBot":
+    if not main_bot.initialized:
+        await main_bot.connect()
+    return main_bot.get_bot()
+
+async def get_partner_bot() -> "PartnerBot":
+    if not partner_bot.initialized:
+        await partner_bot.connect()
+    return partner_bot.get_bot()
 
 
 async def get_rabbitmq() -> "RabbitMQService":

@@ -1,22 +1,21 @@
 import asyncio
 from typing import TYPE_CHECKING
 from aiogram.enums import ParseMode
-
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.models import UserMatchResponse
-from app.services.rabbitmq import RabbitMQService
-from app.dependencies import get_rabbitmq, get_db, get_redis
-from app.models.chat_models import UserMatchRequest
+from app.dependencies import get_rabbitmq, get_db, get_redis, get_partner_bot
 from app.bots.partner_bot.keyboards.inline_keyboards import create_start_chat_button
 from app.bots.partner_bot.translations import MESSAGES
 from app.validators.tokens import create_token
 from config import config
 from logging_config import opt_logger as log
-from aiogram import Bot
 
 if TYPE_CHECKING:
-    from aiogram.types import Message
+    from aiogram import Bot
+    from app.services.rabbitmq import RabbitMQService
+    from app.services.redis import RedisService
+    from app.models.chat_models import UserMatchRequest
 
 logger = log.setup_logger('endpoints', config.LOG_LEVEL)
 
@@ -28,15 +27,15 @@ router = APIRouter(prefix="/api")
 async def request_match(
     request: "UserMatchRequest",
     rabbitmq: "RabbitMQService" = Depends(get_rabbitmq),
-    db=Depends(get_db),
+    redis: "RedisService" = Depends(get_redis),
 ):
     logger.info(
         f"Получен запрос на поиск партнера для пользователя {request.user_id}"
     )
-    # Проверяем пользователя в БД
-    user = await db.check_user_exists(request.user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    # Проверяем пользователя в Redis
+    searching_user = await redis.get_searching_user(request.user_id)
+    if not searching_user:
+        raise HTTPException(status_code=404, detail=f"User not found {request.user_id}")
 
     logger.debug(
         f"User ID: {request.user_id}, "
@@ -63,9 +62,9 @@ async def exit_match(data: "UserMatchResponse", redis=Depends(get_redis)):
 
     curr_search_msg = await redis.get_search_message_id(user_id)
     if not curr_search_msg:
-        raise HTTPException(status_code=404, detail=f"User not found {user_id}")
+        raise HTTPException(status_code=404, detail=f"Message not found {user_id}")
 
-    bot = Bot(token=config.BOT_TOKEN_PARTNER)
+    bot: "Bot" = get_partner_bot()
 
     await bot.delete_message(
         chat_id=user_id,
@@ -80,20 +79,18 @@ async def exit_match(data: "UserMatchResponse", redis=Depends(get_redis)):
         parse_mode=ParseMode.HTML
     )
 
-    await bot.close()
 
 
 @router.post("/cancel")
 async def cancel_match(
     request: UserMatchRequest,
     rabbitmq: RabbitMQService = Depends(get_rabbitmq),
-    db=Depends(get_db),
     redis=Depends(get_redis),
 ):
-    # Проверяем пользователя в БД
-    user = await db.check_user_exists(request.user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    # Проверяем пользователя в Redis
+    searching_user = await redis.get_searching_user(request.user_id)
+    if not searching_user:
+        raise HTTPException(status_code=404, detail=f"User not found {request.user_id}")
 
     logger.debug(
         f"User ID: {request.user_id}, "
@@ -146,7 +143,7 @@ async def notify_users_re_match(
 
     try:
 
-        bot = Bot(token=config.BOT_TOKEN_PARTNER)
+        bot: "Bot" = get_partner_bot()
 
         await bot.delete_message(
             chat_id=user_id,
@@ -185,7 +182,6 @@ async def notify_users_re_match(
             parse_mode=ParseMode.HTML
         )
 
-        await bot.close()
 
     except Exception as e:
         logger.error(f"Error launching chat for users: {e}")
