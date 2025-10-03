@@ -129,8 +129,8 @@ async def notify_users_re_match(
         room_id=room_id, token=await create_token(partner_id, room_id)
     )
     # Никнеймы, видимые партнеру
-    user_nickname = user_profile.get("prefered_name")
-    partner_nickname = partner_profile.get("prefered_name")
+    user_nickname = user_profile.get("nickname")
+    partner_nickname = partner_profile.get("nickname")
     # Извлекаю описание пользователю
     about_user = user_profile.get("about")
     about_partner = partner_profile.get("about")
