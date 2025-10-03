@@ -9,12 +9,12 @@ async def create_token(user_id, room_id, exp: timedelta = timedelta(minutes=15))
 
     db = await get_db()
     users_profile = await db.get_users_profile(user_id)
-    username = users_profile["username"]
+    nickname = users_profile["nickname"]
     time_obj = datetime.now() + exp
 
     payload = {
         "user_id": user_id,
-        "username": username,
+        "nickname": nickname,
         "room_id": room_id,
         "expires_at": time_obj.isoformat(),
     }
