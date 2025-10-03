@@ -48,7 +48,7 @@ async def connect(sid, environ):
     room_id = query_params.get("room_id")
     token = query_params.get("token")
     userdata = convert_token(token)
-    username = userdata["username"]
+    username = userdata["nickname"]
     print("room id: %s, token: %s", room_id, token)
 
     if not room_id or not token:
