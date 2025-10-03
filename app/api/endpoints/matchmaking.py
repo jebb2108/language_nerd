@@ -66,7 +66,7 @@ async def exit_match(data: "UserMatchResponse", redis=Depends(get_redis)):
     if not curr_search_msg:
         raise HTTPException(status_code=404, detail=f"Message not found {user_id}")
 
-    bot: "Bot" = get_partner_bot()
+    bot: "Bot" = await get_partner_bot()
 
     await bot.delete_message(
         chat_id=user_id,
@@ -145,7 +145,7 @@ async def notify_users_re_match(
 
     try:
 
-        bot: "Bot" = get_partner_bot()
+        bot: "Bot" = await get_partner_bot()
 
         await bot.delete_message(
             chat_id=user_id,
