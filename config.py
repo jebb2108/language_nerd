@@ -69,7 +69,7 @@ class Config:
     TELEGRAM_MIN_DELAY_BETWEEN_REQUESTS = 0.05
 
     # Версия FRONTEND
-    VERSION = "20250826-4"
+    VERSION = "20250826-5"
 
     # ID админа
     ADMIN_ID: int = os.getenv("ADMIN_ID", 0)
