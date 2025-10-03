@@ -100,6 +100,8 @@ class Config:
     WAITING_TIME_EXPIRED = 'waiting time expired'
 
     ADD_USER_PURPOSE = "add_user_purpose"
+    ADD_LOCATION_PURPOSE = "add_location_purpose"
+    ADD_PROFILE_PURPOSE = "add_profile_purpose"
 
 
 

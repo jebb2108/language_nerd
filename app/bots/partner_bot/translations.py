@@ -145,11 +145,11 @@ MESSAGES = dict(
             "zh": "格式不正确。请再试一次",
         },
         "wrong_intro": {
-            "en": "Your information is either too long or too short. Please, try again",
-            "ru": "Твоя информация либо слишком длинная, либо слишком короткая. Пожалуйста, попробуй ещё раз",
-            "de": "Ihre Informationen sind entweder zu lang oder zu kurz. Bitte versuchen Sie es erneut",
-            "es": "Tu información es demasiado larga o demasiado corta. Por favor, inténtalo de nuevo",
-            "zh": "您的信息要么太长，要么太短。请再试一次",
+            "en": "Information about you should contain from 50 to 500 characters. Please try again",
+            "ru": "Информация о тебе должна содержать от 50 до 500 символов. Пожалуйста, попробуй ещё раз",
+            "de": "Informationen über dich sollten zwischen 50 und 500 Zeichen enthalten. Bitte versuche es noch einmal",
+            "es": "La información sobre ti debe contener entre 50 y 500 caracteres. Por favor, inténtalo de nuevo",
+            "zh": "关于你的信息应包含50到500个字符。请再试一次"
         },
         "success": {
             "en": "Thank you for your patience 🤝\nPress /menu to go to the main menu",

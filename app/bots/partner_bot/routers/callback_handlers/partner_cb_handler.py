@@ -7,11 +7,11 @@ from aiogram.filters import and_f
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from app.bots.partner_bot.utils.paytime import paytime
+from app.bots.partner_bot.filters.paytime import paytime
 from app.dependencies import get_redis_client, get_db
 from app.models import UserMatchRequest
 from config import config
-from app.bots.partner_bot.utils.access_data import data_storage
+from app.bots.partner_bot.utils.access_data import data_storage as ds
 from app.bots.partner_bot.translations import MESSAGES, TRANSCRIPTIONS
 
 from app.bots.partner_bot.keyboards.inline_keyboards import (
@@ -35,14 +35,13 @@ async def main_menu_handler(callback: CallbackQuery):
     and_f(F.data == "profile", paytime)
 )
 async def profile_handler(callback: CallbackQuery, state: FSMContext):
-    database = await get_db()
     await callback.answer()
     user_id = callback.from_user.id
-    data = await data_storage.get_storage_data(user_id=user_id, state=state)
+    data = await ds.get_storage_data(user_id, state)
     lang_code = data.get("lang_code", "en")
 
     msg = MESSAGES["user_info"][lang_code].format(
-        nickname=data.get("pref_name"),
+        nickname=data.get("nickname"),
         age=data.get("age"),
         fluency=TRANSCRIPTIONS["fluency"][data.get("fluency")][lang_code],
         topic=TRANSCRIPTIONS["topics"][data.get("topic")][lang_code],
@@ -62,8 +61,8 @@ async def about_handler(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
 
-    user_id = callback.message.from_user.id
-    data = await data_storage.get_storage_data(user_id, state)
+    user_id = callback.from_user.id
+    data = await ds.get_storage_data(user_id, state)
     lang_code = data.get("lang_code", "en")
 
     await callback.message.edit_caption(
@@ -80,12 +79,12 @@ async def go_back_handler(callback: CallbackQuery, state: FSMContext):
 
 
     user_id = callback.from_user.id
-    data = await data_storage.get_storage_data(user_id, state)
+    data = await ds.get_storage_data(user_id, state)
     language = data.get("language")
-    lang_code = data.get("lang_code", "en")
-    prefered_name = data.get("pref_name", "User")
+    lang_code = data.get("lang_code")
+    nickname = data.get("nickname")
 
-    msg = MESSAGES["hello"][language] + " <b>" + prefered_name + "</b>!\n\n"
+    msg = MESSAGES["hello"][language] + " <b>" + nickname + "</b>!\n\n"
     msg += MESSAGES["full_intro"][lang_code]
 
     await callback.message.edit_caption(
@@ -105,7 +104,7 @@ async def change_topic_handler(callback: CallbackQuery, state: FSMContext):
 
     user_id = callback.from_user.id
     users_choice = callback.data.split("_")[1]
-    data = await data_storage.get_storage_data(user_id=user_id, state=state)
+    data = await ds.get_storage_data(user_id, state)
     lang_code = data.get("lang_code")
     if data.get("topic") != users_choice:
         await database.change_topic(user_id, users_choice)
@@ -124,15 +123,12 @@ async def cancel_choosing_topic(callback: CallbackQuery, state: FSMContext):
 
     await callback.message.delete()
     user_id = callback.from_user.id
-    data = await data_storage.get_storage_data(user_id=user_id, state=state)
+    data = await ds.get_storage_data(user_id, state)
     lang_code = data.get("lang_code")
     await callback.message.answer(text=MESSAGES["topic_change_canceled"][lang_code])
 
 
-@router.callback_query(
-    F.data == "queue_info",
-    lambda callback: paytime(user_id=callback.from_user.id),
-)
+@router.callback_query(and_f(F.data == "queue_info", paytime))
 async def show_queue_info(callback: CallbackQuery, state: FSMContext):
 
     database = await get_db()
@@ -142,7 +138,7 @@ async def show_queue_info(callback: CallbackQuery, state: FSMContext):
 
     common_lans = dict()
 
-    data = await data_storage.get_storage_data(callback.from_user.id, state)
+    data = await ds.get_storage_data(callback.from_user.id, state)
     lang_code = data.get("lang_code", "en")
     for user_id in map(int, queue):
         user_info = await database.get_user_info(user_id)
@@ -169,7 +165,7 @@ async def cancel_search(callback: CallbackQuery, state: FSMContext):
 
     """Обработчик callback(а) отменяет поиск партнера"""
 
-    data = await data_storage.get_storage_data(callback.from_user.id, state)
+    data = await ds.get_storage_data(callback.from_user.id, state)
     user_id = data.get("user_id")
     username = data.get("username")
     language = data.get("language")
@@ -241,7 +237,7 @@ async def new_session_handler(callback: CallbackQuery, state: FSMContext):
     database = await get_db()
     redis_client = await get_redis_client()
 
-    data = await data_storage.get_storage_data(callback.from_user.id, state)
+    data = await ds.get_storage_data(callback.from_user.id, state)
     user_id = data.get("user_id")
     username = data.get("username")
     language = data.get("language")

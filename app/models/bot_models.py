@@ -31,7 +31,7 @@ class Topic(str, Enum):
 
 class NewUser(BaseModel):
     """
-    Модель профиля пользователя (для базы данных).
+    Модель нового пользователя (для базы данных).
     """
 
     user_id: int
@@ -61,3 +61,31 @@ class NewPayment(BaseModel):
         datetime.now(tz=config.TZINFO) + timedelta(days=3)
     ).isoformat()
     currency: Optional[str] = Field("RUB", description="Currency of payment")
+
+
+class UserProfile(BaseModel):
+    """
+    Модель профиля пользователя (для базы данных)
+    """
+    user_id: int = Field(..., description="User ID")
+    nickname: str = Field(..., description="Уникальный никнейм пользователя")
+    birthday: str = Field(..., description="Дата рождения пользователя (ISO)")
+    about: str = Field(..., description="Краткая информация о пользователе")
+    dating: Optional[bool] = Field(False, description="Согласие на дэйтинг")
+    gender: Optional[str] = Field("unknown", description="Пол пользователя")
+    is_active: Optional[bool] = Field(True, description="Активность пользователя")
+    status: Optional[str] = Field("rookie", description="Статус пользователя")
+
+
+class Location(BaseModel):
+    """
+    Модель местоположения пользователя (для базы данных)
+    """
+    user_id: int = Field(..., description="User ID")
+    latitude: Optional[str] = Field(None, description="Долгота координаты")
+    longitude: Optional[str] = Field(None, description="Широта координаты")
+    city: Optional[str] = Field(None, description="Город пользователя")
+    country: Optional[str] = Field(None, description="Страна пользователя")
+    tzone: Optional[str] = Field(None, description="Временная зона пользователя")
+
+

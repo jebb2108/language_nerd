@@ -3,6 +3,7 @@ import logging
 
 import aio_pika
 
+from app.models import Location, UserProfile
 from app.models import NewPayment
 from app.models import NewUser
 from config import config
@@ -91,6 +92,36 @@ class RabbitMQService:
             ),
             routing_key=config.RABBITMQ_NEW_USERS_QUEUE
         )
+
+
+    async def publish_profile(self, profile: "UserProfile"):
+        json_profile = json.dumps({
+            "purpose": config.ADD_PROFILE_PURPOSE,
+            "profile": profile.model_dump_json()
+        }).encode()
+
+        await self.new_users_exchange.publish(
+            aio_pika.Message(
+                body=json_profile, delivery_mode=aio_pika.DeliveryMode.PERSISTENT
+            ),
+            routing_key=config.RABBITMQ_NEW_USERS_QUEUE
+        )
+
+
+    async def publish_location(self, location: "Location"):
+        """Публикация местоположения пользователя"""
+        json_location = json.dumps({
+            "purpose": config.ADD_LOCATION_PURPOSE,
+            "location": location.model_dump_json()
+        }).encode()
+
+        await self.new_users_exchange.publish(
+            aio_pika.Message(
+                body=json_location, delivery_mode=aio_pika.DeliveryMode.PERSISTENT
+            ),
+            routing_key=config.RABBITMQ_NEW_USERS_QUEUE
+        )
+
 
     async def disconnect(self):
         """Закрытие подключения"""

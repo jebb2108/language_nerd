@@ -211,6 +211,23 @@ async def handle_db_requests(data: dict, msg: "RabbitMessage"):
         await msg.ack()
         return
 
+    elif data["purpose"] == config.ADD_PROFILE_PURPOSE:
+        database = await get_db()
+        profile = json.loads(data["profile"])
+        date_str = profile.get("birthday")
+        date_obj = datetime.fromisoformat(date_str).date()
+        profile["birthday"] = date_obj
+        await database.add_users_profile(**profile)
+        await msg.ack()
+        return
+
+    elif data["purpose"] == config.ADD_LOCATION_PURPOSE:
+        database = await get_db()
+        location = json.loads(data["location"])
+        await database.add_users_location(**location)
+        await msg.ack()
+        return
+
     await broker.publish(
         data,
         queue=config.RABBITMQ_NEW_USERS_QUEUE,

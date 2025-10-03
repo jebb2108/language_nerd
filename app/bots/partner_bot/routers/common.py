@@ -7,7 +7,7 @@ from aiogram.types import Message, ContentType
 from yookassa import Payment
 
 from app.bots.partner_bot.keyboards.inline_keyboards import get_payment_keyboard
-from app.bots.partner_bot.utils.paytime import paytime
+from app.bots.partner_bot.filters.paytime import paytime
 from app.bots.partner_bot.translations import MESSAGES
 from app.bots.partner_bot.utils.access_data import data_storage
 from app.dependencies import get_db

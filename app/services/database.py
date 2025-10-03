@@ -105,13 +105,13 @@ class DatabaseService:
                             CREATE TABLE IF NOT EXISTS users_profile (
                             id SERIAL PRIMARY KEY,
                             user_id BIGINT NOT NULL,
-                            status VARCHAR(50) NOT NULL,
-                            prefered_name VARCHAR(50) NOT NULL,
+                            nickname VARCHAR(50) NOT NULL,
                             birthday DATE NOT NULL,
                             dating BOOLEAN DEFAULT FALSE,
                             gender VARCHAR(50) NULL,
-                            is_active BOOLEAN DEFAULT TRUE,
                             about TEXT NULL,
+                            is_active BOOLEAN DEFAULT TRUE,
+                            status VARCHAR(50) NOT NULL,
                             UNIQUE (user_id)
                             ); """
             )
@@ -239,38 +239,47 @@ class DatabaseService:
     async def add_users_profile(
         self,
         user_id: int,
-        prefered_name: str,
+        nickname: str,
         birthday: datetime,
         about: str,
         gender: bool = None,
         dating: bool = False,
         status: str = "rookie",
+        is_active: bool = True
     ) -> None:
         async with self.acquire_connection() as conn:
             await conn.execute(
                 """
-            INSERT INTO users_profile (user_id, status, prefered_name, birthday, dating, gender, about)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO users_profile 
+            (
+                user_id, status, 
+                nickname, birthday, 
+                dating, gender, 
+                about, is_active
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             ON CONFLICT (user_id) DO UPDATE
             SET status = EXCLUDED.status,
-                prefered_name = EXCLUDED.prefered_name,
+                nickname = EXCLUDED.nickname,
                 birthday = EXCLUDED.birthday,
                 dating = EXCLUDED.dating,
                 gender = EXCLUDED.gender,
-                about = EXCLUDED.about
+                about = EXCLUDED.about,
+                is_active = EXCLUDED.is_active
             """,
                 user_id,
                 status,
-                prefered_name,
+                nickname,
                 birthday,
                 dating,
                 gender,
                 about,
+                is_active
             )
             logger.info(
-                f"User {user_id} profile added. Their name: {prefered_name},"
-                f" birthday: {birthday}, dating paramm: {dating}, gender: {gender}, "
-                f"status: {status},\n intro: {about}"
+                f"User {user_id} profile added. Their name: {nickname},"
+                f" birthday: {birthday}, dating: {dating}, gender: {gender}, "
+                f"status: {status},\n intro: {about}, is_active: {is_active}"
             )
             return
 
@@ -516,7 +525,7 @@ class DatabaseService:
         async with self.acquire_connection() as conn:
             return bool(
                 await conn.fetchrow(
-                "SELECT 1 FROM users_profile WHERE prefered_name = $1", nickname
+                "SELECT 1 FROM users_profile WHERE nickname = $1", nickname
             ))
 
     async def get_weekly_words_by_user(self) -> List[Dict]:

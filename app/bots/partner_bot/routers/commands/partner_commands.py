@@ -34,7 +34,7 @@ async def show_main_menu(message: Message, state: FSMContext):
     database = await get_db()
     user_id = message.from_user.id
     data = await data_storage.get_storage_data(user_id, state)
-    prefered_name = data.get("pref_name", None)
+    nickname = data.get("nickname", None)
     language = data.get("language")
     lang_code = data.get("lang_code")
 
@@ -42,14 +42,14 @@ async def show_main_menu(message: Message, state: FSMContext):
         await message.answer(text="I can`t seem to know you :( Go to @lllangbot")
         return
 
-    elif prefered_name is None:
+    elif nickname is None:
         await message.answer(
             text=MESSAGES["not_registered"][lang_code],
             parse_mode=ParseMode.HTML,
         )
         return
 
-    greeting = MESSAGES["hello"][language] + " <b>" + prefered_name + "</b>!"
+    greeting = MESSAGES["hello"][language] + " <b>" + nickname + "</b>!"
     intro = MESSAGES["full_intro"][lang_code]
     await state.update_data(
         user_id=user_id,
