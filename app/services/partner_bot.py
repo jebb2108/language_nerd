@@ -19,6 +19,7 @@ class PartnerBot:
             token=config.BOT_TOKEN_PARTNER,
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
         )
+        self.initialized = True
 
     async def close(self):
         await self.bot.close()

@@ -15,7 +15,7 @@ from config import config
 
 from routers import router as main_router
 
-logger = log.setup_logger('main bot', config.LOG_LEVEL)
+logger = log.setup_logger("main bot", config.LOG_LEVEL)
 
 # Глобальная переменная с ресурсами бота
 rate_limit_middleware: Optional["RateLimitMiddleware"] = None
@@ -29,19 +29,24 @@ async def init_resources() -> None:
     rate_limit_middleware = RateLimitMiddleware()
     quiz_middleware = QuizMiddleware()
 
+
 # noinspection PyUnresolvedReferences
 async def run():
     """Запуск бота и веб-сервера в одном event loop"""
 
-    await init_resources()
+    # Инициализация бота
+    bot = await get_main_bot()
+
     redis = await get_redis_client()
-    storage = RedisStorage(redis, state_ttl=timedelta(minutes=10), data_ttl=timedelta(minutes=60))
+    storage = RedisStorage(
+        redis, state_ttl=timedelta(minutes=10), data_ttl=timedelta(minutes=60)
+    )
 
     # Инициализация диспетчера
     disp = Dispatcher(storage=storage)
 
-    # Инициализация бота
-    bot = get_main_bot()
+    # Инициализация Middlewares
+    await init_resources()
 
     #  Регистрация middleware -> Messages
     disp.message.middleware(quiz_middleware)
@@ -58,7 +63,7 @@ async def run():
 
     finally:
         # Корректное завершение
-        await bot.session.close()
+        await bot.close()
 
 
 if __name__ == "__main__":

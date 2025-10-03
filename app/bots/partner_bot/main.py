@@ -7,11 +7,13 @@ from aiogram import Dispatcher
 from aiogram.fsm.storage.redis import RedisStorage
 from asyncpg.pgproto.pgproto import timedelta
 
-from app.bots.partner_bot.middlewares.message_tracker_middleware import MessageTrackerMiddleware
+from app.bots.partner_bot.middlewares.message_tracker_middleware import (
+    MessageTrackerMiddleware,
+)
 from app.bots.partner_bot.routers import router as main_router
 from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
 
-from app.dependencies import get_redis_client, partner_bot
+from app.dependencies import get_redis_client, get_partner_bot
 
 # Импорт функций БД
 from config import config
@@ -32,10 +34,12 @@ async def init_resources(bot):
 
 async def run():
 
-    bot = partner_bot()
+    bot = await get_partner_bot()
 
     redis = await get_redis_client()
-    storage = RedisStorage(redis, state_ttl=timedelta(minutes=10), data_ttl=timedelta(minutes=60))
+    storage = RedisStorage(
+        redis, state_ttl=timedelta(minutes=10), data_ttl=timedelta(minutes=60)
+    )
     disp = Dispatcher(storage=storage)
 
     await init_resources(bot)
@@ -50,7 +54,7 @@ async def run():
         await disp.start_polling(bot)
 
     finally:
-        await bot.session.close()
+        await bot.close()
 
 
 # Точка входа в программу

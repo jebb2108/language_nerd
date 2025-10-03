@@ -14,11 +14,12 @@ class MainBot:
     def get_bot(self):
         return self.bot
 
-    def connect(self):
-            self.bot = Bot(
-                token=config.BOT_TOKEN_MAIN,
-                default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-            )
+    async def connect(self):
+        self.bot = Bot(
+            token=config.BOT_TOKEN_MAIN,
+            default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+        )
+        self.initialized = True
 
     async def close(self):
         await self.bot.close()
