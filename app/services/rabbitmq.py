@@ -4,8 +4,10 @@ import logging
 import aio_pika
 
 from app.models import Location, UserProfile
+from app.models import MessageContent
 from app.models import NewPayment
 from app.models import NewUser
+from app.models import UserMatchRequest
 from config import config
 
 from typing import TYPE_CHECKING, Optional
@@ -25,6 +27,7 @@ class RabbitMQService:
         self.channel: Optional["AbstractChannel"] = None
         self.default_exchange = None
         self.new_users_exchange = None
+        self.messages_exchange = None
 
     async def connect(self):
         """Установка подключения к RabbitMQ"""
@@ -37,46 +40,46 @@ class RabbitMQService:
 
     async def declare_exchanges_and_queues(self):
         """Объявление всех обменников и очередей"""
-        self.default_exchange = await self.channel.declare_exchange(
-            name=config.RABBITMQ_EXCHANGE, type="direct"
-        )
-        logger.info(f"Exchange declared: {config.RABBITMQ_EXCHANGE}")
-
-        main_queue = await self.channel.declare_queue(name=config.RABBITMQ_QUEUE)
-        logger.info(f"Queue declared: {config.RABBITMQ_QUEUE}")
-
-        await main_queue.bind(self.default_exchange, config.RABBITMQ_QUEUE)
-        logger.info(
-            f"Queue {config.RABBITMQ_QUEUE} bound to exchange {config.RABBITMQ_EXCHANGE} "
-            f"with routing key {config.RABBITMQ_QUEUE}"
-        )
-
+        """
+        Объясвляем обменник и очередь для обрабтки пользовательской информации
+        """
         self.new_users_exchange = await self.channel.declare_exchange(
             name=config.RABBITMQ_NEW_USERS_EXCHANGE, type="direct"
         )
-        logger.info(f"Exchange declared: {config.RABBITMQ_NEW_USERS_EXCHANGE}")
-
         new_users_queue = await self.channel.declare_queue(name=config.RABBITMQ_NEW_USERS_QUEUE)
-        logger.info(f"Queue declared: {config.RABBITMQ_NEW_USERS_QUEUE}")
-
         await new_users_queue.bind(self.new_users_exchange, config.RABBITMQ_NEW_USERS_QUEUE)
+
+        """
+        Объясвляем обменник и очередь для обрабтки запросов от пользователя на поиск партнера
+        """
+        self.default_exchange = await self.channel.declare_exchange(
+            name=config.RABBITMQ_EXCHANGE, type="direct"
+        )
+        main_queue = await self.channel.declare_queue(name=config.RABBITMQ_QUEUE)
+        await main_queue.bind(self.default_exchange, config.RABBITMQ_QUEUE)
+
+        """Объявляем обменник и очередь для обрабтки текстовых сообщений от пользователя"""
+
+        self.messages_exchange = await self.channel.declare_exchange(
+            name=config.RABBITMQ_NEW_MESSAGES_EXCHANGE, type="direct"
+        )
+        new_messages_queue = await self.channel.declare_queue(name=config.RABBITMQ_NEW_MESSAGES_QUEUE)
+        await new_messages_queue.bind(self.messages_exchange, config.RABBITMQ_NEW_MESSAGES_QUEUE)
+
         logger.info(
-            f"Queue {config.RABBITMQ_NEW_USERS_QUEUE} bound to exchange {config.RABBITMQ_NEW_USERS_EXCHANGE} "
-            f"with routing key {config.RABBITMQ_NEW_USERS_QUEUE}"
-        )
+            f"Queues: {config.RABBITMQ_QUEUE}, {config.RABBITMQ_NEW_USERS_QUEUE}, {config.RABBITMQ_NEW_MESSAGES_QUEUE} "
+            f"were successfully declared bount to exchanges: {config.RABBITMQ_EXCHANGE}, {config.RABBITMQ_NEW_USERS_EXCHANGE}, {config.RABBITMQ_NEW_MESSAGES_EXCHANGE}")
 
 
-
-    async def publish_message(self, message: dict):
-        """Публикация сообщения в основную очередь"""
-        json_message = json.dumps(message).encode()
-
-        await self.default_exchange.publish(
+    async def publish_message(self, message: "MessageContent"):
+        """Публикация сообщения для последующей обработки"""
+        await self.messages_exchange.publish(
             aio_pika.Message(
-                body=json_message, delivery_mode=aio_pika.DeliveryMode.PERSISTENT
-            ),
-            routing_key=config.RABBITMQ_QUEUE,
+                body=message.model_dump_json().encode(),
+                delivery_mode=aio_pika.DeliveryMode.PERSISTENT),
+            routing_key=config.RABBITMQ_NEW_MESSAGES_QUEUE
         )
+
 
     async def publish_user(self, user: "NewUser", payment: "NewPayment"):
         """Публикация нового пользователя и транзакции"""
@@ -133,6 +136,18 @@ class RabbitMQService:
                 body=json_payment, delivery_mode=aio_pika.DeliveryMode.PERSISTENT
             ),
             routing_key=config.RABBITMQ_NEW_USERS_QUEUE
+        )
+
+
+    async def publish_request(self, message: "UserMatchRequest"):
+        """Публикация запроса на поиск партнера в основную очередь"""
+        json_message = json.dumps(message).encode()
+
+        await self.default_exchange.publish(
+            aio_pika.Message(
+                body=json_message, delivery_mode=aio_pika.DeliveryMode.PERSISTENT
+            ),
+            routing_key=config.RABBITMQ_QUEUE,
         )
 
 

@@ -1,6 +1,8 @@
 import asyncio
 import json
 from datetime import datetime, timedelta
+from string import ascii_lowercase
+
 from logging_config import opt_logger
 
 from app.models import UserMatchResponse
@@ -16,11 +18,12 @@ if TYPE_CHECKING:
     from app.services.matching import MatchingService
 
 
-logger = opt_logger.setup_logger('worker')
+logger = opt_logger.setup_logger("worker")
 
 broker = RabbitBroker(config.RABBITMQ_URL, logger=logger)
 
 users_to_delete = {}
+
 
 async def elevate_user(user_data: dict, matcher: "MatchingService") -> bool:
     """Функция для обработки состояния пользовательского инфо в очереди ожидания"""
@@ -29,10 +32,7 @@ async def elevate_user(user_data: dict, matcher: "MatchingService") -> bool:
     logger.debug(f"Starting to elevate message ...")
 
     user_id = int(user_data["user_id"])
-    if user_data["status"] in [
-        config.SEARCH_CANCELED,
-        config.SEARCH_COMPLETED
-    ]:
+    if user_data["status"] in [config.SEARCH_CANCELED, config.SEARCH_COMPLETED]:
         # Привязываем время удалений всех последующих сообщений
         # с временем первого запроса на поиск собеседника
         logger.debug(f"Request for cancel/complete")
@@ -59,7 +59,9 @@ async def elevate_user(user_data: dict, matcher: "MatchingService") -> bool:
     if user_id in matcher.user_status:
         logger.debug("Message w/ user ID %s is in memory", user_id)
         if user_id in users_to_delete:
-            saved_orig_time = datetime.fromisoformat(matcher.user_status[user_id]["created_at"])
+            saved_orig_time = datetime.fromisoformat(
+                matcher.user_status[user_id]["created_at"]
+            )
             users_cancel_time = datetime.fromisoformat(users_to_delete[user_id])
             if saved_orig_time == users_cancel_time:
                 logger.info(f"Original msg {user_id} being acked")
@@ -67,11 +69,13 @@ async def elevate_user(user_data: dict, matcher: "MatchingService") -> bool:
 
         # Пользователю найдена пара
         if matcher.user_status[user_id]["acked"]:
-            logger.info("Message w/ user ID %s has been processed", user_data["user_id"])
+            logger.info(
+                "Message w/ user ID %s has been processed", user_data["user_id"]
+            )
             return True
 
         logger.debug("Msg will go back to queue")
-        return False # Статус сообщения - простое ожидание
+        return False  # Статус сообщения - простое ожидание
 
     # Ситуация, когда пользователь
     # НЕ находится в словаре
@@ -110,16 +114,20 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
     if time_interval < timedelta(seconds=config.SLEEP_TIME):
         remaining_delay = config.SLEEP_TIME - time_interval.total_seconds()
 
-        logger.info(f"User {data["username"]} with ID {data["user_id"]} has criteria: "
-                    f"{data["status"]}, "
-                    f"{data["criteria"]["language"]}, "
-                    f"{data["criteria"]["fluency"]}, "
-                    f"{data["criteria"]["dating"]}, "
-                    f"{data["gender"]}, "
-                    f"{data["criteria"]["topic"]}")
+        logger.info(
+            f"User {data["username"]} with ID {data["user_id"]} has criteria: "
+            f"{data["status"]}, "
+            f"{data["criteria"]["language"]}, "
+            f"{data["criteria"]["fluency"]}, "
+            f"{data["criteria"]["dating"]}, "
+            f"{data["gender"]}, "
+            f"{data["criteria"]["topic"]}"
+        )
 
         # Откладываем ack и публикуем сообщение снова через задержку
-        logger.debug(f"Delaying processing for {remaining_delay:.2f} seconds for user {user_id}")
+        logger.debug(
+            f"Delaying processing for {remaining_delay:.2f} seconds for user {user_id}"
+        )
         await asyncio.sleep(remaining_delay)
 
         # Публикуем сообщение снова с оригинальным временем создания
@@ -138,8 +146,9 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
         logger.debug("User %s marked as acked, expecting to be deleted", user_id)
         matcher.user_status[partner.user_id]["acked"] = True
         logger.debug(
-            "User %s and user %s marked as acked, "
-            "expecting to be deleted", user.user_id, partner.user_id
+            "User %s and user %s marked as acked, " "expecting to be deleted",
+            user.user_id,
+            partner.user_id,
         )
         logger.debug("Currently only msg %s will be acked imedietly", data["user_id"])
         await notifier.notify_match(room_id, user, partner)
@@ -171,7 +180,7 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
     curr_time = datetime.fromisoformat(data["current_time"])
 
     # Таймер на две минуты поиска
-    if curr_time - orig_time  <= timedelta(seconds=config.WAIT_TIMER):
+    if curr_time - orig_time <= timedelta(seconds=config.WAIT_TIMER):
 
         logger.info(f"Retry {retry_count + 1} for user {user_id}")
         data["retry_count"] = retry_count + 1
@@ -186,13 +195,48 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
         user_data = UserMatchResponse(
             status=config.WAITING_TIME_EXPIRED,
             user_id=data["user_id"],
-            lang_code=data["lang_code"]
+            lang_code=data["lang_code"],
         )
         logger.info(f"User {user_id} has run out of time")
         # Очищаем timestamp при превышении лимита попыток
         await notifier.execute_time_out(user_data=user_data)
 
     return await msg.ack()
+
+
+async def process_word_list(data: dict) -> bool:
+    """Обрабатывает сообщение и помечает слова как повторенные"""
+    try:
+        database = await get_db()
+
+        result = await database.mark_repeated_words(data["sender"], data["message"])
+
+        if result:
+            # TODO: Уведомление пользователя в реальном времени
+            logger.info(f"Обновлены слова для пользователя {data['sender']}")
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Ошибка обработки сообщения: {e}")
+        return False
+
+
+@broker.subscriber(config.RABBITMQ_NEW_MESSAGES_QUEUE)
+async def word_handler(data: dict, msg: "RabbitMessage"):
+
+    try:
+        result = await process_word_list(data)
+        if result:
+            await msg.ack()
+        else:
+            # Если пользователь не найден или нет
+            # новых слов - ack, чтобы не обрабатывать повторно
+            await msg.ack()
+
+    except Exception as e:
+        logger.error(f"Ошибка в обработчике: {e}")
+        await msg.nack()
 
 
 @broker.subscriber(config.RABBITMQ_NEW_USERS_QUEUE)
@@ -240,10 +284,9 @@ async def handle_db_requests(data: dict, msg: "RabbitMessage"):
     await msg.ack()
 
 
-
 async def main():
     # Запуск основной программы
-    logger.info('Starting worker ...')
+    logger.info("Starting worker ...")
     app = FastStream(broker, logger=logger)
     await app.run()
 

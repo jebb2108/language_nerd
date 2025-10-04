@@ -50,7 +50,7 @@ async def request_match(
         logger.info(f"Получен запрос на поиск партнера для пользователя {request.user_id}")
         await redis.add_to_queue(request)
     # Отправляем запрос в очередь
-    await rabbitmq.publish_message(request.model_dump())
+    await rabbitmq.publish_request(request.model_dump())
     return {"status": "user added to queue"}
 
 
@@ -70,7 +70,7 @@ async def cancel_match(
     )
 
     # Отправляем сообщение в очередь
-    await rabbitmq.publish_message(request.model_dump())
+    await rabbitmq.publish_request(request.model_dump())
     await redis.remove_from_queue(request.user_id)
     return {"status": "User deleted from queue"}
 

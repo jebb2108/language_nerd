@@ -6,10 +6,19 @@ from app.models import Language, Topic
 from config import config
 
 
+class MessageContent(BaseModel):
+    """
+    Модель содержимого сообщения
+    """
+    sender: str = Field(..., description="Никнейм пользователя. Не путать с username!")
+    message: str = Field(..., description="Слова, которое нужно проверить на статус выученного")
+    created_at: str = Field(..., description="Время создания сообщения ISO формата")
+    room_id: int = Field(..., description="Комната сессии, где слово было использовано")
+
+
 class UserMatchRequest(BaseModel):
     """
-    Модель запроса на поиск собеседника.
-    Содержит user_id и критерии поиска.
+    Модель запроса на поиск собеседника
     """
     user_id: int = Field(..., description="Уникальный идентификатор пользователя")
     username: str = Field(..., description="Никнейм пользователя")

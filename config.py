@@ -26,6 +26,8 @@ class Config:
     RABBITMQ_EXCHANGE: str = os.getenv("RABBITMQ_EXCHANGE", "exchange")
     RABBITMQ_NEW_USERS_EXCHANGE: str = os.getenv("RABBITMQ_NEW_USERS_EXCHANGE", "new_exchange")
     RABBITMQ_NEW_USERS_QUEUE: str = os.getenv("RABBITMQ_NEW_USERS_QUEUE", "new_users")
+    RABBITMQ_NEW_MESSAGES_EXCHANGE: str = os.getenv("RABBITMQ_NEW_MESSAGES_EXCHANGE", "new_messages_exchange")
+    RABBITMQ_NEW_MESSAGES_QUEUE: str = os.getenv("RABBITMQ_NEW_MESSAGES_QUEUE", "new_messages")
 
     # PostgreSQL
     DATABASE_URL: str = os.getenv(

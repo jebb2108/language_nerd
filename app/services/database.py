@@ -29,11 +29,13 @@ class DatabaseService:
             )
 
             # Создаем таблицы
-            await self.__create_words()
             await self.__create_users()
             await self.__create_transactions()
             await self.__create_users_profile()
             await self.__create_locations()
+            await self.__create_words()
+            await self.__create_contexts()
+            await self.__create_audios()
             await self.__create_weekly_reports()
             await self.__create_report_words()
 
@@ -45,22 +47,6 @@ class DatabaseService:
             logger.error(f"Database initialization failed: {e}")
             raise
 
-    async def __create_words(self):
-        async with self.acquire_connection() as conn:
-            await conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS words (
-                id SERIAL PRIMARY KEY,
-                user_id BIGINT NOT NULL,
-                word TEXT NOT NULL,
-                part_of_speech TEXT NOT NULL,
-                translation TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT NOW(),
-                UNIQUE (user_id, word)
-                ); 
-            """
-            )
-
     async def __create_users(self):
         async with self.acquire_connection() as conn:
             await conn.execute(
@@ -68,17 +54,69 @@ class DatabaseService:
                             CREATE TABLE IF NOT EXISTS users (
                             id SERIAL PRIMARY KEY,
                             user_id BIGINT NOT NULL,
-                            username TEXT NOT NULL,
-                            first_name TEXT NOT NULL,
-                            camefrom TEXT NOT NULL,
-                            language TEXT NOT NULL,
+                            username VARCHAR(50) NOT NULL,
+                            first_name VARCHAR(100) NOT NULL,
+                            camefrom VARCHER(50) NOT NULL,
+                            language VARCHAR(20) NOT NULL,
                             fluency SMALLINT NOT NULL,
-                            topic TEXT NOT NULL,
+                            topic VARCHAR(20) NOT NULL,
                             lang_code TEXT NOT NULL,
                             is_active BOOLEAN DEFAULT TRUE,
                             blocked_bot BOOLEAN DEFAULT FALSE,
                             UNIQUE (user_id)
                             ); """
+            )
+
+    async def __create_words(self):
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS words (
+                id SERIAL PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                word VARCHER(100) NOT NULL,
+                part_of_speech VARCHAR(50) NOT NULL,
+                translation TEXT NOT NULL,
+                public BOOLEAN DEFAULT FALSE,
+                word_state VARCHAR(20) DEFAULT 'NEW',
+                emotion VARCHAR(20) DEFAULT 'NEUTRAL',
+                correct_spelling BOOLEAN DEFAULT TRUE,
+                audio_id BIGINT REFERENCES audio(id) ON DELETE CASCADE,
+                context_id BIGINT REFERENCES context(id) ON DELETE CASCADE,
+                created_at TIMESTAMP DEFAULT NOW(),
+                UNIQUE (user_id, word, context_id, audio_id)
+                ); 
+            """
+            )
+
+    async def __create_contexts(self):
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS context (
+                id SERIAL PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                word VARCHAR(100) NOT NULL,
+                context TEXT NOT NULL,
+                edited BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT NOW()
+                );
+            """
+            )
+
+    async def __create_audios(self):
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS audio (
+                id SERRIAL PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                word VARCHAR(100) NOT NULL,
+                audio_url TEXT NOT NULL,
+                edited BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT NOW()
+                );
+            """
             )
 
     async def __create_transactions(self):
@@ -87,7 +125,7 @@ class DatabaseService:
                 """
                 CREATE TABLE IF NOT EXISTS transactions (
                 id SERIAL PRIMARY KEY,
-                user_id BIGINT NOT NULL,
+                user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                 amount NUMERIC NULL,
                 currency VARCHAR(10) NULL,
                 period TEXT NULL,
@@ -103,7 +141,7 @@ class DatabaseService:
                 """
                             CREATE TABLE IF NOT EXISTS users_profile (
                             id SERIAL PRIMARY KEY,
-                            user_id BIGINT NOT NULL,
+                            user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                             nickname VARCHAR(50) NOT NULL,
                             birthday DATE NOT NULL,
                             dating BOOLEAN DEFAULT FALSE,
@@ -121,7 +159,7 @@ class DatabaseService:
                 """
                             CREATE TABLE IF NOT EXISTS locations (
                             id SERIAL PRIMARY KEY,
-                            user_id BIGINT NOT NULL,
+                            user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                             latitude TEXT NULL,
                             longitude TEXT NULL,
                             city TEXT NULL,
@@ -137,7 +175,7 @@ class DatabaseService:
                 """
                             CREATE TABLE IF NOT EXISTS weekly_reports (
                             report_id SERIAL PRIMARY KEY,
-                            user_id BIGINT NOT NULL,
+                            user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                             status TEXT DEFAULT 'OK',
                             generation_date TIMESTAMP DEFAULT NOW(),
                             sent BOOLEAN DEFAULT FALSE
@@ -455,6 +493,33 @@ class DatabaseService:
                             new_word,
                         )
                         return "UPDATE" in result
+
+    async def mark_repeated_words(self, nickname: str, message: str) -> bool:
+        """Помечает слова из сообщения как повторенные одним запросом"""
+        async with self.acquire_connection() as conn:
+            # Нормализуем слова из сообщения
+            message_words = {word.strip().lower() for word in message.split()}
+
+            # Обновляем состояние слов одним запросом
+            result = await conn.execute(
+                """
+                UPDATE words 
+                SET word_state = 'REPEATED'
+                WHERE user_id = (
+                    SELECT up.user_id
+                    FROM users_profile up
+                    WHERE up.nickname = $1
+                    LIMIT 1
+                )
+                AND word_state = 'NEW'
+                AND LOWER(word) = ANY($2)
+                """,
+                nickname,
+                list(message_words)
+            )
+
+            # Проверяем, были ли обновлены какие-либо строки
+            return bool(result)
 
     # Temperorary solution
     async def get_user_stats(self, user_id: int, pos: str = None):

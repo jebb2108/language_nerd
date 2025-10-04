@@ -4,9 +4,12 @@ import uvicorn
 import socketio
 from datetime import datetime
 from fastapi import FastAPI
+from pamqp.decode import timestamp
 from redis.asyncio import Redis
 
-from app.dependencies import get_redis_client
+from app.dependencies import get_redis_client, get_rabbitmq
+from app.models import MessageContent
+from app.services.rabbitmq import RabbitMQService
 from app.validators.tokens import convert_token
 from app.validators.validation import validate_access
 from config import config
@@ -99,26 +102,31 @@ async def send_message(sid, message):
     if not room_id:
         return
 
-    message_data = {
-        "text": message,
-        "sender": username,
-        "timestamp": datetime.now().isoformat(),
-        "room_id": room_id,
-    }
+    message_data = MessageContent(
+        sender=username,
+        text=message,
+        created_at=datetime.now().isoformat(),
+        room_id=room_id,
+    )
 
     # Сохранение сообщения в Redis
-    await save_message(room_id, message_data)
+    await save_message(message_data)
 
     # Отправка сообщения всем в комнате
-    await sio.emit("new_message", message_data, room=room_id)
+    await sio.emit("new_message", message_data.model_dump(), room=room_id)
 
 
-async def save_message(room_id: str, message_data: dict):
+async def save_message(message_data: "MessageContent"):
     """Сохранение сообщения в Redis"""
+    rabbit: "RabbitMQService" = await get_rabbitmq()
     redis: "Redis" = await get_redis_client()
-    key = f"chat:{room_id}:messages"
-    await redis.rpush(key, json.dumps(message_data))
+    key = f"chat:{message_data.room_id}:messages"
+    await redis.rpush(key, json.dumps(message_data.model_dump()))
     await redis.expire(key, 900)  # TTL 15 минут
+
+    await rabbit.publish_message(message_data)
+
+
 
 
 async def get_message_history(room_id: str) -> list:
