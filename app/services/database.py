@@ -1,4 +1,3 @@
-import logging
 import asyncio
 import asyncpg
 
@@ -10,7 +9,7 @@ from contextlib import asynccontextmanager
 from config import config
 from logging_config import opt_logger as log
 
-logger = log.setup_logger('database')
+logger = log.setup_logger("database")
 
 
 # = КЛАСС ДЛЯ РАБОТЫ С БАЗОЙ ДАННЫХ =
@@ -178,7 +177,7 @@ class DatabaseService:
         language: str,
         fluency: int,
         topic: str,
-        lang_code: str
+        lang_code: str,
     ):
 
         try:
@@ -211,9 +210,17 @@ class DatabaseService:
             logger.error(f"Error creating/updating user {user_id}: {e}")
             return False
 
-    async def create_payment(self, user_id: int, period, amount, currency, trial, untill) -> None:
+    async def create_payment(
+        self,
+        user_id: int,
+        period: str,
+        amount: int,
+        currency: str,
+        trial: bool,
+        untill: datetime.isoformat,
+    ) -> None:
         async with self.acquire_connection() as conn:
-            untill_obj = datetime.fromisoformat(untill).date()
+            untill_obj = datetime.fromisoformat(untill)
             await conn.execute(
                 """
                 INSERT INTO transactions (user_id, period, amount, currency, trial, untill) 
@@ -225,16 +232,22 @@ class DatabaseService:
                 trial = EXCLUDED.trial,
                 untill = EXCLUDED.untill 
                 """,
-                user_id, period, amount, currency, trial, untill_obj
+                user_id,
+                period,
+                amount,
+                currency,
+                trial,
+                untill_obj,
             )
 
     async def get_users_due_to(self, user_id: int) -> datetime:
         async with self.acquire_connection() as conn:
-            row = await conn.fetchrow("""
-                SELECT untill FROM transactions WHERE user_id = $1""", user_id
+            row = await conn.fetchrow(
+                """
+                SELECT untill FROM transactions WHERE user_id = $1""",
+                user_id,
             )
-            return row['untill']
-
+            return row["untill"]
 
     async def add_users_profile(
         self,
@@ -245,7 +258,7 @@ class DatabaseService:
         gender: bool = None,
         dating: bool = False,
         status: str = "rookie",
-        is_active: bool = True
+        is_active: bool = True,
     ) -> None:
         async with self.acquire_connection() as conn:
             await conn.execute(
@@ -274,7 +287,7 @@ class DatabaseService:
                 dating,
                 gender,
                 about,
-                is_active
+                is_active,
             )
             logger.info(
                 f"User {user_id} profile added. Their name: {nickname},"
@@ -299,19 +312,19 @@ class DatabaseService:
                 LEFT JOIN users_profile up 
                     ON u.user_id = up.user_id 
                 WHERE u.user_id = $1
-                """
-                ,
-                user_id
+                """,
+                user_id,
             )
             return dict(row) if row else None
 
     async def add_users_location(
-        self, user_id: int,
-            latitude: Optional[str] = None,
-            longitude: Optional[str] = None,
-            city: Optional[str] = None,
-            country: Optional[str] = None,
-            tzone: Optional[str] = None
+        self,
+        user_id: int,
+        latitude: Optional[str] = None,
+        longitude: Optional[str] = None,
+        city: Optional[str] = None,
+        country: Optional[str] = None,
+        tzone: Optional[str] = None,
     ) -> None:
         async with self.acquire_connection() as conn:
             await conn.execute(
@@ -330,23 +343,25 @@ class DatabaseService:
                 longitude,
                 city,
                 country,
-                tzone
+                tzone,
             )
-            logger.info(f"User {user_id} location added: {latitude}, {longitude}, {city}, {country}, {tzone}")
+            logger.info(
+                f"User {user_id} location added: {latitude}, {longitude}, {city}, {country}, {tzone}"
+            )
             return
 
     async def get_criteria(self, user_id: int) -> dict:
         async with self.acquire_connection() as conn:
             row = await conn.fetchrow(
-                "SELECT language, fluency, dating FROM users WHERE user_id = $1", user_id
+                "SELECT language, fluency, dating FROM users WHERE user_id = $1",
+                user_id,
             )
             return dict(row) if row else None
 
     async def change_topic(self, user_id: int, new_topic: str) -> None:
         async with self.acquire_connection() as conn:
             await conn.execute(
-                """UPDATE users SET topic = $1 WHERE user_id = $2""",
-                new_topic, user_id
+                """UPDATE users SET topic = $1 WHERE user_id = $2""", new_topic, user_id
             )
 
     async def get_users_location(self, user_id: int) -> dict:
@@ -525,8 +540,9 @@ class DatabaseService:
         async with self.acquire_connection() as conn:
             return bool(
                 await conn.fetchrow(
-                "SELECT 1 FROM users_profile WHERE nickname = $1", nickname
-            ))
+                    "SELECT 1 FROM users_profile WHERE nickname = $1", nickname
+                )
+            )
 
     async def get_weekly_words_by_user(self) -> List[Dict]:
         week_ago = datetime.now() - timedelta(days=7)

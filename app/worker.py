@@ -225,6 +225,14 @@ async def handle_db_requests(data: dict, msg: "RabbitMessage"):
         await msg.ack()
         return
 
+    elif data["purpose"] == config.ADD_PAYMENT_PURPOSE:
+        database = await get_db()
+        payment = json.loads(data["payment"])
+        await database.create_payment(**payment)
+        await msg.ack()
+        return
+
+    logger.error("Error in DB execution")
     await broker.publish(
         data,
         queue=config.RABBITMQ_NEW_USERS_QUEUE,

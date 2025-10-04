@@ -122,6 +122,20 @@ class RabbitMQService:
             routing_key=config.RABBITMQ_NEW_USERS_QUEUE
         )
 
+    async def publish_payment(self, payment: "NewPayment"):
+        json_payment = json.dumps({
+            "purpose": config.ADD_PAYMENT_PURPOSE,
+            "payment": payment.model_dump_json()
+        }).encode()
+
+        self.new_users_exchange.publish(
+            aio_pika.Message(
+                body=json_payment, delivery_mode=aio_pika.DeliveryMode.PERSISTENT
+            ),
+            routing_key=config.RABBITMQ_NEW_USERS_QUEUE
+        )
+
+
 
     async def disconnect(self):
         """Закрытие подключения"""

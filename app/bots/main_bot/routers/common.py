@@ -1,4 +1,5 @@
 import uuid
+from datetime import timedelta, datetime
 
 from aiogram import Router
 from aiogram.enums import ParseMode
@@ -10,7 +11,8 @@ from app.bots.main_bot.keyboards.inline_keyboards import get_payment_keyboard
 from app.bots.main_bot.translations import MESSAGES
 from app.bots.main_bot.utils.access_data import data_storage
 from app.bots.main_bot.utils.paytime import paytime
-from app.dependencies import get_db
+from app.dependencies import get_rabbitmq
+from app.models import NewPayment
 from config import config
 
 router = Router(name=__name__)
@@ -58,9 +60,18 @@ async def handle_payment(message: Message):
     payment_id = message.web_app_data.data  # Пример получения ID платежа
     payment = Payment.find_one(payment_id)
     user_id = message.from_user.id
-    database = await get_db()
+    rabbit = await get_rabbitmq()
     if payment.status == "succeeded":
-        await database.create_payment(user_id, config.MONTH, trial=False)
+        new_untill = datetime.now(tz=config.TZINFO) + timedelta(days=31)
+        new_payment = NewPayment(
+            user_id=user_id,
+            period=config.MONTH,
+            amount=199,
+            currency="RUB",
+            trial=False,
+            untill=new_untill.isoformat(),
+        )
+        await rabbit.publish_payment(new_payment)
         await message.answer("Платеж прошел успешно!")
     else:
         await message.answer("Ошибка оплаты.")
