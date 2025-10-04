@@ -1,3 +1,4 @@
+from aiogram.filters import and_f
 from app.bots.main_bot.utils.paytime import paytime
 from config import config
 from logging_config import opt_logger as log
@@ -18,8 +19,7 @@ router = Router(name=__name__)
 
 
 @router.callback_query(
-    F.data.startswith("start_report:"),
-    lambda callback: paytime(user_id=callback.message.from_user.id),
+    and_f(F.data.startswith("start_report:"), paytime)
 )
 async def start_report_handler(
     callback: types.CallbackQuery,
@@ -67,8 +67,7 @@ async def start_report_handler(
 
 
 @router.callback_query(
-    lambda callback: callback.data.startswith("quiz:"),
-    lambda callback: paytime(user_id=callback.message.from_user.id),
+    and_f(lambda callback: callback.data.startswith("quiz:"), paytime)
 )
 async def handle_word_quiz(callback: CallbackQuery, state: FSMContext):
 
@@ -174,8 +173,7 @@ async def send_question(callback, state, database):
 
 
 @router.callback_query(
-    lambda callback: callback.data.startswith("end_quiz"),
-    lambda callback: paytime(user_id=callback.message.from_user.id),
+    and_f(lambda callback: callback.data.startswith("end_quiz"), paytime)
 )
 async def do_nothing(callback: CallbackQuery):
     await callback.answer()
