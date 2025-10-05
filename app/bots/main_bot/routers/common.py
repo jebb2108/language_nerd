@@ -25,8 +25,8 @@ async def get_help_handler(message: Message, state: FSMContext):
         chat_id=message.chat.id, text=MESSAGES["get_help"][lang_code]
     )
 
-@router.callback_query(not paytime)
-@router.message(not paytime)
+
+@router.message()
 async def pay_cmd(message: Message, state: FSMContext):
     if not await paytime(message.from_user.id): return
 
