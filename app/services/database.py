@@ -109,7 +109,7 @@ class DatabaseService:
             await conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS audio (
-                id SERRIAL PRIMARY KEY,
+                id BIGINT PRIMARY KEY,
                 user_id BIGINT NOT NULL,
                 word VARCHAR(100) NOT NULL,
                 audio_url TEXT NOT NULL,
@@ -124,7 +124,7 @@ class DatabaseService:
             await conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS transactions (
-                id SERIAL PRIMARY KEY,
+                id BIGINT PRIMARY KEY,
                 user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                 amount NUMERIC NULL,
                 currency VARCHAR(10) NULL,
