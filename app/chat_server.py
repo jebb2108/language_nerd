@@ -18,7 +18,7 @@ from app.api.endpoints.matchmaking import router as match_router
 
 from logging_config import opt_logger as log
 
-logger = log.setup_logger('chat server')
+logger = log.setup_logger("chat server")
 
 # Создаем единственный экземпляр FastAPI
 app = FastAPI()
@@ -35,7 +35,6 @@ socket_app = socketio.ASGIApp(sio, app)
 
 @sio.event
 async def connect(sid, environ):
-
     """Обработчик подключения клиента"""
     print(f"=== NEW CONNECTION ATTEMPT ===")
     print(f"SID: {sid}")
@@ -105,7 +104,9 @@ async def send_message(sid, message):
     message_data = MessageContent(
         sender=username,
         text=message,
-        created_at=datetime.now().isoformat(),
+        created_at=datetime.now(
+            tz=config.TZINFO
+        ).isoformat(timespec="milliseconds"),
         room_id=room_id,
     )
 
@@ -125,8 +126,6 @@ async def save_message(message_data: "MessageContent"):
     await redis.expire(key, 900)  # TTL 15 минут
 
     await rabbit.publish_message(message_data)
-
-
 
 
 async def get_message_history(room_id: str) -> list:
