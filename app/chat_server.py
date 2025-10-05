@@ -119,13 +119,13 @@ async def send_message(sid, message):
 
 async def save_message(message_data: "MessageContent"):
     """Сохранение сообщения в Redis"""
-    rabbit: "RabbitMQService" = await get_rabbitmq()
+    # rabbit: "RabbitMQService" = await get_rabbitmq()
     redis: "Redis" = await get_redis_client()
     key = f"chat:{message_data.room_id}:messages"
     await redis.rpush(key, json.dumps(message_data.model_dump()))
     await redis.expire(key, 900)  # TTL 15 минут
 
-    await rabbit.publish_message(message_data)
+    # await rabbit.publish_message(message_data)
 
 
 async def get_message_history(room_id: str) -> list:
