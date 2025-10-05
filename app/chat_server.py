@@ -103,7 +103,7 @@ async def send_message(sid, message):
 
     message_data = MessageContent(
         sender=username,
-        message=message,
+        text=message,
         created_at=datetime.now(
             tz=config.TZINFO
         ).isoformat(timespec="milliseconds"),
