@@ -1,23 +1,26 @@
 import asyncio
+import uuid
+from datetime import datetime, timedelta
 
 import aiohttp
 from aiogram import F, Router
-from aiogram.enums import ParseMode
+from aiogram.enums import ParseMode, ContentType
 from aiogram.filters import and_f
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
+from yookassa import Payment
 
 from app.bots.partner_bot.filters.paytime import paytime
-from app.dependencies import get_redis_client, get_db
-from app.models import UserMatchRequest
+from app.dependencies import get_redis_client, get_db, get_rabbitmq
+from app.models import UserMatchRequest, NewPayment
 from config import config
-from app.bots.partner_bot.utils.access_data import data_storage as ds
+from app.bots.partner_bot.utils.access_data import data_storage as ds, data_storage
 from app.bots.partner_bot.translations import MESSAGES, TRANSCRIPTIONS
 
 from app.bots.partner_bot.keyboards.inline_keyboards import (
     get_go_back_keyboard,
     show_partner_menu_keyboard,
-    get_search_keyboard,
+    get_search_keyboard, get_payment_keyboard,
 )
 from logging_config import opt_logger as log
 
@@ -312,3 +315,54 @@ async def new_session_handler(callback: CallbackQuery, state: FSMContext):
         parse_mode=ParseMode.HTML,
         reply_markup=get_search_keyboard(lang_code),
     )
+
+
+@router.callback_query()
+async def subscription_expired_handler(callback: CallbackQuery, state: FSMContext):
+
+    user_id = callback.from_user.id
+    data = await data_storage.get_storage_data(user_id, state)
+    lang_code = data.get("lang_code")
+
+    # Создание платежа в ЮKassa
+    payment = Payment.create({
+        "amount": {
+            "value": "199.00",
+            "currency": "RUB"
+        },
+        "confirmation": {
+            "type": "redirect",
+            "return_url": "https://t.me/lllangbot"
+        },
+        "capture": True,
+        "description": "Оплата подписки"
+    }, uuid.uuid4())
+
+    # Отправка ссылки на оплату
+    link = payment.confirmation.confirmation_url
+    await callback.message.answer(
+        text=MESSAGES['payment_needed'][lang_code],
+        reply_markup=get_payment_keyboard(lang_code, link),
+        parse_mode=ParseMode.HTML,
+    )
+
+@router.callback_query(lambda callback: callback.message.content_type == ContentType.WEB_APP_DATA)
+async def handle_payment(callback: CallbackQuery):
+    payment_id = callback.message.web_app_data.data  # Пример получения ID платежа
+    payment = Payment.find_one(payment_id)
+    user_id = callback.from_user.id
+    rabbit = await get_rabbitmq()
+    if payment.status == "succeeded":
+        new_untill = datetime.now(tz=config.TZINFO) + timedelta(days=31)
+        new_payment = NewPayment(
+            user_id=user_id,
+            period=config.MONTH,
+            amount=199,
+            currency="RUB",
+            trial=False,
+            untill=new_untill.isoformat(),
+        )
+        await rabbit.publish_payment(new_payment)
+        await callback.message.answer("Платеж прошел успешно!")
+    else:
+        await callback.message.answer("Ошибка оплаты.")

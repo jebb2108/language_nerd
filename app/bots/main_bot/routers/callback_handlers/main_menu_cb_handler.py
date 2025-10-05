@@ -75,7 +75,7 @@ async def go_back(callback: CallbackQuery, state: FSMContext):
         parse_mode=ParseMode.HTML,
     )
 
-@router.callback_query(not paytime)
+@router.callback_query()
 async def subscription_expired_handler(callback: CallbackQuery, state: FSMContext):
 
     user_id = callback.from_user.id
