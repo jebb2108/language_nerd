@@ -463,7 +463,7 @@ class DatabaseService:
                 ,w.translation 
                 ,c.context
                 FROM words w
-                LEFT JOIN context c
+                LEFT JOIN contexts c
                     ON w.word = c.word
                 WHERE w.user_id = $1 
                 ORDER BY w.word""",
