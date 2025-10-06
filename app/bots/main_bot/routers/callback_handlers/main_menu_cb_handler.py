@@ -1,5 +1,6 @@
 from aiogram.filters import and_f
 
+from app.bots.main_bot.utils.exc import StorageDataException
 from config import config
 from logging_config import opt_logger as log
 from aiogram import F, Router
@@ -10,7 +11,7 @@ from aiogram.types import CallbackQuery
 from app.dependencies import get_db
 from app.bots.main_bot.filters.paytime import paytime
 from app.bots.main_bot.translations import MESSAGES
-from app.bots.main_bot.utils.access_data import data_storage
+from app.bots.main_bot.utils.access_data import data_storage as ds
 from app.bots.main_bot.keyboards.inline_keyboards import (
     get_on_main_menu_keyboard,
     get_go_back_keyboard, )
@@ -28,19 +29,29 @@ async def about(callback: CallbackQuery, state: FSMContext):
     Обработчик нажатия кнопки "О боте".
     Берём текст из QUESTIONARY, ничего не храним в state.
     """
-    await callback.answer()  # убираем "часики" на кнопке
+
+    await callback.answer()
     user_id = callback.from_user.id
-    data = await data_storage.get_storage_data(user_id, state)
-    lang_code = data.get("lang_code")
 
-    msg = MESSAGES["about"][lang_code]
+    try:
+        data = await ds.get_storage_data(user_id, state)
+        lang_code = data.get("lang_code")
 
-    # Редактируем текущее сообщение
-    await callback.message.edit_caption(
-        caption=msg,
-        reply_markup=get_go_back_keyboard(lang_code),
-        parse_mode=ParseMode.HTML,
-    )
+        msg = MESSAGES["about"][lang_code]
+
+        # Редактируем текущее сообщение
+        await callback.message.edit_caption(
+            caption=msg,
+            reply_markup=get_go_back_keyboard(lang_code),
+            parse_mode=ParseMode.HTML,
+        )
+
+    except StorageDataException:
+        logger.error(f"User {user_id} trying to acces data, but doesn`t exist in DB")
+        await callback.message.answer("You`re not registered. Press /start to do so")
+
+    except Exception as e:
+        logger.error(f"Error in about handler: {e}")
 
 
 @router.callback_query(
@@ -53,19 +64,30 @@ async def go_back(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     database = await get_db()
     user_id = callback.from_user.id
-    data = await data_storage.get_storage_data(user_id, state)
-    lang_code = data.get("lang_code")
 
-    msg = f"{MESSAGES['welcome'][lang_code]}"
+    try:
+        data = await ds.get_storage_data(user_id, state)
+        lang_code = data.get("lang_code")
 
-    if not await database.check_profile_exists(user_id):
-        msg += MESSAGES["get_to_know"][lang_code]
-    else:
-        msg += MESSAGES["pin_me"][lang_code]
+        msg = f"{MESSAGES['welcome'][lang_code]}"
 
-    await callback.message.edit_caption(
-        caption=msg,
-        reply_markup=get_on_main_menu_keyboard(user_id, lang_code),
-        parse_mode=ParseMode.HTML,
-    )
+        if not await database.check_profile_exists(user_id):
+            msg += MESSAGES["get_to_know"][lang_code]
+        else:
+            msg += MESSAGES["pin_me"][lang_code]
+
+        await callback.message.edit_caption(
+            caption=msg,
+            reply_markup=get_on_main_menu_keyboard(user_id, lang_code),
+            parse_mode=ParseMode.HTML,
+        )
+
+    except StorageDataException:
+        logger.error(f"User {user_id} trying to acces data, but doesn`t exist in DB")
+        await callback.message.answer("You`re not registered. Press /start to do so")
+
+    except Exception as e:
+        logger.error(f"Error in go_back handler: {e}")
+
+
 

@@ -118,7 +118,6 @@ async def handle_topic_choice(callback: CallbackQuery, state: FSMContext):
 
     data = await state.get_data()
     lang_code = data.get("lang_code")
-    users_choice = callback.data.split("_", 1)[1]
 
     # Отправляем сообщение с подтверждением
     msg = f"{QUESTIONARY['terms'][lang_code]}"
