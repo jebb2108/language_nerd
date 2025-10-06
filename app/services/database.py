@@ -86,8 +86,8 @@ class DatabaseService:
                 audio_id BIGINT NULL,
                 context_id BIGINT NULL,
                 created_at TIMESTAMP DEFAULT NOW(),
-                FOREIGN KEY(context_id) REFERENCES contexts(id) ON DELETE SET NULL,
-                FOREIGN KEY(audio_id) REFERENCES audios(id) ON DELETE SET NULL,
+                FOREIGN KEY(context_id) REFERENCES contexts(id) ON DELETE CASCADE,
+                FOREIGN KEY(audio_id) REFERENCES audios(id) ON DELETE CASCADE,
                 UNIQUE (user_id, word)
                 ); 
             """
@@ -477,21 +477,37 @@ class DatabaseService:
     async def add_word(self, user_id: int, word: str, pos: str, value: str, context: str=None, audio=None) -> bool:
         async with self.acquire_connection() as conn:
             try:
+                context_id = None
+                audio_id = None
+
+                if context:
+                    row = await conn.fetchrow(
+                        """INSERT INTO contexts (user_id, word, context) 
+                        VALUES ($1, $2, $3) RETURNING id""",
+                        user_id, word, context
+                    )
+
+                    context_id = row["id"]
+
+                if audio:
+                    row = await conn.fetchrow(
+                        """INSERT INTO audios (user_id, word, audio_url) 
+                        VALUES ($1, $2, $3) RETURNING id""",
+                        user_id, word, context
+                    )
+
+                    audio_id = row["id"]
+
                 await conn.execute(
-                    "INSERT INTO words (user_id, word, part_of_speech, translation) VALUES ($1, $2, $3, $4)",
+                    """INSERT INTO words (user_id, word, part_of_speech, translation, context_id, audio_id) 
+                    VALUES ($1, $2, $3, $4, $5, $6)""",
                     user_id,
                     word,
                     pos,
                     value,
+                    context_id,
+                    audio_id
                 )
-
-                if context:
-                    await conn.execute(
-                        "INSERT INTO contexts (user_id, word, context) VALUES ($1, $2, $3)",
-                        user_id, word, context
-                    )
-
-                return True
 
             except Exception as e:
                 logger.error(f"Database error: {e}")
