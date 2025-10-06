@@ -2,7 +2,7 @@ import json
 from datetime import datetime, timedelta
 from json import JSONDecodeError
 
-from fastapi import FastAPI, Request, BackgroundTasks
+from fastapi import Request, BackgroundTasks, APIRouter
 from aiogram import Bot
 
 from app.dependencies import get_main_bot, get_db, get_redis_client
@@ -12,7 +12,7 @@ from logging_config import opt_logger as log
 
 logger = log.setup_logger('webhook_payments')
 
-router = FastAPI(prefix="/api")
+router = APIRouter(prefix="/api")
 
 
 
