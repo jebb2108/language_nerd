@@ -92,7 +92,5 @@ async def api_stats_handler(user_id: int, db=Depends(get_db)):
         return {"total_words": 0, "nouns": 0, "verbs": 0}
 
     return {
-        "total_words": stats[0] if len(stats) > 0 else 0,
-        "nouns": stats[1] if len(stats) > 1 else 0,
-        "verbs": stats[2] if len(stats) > 2 else 0
+        "total_words": stats[0], "nouns": stats[1], "verbs": stats[2]
     }
