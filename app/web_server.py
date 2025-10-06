@@ -1,8 +1,9 @@
 import uvicorn
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from app.dependencies import get_rabbitmq, get_redis, get_db
+from app.dependencies import get_db
 from app.api.endpoints.dictionary import router as dict_router
+from app.api.endpoints.yookassa import router as weebhook_router
 from config import config
 
 
@@ -15,6 +16,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(dict_router)
+app.include_router(weebhook_router)
 
 if __name__ == "__main__":
     uvicorn.run(

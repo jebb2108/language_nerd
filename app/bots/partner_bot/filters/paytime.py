@@ -17,7 +17,7 @@ async def paytime(callback: Union["CallbackQuery", "Message"]):
     redis_client = await get_redis_client()
     logger.debug(f"Проверка подписки для пользователя {user_id}")
     due_to = await redis_client.get(f"user_paid:{user_id}")
-    if due_to and datetime.fromisoformat(due_to) > datetime.now():
+    if due_to and datetime.fromisoformat(due_to) > datetime.now(tz=config.TZINFO):
             return True
     elif due_to := await db.get_users_due_to(user_id):
         if due_to > datetime.now():

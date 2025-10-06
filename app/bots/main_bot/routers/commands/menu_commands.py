@@ -1,12 +1,12 @@
 import uuid
 
-from yookassa import Payment, Configuration
+from yookassa import Payment, Configuration, Webhook
 from aiogram import Router
 
 from aiogram.filters import Command, and_f
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, FSInputFile, ContentType
+from aiogram.types import Message, FSInputFile
 
 from app.bots.main_bot.filters.paytime import paytime
 from app.bots.main_bot.utils.exc import StorageDataException
@@ -27,6 +27,11 @@ router = Router(name=__name__)
 
 Configuration.account_id = config.YOOKASSA_SHOP_ID
 Configuration.secret_key = config.YOOKASSA_SECRET_KEY
+
+Webhook.add({
+    "event": "payment.succeeded",
+    "url": "https://www.dict.lllang.site/webhook/yookassa",
+})
 
 
 @router.message(
@@ -83,6 +88,9 @@ async def pay_cmd(message: Message, state: FSMContext):
                 },
                 "capture": True,
                 "description": "Оплата подписки",
+                "meta": {
+                    "user_id": user_id
+                }
             },
             uuid.uuid4(),
         )
@@ -94,16 +102,3 @@ async def pay_cmd(message: Message, state: FSMContext):
             reply_markup=get_payment_keyboard(lang_code, link),
             parse_mode=ParseMode.HTML,
         )
-
-
-@router.message(lambda message: message.content_type == ContentType.WEB_APP_DATA)
-async def handle_payment(message: Message):
-    payment_id = message.web_app_data.data  # Пример получения ID платежа
-    payment = Payment.find_one(payment_id)
-    user_id = message.from_user.id
-    database = await get_db()
-    if payment.status == "succeeded":
-        await database.create_payment(user_id, config.MONTH, trial=False)
-        await message.answer("Платеж прошел успешно!")
-    else:
-        await message.answer("Ошибка оплаты.")

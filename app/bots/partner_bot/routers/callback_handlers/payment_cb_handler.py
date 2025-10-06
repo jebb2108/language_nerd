@@ -41,7 +41,10 @@ async def subscription_expired_handler(callback: CallbackQuery, state: FSMContex
                 "return_url": "https://t.me/lllangbot"
             },
             "capture": True,
-            "description": "Оплата подписки"
+            "description": "Оплата подписки",
+            "meta": {
+                "user_id": user_id
+            }
         }, uuid.uuid4())
 
         # Отправка ссылки на оплату
@@ -56,28 +59,3 @@ async def subscription_expired_handler(callback: CallbackQuery, state: FSMContex
         await callback.message.answer("You`re not registered. Press /start to do so")
     except Exception as e:
         logger.error(f"Error in subscription_expired_handler: {e}")
-
-
-@router.callback_query(lambda callback: callback.message.content_type == ContentType.WEB_APP_DATA)
-async def handle_payment(callback: CallbackQuery):
-    """ Обработка платежа """
-    user_id = callback.from_user.id
-    payment_id = callback.message.web_app_data.data  # Пример получения ID платежа
-    payment = Payment.find_one(payment_id)
-    if payment.status == "succeeded":
-        redis_client = await get_redis_client()
-        database = await get_db()
-        new_untill = datetime.now(tz=config.TZINFO) + timedelta(days=31)
-        await redis_client.delete(f"user_paid:{user_id}")
-        new_payment = NewPayment(
-            user_id=user_id,
-            period=config.MONTH,
-            amount=199,
-            currency="RUB",
-            trial=False,
-            untill=new_untill.isoformat(),
-        )
-        await database.create_payment(**new_payment.model_dump())
-        await callback.message.answer("Платеж прошел успешно!")
-    else:
-        await callback.message.answer("Ошибка оплаты.")

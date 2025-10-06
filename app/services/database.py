@@ -6,6 +6,8 @@ from typing import Dict, Tuple, List, Optional
 from collections import defaultdict
 from contextlib import asynccontextmanager
 
+from netaddr.strategy.ipv4 import width
+
 from config import config
 from logging_config import opt_logger as log
 
@@ -31,6 +33,7 @@ class DatabaseService:
             # Создаем таблицы
             await self.__create_users()
             await self.__create_transactions()
+            await self.__create_transaction_history()
             await self.__create_users_profile()
             await self.__create_locations()
             await self.__create_words()
@@ -132,6 +135,19 @@ class DatabaseService:
                 trial BOOLEAN DEFAULT TRUE,
                 untill TIMESTAMP DEFAULT NOW(),
                 UNIQUE (user_id)
+                ); """
+            )
+
+    async def __transaction_history(self):
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS transaction_history (
+                id BIGINT PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                payment_id TEXT NOT NULL,
+                created_at TIMESTANP DEFAULT NOW(),
+                UNIQUE (user_id, payment_id)
                 ); """
             )
 
@@ -256,6 +272,7 @@ class DatabaseService:
         currency: str,
         trial: bool,
         untill: datetime.isoformat,
+        payment_id: Optional[str] = None
     ) -> None:
         async with self.acquire_connection() as conn:
             untill_obj = datetime.fromisoformat(untill)
@@ -277,6 +294,15 @@ class DatabaseService:
                 trial,
                 untill_obj,
             )
+
+            # Проверка на реальный платеж
+            if payment_id:
+                created_at = datetime.now(tz=config.TZINFO)
+                await conn.execute(
+                    """
+                    INSERT INTO transaction_history (user_id, payment_id, created_at) VALUES ($1, $2, $3)
+                    """, user_id, payment_id, created_at
+                )
 
     async def get_users_due_to(self, user_id: int) -> datetime:
         async with self.acquire_connection() as conn:

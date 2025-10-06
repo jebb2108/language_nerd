@@ -59,7 +59,10 @@ async def pay_cmd(message: Message, state: FSMContext):
                 "return_url": "https://t.me/lllangbot"
             },
             "capture": True,
-            "description": "Оплата подписки"
+            "description": "Оплата подписки",
+            "meta": {
+                "user_id": user_id
+            }
         }, uuid.uuid4())
 
         # Отправка ссылки на оплату
@@ -76,30 +79,3 @@ async def pay_cmd(message: Message, state: FSMContext):
 
     except Exception as e:
         logger.error(f"Error in pay_cmd handler: {e}")
-
-
-@router.message(lambda message: message.content_type == ContentType.WEB_APP_DATA)
-async def handle_payment(message: Message):
-
-    payment_id = message.web_app_data.data
-    payment = Payment.find_one(payment_id)
-    user_id = message.from_user.id
-    if payment.status == "succeeded":
-
-        database = await get_db()
-        redis_client = await get_redis_client()
-        new_untill = datetime.now(tz=config.TZINFO) + timedelta(days=31)
-
-        await redis_client.delete(f"user_paid:{user_id}")
-        new_payment = NewPayment(
-            user_id=user_id,
-            period=config.MONTH,
-            amount=199,
-            currency="RUB",
-            trial=False,
-            untill=new_untill.isoformat(),
-        )
-        await database.create_payment(**new_payment.model_dump())
-        await message.answer("Платеж прошел успешно!")
-    else:
-        await message.answer("Ошибка оплаты.")
