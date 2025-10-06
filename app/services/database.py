@@ -145,7 +145,7 @@ class DatabaseService:
                 id BIGINT PRIMARY KEY,
                 user_id BIGINT NOT NULL,
                 payment_id TEXT NOT NULL,
-                created_at TIMESTANP DEFAULT NOW(),
+                created_at TIMESTAMP DEFAULT NOW(),
                 UNIQUE (user_id, payment_id)
                 ); """
             )
