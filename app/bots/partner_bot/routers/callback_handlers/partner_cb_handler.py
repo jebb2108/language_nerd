@@ -320,6 +320,8 @@ async def new_session_handler(callback: CallbackQuery, state: FSMContext):
 @router.callback_query()
 async def subscription_expired_handler(callback: CallbackQuery, state: FSMContext):
 
+    await callback.answer()
+
     user_id = callback.from_user.id
     data = await data_storage.get_storage_data(user_id, state)
     lang_code = data.get("lang_code")
