@@ -88,7 +88,7 @@ class DatabaseService:
                 created_at TIMESTAMP DEFAULT NOW(),
                 FOREIGN KEY(context_id) REFERENCES context(id) ON DELETE SET NULL,
                 FOREIGN KEY(audio_id) REFERENCES audio(id) ON DELETE SET NULL,
-                UNIQUE (user_id, word),
+                UNIQUE (user_id, word)
                 ); 
             """
             )
@@ -97,14 +97,14 @@ class DatabaseService:
         async with self.acquire_connection() as conn:
             await conn.execute(
                 """
-                CREATE TABLE IF NOT EXISTS context (
+                CREATE TABLE IF NOT EXISTS contexts (
                 id SERIAL PRIMARY KEY,
                 user_id BIGINT NOT NULL,
                 word VARCHAR(100) NOT NULL,
                 context TEXT NOT NULL,
                 edited BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT NOW(),
-                UNIQUE (user_id, word, context),
+                UNIQUE (user_id, word, context)
                 );
             """
             )
@@ -113,14 +113,14 @@ class DatabaseService:
         async with self.acquire_connection() as conn:
             await conn.execute(
                 """
-                CREATE TABLE IF NOT EXISTS audio (
+                CREATE TABLE IF NOT EXISTS audios (
                 id SERIAL PRIMARY KEY,
                 user_id BIGINT NOT NULL,
                 word VARCHAR(100) NOT NULL,
                 audio_url TEXT NOT NULL,
                 edited BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT NOW(),
-                UNIQUE (user_id, word, audio_url),
+                UNIQUE (user_id, word, audio_url)
                 );
             """
             )
@@ -487,7 +487,7 @@ class DatabaseService:
 
                 if context:
                     await conn.execute(
-                        "INSERT INTO context (user_id, word, context) VALUES ($1, $2, $3)",
+                        "INSERT INTO contexts (user_id, word, context) VALUES ($1, $2, $3)",
                         user_id, word, context
                     )
 
