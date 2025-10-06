@@ -579,7 +579,7 @@ class DatabaseService:
                     )
 
                     if not all_words_count_row:
-                        return 0, 0, 0
+                        return None
 
                     total = sum([int(cnt) for cnt in all_words_count_row.values()])
                     return (
