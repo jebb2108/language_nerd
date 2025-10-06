@@ -474,7 +474,7 @@ class DatabaseService:
                 for row in rows
             ]
 
-    async def add_word(self, user_id: int, word: str, pos: str, value: str, context: str=None, audio=None) -> bool:
+    async def add_word(self, user_id: int, word: str, pos: str, value: str, is_public: bool, context: str=None, audio=None) -> bool:
         async with self.acquire_connection() as conn:
             try:
                 context_id = None
@@ -499,12 +499,13 @@ class DatabaseService:
                     audio_id = row["id"]
 
                 await conn.execute(
-                    """INSERT INTO words (user_id, word, part_of_speech, translation, context_id, audio_id) 
-                    VALUES ($1, $2, $3, $4, $5, $6)""",
+                    """INSERT INTO words (user_id, word, part_of_speech, translation, is_public, context_id, audio_id) 
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)""",
                     user_id,
                     word,
                     pos,
                     value,
+                    is_public,
                     context_id,
                     audio_id
                 )
