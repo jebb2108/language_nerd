@@ -79,7 +79,7 @@ class DatabaseService:
                 word VARCHAR(100) NOT NULL,
                 part_of_speech VARCHAR(50) NOT NULL,
                 translation TEXT NOT NULL,
-                public BOOLEAN DEFAULT FALSE,
+                is_public BOOLEAN DEFAULT FALSE,
                 word_state VARCHAR(20) DEFAULT 'NEW',
                 emotion VARCHAR(20) DEFAULT 'NEUTRAL',
                 correct_spelling BOOLEAN DEFAULT TRUE,
