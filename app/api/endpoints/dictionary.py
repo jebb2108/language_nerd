@@ -22,6 +22,7 @@ async def api_words_handler(
             "word": word[1],
             "part_of_speech": word[2],
             "translation": word[3],
+            "context": word[4]
         }
         for word in words
     ]

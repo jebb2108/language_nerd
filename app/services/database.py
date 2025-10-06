@@ -451,11 +451,22 @@ class DatabaseService:
     async def get_words(self, user_id: int) -> List[Tuple[str, str, str, str]]:
         async with self.acquire_connection() as conn:
             rows = await conn.fetch(
-                "SELECT id, word, part_of_speech, translation FROM words WHERE user_id = $1 ORDER BY word",
+                """
+                SELECT 
+                w.id
+                ,w.word
+                ,w.part_of_speech
+                ,w.translation 
+                ,c.context
+                FROM words w
+                LEFT JOIN context c
+                    ON w.word = c.word
+                WHERE user_id = $1 
+                ORDER BY w.word""",
                 user_id,
             )
             return [
-                (row["id"], row["word"], row["part_of_speech"], row["translation"])
+                (row["id"], row["word"], row["part_of_speech"], row["translation"], row["context"])
                 for row in rows
             ]
 
@@ -491,7 +502,7 @@ class DatabaseService:
                 user_id,
                 word,
             )
-            return [(row["id"], row["word"], row["part_of_speech"], row["translation"])]
+            return [(row["id"], row["word"], row["part_of_speech"], row["translation"] if row["translation"] else None)]
 
     async def delete_word(self, user_id: int, word_id: int) -> bool:
         async with self.acquire_connection() as conn:
@@ -584,8 +595,8 @@ class DatabaseService:
                     total = sum([int(cnt) for cnt in all_words_count_row.values()])
                     return (
                         total,
-                        all_words_count_row["noun"],
-                        all_words_count_row["verb"]
+                        all_words_count_row["noun"] if all_words_count_row["noun"] else 0,
+                        all_words_count_row["verb"] if all_words_count_row["verb"] else 0
                     )
 
                 except Exception as e:
