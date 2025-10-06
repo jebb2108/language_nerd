@@ -83,11 +83,11 @@ class DatabaseService:
                 word_state VARCHAR(20) DEFAULT 'NEW',
                 emotion VARCHAR(20) DEFAULT 'NEUTRAL',
                 correct_spelling BOOLEAN DEFAULT TRUE,
-                audio_id BIGINT REFERENCES audio(id) ON DELETE CASCADE,
-                context_id BIGINT REFERENCES context(id) ON DELETE CASCADE,
+                audio_id BIGINT NULL,
+                context_id BIGINT NULL,
                 created_at TIMESTAMP DEFAULT NOW(),
-                FOREIGN KEY(context_id) REFERENCES context(id) ON DELETE SET NULL,
-                FOREIGN KEY(audio_id) REFERENCES audio(id) ON DELETE SET NULL,
+                FOREIGN KEY(context_id) REFERENCES contexts(id) ON DELETE SET NULL,
+                FOREIGN KEY(audio_id) REFERENCES audios(id) ON DELETE SET NULL,
                 UNIQUE (user_id, word)
                 ); 
             """
