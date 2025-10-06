@@ -8,6 +8,9 @@ class UserDictionaryRequest(BaseModel):
     word: Union[str, None] = Field(None, description="Слово, которое нужно добавить в словарь")
     part_of_speech: Union[str, None] = Field(None, description="Часть речи слова")
     translation: Union[str, None] = Field(None, description="Перевод слова")
+    is_public: bool = Field(False, description="Видно ли слово остальным пользователям")
+    context: Optional[str] = Field(None, description="Контекст к слову")
+    audio: Optional[bytes] = Field(None, description="bytes of audio recording")
 
     source: Optional[str] = Field(
         default="api", description="Источник запроса (api, bot, etc)"

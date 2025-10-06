@@ -36,12 +36,15 @@ async def api_add_word_handler(
     word = request.word
     part_of_speech = request.part_of_speech
     translation = request.translation
+    context = request.context
 
     if not all([user_id, word, part_of_speech, translation]):
         raise HTTPException(status_code=400, detail="Missing fields")
 
     try:
-        await db.add_word(user_id, word, part_of_speech, translation)
+
+        await db.add_word(user_id, word, part_of_speech, translation, context)
+
     except Exception as e:
         logger.error(f"Error in api_add_word_handler: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -81,7 +84,6 @@ async def api_delete_word_handler(word_id: int, user_id: int, db=Depends(get_db)
 
 
 @router.get("/stats")
-async def api_stats_handler(request: UserDictionaryRequest, db=Depends(get_db)):
-    user_id = request.user_id
+async def api_stats_handler(user_id: int, db=Depends(get_db)):
     stats = await db.get_user_stats(user_id)
     return {"total_words": stats[0], "nouns": stats[1], "verbs": stats[2]}

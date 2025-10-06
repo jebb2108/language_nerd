@@ -459,9 +459,7 @@ class DatabaseService:
                 for row in rows
             ]
 
-    async def add_word(self, user_id: int, word: str, pos: str, value: str) -> bool:
-        if value is None:
-            value = ""
+    async def add_word(self, user_id: int, word: str, pos: str, value: str, context: str=None, audio=None) -> bool:
         async with self.acquire_connection() as conn:
             try:
                 await conn.execute(
@@ -471,7 +469,15 @@ class DatabaseService:
                     pos,
                     value,
                 )
+
+                if context:
+                    await conn.execute(
+                        "INSERT INTO context (user_id, word, context) VALUES ($1, $2, $3)",
+                        user_id, word, context
+                    )
+
                 return True
+
             except Exception as e:
                 logger.error(f"Database error: {e}")
                 return False
@@ -571,26 +577,18 @@ class DatabaseService:
                         """,
                         user_id,
                     )
-                    if all_words_count_row and pos is None:
-                        total_words = (
-                            all_words_count_row["noun"]
-                            + all_words_count_row["verb"]
-                            + all_words_count_row["adjective"]
-                            + all_words_count_row["adverb"]
-                            + all_words_count_row["other"]
-                        )
 
-                        return total_words
-
-                    elif all_words_count_row and pos is not None:
-                        return all_words_count_row[pos]
-
-                    else:
-                        return 0
+                    total = sum([int(cnt) for cnt in all_words_count_row.values()])
+                    return (
+                        total,
+                        all_words_count_row["noun"],
+                        all_words_count_row["verb"]
+                    )
 
                 except Exception as e:
                     logger.error(f"Database error: {e}")
                     return None
+
 
     async def get_user_stats_last_week(self, user_id: int):
         async with self.stats_lock:
