@@ -28,12 +28,6 @@ router = Router(name=__name__)
 Configuration.account_id = config.YOOKASSA_SHOP_ID
 Configuration.secret_key = config.YOOKASSA_SECRET_KEY
 
-Webhook.add({
-    "event": "payment.succeeded",
-    "url": "https://www.dict.lllang.site/webhook/yookassa",
-})
-
-
 @router.message(
     and_f(Command("menu", prefix="!/"), paytime)
 )
