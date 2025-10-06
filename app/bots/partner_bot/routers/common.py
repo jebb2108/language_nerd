@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timedelta
 
 from aiogram import Router
 from aiogram.enums import ParseMode
@@ -9,10 +10,14 @@ from yookassa import Payment
 from app.bots.partner_bot.keyboards.inline_keyboards import get_payment_keyboard
 from app.bots.partner_bot.filters.paytime import paytime
 from app.bots.partner_bot.translations import MESSAGES
-from app.bots.partner_bot.utils.access_data import data_storage, logger
+from app.bots.partner_bot.utils.access_data import data_storage
 from app.bots.partner_bot.utils.exc import StorageDataException
-from app.dependencies import get_db
+from app.dependencies import get_db, get_redis_client
+from app.models import NewPayment
+from logging_config import opt_logger as log
 from config import config
+
+logger = log.setup_logger('common')
 
 router = Router(name=__name__)
 
@@ -62,15 +67,30 @@ async def subscription_expiration_handler(message: Message, state: FSMContext):
     except Exception as e:
         logger.error(f"Error in subscription_expiration_handler: {e}")
 
+
 @router.message(lambda message: message.content_type == ContentType.WEB_APP_DATA)
 async def handle_payment(message: Message):
-    payment_id = message.web_app_data.data  # Пример получения ID платежа
+    payment_id = message.web_app_data.data
     payment = Payment.find_one(payment_id)
     user_id = message.from_user.id
-    database = await get_db()
     if payment.status == "succeeded":
-        await database.create_payment(user_id, config.MONTH, ..., ..., ..., ...)
+
+        database = await get_db()
+        redis_client = await get_redis_client()
+        new_untill = datetime.now(tz=config.TZINFO) + timedelta(days=31)
+
+        await redis_client.delete(f"user_paid:{user_id}")
+        new_payment = NewPayment(
+            user_id=user_id,
+            period=config.MONTH,
+            amount=199,
+            currency="RUB",
+            trial=False,
+            untill=new_untill.isoformat(),
+        )
+        await database.create_payment(**new_payment.model_dump())
         await message.answer("Платеж прошел успешно!")
     else:
         await message.answer("Ошибка оплаты.")
+
 

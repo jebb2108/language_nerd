@@ -11,7 +11,7 @@ from app.bots.partner_bot.keyboards.inline_keyboards import get_payment_keyboard
 from app.bots.partner_bot.translations import MESSAGES
 from app.bots.partner_bot.utils.access_data import data_storage
 from app.bots.partner_bot.utils.exc import StorageDataException
-from app.dependencies import get_rabbitmq
+from app.dependencies import get_redis_client, get_db
 from app.models import NewPayment
 from logging_config import opt_logger as log
 from config import config
@@ -60,12 +60,15 @@ async def subscription_expired_handler(callback: CallbackQuery, state: FSMContex
 
 @router.callback_query(lambda callback: callback.message.content_type == ContentType.WEB_APP_DATA)
 async def handle_payment(callback: CallbackQuery):
+    """ Обработка платежа """
+    user_id = callback.from_user.id
     payment_id = callback.message.web_app_data.data  # Пример получения ID платежа
     payment = Payment.find_one(payment_id)
-    user_id = callback.from_user.id
-    rabbit = await get_rabbitmq()
     if payment.status == "succeeded":
+        redis_client = await get_redis_client()
+        database = await get_db()
         new_untill = datetime.now(tz=config.TZINFO) + timedelta(days=31)
+        await redis_client.delete(f"user_paid:{user_id}")
         new_payment = NewPayment(
             user_id=user_id,
             period=config.MONTH,
@@ -74,7 +77,7 @@ async def handle_payment(callback: CallbackQuery):
             trial=False,
             untill=new_untill.isoformat(),
         )
-        await rabbit.publish_payment(new_payment)
+        await database.create_payment(**new_payment.model_dump())
         await callback.message.answer("Платеж прошел успешно!")
     else:
         await callback.message.answer("Ошибка оплаты.")
