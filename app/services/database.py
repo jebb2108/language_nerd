@@ -35,9 +35,9 @@ class DatabaseService:
             await self.__create_transaction_history()
             await self.__create_users_profile()
             await self.__create_locations()
-            await self.__create_words()
             await self.__create_contexts()
             await self.__create_audios()
+            await self.__create_words()
             await self.__create_weekly_reports()
             await self.__create_report_words()
 
