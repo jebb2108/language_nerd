@@ -461,7 +461,7 @@ class DatabaseService:
                 FROM words w
                 LEFT JOIN context c
                     ON w.word = c.word
-                WHERE user_id = $1 
+                WHERE w.user_id = $1 
                 ORDER BY w.word""",
                 user_id,
             )
@@ -571,18 +571,18 @@ class DatabaseService:
             return bool(result)
 
     # Temperorary solution
-    async def get_user_stats(self, user_id: int, pos: str = None):
+    async def get_user_stats(self, user_id: int):
         async with self.stats_lock:
             async with self.acquire_connection() as conn:
                 try:
                     all_words_count_row = await conn.fetchrow(
                         """
                         SELECT
-                          COUNT(*) FILTER (WHERE part_of_speech = 'noun')      AS nouns,
-                          COUNT(*) FILTER (WHERE part_of_speech = 'verb')      AS verbs,
+                          COUNT(*) FILTER (WHERE part_of_speech = 'noun') AS nouns,
+                          COUNT(*) FILTER (WHERE part_of_speech = 'verb') AS verbs,
                           COUNT(*) FILTER (WHERE part_of_speech = 'adjective') AS adjectives,
-                          COUNT(*) FILTER (WHERE part_of_speech = 'adverb')    AS adverbs,
-                          COUNT(*) FILTER (WHERE part_of_speech = 'other')       AS other
+                          COUNT(*) FILTER (WHERE part_of_speech = 'adverb') AS adverbs,
+                          COUNT(*) FILTER (WHERE part_of_speech = 'other') AS other
                         FROM words
                         WHERE user_id = $1
                         """,
@@ -590,19 +590,22 @@ class DatabaseService:
                     )
 
                     if not all_words_count_row:
-                        return None
+                        return 0, 0, 0
 
-                    total = sum([int(cnt) for cnt in all_words_count_row.values()])
-                    return (
-                        total,
-                        all_words_count_row["noun"] if all_words_count_row["noun"] else 0,
-                        all_words_count_row["verb"] if all_words_count_row["verb"] else 0
-                    )
+                    # Преобразуем None в 0 и суммируем
+                    nouns = all_words_count_row.get('nouns', 0) or 0
+                    verbs = all_words_count_row.get('verbs', 0) or 0
+                    adjectives = all_words_count_row.get('adjectives', 0) or 0
+                    adverbs = all_words_count_row.get('adverbs', 0) or 0
+                    other = all_words_count_row.get('other', 0) or 0
+
+                    total = nouns + verbs + adjectives + adverbs + other
+
+                    return total, nouns, verbs
 
                 except Exception as e:
-                    logger.error(f"Database error: {e}")
-                    return None
-
+                    logger.error(f"Database error in get_user_stats: {e}")
+                    return 0, 0, 0
 
     async def get_user_stats_last_week(self, user_id: int):
         async with self.stats_lock:
