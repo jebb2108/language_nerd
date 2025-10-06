@@ -60,7 +60,7 @@ async def pay_cmd(message: Message, state: FSMContext):
             },
             "capture": True,
             "description": "Оплата подписки",
-            "meta": {
+            "metadata": {
                 "user_id": user_id
             }
         }, uuid.uuid4())

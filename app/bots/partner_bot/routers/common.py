@@ -51,7 +51,7 @@ async def subscription_expiration_handler(message: Message, state: FSMContext):
             },
             "capture": True,
             "description": "Оплата подписки",
-            "meta": {
+            "metadata": {
                 "user_id": user_id
             }
         }, uuid.uuid4())

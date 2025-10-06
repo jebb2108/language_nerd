@@ -80,9 +80,10 @@ async def pay_cmd(message: Message, state: FSMContext):
                     "type": "redirect",
                     "return_url": "https://t.me/lllangbot",
                 },
+
                 "capture": True,
                 "description": "Оплата подписки",
-                "meta": {
+                "metadata": {
                     "user_id": user_id
                 }
             },
