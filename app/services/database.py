@@ -285,7 +285,7 @@ class DatabaseService:
                 SELECT untill FROM transactions WHERE user_id = $1""",
                 user_id,
             )
-            return row["untill"]
+            return row["untill"] if row else None
 
     async def add_users_profile(
         self,

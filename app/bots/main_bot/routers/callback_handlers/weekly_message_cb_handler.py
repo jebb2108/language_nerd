@@ -1,5 +1,5 @@
 from aiogram.filters import and_f
-from app.bots.main_bot.utils.paytime import paytime
+from app.bots.main_bot.filters.paytime import paytime
 from config import config
 from logging_config import opt_logger as log
 from aiogram import Router, types, F

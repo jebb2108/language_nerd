@@ -7,7 +7,7 @@ from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import Command, and_f
 from aiogram.enums import ParseMode
 
-from app.bots.main_bot.utils.paytime import paytime
+from app.bots.main_bot.filters.paytime import paytime
 from app.bots.partner_bot.keyboards.inline_keyboards import show_topic_keyboard
 from app.dependencies import get_db, get_redis_client
 from app.models import UserMatchRequest

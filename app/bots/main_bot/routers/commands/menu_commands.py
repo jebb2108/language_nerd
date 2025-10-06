@@ -8,7 +8,7 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, FSInputFile, ContentType
 
-from app.bots.main_bot.utils.paytime import paytime
+from app.bots.main_bot.filters.paytime import paytime
 from app.dependencies import get_db
 from config import config
 from app.bots.main_bot.keyboards.inline_keyboards import (

@@ -1,10 +1,8 @@
 from aiogram import Router, F
 from aiogram.enums import ParseMode
-from aiogram.filters import and_f
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, FSInputFile
 
-from app.bots.main_bot.utils.paytime import paytime
 from app.bots.partner_bot.translations import TRANSCRIPTIONS
 from app.dependencies import get_rabbitmq
 from app.models import NewUser, NewPayment

@@ -1,6 +1,5 @@
 import re
 from datetime import datetime
-from logging import Filter
 
 import aiohttp
 from aiogram import F, Router
@@ -10,7 +9,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardRemove
 
-from app.bots.main_bot.utils.paytime import paytime
+from app.bots.main_bot.filters.paytime import paytime
 from app.bots.partner_bot.filters.answers import AnswerFilter
 
 from app.bots.partner_bot.keyboards.regular_keyboards import (
