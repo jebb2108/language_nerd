@@ -8,13 +8,15 @@ from aiogram.types import CallbackQuery
 from yookassa import Payment
 
 from app.bots.partner_bot.keyboards.inline_keyboards import get_payment_keyboard
-from app.bots.partner_bot.main import logger
 from app.bots.partner_bot.translations import MESSAGES
 from app.bots.partner_bot.utils.access_data import data_storage
 from app.bots.partner_bot.utils.exc import StorageDataException
 from app.dependencies import get_rabbitmq
 from app.models import NewPayment
+from logging_config import opt_logger as log
 from config import config
+
+logger = log.setup_logger('payment_cb_handler')
 
 router = Router()
 
