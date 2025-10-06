@@ -461,6 +461,7 @@ class DatabaseService:
                 ,w.word
                 ,w.part_of_speech
                 ,w.translation 
+                ,w.is_public,
                 ,c.context
                 FROM words w
                 LEFT JOIN contexts c
@@ -470,7 +471,7 @@ class DatabaseService:
                 user_id,
             )
             return [
-                (row["id"], row["word"], row["part_of_speech"], row["translation"], row["context"])
+                (row["id"], row["word"], row["part_of_speech"], row["translation"], row["is_public"], row["context"])
                 for row in rows
             ]
 
