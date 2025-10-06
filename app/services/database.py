@@ -76,7 +76,7 @@ class DatabaseService:
                 CREATE TABLE IF NOT EXISTS words (
                 id SERIAL PRIMARY KEY,
                 user_id BIGINT NOT NULL,
-                word VARCHER(100) NOT NULL,
+                word VARCHAR(100) NOT NULL,
                 part_of_speech VARCHAR(50) NOT NULL,
                 translation TEXT NOT NULL,
                 public BOOLEAN DEFAULT FALSE,
