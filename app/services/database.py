@@ -6,7 +6,6 @@ from typing import Dict, Tuple, List, Optional
 from collections import defaultdict
 from contextlib import asynccontextmanager
 
-from netaddr.strategy.ipv4 import width
 
 from config import config
 from logging_config import opt_logger as log
@@ -138,7 +137,7 @@ class DatabaseService:
                 ); """
             )
 
-    async def __transaction_history(self):
+    async def __create_transaction_history(self):
         async with self.acquire_connection() as conn:
             await conn.execute(
                 """
