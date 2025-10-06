@@ -40,7 +40,7 @@ async def process_payment_webhook(data):
     try:
         if data['event'] == 'payment.succeeded':
             payment = data['object']
-            user_id = payment['metadata']['user_id']  # Получаем из metadata
+            user_id = int(payment['metadata']['user_id'])  # Получаем из metadata
 
             # Активируем подписку
             await activate_subscription(user_id, payment)
@@ -52,7 +52,7 @@ async def process_payment_webhook(data):
         logger.error(f"Webhook processing failed: {e}")
 
 
-async def activate_subscription(user_id, payment):
+async def activate_subscription(user_id: int, payment):
 
     database: "DatabaseService" = await get_db()
     redis_client = await get_redis_client()

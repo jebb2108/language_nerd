@@ -270,7 +270,7 @@ class DatabaseService:
         amount: int,
         currency: str,
         trial: bool,
-        untill: datetime.isoformat,
+        untill: str,
         payment_id: Optional[str] = None
     ) -> None:
         async with self.acquire_connection() as conn:
