@@ -1,6 +1,7 @@
 import uuid
+from datetime import timedelta
 
-from yookassa import Payment, Configuration, Webhook
+from yookassa import Payment, Configuration
 from aiogram import Router
 
 from aiogram.filters import Command, and_f
@@ -10,7 +11,7 @@ from aiogram.types import Message, FSInputFile
 
 from app.bots.main_bot.filters.paytime import paytime
 from app.bots.main_bot.utils.exc import StorageDataException
-from app.dependencies import get_db
+from app.dependencies import get_db, get_redis_client
 from config import config
 from app.bots.main_bot.keyboards.inline_keyboards import (
     get_on_main_menu_keyboard,
@@ -62,6 +63,7 @@ async def pay_cmd(message: Message, state: FSMContext):
         return
 
     user_id = message.from_user.id
+    redis_client = await get_redis_client()
 
     try:
         data = await ds.get_storage_data(user_id, state)
@@ -92,8 +94,10 @@ async def pay_cmd(message: Message, state: FSMContext):
 
         # Отправка ссылки на оплату
         link = payment.confirmation.confirmation_url
-        await message.answer(
+        sent = await message.answer(
             text=MESSAGES["payment_needed"][lang_code],
             reply_markup=get_payment_keyboard(lang_code, link),
             parse_mode=ParseMode.HTML,
         )
+
+        await redis_client.setex(f'user_payment:{user_id}', timedelta(minutes=10), sent.message_id)

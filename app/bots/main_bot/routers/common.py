@@ -41,9 +41,10 @@ async def get_help_handler(message: Message, state: FSMContext):
 
 @router.message()
 async def pay_cmd(message: Message, state: FSMContext):
-    if not await paytime(message.from_user.id): return
 
     user_id = message.from_user.id
+    redis_client = await get_redis_client()
+
     try:
         data = await ds.get_storage_data(user_id, state)
         lang_code = data.get("lang_code")
@@ -67,11 +68,17 @@ async def pay_cmd(message: Message, state: FSMContext):
 
         # Отправка ссылки на оплату
         link = payment.confirmation.confirmation_url
-        await message.answer(
+        sent = await message.answer(
             text=MESSAGES['payment_needed'][lang_code],
             reply_markup=get_payment_keyboard(lang_code, link),
             parse_mode=ParseMode.HTML,
         )
+
+        await redis_client.setex(
+            f'user_payment:{user_id}', timedelta(minutes=10), sent.message_id
+        )
+
+
 
     except StorageDataException:
         logger.error(f"User {user_id} trying to access data but doesn`t exist in DB")

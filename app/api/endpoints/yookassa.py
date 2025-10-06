@@ -75,7 +75,13 @@ async def activate_subscription(user_id: int, payment):
 async def notify_user_via_bot(user_id):
     try:
         bot: "Bot" = await get_main_bot()
-        await bot.send_message(user_id, "✅ Платеж прошел успешно! Подписка активирована.")
+        redis_client = await get_redis_client()
+        message_id = await redis_client.get(f"user_payment:{user_id}")
+        await bot.edit_message_text(
+            text="✅ Платеж прошел успешно! Подписка активирована",
+            chat_id=user_id,
+            message_id=int(message_id)
+        )
     except Exception as e:
         logger.error(f"Can't notify user {user_id}: {e}")
         # Можно сохранить в очередь для повторной отправки
