@@ -15,20 +15,14 @@ logger = log.setup_logger('webhook_payments')
 router = APIRouter(prefix="/api")
 
 
-
 @router.post("/webhook/yookassa")
 async def yookassa_webhook(request: Request, background_tasks: BackgroundTasks):
     # Проверка подписи (важно для безопасности!)
-    body = await request.json()
+    data = await request.json()
     signature = request.headers.get("Authorization")
 
-    if not verify_signature(body, signature):
+    if not verify_signature(data, signature):
         return {"status": "error"}
-
-    try:
-        data = await json.loads(body)
-    except JSONDecodeError:
-        return {"stetus": "error"}
 
     # Обрабатываем в фоне
     background_tasks.add_task(process_payment_webhook, data)
