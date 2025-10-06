@@ -78,7 +78,7 @@ class Config:
 
     SECRET_KEY: str = os.getenv("SECRET_KEY", "secret_key")
 
-    TZINFO = timezone(timedelta(hours=0.0))
+    TZINFO = timezone(timedelta(hours=3.0))
 
     SEARCH_STARTED = 'search_started'
     SEARCH_CANCELED = 'search_canceled'

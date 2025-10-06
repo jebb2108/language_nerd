@@ -142,7 +142,7 @@ class DatabaseService:
             await conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS transaction_history (
-                id BIGINT PRIMARY KEY,
+                id SERIAL PRIMARY KEY,
                 user_id BIGINT NOT NULL,
                 payment_id TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT NOW(),
