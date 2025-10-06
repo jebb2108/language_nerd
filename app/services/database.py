@@ -461,7 +461,7 @@ class DatabaseService:
                 ,w.word
                 ,w.part_of_speech
                 ,w.translation 
-                ,w.is_public,
+                ,w.is_public
                 ,c.context
                 FROM words w
                 LEFT JOIN contexts c
