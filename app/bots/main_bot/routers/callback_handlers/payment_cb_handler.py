@@ -20,10 +20,6 @@ logger = log.setup_logger('payment_cb_handler')
 
 router = Router(name=__name__)
 
-Webhook.add(
-
-)
-
 @router.callback_query()
 async def subscription_expired_handler(callback: CallbackQuery, state: FSMContext):
 
