@@ -1,7 +1,7 @@
 import asyncio
 import asyncpg
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Tuple, List, Optional
 from collections import defaultdict
 from contextlib import asynccontextmanager
@@ -270,11 +270,17 @@ class DatabaseService:
         amount: int,
         currency: str,
         trial: bool,
-        untill: str,
+        untill: datetime,
         payment_id: Optional[str] = None
     ) -> None:
         async with self.acquire_connection() as conn:
-            untill_obj = datetime.fromisoformat(untill)
+            # Преобразуем aware datetime в UTC и делаем naive
+            if untill.tzinfo is not None:
+                untill_utc = untill.astimezone(timezone.utc)
+                untill_naive = untill_utc.replace(tzinfo=None)
+            else:
+                untill_naive = untill
+
             await conn.execute(
                 """
                 INSERT INTO transactions (user_id, period, amount, currency, trial, untill) 
@@ -291,12 +297,13 @@ class DatabaseService:
                 amount,
                 currency,
                 trial,
-                untill_obj,
+                untill_naive,
             )
 
             # Проверка на реальный платеж
             if payment_id:
-                created_at = datetime.now(tz=config.TZINFO)
+                created_at = datetime.now(tz=config.TZINFO).replace(tzinfo=None)
+
                 await conn.execute(
                     """
                     INSERT INTO transaction_history (user_id, payment_id, created_at) VALUES ($1, $2, $3)

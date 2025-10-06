@@ -57,9 +57,9 @@ class NewPayment(BaseModel):
         "trial", description="Period of payment", examples=["month", "year"]
     )
     trial: Optional[bool] = Field(True, description="If it is trial period for user")
-    untill: Optional[str] = (
+    untill: Optional[datetime] = (
         datetime.now(tz=config.TZINFO) + timedelta(days=3)
-    ).isoformat()
+    )
     currency: Optional[str] = Field("RUB", description="Currency of payment")
 
 

@@ -65,7 +65,7 @@ async def activate_subscription(user_id: int, payment):
         amount=199,
         currency='RUB',
         trial=False,
-        untill=new_until.isoformat(),
+        untill=new_until,
         payment_id=payment_id
     )
 
