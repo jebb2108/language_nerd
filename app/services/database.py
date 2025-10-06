@@ -276,8 +276,8 @@ class DatabaseService:
         async with self.acquire_connection() as conn:
             # Преобразуем aware datetime в UTC и делаем naive
             if untill.tzinfo is not None:
-                untill_utc = untill.astimezone(timezone.utc)
-                untill_naive = untill_utc.replace(tzinfo=None)
+                untill_moscow = untill.astimezone(tz=config.TZINFO)
+                untill_naive = untill_moscow.replace(tzinfo=None)
             else:
                 untill_naive = untill
 
