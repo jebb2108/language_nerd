@@ -86,7 +86,9 @@ class DatabaseService:
                 audio_id BIGINT REFERENCES audio(id) ON DELETE CASCADE,
                 context_id BIGINT REFERENCES context(id) ON DELETE CASCADE,
                 created_at TIMESTAMP DEFAULT NOW(),
-                UNIQUE (user_id, word, context_id, audio_id)
+                FOREIGN KEY(context_id) REFERENCES context(id) ON DELETE SET NULL,
+                FOREIGN KEY(audio_id) REFERENCES audio(id) ON DELETE SET NULL,
+                UNIQUE (user_id, word),
                 ); 
             """
             )
@@ -101,7 +103,8 @@ class DatabaseService:
                 word VARCHAR(100) NOT NULL,
                 context TEXT NOT NULL,
                 edited BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT NOW()
+                created_at TIMESTAMP DEFAULT NOW(),
+                UNIQUE (user_id, word, context),
                 );
             """
             )
@@ -111,12 +114,13 @@ class DatabaseService:
             await conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS audio (
-                id BIGINT PRIMARY KEY,
+                id SERIAL PRIMARY KEY,
                 user_id BIGINT NOT NULL,
                 word VARCHAR(100) NOT NULL,
                 audio_url TEXT NOT NULL,
                 edited BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT NOW()
+                created_at TIMESTAMP DEFAULT NOW(),
+                UNIQUE (user_id, word, audio_url),
                 );
             """
             )
