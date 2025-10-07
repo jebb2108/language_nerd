@@ -32,7 +32,6 @@ async def get_help_handler(message: Message, state: FSMContext):
 
 @router.message()
 async def subscription_expiration_handler(message: Message, state: FSMContext):
-    if not await paytime(message.from_user.id): return
 
     user_id = message.from_user.id
     redis_client = await get_redis_client()
