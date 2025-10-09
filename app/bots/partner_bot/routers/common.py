@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from aiogram import Router
 from aiogram.enums import ParseMode
@@ -12,10 +12,8 @@ from app.bots.partner_bot.filters.paytime import paytime
 from app.bots.partner_bot.translations import MESSAGES
 from app.bots.partner_bot.utils.access_data import data_storage as ds
 from app.bots.partner_bot.utils.exc import StorageDataException
-from app.dependencies import get_db, get_redis_client
-from app.models import NewPayment
+from app.dependencies import get_redis_client
 from logging_config import opt_logger as log
-from config import config
 
 logger = log.setup_logger('common')
 

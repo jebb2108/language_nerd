@@ -1,7 +1,10 @@
+from datetime import datetime
+
 from aiogram import Router, F
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, FSInputFile
+from asyncpg.pgproto.pgproto import timedelta
 
 from app.bots.partner_bot.translations import TRANSCRIPTIONS
 from app.dependencies import get_rabbitmq
@@ -160,6 +163,7 @@ async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
     )
     # Отправляем нового пользователя и транзакцию в RabbitMQ
     # на сохранение в основную БД
+    trial_dt_obj = datetime.now(tz=config.TZINFO) + timedelta(days=3)
     await rabbit.publish_user(
         NewUser(
             user_id=user_id,
@@ -171,5 +175,5 @@ async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
             topic=topic,
             lang_code=lang_code,
         ),
-        NewPayment(user_id=user_id),
+        NewPayment(user_id=user_id, untill=trial_dt_obj),
     )
