@@ -463,7 +463,7 @@ class DatabaseService:
                 ,c.context
                 FROM words w
                 LEFT JOIN contexts c
-                    ON w.word = c.word
+                    ON w.id = c.word_id
                 WHERE w.user_id = $1 
                 ORDER BY w.word""",
                 user_id,
