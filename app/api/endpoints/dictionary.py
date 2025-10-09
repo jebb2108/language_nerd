@@ -38,7 +38,7 @@ async def api_add_word_handler(
     word = request.word
     part_of_speech = request.part_of_speech
     translation = request.translation
-    is_publick = request.is_public
+    is_public = request.is_public
     context = request.context
 
     if not all([user_id, word, part_of_speech, translation]):
@@ -46,7 +46,7 @@ async def api_add_word_handler(
 
     try:
 
-        await db.add_word(user_id, word, part_of_speech, translation, is_publick, context)
+        await db.add_word(user_id, word, part_of_speech, translation, is_public, context)
 
     except Exception as e:
         logger.error(f"Error in api_add_word_handler: {str(e)}")

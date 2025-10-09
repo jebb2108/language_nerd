@@ -478,7 +478,7 @@ class DatabaseService:
             try:
                 row = await conn.fetchrow(
                     """INSERT INTO words (user_id, word, part_of_speech, translation, is_public) 
-                    VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id""",
+                    VALUES ($1, $2, $3, $4, $5) RETURNING id""",
                     user_id,
                     word,
                     pos,
