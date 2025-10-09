@@ -83,11 +83,7 @@ class DatabaseService:
                 word_state VARCHAR(20) DEFAULT 'NEW',
                 emotion VARCHAR(20) DEFAULT 'NEUTRAL',
                 correct_spelling BOOLEAN DEFAULT TRUE,
-                audio_id BIGINT NULL,
-                context_id BIGINT NULL,
                 created_at TIMESTAMP DEFAULT NOW(),
-                FOREIGN KEY(context_id) REFERENCES contexts(id) ON DELETE CASCADE,
-                FOREIGN KEY(audio_id) REFERENCES audios(id) ON DELETE CASCADE,
                 UNIQUE (user_id, word)
                 ); 
             """
@@ -100,11 +96,12 @@ class DatabaseService:
                 CREATE TABLE IF NOT EXISTS contexts (
                 id SERIAL PRIMARY KEY,
                 user_id BIGINT NOT NULL,
-                word VARCHAR(100) NOT NULL,
+                word_id INTEGER NOT NULL,
                 context TEXT NOT NULL,
                 edited BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT NOW(),
-                UNIQUE (user_id, word, context)
+                FOREIGN KEY (word_id) REFERENCES words(id) ON DELETE CASCADE,
+                UNIQUE (user_id, word_id, context)
                 );
             """
             )
@@ -116,11 +113,12 @@ class DatabaseService:
                 CREATE TABLE IF NOT EXISTS audios (
                 id SERIAL PRIMARY KEY,
                 user_id BIGINT NOT NULL,
-                word VARCHAR(100) NOT NULL,
+                audio_id INTEGER NOT NULL,
                 audio_url TEXT NOT NULL,
                 edited BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT NOW(),
-                UNIQUE (user_id, word, audio_url)
+                FOREIGN KEY (audio_id) REFERENCES audios(id) ON DELETE CASCADE,
+                UNIQUE (user_id, audio_id, audio_url)
                 );
             """
             )
