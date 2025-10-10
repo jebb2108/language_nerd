@@ -12,7 +12,7 @@ def get_go_back_keyboard(lang_code):
         callback_data="go_back",
     )
     builder.add(go_back_button)
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
 
 
 def show_where_from_keyboard(lang_code):
@@ -32,7 +32,7 @@ def show_where_from_keyboard(lang_code):
     )
     builder.add(friends_button, search_button, through_ad_button)
     builder.adjust(1)
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
 
 
 def show_language_keyboard():
@@ -61,7 +61,7 @@ def show_language_keyboard():
         russian_button, english_button, german_button, spanish_button, chinese_button
     )
     builder.adjust(1)
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
 
 
 def show_fluency_keyboard(lang_code):
@@ -69,14 +69,14 @@ def show_fluency_keyboard(lang_code):
     for key, value in QUESTIONARY["fluency_levels"][lang_code].items():
         builder.row(InlineKeyboardButton(text=value, callback_data=f"fluency_{key}"))
 
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
 
 def show_topic_keyboard(lang_code):
     builder = InlineKeyboardBuilder()
     for key, value in QUESTIONARY["topics"][lang_code].items():
         builder.row(InlineKeyboardButton(text=value, callback_data=f"topic_{key}"))
 
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
 
 def payment_keyboard(lang_code):
     builder = InlineKeyboardBuilder()
@@ -85,7 +85,7 @@ def payment_keyboard(lang_code):
         callback_data="start_trial",
     )
     builder.add(start_trial)
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
 
 
 def confirm_choice_keyboard(lang_code):
@@ -96,7 +96,7 @@ def confirm_choice_keyboard(lang_code):
         callback_data="action_confirm",
     )
     builder.add(confirm_button)
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
 
 
 def get_on_main_menu_keyboard(lang_code):
@@ -140,7 +140,7 @@ def show_word_options_keyboard(word_data):
         call_back = f"quiz:{word_data['word_id']}:{opt_idx}"
         builder.row(InlineKeyboardButton(text=option, callback_data=call_back))
     builder.adjust(2)
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
 
 
 def get_finish_button(lang_code):
@@ -150,7 +150,7 @@ def get_finish_button(lang_code):
         callback_data="end_quiz",
     )
     builder.add(finish_button)
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
 
 
 def begin_weekly_quiz_keyboard(lang_code, report_id):
@@ -159,7 +159,7 @@ def begin_weekly_quiz_keyboard(lang_code, report_id):
         text=WEEKLY_QUIZ["begin"][lang_code], callback_data=f"start_report:{report_id}"
     )
     builder.add(begin_quiz_button)
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
 
 def get_payment_keyboard(lang_code, url):
     builder = InlineKeyboardBuilder()
@@ -167,4 +167,4 @@ def get_payment_keyboard(lang_code, url):
         text=BUTTONS["payment"][lang_code], url=url
     )
     builder.add(payment_button)
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
