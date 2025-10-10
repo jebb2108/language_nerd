@@ -112,6 +112,10 @@ def get_on_main_menu_keyboard(user_id, lang_code):
         text=BUTTONS["find_partner"][lang_code],
         url="https://t.me/lllang_onlinebot",
     )
+    subscription_details = InlineKeyboardButton(
+        text=BUTTONS["sub_details"][lang_code],
+        callback_data="sub_details"
+    )
     about_bot_button = InlineKeyboardButton(
         text=BUTTONS["about_bot"][lang_code],
         callback_data="about",
@@ -120,8 +124,14 @@ def get_on_main_menu_keyboard(user_id, lang_code):
         text=BUTTONS["support"][lang_code],
         url="https://t.me/user_bot6426",
     )
-    builder.add(dict_button, find_partner_button, about_bot_button, support_button)
-    builder.adjust(1, 1, 2)
+    builder.add(
+        dict_button,
+                find_partner_button,
+                subscription_details,
+                about_bot_button,
+                support_button
+    )
+    builder.adjust(1, 1, 1, 2)
 
     return builder.as_markup(resize_keyboard=True)
 

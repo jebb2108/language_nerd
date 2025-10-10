@@ -1,7 +1,4 @@
-import json
 from datetime import datetime, timedelta
-from json import JSONDecodeError
-
 from fastapi import Request, BackgroundTasks, APIRouter
 from aiogram import Bot
 
@@ -17,7 +14,6 @@ router = APIRouter(prefix="/api")
 
 @router.post("/webhook/yookassa")
 async def yookassa_webhook(request: Request, background_tasks: BackgroundTasks):
-    # Проверка подписи (важно для безопасности!)
     data = await request.json()
     signature = request.headers.get("Authorization")
 
@@ -40,48 +36,135 @@ async def process_payment_webhook(data):
     try:
         if data['event'] == 'payment.succeeded':
             payment = data['object']
-            user_id = int(payment['metadata']['user_id'])  # Получаем из metadata
 
-            # Активируем подписку
-            await activate_subscription(user_id, payment)
+            # Проверяем, это автоматический платеж или обычный
+            is_auto_payment = payment['metadata'].get('auto_payment', False)
 
-            # Пытаемся уведомить пользователя через бота
-            await notify_user_via_bot(user_id)
+            if is_auto_payment:
+                await handle_auto_payment_success(payment)
+            else:
+                await handle_regular_payment_success(payment)
+
+        elif data['event'] == 'payment.canceled':
+            payment = data['object']
+            is_auto_payment = payment['metadata'].get('auto_payment', False)
+
+            if is_auto_payment:
+                await handle_auto_payment_failed(payment)
 
     except Exception as e:
         logger.error(f"Webhook processing failed: {e}")
 
 
-async def activate_subscription(user_id: int, payment):
+async def handle_auto_payment_success(payment: dict):
+    """Обработка успешного автоматического списания"""
+    try:
+        user_id = int(payment['metadata']['user_id'])
 
-    database: "DatabaseService" = await get_db()
+        # Активируем подписку
+        await activate_subscription(user_id, payment)
+
+        logger.info(f"Auto-payment succeeded for user {user_id}, payment {payment['id']}")
+
+    except Exception as e:
+        logger.error(f"Failed to process auto-payment success: {e}")
+
+
+async def handle_auto_payment_failed(payment: dict):
+    """Обработка неудачного автоматического списания"""
+    try:
+        user_id = int(payment['metadata']['user_id'])
+
+        # Деактивируем подписку
+        await deactivate_subscription(user_id)
+
+        # Уведомляем пользователя
+        await notify_user_auto_failed(user_id)
+
+        logger.info(f"Auto-payment failed for user {user_id}, payment {payment['id']}")
+
+    except Exception as e:
+        logger.error(f"Failed to process auto-payment failure: {e}")
+
+
+async def handle_regular_payment_success(payment: dict):
+    """Обработка обычного успешного платежа (существующая логика)"""
+    try:
+        user_id = int(payment['metadata']['user_id'])
+
+        # Сохраняем payment_method_id для будущих автоматических списаний
+        if payment.get('payment_method'):
+            payment_method_id = payment['payment_method']['id']
+            await save_payment_method(user_id, payment_method_id)
+
+        # Активируем подписку
+        await activate_subscription(user_id, payment)
+
+        # Уведомляем пользователя
+        await notify_user_regular_success(user_id)
+
+    except Exception as e:
+        logger.error(f"Failed to process regular payment: {e}")
+
+
+async def activate_subscription(user_id: int, payment: dict):
+    """Активация подписки после успешного платежа"""
+    database: DatabaseService = await get_db()
     redis_client = await get_redis_client()
-    new_until = datetime.now(tz=config.TZINFO) + timedelta(days=31)
-    payment_id = payment["id"]
+
+    new_untill = datetime.now(tz=config.TZINFO) + timedelta(days=31)
 
     await database.create_payment(
         user_id=user_id,
-        period=config.MONTH,
-        amount=199,
-        currency='RUB',
+        period="month",
+        amount=payment['amount']['value'],
+        currency=payment['amount']['currency'],
         trial=False,
-        untill=new_until,
-        payment_id=payment_id
+        untill=new_untill,
+        payment_id=payment['id']
     )
 
-    await redis_client.setex(f"user_paid:{user_id}", timedelta(hours=2), new_until.isoformat())
+    await redis_client.setex(
+        f"user_paid:{user_id}",
+        timedelta(hours=2),
+        new_untill.isoformat()
+    )
 
 
-async def notify_user_via_bot(user_id):
+async def deactivate_subscription(user_id: int):
+    """Деактивация подписки при неудачном списании"""
+    database: DatabaseService = await get_db()
+    # Логика деактивации подписки
+    await database.deactivate_subscription(user_id)
+
+
+async def save_payment_method(user_id: int, payment_method_id: str):
+    """Сохранение payment_method_id для автоматических списаний"""
+    database: DatabaseService = await get_db()
+    await database.save_payment_method(user_id, payment_method_id)
+
+
+
+async def notify_user_auto_failed(user_id: int):
+    """Уведомление о неудачном автоматическом списании"""
     try:
-        bot: "Bot" = await get_main_bot()
-        redis_client = await get_redis_client()
-        message_id = await redis_client.get(f"user_payment:{user_id}")
-        await bot.edit_message_text(
-            text="✅ Платеж прошел успешно! Подписка активирована",
+        bot: Bot = await get_main_bot()
+        await bot.send_message(
             chat_id=user_id,
-            message_id=int(message_id)
+            text="❌ Не удалось автоматически продлить подписку. "
+                 "Пожалуйста, проверьте способ оплаты или обновите карту."
         )
     except Exception as e:
-        logger.error(f"Can't notify user {user_id}: {e}")
-        # Можно сохранить в очередь для повторной отправки
+        logger.error(f"Can't notify user {user_id} about auto-failure: {e}")
+
+
+async def notify_user_regular_success(user_id: int):
+    """Уведомление об успешном обычном платеже"""
+    try:
+        bot: Bot = await get_main_bot()
+        await bot.send_message(
+            chat_id=user_id,
+            text="✅ Платеж прошел успешно! Подписка активирована."
+        )
+    except Exception as e:
+        logger.error(f"Can't notify user {user_id} about regular success: {e}")

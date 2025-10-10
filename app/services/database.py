@@ -6,7 +6,7 @@ from typing import Dict, Tuple, List, Optional
 from collections import defaultdict
 from contextlib import asynccontextmanager
 
-
+from app.bots.partner_bot.routers.common import subscription_expiration_handler
 from config import config
 from logging_config import opt_logger as log
 
@@ -33,6 +33,7 @@ class DatabaseService:
             await self.__create_users()
             await self.__create_transactions()
             await self.__create_transaction_history()
+            await self.__create_payment_methods()
             await self.__create_users_profile()
             await self.__create_locations()
             await self.__create_words()
@@ -147,9 +148,22 @@ class DatabaseService:
                 id SERIAL PRIMARY KEY,
                 user_id BIGINT NOT NULL,
                 payment_id TEXT NOT NULL,
+                payment_method_id TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT NOW(),
                 UNIQUE (user_id, payment_id)
                 ); """
+            )
+
+    async def __create_payment_methods(self):
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS payment_methods (
+                id SERIAL PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                payment_method_id TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT NOW()
+                );"""
             )
 
     async def __create_users_profile(self):
@@ -273,7 +287,7 @@ class DatabaseService:
         currency: str,
         trial: bool,
         untill: datetime,
-        payment_id: Optional[str] = None
+        payment_id: Optional[str] = None,
     ) -> None:
         async with self.acquire_connection() as conn:
             # Преобразуем aware datetime в UTC и делаем naive
@@ -312,6 +326,52 @@ class DatabaseService:
                     """, user_id, payment_id, created_at
                 )
 
+    async def save_payment_method(self, user_id: int, payment_method_id: str) -> None:
+        """Сохранение payment_method_id для автоматических списаний"""
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+                """
+                INSERT INTO user_payment_methods (user_id, payment_method_id, created_at) 
+                VALUES ($1, $2, $3) 
+                ON CONFLICT (user_id) DO UPDATE SET 
+                payment_method_id = $2, updated_at = $3
+                """,
+                user_id, payment_method_id, datetime.now(tz=config.TZINFO)
+            )
+
+    async def get_sub_due_to_info(self) -> List[dict]:
+        async with self.acquire_connection() as conn:
+            rows = await conn.execute(
+                """
+                SELECT u.user_id, u.is_active, t.amount, t.untill
+                FROM users u
+                LEFT JOIUN transactions t
+                    ON u.user_id = t.user_id
+                LEFT JOIN transaction_history th
+                    ON u.user_id = th.user_id
+                """
+            )
+            return [
+                {
+                    "user_id": row["user_id"],
+                    "is_active": row["is_active"],
+                    "amount": row["amount"],
+                    "untill": row["untill"]
+                } for row in rows
+            ]
+
+    async def get_user_payment_method(self, user_id: int):
+        async with self.acquire_connection() as conn:
+            return await conn.fetchval(
+                """
+                SELECT payment_method_id 
+                FROM transaction_history 
+                WHERE user_id = $1 
+                ORDER BY created_at DISC 
+                LIMIT 1
+                """
+            )
+
     async def get_users_due_to(self, user_id: int) -> datetime:
         async with self.acquire_connection() as conn:
             row = await conn.fetchrow(
@@ -320,6 +380,13 @@ class DatabaseService:
                 user_id,
             )
             return row["untill"] if row else None
+
+
+    async def deactivate_subscription(self, user_id):
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+                "UPDATE users SET is_active = false WHERE user_id = $1", user_id
+            )
 
     async def add_users_profile(
         self,

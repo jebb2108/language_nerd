@@ -339,6 +339,13 @@ BUTTONS = dict(
             "es": "🌐 Encontrar compañero",
             "zh": "🌐 寻找伙伴",
         },
+        "sub_details": {
+            "en": "💳 Manage subscription",
+            "ru": "💳 Управление подпиской",
+            "de": "💳 Abonnement verwalten",
+            "es": "💳 Gestionar suscripción",
+            "zh": "💳 管理订阅"
+        },
         "about_bot": {
             "en": "ℹ️ About me",
             "ru": "ℹ️ Обо мне",
