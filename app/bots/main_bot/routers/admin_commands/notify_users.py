@@ -29,9 +29,9 @@ async def notify_users(message: Message, state: FSMContext):
     lang_code = data.get("lang_code")
 
     msg_list = NOTIFICATIONS["havent_seen_you"][lang_code]
-    rand_int = random.randint(0, len(msg_list)-1)
     for user in all_users:
         if user not in results["success_ids"]:
+            rand_int = random.randint(0, len(msg_list) - 1)
             await message.bot.send_message(chat_id=user, text=msg_list[rand_int])
 
     await message.answer(
