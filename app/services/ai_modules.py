@@ -844,7 +844,7 @@ class PendingReportsProcessor:
         pending_reports = await self._get_pending_reports()
         if not pending_reports:
             logger.info("Нет ожидающих отчетов")
-            return {"success_count": 0, "failed_count": 0, "failed_reports": []}
+            return {"success_count": 0, "failed_count": 0, "success_ids":[], "failed_reports": []}
 
         logger.info(f"Попытка отправить {len(pending_reports)} ожидающих отчетов.")
 
