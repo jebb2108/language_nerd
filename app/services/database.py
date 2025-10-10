@@ -685,10 +685,10 @@ class DatabaseService:
                 FROM words 
                 WHERE word_state != 'LEARNED' 
                    AND word IS NOT NULL 
-                   AND created_at >= CASE word_state
-                       WHEN 'NEW' THEN $1 - INTERVAL '2 days'
-                       WHEN 'REPEATED' THEN $1 - INTERVAL '5 days'
-                       WHEN 'REINFORCED' THEN $1 - INTERVAL '14 days'
+                   AND $1 - created_at >= CASE word_state
+                       WHEN 'NEW' THEN INTERVAL '1 days'
+                       WHEN 'REPEATED' THEN INTERVAL '5 days'
+                       WHEN 'REINFORCED' THEN INTERVAL '14 days'
                    END 
                 GROUP BY user_id
                 """, current_time
