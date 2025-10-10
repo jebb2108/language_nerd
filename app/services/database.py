@@ -58,7 +58,7 @@ class DatabaseService:
                             user_id BIGINT NOT NULL,
                             username VARCHAR(50) NOT NULL,
                             first_name VARCHAR(100) NOT NULL,
-                            camefrom VARCHER(50) NOT NULL,
+                            camefrom VARCHAR(50) NOT NULL,
                             language VARCHAR(20) NOT NULL,
                             fluency SMALLINT NOT NULL,
                             topic VARCHAR(20) NOT NULL,
@@ -128,7 +128,7 @@ class DatabaseService:
             await conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS transactions (
-                id BIGINT PRIMARY KEY,
+                id SERIAL PRIMARY KEY,
                 user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                 amount NUMERIC NULL,
                 currency VARCHAR(10) NULL,

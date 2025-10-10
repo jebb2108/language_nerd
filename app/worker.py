@@ -246,6 +246,7 @@ async def handle_db_requests(data: dict, msg: "RabbitMessage"):
         user = json.loads(data["user"])
         await database.create_user(**user)
         payment = json.loads(data["payment"])
+        payment["untill"] = datetime.fromisoformat(payment["untill"])
         await database.create_payment(**payment)
         logger.info("New user & payment processed by worker")
         await msg.ack()

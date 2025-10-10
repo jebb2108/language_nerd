@@ -35,7 +35,7 @@ class AnswerFilter(Filter):
             database = await get_db()
             data = await database.get_user_info(user_id)
             await redis_client.setex(
-                f"lang_code:{user_id}", 900, data["lang_code"]
+                f"lang_code:{user_id}", 900, data.get("lang_code")
             )
             r_lang_code = await redis_client.get(f"lang_code:{user_id}")
 
