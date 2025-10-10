@@ -372,7 +372,7 @@ async def new_session_handler(callback: CallbackQuery, state: FSMContext):
                         logger.info("Запрос успешно обработан")
 
         except Exception as e:
-            logger.error(f"Исключение при выполнении запроса: {e}")
+            return logger.error(f"Исключение при выполнении запроса: {e}")
 
         return await callback.message.answer(
             text=MESSAGES["search_began"][lang_code],

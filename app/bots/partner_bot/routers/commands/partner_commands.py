@@ -130,7 +130,7 @@ async def new_session_handler(
 
     except StorageDataException:
         logger.error(f"User {user_id} trying to access data but doesn`t exist in DB")
-        await message.answer("You`re not registered. Press /start to do so")
+        return await message.answer("You`re not registered. Press /start to do so")
 
     else:
         user_id = data.get("user_id")
@@ -206,6 +206,6 @@ async def new_session_handler(
                         logger.info("Запрос успешно обработан")
 
         except Exception as e:
-            logger.error(f"Исключение при выполнении запроса: {e}")
+            return logger.error(f"Исключение при выполнении запроса: {e}")
 
 

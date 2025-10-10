@@ -63,6 +63,6 @@ async def subscription_expired_handler(callback: CallbackQuery, state: FSMContex
 
     except StorageDataException:
         logger.error(f"User {user_id} trying to access data but doesn`t exist in DB")
-        await callback.message.answer("You`re not registered. Press /start to do so")
+        return await callback.message.answer("You`re not registered. Press /start to do so")
     except Exception as e:
-        logger.error(f"Error in subscription_expired_handler: {e}")
+        return logger.error(f"Error in subscription_expired_handler: {e}")

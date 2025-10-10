@@ -53,10 +53,10 @@ async def about(callback: CallbackQuery, state: FSMContext):
 
     except StorageDataException:
         logger.error(f"User {user_id} trying to acces data, but doesn`t exist in DB")
-        await callback.message.answer("You`re not registered. Press /start to do so")
+        return await callback.message.answer("You`re not registered. Press /start to do so")
 
     except Exception as e:
-        logger.error(f"Error in about handler: {e}")
+        return logger.error(f"Error in about handler: {e}")
 
 
 @router.callback_query(
@@ -89,10 +89,10 @@ async def go_back(callback: CallbackQuery, state: FSMContext):
 
     except StorageDataException:
         logger.error(f"User {user_id} trying to acces data, but doesn`t exist in DB")
-        await callback.message.answer("You`re not registered. Press /start to do so")
+        return await callback.message.answer("You`re not registered. Press /start to do so")
 
     except Exception as e:
-        logger.error(f"Error in go_back handler: {e}")
+        return logger.error(f"Error in go_back handler: {e}")
 
 
 

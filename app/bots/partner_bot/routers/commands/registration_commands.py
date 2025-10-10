@@ -306,7 +306,7 @@ async def process_location(message: Message, state: FSMContext):
                     return await state.clear()
 
     except Exception as e:
-        logger.error(f"There was an error occuring: {e}")
+        return logger.error(f"There was an error occuring: {e}")
 
 
 @router.message(

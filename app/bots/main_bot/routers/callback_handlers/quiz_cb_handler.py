@@ -63,7 +63,7 @@ async def start_report_handler(
         await send_question(callback, state, database)
 
     except Exception as e:
-        logger.error(f"Ошибка в start_report_handler: {e}", exc_info=True)
+        return logger.error(f"Ошибка в start_report_handler: {e}", exc_info=True)
 
 
 @router.callback_query(
@@ -124,7 +124,7 @@ async def handle_word_quiz(callback: CallbackQuery, state: FSMContext):
         return await send_question(callback, state, database)
 
     except Exception as e:
-        logger.error(f"Ошибка при отправке сообщения: {e}")
+        return logger.error(f"Ошибка при отправке сообщения: {e}")
 
 
 async def send_question(callback, state, database):

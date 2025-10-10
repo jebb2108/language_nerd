@@ -64,7 +64,7 @@ async def subscription_expired_handler(callback: CallbackQuery, state: FSMContex
         await redis_client.setex(f'user_payment:{user_id}', timedelta(minutes=10), sent.message_id)
 
     except StorageDataException:
-        logger.error(f"User {user_id} trying to acces data but doesn`t exist in DB")
+        return logger.error(f"User {user_id} trying to acces data but doesn`t exist in DB")
 
     except Exception as e:
-        logger.error(f"Error in subscription_expired_handler: {e}")
+        return logger.error(f"Error in subscription_expired_handler: {e}")
