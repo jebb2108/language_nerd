@@ -483,12 +483,12 @@ WEEKLY_QUIZ = dict(
         },
         "congradulations": {
             "en": (
-                "congrades! You completed this quiz for all the learned words this week.\n\n"
+                "congrades! You completed this quiz for all the learned words today.\n\n"
                 "Words which you chose right: {rights}\n"
                 "Words which you made a mistake with: {wrongs}\n"
             ),
             "ru": (
-                "🎉 Поздравляем! Вы завершили проверку знаний по всем словам за эту неделю.\n\n"
+                "🎉 Поздравляем! Вы завершили проверку знаний по всем словам за сегодня.\n\n"
                 "Слова, на которые вы ответили правильно: {rights}\n"
                 "Ошибочные ответы: {wrongs}\n"
             ),
