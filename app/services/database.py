@@ -468,7 +468,7 @@ class DatabaseService:
             reports = await conn.fetch(
                 "SELECT DISTINCT user_id, last_notified FROM users WHERE user_id IS NOT NULL AND blocked_bot = false"
             )
-            return [ int(report["user_id"], report["last_notified"]) for report in reports ]
+            return [ (int(report["user_id"]), report["last_notified"]) for report in reports ]
 
     async def add_users_location(
         self,
