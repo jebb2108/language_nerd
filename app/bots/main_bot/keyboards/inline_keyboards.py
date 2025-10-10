@@ -99,7 +99,7 @@ def confirm_choice_keyboard(lang_code):
     return builder.as_markup(resize_keyboard=True)
 
 
-def get_on_main_menu_keyboard(user_id, lang_code):
+def get_on_main_menu_keyboard(lang_code):
     # Формируем URL с user_id для Web App
     web_app_url = f"https://dict.lllang.site/?v={config.VERSION}"
 
@@ -114,7 +114,7 @@ def get_on_main_menu_keyboard(user_id, lang_code):
     )
     subscription_details = InlineKeyboardButton(
         text=BUTTONS["sub_details"][lang_code],
-        callback_data="sub_details"
+        callback_data="sub_details",
     )
     about_bot_button = InlineKeyboardButton(
         text=BUTTONS["about_bot"][lang_code],
@@ -124,16 +124,13 @@ def get_on_main_menu_keyboard(user_id, lang_code):
         text=BUTTONS["support"][lang_code],
         url="https://t.me/user_bot6426",
     )
-    builder.add(
-        dict_button,
-                find_partner_button,
-                subscription_details,
-                about_bot_button,
-                support_button
-    )
-    builder.adjust(1, 1, 1, 2)
 
-    return builder.as_markup(resize_keyboard=True)
+    builder.row(dict_button)
+    builder.row(find_partner_button)
+    builder.row(subscription_details)
+    builder.row(about_bot_button, support_button)
+
+    return builder.as_markup()
 
 
 def show_word_options_keyboard(word_data):
