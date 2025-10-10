@@ -649,3 +649,59 @@ TRANSCRIPTIONS = dict(
         },
     }
 )
+
+
+NOTIFICATIONS = dict({
+    "havent_seen_you": {
+    "en": [
+        "Hey! Long time no see :( Start adding words to stay the best",
+        "Haven't seen you around in a while. Is everything okay? I know the best way to boost motivation. Add a couple of words to the dictionary!",
+        "Hey, where did you disappear to? Maybe... let's record a couple of words in the dictionary? ;)",
+        "Hey! We haven't updated our vocabulary in a while. Come by for a bit, let's add something interesting! 😊",
+        "Well, well, well, who's forgotten the way to our little dictionary? You better fix that, I'm waiting! 😉",
+        "Hi there! I'm getting so bored here without you... Maybe it's time to add a new word? 😊",
+        "Where are you? 🥺 Without you, my dictionary feels so empty... Let's fill it up together?",
+        "I really enjoyed when we learned words together! Come back, let's write down something new! 🌟"
+    ],
+    "ru": [
+        "Привет! Давно тебя не видела :( Начни добавлять слова, чтобы оставаться the best",
+        "Что-то тебя давно не было со мной. Все хорошо? Я знаю лучший способ поднять мотивацию. Добавь пару слов в словарь!",
+        "Хэй, ты куда-то пропал(а)? Может быть... запишем парочку слов в словарь? ;)",
+        "Привет! Мы с тобой давно не пополняли наш словарик. Зайди ненадолго, давай добавим что-нибудь интересное! 😊",
+        "Так-так-так, кто это у нас забыл дорогу к словарику? Исправляйся, я жду! 😉",
+        "Приветик! Я тут без тебя совсем заскучала... Может, пора добавить новое словечко? 😊",
+        "Ты где? 🥺 Без тебя мой словарь такой пустотой... Давай наполним его вместе?",
+        "Мне так нравилось, когда мы вместе учили слова! Возвращайся, давай запишем что-нибудь новенькое! 🌟"
+    ],
+    "de": [
+        "Hey! Lange nicht gesehen :( Fang an, Wörter hinzuzufügen, um der/die Beste zu bleiben",
+        "Ich habe dich eine Weile nicht bei mir gesehen. Ist alles in Ordnung? Ich kenne den besten Weg, die Motivation zu steigern. Füge ein paar Wörter zum Wörterbuch hinzu!",
+        "Hey, wo bist du denn verschwunden? Vielleicht... nehmen wir ein paar Wörter ins Wörterbuch auf? ;)",
+        "Hey! Wir haben unser Vokabular schon lange nicht mehr aufgefrischt. Komm kurz vorbei, lass uns was Interessantes hinzufügen! 😊",
+        "So, so, so, wer hat hier den Weg zu unserem Wörterbuch vergessen? Besser, du änderst was, ich warte! 😉",
+        "Hallo! Ich langweile mich hier so ohne dich... Vielleicht ist es Zeit, ein neues Wort hinzuzufügen? 😊",
+        "Wo bist du? 🥺 Ohne dich ist mein Wörterbuch so leer... Lass es uns zusammen füllen?",
+        "Ich mochte es so, wenn wir zusammen Wörter gelernt haben! Komm zurück, lass uns was Neues aufschreiben! 🌟"
+    ],
+    "es": [
+        "¡Oye! Mucho tiempo sin verte :( Empieza a agregar palabras para seguir siendo el/la mejor",
+        "Hace tiempo que no te veo por aquí. ¿Todo bien? Conozco la mejor manera de aumentar la motivación. ¡Agrega un par de palabras al diccionario!",
+        "Oye, ¿a dónde te metiste? Quizás... ¿registremos un par de palabras en el diccionario? ;)",
+        "¡Oye! Hace tiempo que no actualizamos nuestro vocabulario. Pasa un rato, ¡vamos a agregar algo interesante! 😊",
+        "Vaya, vaya, ¿quién se olvidó del camino a nuestro diccionario? ¡Enmiéndalo, te estoy esperando! 😉",
+        "¡Holi! Me estoy aburriendo tanto aquí sin ti... ¿Quizás es hora de agregar una palabra nueva? 😊",
+        "¿Dónde estás? 🥺 Sin ti, mi diccionario está tan vacío... ¿Vamos a llenarlo juntos?",
+        "¡Me encantaba cuando aprendíamos palabras juntos! Vuelve, ¡escribamos algo nuevo! 🌟"
+    ],
+    "zh": [
+        "嘿！好久没见到你了 :( 开始添加单词，保持最佳状态吧",
+        "有一阵子没看到你了。一切都好吗？我知道提升动力的最佳方法。快在词典里添加几个单词吧！",
+        "嘿，你消失到哪儿去了？也许... 咱们在词典里记录几个词？；)",
+        "嘿！我们好久没更新词汇库了。来一会儿吧，我们一起添加些有趣的内容！😊",
+        "哎哟哟，这是谁忘了来我们小词典的路了呀？赶快改正，我等着你呢！😉",
+        "嗨！没有你在这里，我好无聊呀... 是不是该添加个新词了？😊",
+        "你在哪里呀？🥺 没有你，我的词典空荡荡的... 我们一起填满它好不好？",
+        "我超喜欢我们一起学单词的时候！快回来，我们一起记录些新内容吧！🌟"
+    ],
+}
+})
