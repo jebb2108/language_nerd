@@ -46,7 +46,9 @@ async def subscription_expired_handler(callback: CallbackQuery, state: FSMContex
             "capture": True,
             "description": "Оплата подписки",
             "metadata": {
-                "user_id": user_id
+                "user_id": user_id,
+                "subscription_type": "monthly_auto",
+                "auto_payment": True
             },
             "save_payment_method": True
         }, uuid.uuid4())

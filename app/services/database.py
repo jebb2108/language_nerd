@@ -339,17 +339,19 @@ class DatabaseService:
                 user_id, payment_method_id, datetime.now(tz=config.TZINFO)
             )
 
-    async def get_sub_due_to_info(self) -> List[dict]:
+    async def get_sub_due_to_info(self, limit, offet) -> List[dict]:
         async with self.acquire_connection() as conn:
             rows = await conn.execute(
                 """
-                SELECT u.user_id, u.is_active, t.amount, t.untill
+                SELECT u.user_id, t.amount, t.untill
                 FROM users u
                 LEFT JOIUN transactions t
                     ON u.user_id = t.user_id
                 LEFT JOIN transaction_history th
                     ON u.user_id = th.user_id
-                """
+                WHERE u.is_active = true
+                LIMIT $1 OFFSET $2
+                """, limit, offet
             )
             return [
                 {

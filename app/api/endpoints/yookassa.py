@@ -26,10 +26,19 @@ async def yookassa_webhook(request: Request, background_tasks: BackgroundTasks):
 
 
 def verify_signature(body, signature):
-    # Реализуйте проверку подписи ЮKassa
-    logger.debug(f"Body: {body}")
-    logger.debug(f"Signature: {signature}")
-    return True  # Заглушка
+    import hmac
+    import hashlib
+    import json
+
+    # Генерируем подпись из тела запроса
+    message = json.dumps(body, separators=(',', ':'), ensure_ascii=False).encode()
+    expected_signature = hmac.new(
+        config.YOOKASSA_WEBHOOK_SECRET.encode(),
+        message,
+        hashlib.sha256
+    ).hexdigest()
+
+    return hmac.compare_digest(signature, expected_signature)
 
 
 async def process_payment_webhook(data):

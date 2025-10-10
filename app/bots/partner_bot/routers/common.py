@@ -50,7 +50,9 @@ async def subscription_expiration_handler(message: Message, state: FSMContext):
             "capture": True,
             "description": "Оплата подписки",
             "metadata": {
-                "user_id": user_id
+                "user_id": user_id,
+                "subscription_type": "monthly_auto",
+                "auto_payment": True
             },
             "save_payment_method": True
         }, uuid.uuid4())
