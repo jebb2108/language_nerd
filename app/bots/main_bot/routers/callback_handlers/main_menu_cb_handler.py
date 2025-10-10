@@ -78,7 +78,7 @@ async def go_back(callback: CallbackQuery, state: FSMContext):
 
         await callback.message.edit_caption(
             caption=msg,
-            reply_markup=get_on_main_menu_keyboard(user_id, lang_code),
+            reply_markup=get_on_main_menu_keyboard(lang_code),
             parse_mode=ParseMode.HTML,
         )
 

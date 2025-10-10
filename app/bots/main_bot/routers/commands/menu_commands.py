@@ -50,6 +50,6 @@ async def show_main_menu(message: Message, state: FSMContext):
     await message.answer_photo(
         photo=image_from_file,
         caption=msg,
-        reply_markup=get_on_main_menu_keyboard(user_id, lang_code),
+        reply_markup=get_on_main_menu_keyboard(lang_code),
         parse_mode=ParseMode.HTML,
     )
