@@ -677,7 +677,7 @@ class DatabaseService:
             )
 
     async def get_words_by_user(self) -> List[Dict]:
-        current_time = datetime.now(tz=config.TZINFO)
+        current_time = datetime.now(tz=config.TZINFO).replace(tzinfo=None)
         async with self.acquire_connection() as conn:
             return await conn.fetch(
                 """
