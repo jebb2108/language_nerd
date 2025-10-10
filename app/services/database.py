@@ -6,7 +6,6 @@ from typing import Dict, Tuple, List, Optional
 from collections import defaultdict
 from contextlib import asynccontextmanager
 
-from app.bots.partner_bot.routers.common import subscription_expiration_handler
 from config import config
 from logging_config import opt_logger as log
 
@@ -371,7 +370,7 @@ class DatabaseService:
                 WHERE user_id = $1 
                 ORDER BY created_at DISC 
                 LIMIT 1
-                """
+                """, user_id
             )
 
     async def get_users_due_to(self, user_id: int) -> datetime:
