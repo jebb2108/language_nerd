@@ -31,7 +31,7 @@ async def notify_users(message: Message, state: FSMContext):
     lang_code = data.get("lang_code")
 
     notified_count = 0
-    current_time = datetime.now(tz=config.TZINFO)
+    current_time = datetime.now(tz=config.TZINFO).replace(tzinfo=None)
     msg_list = NOTIFICATIONS["havent_seen_you"][lang_code]
     for user_id, last_notified in all_users:
         if (user_id not in results["success_ids"] and
