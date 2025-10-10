@@ -59,23 +59,6 @@ async def create_autopayment(user_id: int, amount: float) -> bool:
         logger.error(f"Failed to create auto-payment for user {user_id}: {e}")
         return False
 
-async def process_failed_payment_creation(user_id: int, bot: "Bot"):
-    """Обработка неудачного создания платежа (не путать с неудачным вебхуком)"""
-    try:
-        await bot.send_message(
-            chat_id=user_id,
-            text="❌ Не удалось создать автоматическое списание. "
-                 "Пожалуйста, проверьте способ оплаты."
-        )
-
-        database = await get_db()
-        await database.deactivate_subscription(user_id)
-
-        logger.info(f"Payment creation failed for user {user_id}")
-
-    except Exception as e:
-        logger.error(f"Error processing failed payment creation for user {user_id}: {e}")
-
 async def main():
     database = await get_db()
     bot: "Bot" = await get_main_bot()
@@ -91,11 +74,7 @@ async def main():
         # Если подписка уже истекла и активна
         if current_time > untill and is_active:
             # Создаем автоматический платеж
-            payment_created = await create_autopayment(user_id, amount)
-
-            if not payment_created:
-                # Если не удалось создать платеж, обрабатываем ошибку
-                await process_failed_payment_creation(user_id, bot)
+            await create_autopayment(user_id, amount)
 
         # Уведомление за день до списания
         elif untill - current_time <= timedelta(days=1):

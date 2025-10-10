@@ -101,7 +101,7 @@ async def handle_regular_payment_success(payment: dict):
         await activate_subscription(user_id, payment)
 
         # Уведомляем пользователя
-        await notify_user_regular_success(user_id)
+        await notify_user_via_bot(user_id)
 
     except Exception as e:
         logger.error(f"Failed to process regular payment: {e}")
@@ -160,13 +160,16 @@ async def notify_user_auto_failed(user_id: int):
         logger.error(f"Can't notify user {user_id} about auto-failure: {e}")
 
 
-async def notify_user_regular_success(user_id: int):
-    """Уведомление об успешном обычном платеже"""
+async def notify_user_via_bot(user_id):
     try:
-        bot: Bot = await get_main_bot()
-        await bot.send_message(
+        bot: "Bot" = await get_main_bot()
+        redis_client = await get_redis_client()
+        message_id = await redis_client.get(f"user_payment:{user_id}")
+        await bot.edit_message_text(
+            text="✅ Платеж прошел успешно! Подписка активирована",
             chat_id=user_id,
-            text="✅ Платеж прошел успешно! Подписка активирована."
+            message_id=int(message_id)
         )
     except Exception as e:
-        logger.error(f"Can't notify user {user_id} about regular success: {e}")
+        logger.error(f"Can't notify user {user_id}: {e}")
+        # Можно сохранить в очередь для повторной отправки
