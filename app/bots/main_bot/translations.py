@@ -400,22 +400,22 @@ WEEKLY_QUIZ = dict(
             "es": "Comenzar cuestionario",
             "zh": "开始测验",
         },
-        "weekly_report": {
-            "en": "📊 Your weekly report with learned words:\n\n"
-            "Total words: {total}\n\n"
-            "Click button below to proceed 👇",
-            "ru": "📊 Ваш еженедельный отчет по изученным словам:\n\n"
-            "Всего слов: {total}\n\n"
-            "Для начала проверки нажмите кнопку ниже 👇",
-            "de": "📊 Dein wöchentlicher Bericht mit gelernten Wörtern:\n\n"
-            "Gesamtwörter: {total}\n\n"
-            "Klicke unten, um fortzufahren 👇",
-            "es": "📊 Tu informe semanal con palabras aprendidas:\n\n"
-            "Total de palabras: {total}\n\n"
-            "Haz clic en el botón de abajo para continuar 👇",
-            "zh": "📊 你的每周学习单词报告：\n\n"
-            "总单词数：{total}\n\n"
-            "点击下方按钮继续 👇",
+        "daily_report": {
+            "en": "📊 Your daily report with learned words:\n\n"
+                  "Total words: {total}\n\n"
+                  "Click button below to proceed 👇",
+            "ru": "📊 Ваш ежедневный отчет по изученным словам:\n\n"
+                  "Всего слов: {total}\n\n"
+                  "Для начала проверки нажмите кнопку ниже 👇",
+            "de": "📊 Dein täglicher Bericht mit gelernten Wörtern:\n\n"
+                  "Gesamtwörter: {total}\n\n"
+                  "Klicke unten, um fortzufahren 👇",
+            "es": "📊 Tu informe diario con palabras aprendidas:\n\n"
+                  "Total de palabras: {total}\n\n"
+                  "Haz clic en el botón de abajo para continuar 👇",
+            "zh": "📊 你的每日学习单词报告：\n\n"
+                  "总单词数：{total}\n\n"
+                  "点击下方按钮继续 👇",
         },
         "no_rights": {
             "en": "No right answers",
