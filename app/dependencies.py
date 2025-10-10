@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from app.services.ai_modules import TelegramRateLimiter, ReportDeliveryManager, \
-    PendingReportsProcessor, DeepSeekClient, QuestionGenerator, ReportProcessor
+    PendingReportsProcessor, DeepSeekClient, QuestionGenerator, ReportProcessor, WeeklyReportScheduler
 from app.services.rabbitmq import rabbitmq_service
 from app.services.database import database_service
 from app.services.matching import matching_service
@@ -14,7 +14,6 @@ from config import config
 if TYPE_CHECKING:
     from redis.asyncio import Redis
     from app.services.database import DatabaseService
-    from app.services.ai_modules import WeeklyReportScheduler
     from app.services.redis import RedisService
     from app.services.rabbitmq import RabbitMQService
     from app.services.matching import MatchingService
