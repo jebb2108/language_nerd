@@ -382,10 +382,16 @@ class DatabaseService:
             return row["untill"] if row else None
 
 
-    async def deactivate_subscription(self, user_id):
+    async def deactivate_subscription(self, user_id: int):
         async with self.acquire_connection() as conn:
             await conn.execute(
                 "UPDATE users SET is_active = false WHERE user_id = $1", user_id
+            )
+
+    async def activate_subscription(self, user_id: int):
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+                "UPDATE users SET is_active = true WHERE user_id = $1", user_id
             )
 
     async def add_users_profile(

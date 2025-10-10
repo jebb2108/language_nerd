@@ -124,6 +124,8 @@ async def activate_subscription(user_id: int, payment: dict):
         payment_id=payment['id']
     )
 
+    await database.activate_subscription(user_id)
+
     await redis_client.setex(
         f"user_paid:{user_id}",
         timedelta(hours=2),
