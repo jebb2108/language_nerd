@@ -65,6 +65,7 @@ class DatabaseService:
                             lang_code TEXT NOT NULL,
                             is_active BOOLEAN DEFAULT TRUE,
                             blocked_bot BOOLEAN DEFAULT FALSE,
+                            last_notified TIMESTAMP DEFAULT NOW(),
                             UNIQUE (user_id)
                             ); """
             )
@@ -83,7 +84,6 @@ class DatabaseService:
                 word_state VARCHAR(20) DEFAULT 'NEW',
                 emotion VARCHAR(20) DEFAULT 'NEUTRAL',
                 correct_spelling BOOLEAN DEFAULT TRUE,
-                created_at TIMESTAMP DEFAULT NOW(),
                 UNIQUE (user_id, word)
                 ); 
             """
@@ -389,12 +389,12 @@ class DatabaseService:
             )
             return dict(row) if row else None
 
-    async def get_all_users(self) -> List[int]:
+    async def get_all_users_for_notification(self) -> List[int]:
         async with self.acquire_connection() as conn:
             reports = await conn.fetch(
-                "SELECT DISTINCT user_id FROM users WHERE user_id IS NOT NULL AND blocked_bot = false"
+                "SELECT DISTINCT user_id, last_notified FROM users WHERE user_id IS NOT NULL AND blocked_bot = false"
             )
-            return [ int(report["user_id"]) for report in reports ]
+            return [ int(report["user_id"], report["last_notified"]) for report in reports ]
 
     async def add_users_location(
         self,
@@ -589,6 +589,13 @@ class DatabaseService:
 
             # Проверяем, были ли обновлены какие-либо строки
             return bool(result)
+
+    async def update_notified_time(self, user_id: int) -> None:
+        curr_time = datetime.now(tz=config.TZINFO).replace(tzinfo=None)
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+                "UPDATE users SET last_notified = $1 WHERE user_id = $2", curr_time, user_id
+            )
 
     # Temperorary solution
     async def get_user_stats(self, user_id: int):
