@@ -1,7 +1,6 @@
 import asyncio
 import json
 from datetime import datetime, timedelta
-from string import ascii_lowercase
 
 from logging_config import opt_logger
 

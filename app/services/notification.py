@@ -1,15 +1,9 @@
 import asyncio
 import aiohttp
-
-from typing import TYPE_CHECKING
-
 from app.models import MatchFoundEvent
 from app.models import UserMatchResponse
 from config import config
 from logging_config import opt_logger as log
-
-if TYPE_CHECKING:
-    from app.models import UserMatchRequest
 
 logger = log.setup_logger("notification")
 

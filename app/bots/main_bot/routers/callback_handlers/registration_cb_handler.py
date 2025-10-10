@@ -136,17 +136,9 @@ async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
     await callback.message.delete()
-
     rabbit = await get_rabbitmq()
-
     data = await state.get_data()
-    user_id = int(data.get("user_id"))
-    username = data.get("username")
-    first_name = data.get("first_name")
-    camefrom = data.get("camefrom")
-    language = data.get("language")
-    fluency = int(data.get("fluency"))
-    topic = data.get("topic", "general")
+
     lang_code = data.get("lang_code")
     if lang_code not in ["en", "ru", "de", "es", "zh"]:
         lang_code = "en"
@@ -158,7 +150,7 @@ async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer_photo(
         photo=image_from_file,
         caption=msg,
-        reply_markup=get_on_main_menu_keyboard(user_id, lang_code),
+        reply_markup=get_on_main_menu_keyboard(int(data.get("user_id")), lang_code),
         parse_mode=ParseMode.HTML,
     )
     # Отправляем нового пользователя и транзакцию в RabbitMQ
@@ -166,14 +158,14 @@ async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
     trial_dt_obj = datetime.now(tz=config.TZINFO) + timedelta(days=3)
     await rabbit.publish_user(
         NewUser(
-            user_id=user_id,
-            username=username,
-            first_name=first_name,
-            camefrom=camefrom,
-            language=language,
-            fluency=fluency,
-            topic=topic,
+            user_id=int(data.get("user_id")),
+            username=data.get("username"),
+            first_name=data.get("first_name"),
+            camefrom=data.get("camefrom"),
+            language=data.get("language"),
+            fluency=int(data.get("fluency")),
+            topic=data.get("topic"),
             lang_code=lang_code,
         ),
-        NewPayment(user_id=user_id, untill=trial_dt_obj),
+        NewPayment(user_id=int(data.get("user_id")), untill=trial_dt_obj),
     )

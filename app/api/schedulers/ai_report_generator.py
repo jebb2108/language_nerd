@@ -1,5 +1,5 @@
 import asyncio
-from app.dependencies import get_report_processer
+from app.dependencies import generate_notifications
 from config import config
 from logging_config import opt_logger as log
 
@@ -8,8 +8,8 @@ logger = log.setup_logger('schedulers', config.LOG_LEVEL)
 
 
 async def main() -> None:
-    weekly_report_scheduler = await get_report_processer()
-    await weekly_report_scheduler.generate_weekly_reports()
+    weekly_report_scheduler = await generate_notifications()
+    await weekly_report_scheduler.generate_reports()
     return
 
 # ========== MAIN EXECUTION ==========

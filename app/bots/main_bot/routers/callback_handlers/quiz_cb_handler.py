@@ -98,6 +98,7 @@ async def handle_word_quiz(callback: CallbackQuery, state: FSMContext):
         r_choices = data.get("right_choices", [])
         r_choices.append(correct_word)
         await state.update_data(right_choices=r_choices)
+        await database.update_word_state(callback.from_user.id, correct_word, correct=True)
 
     else:
         msg = WEEKLY_QUIZ["wrong_answer"][lang_code].format(
@@ -107,6 +108,7 @@ async def handle_word_quiz(callback: CallbackQuery, state: FSMContext):
         w_choices = data.get("wrong_choices", [])
         w_choices.append(word_data["word"])
         await state.update_data(wrong_choices=w_choices)
+        await database.update_word_state(callback.from_user.id, correct_word, correct=False)
 
     try:
         # Отправляем результат ответа (используем user_id)

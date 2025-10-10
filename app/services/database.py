@@ -389,6 +389,13 @@ class DatabaseService:
             )
             return dict(row) if row else None
 
+    async def get_all_users(self) -> List[int]:
+        async with self.acquire_connection() as conn:
+            reports = await conn.fetch(
+                "SELECT DISTINCT user_id FROM users WHERE user_id IS NOT NULL AND blocked_bot = false"
+            )
+            return [ int(report["user_id"]) for report in reports ]
+
     async def add_users_location(
         self,
         user_id: int,
@@ -669,16 +676,22 @@ class DatabaseService:
                 )
             )
 
-    async def get_weekly_words_by_user(self) -> List[Dict]:
-        week_ago = datetime.now() - timedelta(days=7)
+    async def get_words_by_user(self) -> List[Dict]:
+        current_time = datetime.now(tz=config.TZINFO)
         async with self.acquire_connection() as conn:
             return await conn.fetch(
-                "SELECT user_id, ARRAY_AGG(DISTINCT word) as words "
-                "FROM words "
-                "WHERE created_at <= $1 AND word IS NOT NULL "
-                "GROUP BY user_id "
-                "HAVING COUNT(word) > 1",
-                week_ago,
+                """
+                SELECT user_id, ARRAY_AGG(DISTINCT word) as words
+                FROM words 
+                WHERE word_state != 'LEARNED' 
+                   AND word IS NOT NULL 
+                   AND created_at >= CASE word_state
+                       WHEN 'NEW' THEN $1 - INTERVAL '2 days'
+                       WHEN 'REPEATED' THEN $1 - INTERVAL '5 days'
+                       WHEN 'REINFORCED' THEN $1 - INTERVAL '14 days'
+                   END 
+                GROUP BY user_id
+                """, current_time
             )
 
     async def create_report(self, user_id: int) -> int:
@@ -731,6 +744,29 @@ class DatabaseService:
             return await conn.fetch(
                 "SELECT report_id, user_id FROM weekly_reports WHERE sent = FALSE AND status = 'OK'"
             )
+
+    async def update_word_state(self, user_id: int, word: str, correct: bool):
+        async with self.acquire_connection() as conn:
+            await conn.execute("""
+                UPDATE words 
+                SET word_state = CASE 
+                    WHEN $3 = true THEN 
+                        CASE word_state 
+                            WHEN 'NEW' THEN 'REPEATED'
+                            WHEN 'REPEATED' THEN 'REINFORCED' 
+                            WHEN 'REINFORCED' THEN 'LEARNED'
+                            ELSE word_state
+                        END
+                    ELSE 
+                        CASE word_state 
+                            WHEN 'REPEATED' THEN 'NEW'
+                            WHEN 'REINFORCED' THEN 'REPEATED'
+                            WHEN 'LEARNED' THEN 'REINFORCED'
+                            ELSE word_state
+                        END
+                END
+                WHERE user_id = $1 AND word = $2
+            """, user_id, word, correct)
 
     async def mark_user_as_blocked(self, user_id: int):
         async with self.acquire_connection() as conn:

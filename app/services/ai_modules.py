@@ -496,12 +496,12 @@ class WeeklyReportScheduler:
 
         return True
 
-    async def generate_weekly_reports(self) -> None:
+    async def generate_reports(self) -> None:
         """Генерирует недельные отчеты с ограничением скорости"""
         from app.dependencies import get_db
 
         db = await get_db()
-        user_words_records = await db.get_weekly_words_by_user()
+        user_words_records = await db.get_words_by_user()
 
         if not user_words_records:
             logger.info("No users with enough words")
@@ -514,7 +514,7 @@ class WeeklyReportScheduler:
         ]
 
         processed_users = 0
-        start_time = datetime.now()
+        start_time = datetime.now(tz=config.TZINFO)
 
         for user_record in user_words:
             success = await self.process_single_user(user_record, db)
@@ -522,7 +522,7 @@ class WeeklyReportScheduler:
                 processed_users += 1
 
             # Контроль скорости обработки
-            elapsed = (datetime.now() - start_time).total_seconds()
+            elapsed = (datetime.now(tz=config.TZINFO) - start_time).total_seconds()
             required_delay = max(0, (60 / self.max_users_per_minute) - elapsed)
 
             if required_delay > 0:
@@ -530,9 +530,9 @@ class WeeklyReportScheduler:
                     f"Rate limiting: waiting {required_delay:.1f}s before next user"
                 )
                 await asyncio.sleep(required_delay)
-                start_time = datetime.now()
+                start_time = datetime.now(tz=config.TZINFO)
             else:
-                start_time = datetime.now()
+                start_time = datetime.now(tz=config.TZINFO)
 
         logger.info(f"Generated reports for {processed_users} users")
 
@@ -872,6 +872,7 @@ class PendingReportsProcessor:
     def _analyze_results(results: List[Any], pending_reports: List[PendingReport]) -> Dict[str, Any]:
         """Анализирует результаты обработки отчетов"""
         success_count = 0
+        success_ids = []
         failed_reports = []
 
         for i, result in enumerate(results):
@@ -894,6 +895,7 @@ class PendingReportsProcessor:
                 # Normal DeliveryResult
                 if result.success:
                     success_count += 1
+                    success_ids.append(report.user_id)
                 else:
                     failed_reports.append({
                         "report_id": report.report_id,
@@ -921,6 +923,7 @@ class PendingReportsProcessor:
 
         return {
             "success_count": success_count,
+            "success_ids": success_ids,
             "failed_count": len(failed_reports),
             "failed_reports": failed_reports
         }
