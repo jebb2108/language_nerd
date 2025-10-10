@@ -20,6 +20,11 @@ logger = log.setup_logger("main_menu_cb_handler", config.LOG_LEVEL)
 
 router = Router(name=__name__)
 
+@router.callback_query(and_f(F.data == "sub_details", paytime))
+async def manage_subscription_handler(callback: CallbackQuery):
+    await callback.answer()
+    pass
+
 
 @router.callback_query(
     and_f(F.data == "about", paytime)
