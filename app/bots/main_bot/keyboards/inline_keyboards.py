@@ -152,7 +152,7 @@ def get_finish_button(lang_code):
     return builder.as_markup()
 
 
-def begin_weekly_quiz_keyboard(lang_code, report_id):
+def begin_daily_quiz_keyboard(lang_code, report_id, show_info: bool = True):
     builder = InlineKeyboardBuilder()
     learning_info_button = InlineKeyboardButton(
         text=WEEKLY_QUIZ["learning_info"][lang_code], callback_data=f"how_it_works:{report_id}"
@@ -160,7 +160,8 @@ def begin_weekly_quiz_keyboard(lang_code, report_id):
     begin_quiz_button = InlineKeyboardButton(
         text=WEEKLY_QUIZ["begin"][lang_code], callback_data=f"start_report:{report_id}"
     )
-    builder.row(learning_info_button)
+    if show_info:
+        builder.row(learning_info_button)
     builder.row(begin_quiz_button)
     return builder.as_markup()
 

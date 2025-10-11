@@ -14,7 +14,6 @@ from aiogram.exceptions import (
     TelegramServerError,
     TelegramAPIError
 )
-from aiogram.types import FSInputFile
 
 from app.models import UserWords, ReportData
 
@@ -707,7 +706,7 @@ class ReportSender:
         """Отправляет сообщение с отчетом пользователю"""
 
         from app.bots.main_bot.translations import WEEKLY_QUIZ
-        from app.bots.main_bot.keyboards.inline_keyboards import begin_weekly_quiz_keyboard
+        from app.bots.main_bot.keyboards.inline_keyboards import begin_daily_quiz_keyboard
 
         try:
             lang_code = user_report.user_info["lang_code"]
@@ -717,7 +716,7 @@ class ReportSender:
                 text=WEEKLY_QUIZ["daily_report"][user_report.user_info["lang_code"]].format(
                     total=len(user_report.words)
                 ),
-                reply_markup=begin_weekly_quiz_keyboard(lang_code, user_report.report_id),
+                reply_markup=begin_daily_quiz_keyboard(lang_code, user_report.report_id),
             )
 
             return True

@@ -5,13 +5,13 @@ from app.bots.main_bot.utils.exc import StorageDataException
 from config import config
 from logging_config import opt_logger as log
 from aiogram import Router, types, F
-from aiogram.enums import ParseMode, InputMediaType
+from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, InputMedia, InputMediaPhoto
+from aiogram.types import CallbackQuery
 from app.bots.main_bot.translations import WEEKLY_QUIZ
 from app.bots.main_bot.keyboards.inline_keyboards import (
     show_word_options_keyboard,
-    get_finish_button, begin_weekly_quiz_keyboard,
+    get_finish_button, begin_daily_quiz_keyboard,
 )
 from app.dependencies import get_db
 
@@ -30,7 +30,7 @@ async def how_it_works_handler(callback: types.CallbackQuery, state: FSMContext)
         lang_code = data.get("lang_code")
         await callback.message.edit_text(
             text=WEEKLY_QUIZ["how_it_works"][lang_code],
-            reply_markup=begin_weekly_quiz_keyboard(lang_code, report_id)
+            reply_markup=begin_daily_quiz_keyboard(lang_code, report_id, False)
         )
 
     except StorageDataException:
