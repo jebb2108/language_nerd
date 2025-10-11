@@ -51,6 +51,8 @@ async def start_report_handler(
     await callback.answer()
     database = await get_db()
     data = await state.get_data()
+    is_active = data.get("is_active")
+    if not is_active: return await callback.answer("Your subscriotion on pause")
 
     try:
         user_id = callback.message.chat.id

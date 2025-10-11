@@ -38,6 +38,8 @@ async def about(callback: CallbackQuery, state: FSMContext):
     try:
         data = await ds.get_storage_data(user_id, state)
         lang_code = data.get("lang_code")
+        is_active = data.get("is_active")
+        if not is_active: return await callback.answer("Your subscriotion on pause")
 
         msg = MESSAGES["about"][lang_code]
 

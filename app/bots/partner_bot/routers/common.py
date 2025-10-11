@@ -7,6 +7,7 @@ from aiogram.types import Message
 
 from app.bots.partner_bot.keyboards.inline_keyboards import get_payment_keyboard
 from app.bots.partner_bot.filters.paytime import paytime
+from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitInfo
 from app.bots.partner_bot.translations import MESSAGES
 from app.bots.partner_bot.utils.access_data import data_storage as ds
 from app.bots.partner_bot.utils.exc import StorageDataException
@@ -19,19 +20,33 @@ router = Router(name=__name__)
 
 
 @router.message(paytime)
-async def get_help_handler(message: Message, state: FSMContext):
+async def get_help_handler(
+        message: Message, state: FSMContext, rate_limit_info: RateLimitInfo
+):
+    user_id = message.from_user.id
     data = await ds.get_storage_data(message.from_user.id, state)
+    logger.debug(
+        f"User %s message count: %s",
+        user_id, rate_limit_info.message_count
+    )
     lang_code = data.get("lang_code")
     await message.bot.send_message(
         chat_id=message.chat.id, text=MESSAGES["get_help"][lang_code]
     )
 
 @router.message()
-async def subscription_expiration_handler(message: Message, state: FSMContext):
+async def subscription_expiration_handler(
+        message: Message, state: FSMContext, rate_limit_info: RateLimitInfo
+):
 
     user_id = message.from_user.id
     redis_client = await get_redis_client()
     yookassa_client = await get_yookassa()
+    logger.debug(
+        f"User %s message count: %s",
+        user_id, rate_limit_info.message_count
+    )
+
     try:
         data = await ds.get_storage_data(user_id, state)
         lang_code = data.get("lang_code")

@@ -9,6 +9,7 @@ from aiogram.enums import ParseMode
 
 from app.bots.main_bot.filters.paytime import paytime
 from app.bots.partner_bot.keyboards.inline_keyboards import show_topic_keyboard
+from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitInfo
 from app.bots.partner_bot.utils.exc import StorageDataException
 from app.dependencies import get_db, get_redis_client
 from app.models import UserMatchRequest
@@ -31,7 +32,7 @@ logger = log.setup_logger("partner_commands", config.LOG_LEVEL)
 
 
 @router.message(and_f(Command("menu", prefix="!/"), paytime))
-async def show_main_menu(message: Message, state: FSMContext):
+async def show_main_menu(message: Message, state: FSMContext, rate_limit_info: RateLimitInfo):
     """Главное меню бота"""
     database = await get_db()
     user_id = message.from_user.id
@@ -39,6 +40,11 @@ async def show_main_menu(message: Message, state: FSMContext):
     nickname = data.get("nickname", None)
     language = data.get("language")
     lang_code = data.get("lang_code")
+
+    logger.debug(
+        f"User %s message count: %s",
+        user_id, rate_limit_info.message_count
+    )
 
     if not await database.check_user_exists(user_id):
         await message.answer(text="I can`t seem to know you :( Go to @lllangbot")

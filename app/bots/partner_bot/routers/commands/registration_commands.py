@@ -17,7 +17,6 @@ from app.bots.partner_bot.keyboards.regular_keyboards import (
     show_location_keyboard,
     show_gender_keyboard,
 )
-from app.bots.partner_bot.routers.commands.partner_commands import show_main_menu
 from app.bots.partner_bot.translations import (
     MESSAGES,
     QUESTIONARY,
@@ -61,7 +60,7 @@ async def start(message: Message, state: FSMContext):
 
     database = await get_db()
     if await database.check_profile_exists(message.from_user.id):
-        return await show_main_menu(message, state)
+        return await message.answer("Press /menu to go to menu")
     # Извлекаем данные о пользователе
     user_id = message.from_user.id
     user_data = await ds.get_storage_data(user_id, state)

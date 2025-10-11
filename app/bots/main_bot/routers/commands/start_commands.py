@@ -3,6 +3,7 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bots.main_bot.middlewares.rate_limit_middleware import RateLimitInfo
 from app.bots.main_bot.translations import QUESTIONARY, MESSAGES
 from app.dependencies import get_db
 from app.bots.main_bot.keyboards.inline_keyboards import show_where_from_keyboard
@@ -15,11 +16,12 @@ logger = log.setup_logger('main start commands', config.LOG_LEVEL)
 router = Router(name=__name__)
 
 @router.message(Command("start", prefix="!/"))
-async def start_with_polling(message: Message, state: FSMContext):
+async def start_with_polling(message: Message, state: FSMContext, message_count: RateLimitInfo):
     """
     Стартовая команда: проверяем в БД существование пользователя,
     сохраняем основные поля в state и либо идём в show_main_menu, либо стартуем опрос.
     """
+    logger.debug(f"Current message count: {message_count}")
 
     # Проверяем, есть ли запись в users
     user_id = message.from_user.id

@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from app.bots.main_bot.keyboards.inline_keyboards import get_payment_keyboard
+from app.bots.main_bot.middlewares.rate_limit_middleware import RateLimitInfo
 from app.bots.main_bot.translations import MESSAGES
 from app.bots.main_bot.utils.access_data import data_storage as ds
 from app.bots.main_bot.filters.paytime import paytime
@@ -18,11 +19,20 @@ logger = log.setup_logger('common')
 router = Router(name=__name__)
 
 @router.message(paytime)
-async def get_help_handler(message: Message, state: FSMContext):
+async def get_help_handler(message: Message, state: FSMContext, rate_limit_info: RateLimitInfo):
+    """ Обрабатывает остальные сообщения пользователя """
+
     user_id = message.from_user.id
+    logger.debug(
+        f"User %s message count: %s",
+        user_id, rate_limit_info.message_count
+    )
     try:
         data = await ds.get_storage_data(user_id, state)
         lang_code = data.get("lang_code")
+        is_active = data.get("is_active")
+        if not is_active: return
+
         await message.bot.send_message(
             chat_id=message.chat.id, text=MESSAGES["get_help"][lang_code]
         )
@@ -36,11 +46,16 @@ async def get_help_handler(message: Message, state: FSMContext):
 
 
 @router.message()
-async def pay_cmd(message: Message, state: FSMContext):
+async def pay_cmd(message: Message, state: FSMContext, rate_limit_info: RateLimitInfo):
 
     user_id = message.from_user.id
     redis_client = await get_redis_client()
     yookassa_client = await get_yookassa()
+
+    logger.debug(
+        f"User %s message count: %s",
+        user_id, rate_limit_info.message_count
+    )
 
     try:
         data = await ds.get_storage_data(user_id, state)

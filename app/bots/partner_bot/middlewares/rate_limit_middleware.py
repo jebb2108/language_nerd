@@ -35,7 +35,7 @@ class RateLimitMiddleware(BaseMiddleware):
 
     def __init__(
         self,
-        limit: int = 15,
+        limit: int = 5,
         time_interval: timedelta = timedelta(seconds=30),
     ):
         self.rate_limit = limit
