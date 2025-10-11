@@ -37,10 +37,10 @@ async def shop_handler(callback: CallbackQuery, state: FSMContext):
     try:
         data = await ds.get_storage_data(user_id, state)
         lang_code = data.get("lang_code")
-        msg = MESSAGES["shop_offer"][lang_code] + " "*20 + f"{shop_indx+1}/10\n\n"
-        for k, v in EMOJI_SHOP[shop_indx].items():
+        msg = MESSAGES["shop_offer"][lang_code] + " "*10 + f"{shop_indx+1}/10\n\n"
+        for k, v in EMOJI_SHOP["emojies"][shop_indx].items():
             msg += v + " " + EMOJI_TRANSCRIPTIONS[k][lang_code] + "\n"
-        msg += "\n" + MESSAGES["shop_actions"][lang_code]
+        msg += "\n" + MESSAGES["shop_actions"][lang_code].format(description=EMOJI_SHOP["description"][shop_indx][lang_code])
 
         if callback.message.caption is not None:
             await callback.bot.send_message(
