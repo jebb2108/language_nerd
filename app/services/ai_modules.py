@@ -14,6 +14,7 @@ from aiogram.exceptions import (
     TelegramServerError,
     TelegramAPIError
 )
+from aiogram.types import FSInputFile
 
 from app.models import UserWords, ReportData
 

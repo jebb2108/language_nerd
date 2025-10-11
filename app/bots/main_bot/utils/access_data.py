@@ -51,6 +51,7 @@ class DataStorage:
             "fluency": user_info["fluency"],
             "topic": user_info["topic"],
             "lang_code": user_info["lang_code"],
+            "is_active": user_info["is_active"]
         }
 
         if profile_info:

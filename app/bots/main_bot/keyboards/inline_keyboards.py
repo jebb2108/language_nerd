@@ -14,7 +14,6 @@ def get_go_back_keyboard(lang_code):
     builder.add(go_back_button)
     return builder.as_markup()
 
-
 def show_where_from_keyboard(lang_code):
     # иначе запускаем опрос «откуда вы о нас узнали»
     builder = InlineKeyboardBuilder()
@@ -155,10 +154,14 @@ def get_finish_button(lang_code):
 
 def begin_weekly_quiz_keyboard(lang_code, report_id):
     builder = InlineKeyboardBuilder()
+    learning_info_button = InlineKeyboardButton(
+        text=WEEKLY_QUIZ["learning_info"][lang_code], callback_data=f"how_it_works:{report_id}"
+    )
     begin_quiz_button = InlineKeyboardButton(
         text=WEEKLY_QUIZ["begin"][lang_code], callback_data=f"start_report:{report_id}"
     )
-    builder.add(begin_quiz_button)
+    builder.row(learning_info_button)
+    builder.row(begin_quiz_button)
     return builder.as_markup()
 
 def get_payment_keyboard(lang_code, url):
@@ -167,4 +170,33 @@ def get_payment_keyboard(lang_code, url):
         text=BUTTONS["payment"][lang_code], url=url
     )
     builder.add(payment_button)
+    return builder.as_markup()
+
+def get_subscription_keyboard(lang_code: str, is_active: bool, paused: bool = False):
+    builder = InlineKeyboardBuilder()
+    cancel_subscription_button = InlineKeyboardButton(
+        text=BUTTONS["cancel_sub"][lang_code],
+        callback_data="cancel_subscription"
+    )
+    resume_subscription_button = InlineKeyboardButton(
+        text=BUTTONS["resume_sub"][lang_code],
+        callback_data="resume_subscription"
+    )
+    activate_subscription_button = InlineKeyboardButton(
+        text=BUTTONS["activate_sub"][lang_code],
+        callback_data="activate_subscription"
+    )
+    go_back_button = InlineKeyboardButton(
+        text=BUTTONS["go_back"][lang_code],
+        callback_data="go_back",
+    )
+
+    if paused:
+        builder.row(resume_subscription_button)
+    elif is_active:
+        builder.row(cancel_subscription_button)
+    else:
+        builder.row(activate_subscription_button)
+
+    builder.row(go_back_button)
     return builder.as_markup()

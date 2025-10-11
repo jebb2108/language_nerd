@@ -1,21 +1,43 @@
 from aiogram.filters import and_f
 from app.bots.main_bot.filters.paytime import paytime
+from app.bots.main_bot.utils.access_data import data_storage as ds
+from app.bots.main_bot.utils.exc import StorageDataException
 from config import config
 from logging_config import opt_logger as log
 from aiogram import Router, types, F
-from aiogram.enums import ParseMode
+from aiogram.enums import ParseMode, InputMediaType
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, InputMedia, InputMediaPhoto
 from app.bots.main_bot.translations import WEEKLY_QUIZ
 from app.bots.main_bot.keyboards.inline_keyboards import (
     show_word_options_keyboard,
-    get_finish_button,
+    get_finish_button, begin_weekly_quiz_keyboard,
 )
 from app.dependencies import get_db
 
 logger = log.setup_logger("weekly_message_cb_handler", config.LOG_LEVEL)
 
 router = Router(name=__name__)
+
+
+@router.callback_query(F.data.startswith("how_it_works:"), paytime)
+async def how_it_works_handler(callback: types.CallbackQuery, state: FSMContext):
+    await callback.answer()
+    report_id = int(callback.data.split(":", 1)[1])
+
+    try:
+        data = await ds.get_storage_data(callback.from_user.id, state)
+        lang_code = data.get("lang_code")
+        await callback.message.edit_text(
+            text=WEEKLY_QUIZ["how_it_works"][lang_code],
+            reply_markup=begin_weekly_quiz_keyboard(lang_code, report_id)
+        )
+
+    except StorageDataException:
+        return logger.error(f"User {callback.from_user.id} trying to acces data but doesn`t exist in DB")
+
+    except Exception as e:
+        return logger.error(f"Error in how_it_works_handler: {e}")
 
 
 @router.callback_query(

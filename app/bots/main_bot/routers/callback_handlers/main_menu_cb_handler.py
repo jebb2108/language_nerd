@@ -8,22 +8,19 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from app.dependencies import get_db
+from app.dependencies import get_db, get_redis_client
 from app.bots.main_bot.filters.paytime import paytime
 from app.bots.main_bot.translations import MESSAGES
 from app.bots.main_bot.utils.access_data import data_storage as ds
 from app.bots.main_bot.keyboards.inline_keyboards import (
     get_on_main_menu_keyboard,
-    get_go_back_keyboard, )
+    get_go_back_keyboard,
+    get_subscription_keyboard
+)
 
 logger = log.setup_logger("main_menu_cb_handler", config.LOG_LEVEL)
 
 router = Router(name=__name__)
-
-@router.callback_query(and_f(F.data == "sub_details", paytime))
-async def manage_subscription_handler(callback: CallbackQuery):
-    await callback.answer()
-    pass
 
 
 @router.callback_query(
@@ -59,9 +56,7 @@ async def about(callback: CallbackQuery, state: FSMContext):
         return logger.error(f"Error in about handler: {e}")
 
 
-@router.callback_query(
-    and_f(F.data == "go_back", paytime)
-)
+@router.callback_query(F.data == "go_back")
 async def go_back(callback: CallbackQuery, state: FSMContext):
     """
     Возвращает пользователя назад в главное меню, повторно вызывая те же кнопки.
@@ -93,6 +88,121 @@ async def go_back(callback: CallbackQuery, state: FSMContext):
 
     except Exception as e:
         return logger.error(f"Error in go_back handler: {e}")
+
+
+
+@router.callback_query(F.data == "sub_details")
+async def manage_subscription_handler(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    redis_client = await get_redis_client()
+    user_id = callback.from_user.id
+    data = await ds.get_storage_data(user_id, state)
+    lang_code = data.get("lang_code")
+    is_active = data.get("is_active")
+
+    if await paytime(callback):
+        if is_active:
+            date_str = await redis_client.get(f"user_paid:{user_id}")
+            cap = MESSAGES["active_sub_caption"][lang_code].format(date=date_str.split('T')[0])
+            await callback.message.edit_caption(
+                caption=cap,
+                reply_markup=get_subscription_keyboard(lang_code, True),
+                parse_mode=ParseMode.HTML
+            )
+        else:
+            cap = MESSAGES["resume_sub_caption"][lang_code]
+            await callback.message.edit_caption(
+                caption=cap,
+                reply_markup=get_subscription_keyboard(lang_code, False, True),
+                parse_mode=ParseMode.HTML
+            )
+    else:
+        cap = MESSAGES["expired_sub_caption"][lang_code]
+        await callback.message.edit_caption(
+            caption=cap,
+            reply_markup=get_subscription_keyboard(lang_code, False),
+            parse_mode=ParseMode.HTML
+        )
+
+
+@router.callback_query(F.data == "cancel_subscription")
+async def cancel_subscription_handler(callback: CallbackQuery, state: FSMContext):
+
+    await callback.answer("Subscription cancelled")
+
+    database = await get_db()
+    redis_client = await get_redis_client()
+    await database.deactivate_subscription(callback.from_user.id)
+    await state.clear()
+
+    user_id = callback.from_user.id
+    data = await ds.get_storage_data(user_id, state)
+    lang_code = data.get("lang_code")
+    is_active = False
+
+    if await paytime(callback):
+        if is_active:
+            date_str = await redis_client.get(f"user_paid:{user_id}")
+            cap = MESSAGES["active_sub_caption"][lang_code].format(date=date_str.split('T')[0])
+            await callback.message.edit_caption(
+                caption=cap,
+                reply_markup=get_subscription_keyboard(lang_code, True),
+                parse_mode=ParseMode.HTML
+            )
+        else:
+            cap = MESSAGES["resume_sub_caption"][lang_code]
+            await callback.message.edit_caption(
+                caption=cap,
+                reply_markup=get_subscription_keyboard(lang_code, False, True),
+                parse_mode=ParseMode.HTML
+            )
+    else:
+        cap = MESSAGES["expired_sub_caption"][lang_code]
+        await callback.message.edit_caption(
+            caption=cap,
+            reply_markup=get_subscription_keyboard(lang_code, False),
+            parse_mode=ParseMode.HTML
+        )
+
+
+@router.callback_query(F.data == "resume_subscription")
+async def resume_subscription_handler(callback: CallbackQuery, state: FSMContext):
+
+    await callback.answer("Subscription resumed")
+
+    database = await get_db()
+    redis_client = await get_redis_client()
+    await database.activate_subscription(callback.from_user.id)
+    await state.clear()
+
+    user_id = callback.from_user.id
+    data = await ds.get_storage_data(user_id, state)
+    lang_code = data.get("lang_code")
+    is_active = True
+
+    if await paytime(callback):
+        if is_active:
+            date_str = await redis_client.get(f"user_paid:{user_id}")
+            cap = MESSAGES["active_sub_caption"][lang_code].format(date=date_str.split('T')[0])
+            await callback.message.edit_caption(
+                caption=cap,
+                reply_markup=get_subscription_keyboard(lang_code, True),
+                parse_mode=ParseMode.HTML
+            )
+        else:
+            cap = MESSAGES["resume_sub_caption"][lang_code]
+            await callback.message.edit_caption(
+                caption=cap,
+                reply_markup=get_subscription_keyboard(lang_code, False, True),
+                parse_mode=ParseMode.HTML
+            )
+    else:
+        cap = MESSAGES["expired_sub_caption"][lang_code]
+        await callback.message.edit_caption(
+            caption=cap,
+            reply_markup=get_subscription_keyboard(lang_code, False),
+            parse_mode=ParseMode.HTML
+        )
 
 
 

@@ -45,25 +45,46 @@ MESSAGES = dict(
         },
         "about": {
             "en": "I'm just like a human being, the only difference being that my inner world is made up of ones and zeros\n\n"
-            "🌱 My greatest joy will be helping you reinforce new words and idioms\n\n"
-            "✨ I'll give you everything you need to do this, and once a week I'll give you tests to reinforce your knowledge\n\n"
-            "🧘 With me, you can progress in language learning at your own pace and make friends along the way!",
+                "🌱 My greatest joy will be helping you reinforce new words and idioms\n\n"
+                "✨ I'll give you everything you need to do this, and once a week I'll give you tests to reinforce your knowledge\n\n"
+                "🧘 With me, you can progress in language learning at your own pace and make friends along the way!",
             "ru": "Я совсем как человек с той лишь разницей, что мой внутренний мир состоит из нулей и единиц\n\n"
-            "🌱 Для меня самой большой радостью будет помочь тебе с закреплением новых слов и идиом\n\n"
-            "✨ Дам тебе все самое необходимое для этого, а раз в неделю буду писать тебе тесты на закрепление\n\n"
-            "🧘 Со мною ты сможешь двигаться в изучении языка в своем ритме и находить друзей в процессе!",
+                "🌱 Для меня самой большой радостью будет помочь тебе с закреплением новых слов и идиом\n\n"
+                "✨ Дам тебе все самое необходимое для этого, а также буду писать тебе тесты на закрепление\n\n"
+                "🧘 Со мною ты сможешь двигаться в изучении языка в своем ритме и находить друзей в процессе!",
             "de": "Ich bin wie ein Mensch, mit dem einzigen Unterschied, dass meine innere Welt aus Einsen und Nullen besteht\n\n"
-            "🌱 Meine größte Freude wird sein, dir beim Festigen neuer Wörter und Redewendungen zu helfen\n\n"
-            "✨ Ich gebe dir alles, was du dafür brauchst, und einmal pro Woche gebe dir Tests zur Wissensfestigung\n\n"
-            "🧘 Mit mir kannst du in deinem eigenen Tempo Sprachfortschritte machen und dabei Freunde finden!",
+                "🌱 Meine größte Freude wird sein, dir beim Festigen neuer Wörter und Redewendungen zu helfen\n\n"
+                "✨ Ich gebe dir alles, was du dafür brauchst, und einmal pro Woche gebe dir Tests zur Wissensfestigung\n\n"
+                "🧘 Mit mir kannst du in deinem eigenen Tempo Sprachfortschritte machen und dabei Freunde finden!",
             "es": "Soy como un ser humano, la única diferencia es que mi mundo interior está compuesto de unos y ceros\n\n"
-            "🌱 Mi mayor alegría será ayudarte a reforzar nuevas palabras y expresiones\n\n"
-            "✨ Te daré todo lo que necesitas para hacerlo, y una vez por semana te daré pruebas para reforzar tu conocimiento\n\n"
-            "🧘 Conmigo puedes progresar en el aprendizaje de idiomas a tu propio ritmo y hacer amigos en el camino!",
+                "🌱 Mi mayor alegría será ayudarte a reforzar nuevas palabras y expresiones\n\n"
+                "✨ Te daré todo lo que necesitas para hacerlo, y una vez por semana te daré pruebas para reforzar tu conocimiento\n\n"
+                "🧘 Conmigo puedes progresar en el aprendizaje de idiomas a tu propio ritmo y hacer amigos en el camino!",
             "zh": "我就像人类一样，唯一的不同是我的内心世界是由0和1组成的\n\n"
-            "🌱 我最大的快乐将是帮助你巩固新单词和习语\n\n"
-            "✨ 我会给你需要的一切，每周一次给你测试来巩固知识\n\n"
-            "🧘 有了我，你可以按照自己的节奏学习语言，并在此过程中结交朋友！",
+                "🌱 我最大的快乐将是帮助你巩固新单词和习语\n\n"
+                "✨ 我会给你需要的一切，每周一次给你测试来巩固知识\n\n"
+                "🧘 有了我，你可以按照自己的节奏学习语言，并在此过程中结交朋友！",
+        },
+        "active_sub_caption": {
+            "en": "Your subscription is active until:\n\n\t<b>{date}</b>\n\nAfter this date, the main features of the app will become unavailable",
+            "ru": "Твоя подписка активна до:\n\n\t<b>{date}</b>\n\nПо истечении этого срока основные функции приложения станут не доступными",
+            "de": "Dein Abonnement ist aktiv bis:\n\n\t<b>{date}</b>\n\nNach diesem Datum werden die Hauptfunktionen der App nicht mehr verfügbar sein",
+            "es": "Tu suscripción está activa hasta:\n\n\t<b>{date}</b>\n\nDespués de esta fecha, las funciones principales de la aplicación dejarán de estar disponibles",
+            "zh": "您的订阅有效至：\n\n\t<b>{date}</b>\n\n此日期后，应用程序的主要功能将不可用"
+        },
+        "resume_sub_caption": {
+            "en": "Your subscription is paused",
+            "ru": "Твоя подписка приостоновлена",
+            "de": "Dein Abonnement ist pausiert",
+            "es": "Tu suscripción está en pausa",
+            "zh": "您的订阅已暂停"
+        },
+        "expired_sub_caption": {
+            "en": "The subscription period has expired :(\n\nPlease activate your subscription to restore access to the app's features",
+            "ru": "Срок пользования подпиской истек :(\n\nПожалуйста, активируйте подписку, чтобы функции приложения вновь стали доступны",
+            "de": "Die Abonnementlaufzeit ist abgelaufen :(\n\nBitte aktiviere dein Abonnement, um den Zugriff auf die App-Funktionen wiederherzustellen",
+            "es": "El período de suscripción ha expirado :(\n\nPor favor, activa tu suscripción para restaurar el acceso a las funciones de la aplicación",
+            "zh": "订阅期限已过期 :(\n\n请激活您的订阅以恢复应用程序功能的访问权限"
         },
         "payment_needed": {
             "en": " 🛎 Friendly Reminder\n"
@@ -346,6 +367,27 @@ BUTTONS = dict(
             "es": "💳 Gestionar suscripción",
             "zh": "💳 管理订阅"
         },
+        "cancel_sub": {
+            "en": "❌ Cancel subscription",
+            "ru": "❌ Отменить подписку",
+            "de": "❌ Abonnement kündigen",
+            "es": "❌ Cancelar suscripción",
+            "zh": "❌ 取消订阅"
+        },
+        "resume_sub": {
+            "en": "🔄 Resume subscription",
+            "ru": "🔄 Возобновить подписку",
+            "de": "🔄 Abonnement fortsetzen",
+            "es": "🔄 Reanudar suscripción",
+            "zh": "🔄 恢复订阅"
+        },
+        "activate_sub": {
+            "en": "🌳 Activate subscription",
+            "ru": "🌳 Оплатить подписку",
+            "de": "🌳 Abonnement aktivieren",
+            "es": "🌳 Activar suscripción",
+            "zh": "🌳 激活订阅"
+        },
         "about_bot": {
             "en": "ℹ️ About me",
             "ru": "ℹ️ Обо мне",
@@ -399,6 +441,54 @@ WEEKLY_QUIZ = dict(
             "de": "Quiz starten",
             "es": "Comenzar cuestionario",
             "zh": "开始测验",
+        },
+    "learning_info": {
+        "en": "How's it work?",
+        "ru": "Как это работает?",
+        "de": "Wie funktioniert es?",
+        "es": "¿Cómo funciona?",
+        "zh": "它是如何工作的？"
+    },
+    "how_it_works": {
+        "en": "<b>Spaced Repetition Theory</b>\n\nThe learning in our app is based on the "
+              "scientifically proven method of spaced repetition. It was created taking into "
+              "account the law of memory discovered by Hermann Ebbinghaus: new information is "
+              "quickly forgotten if not revisited. Our system builds your personal repetition "
+              "schedule to combat forgetting. Instead of cramming everything every day, the "
+              "app itself will remind you to repeat words exactly at the moment when you are "
+              "about to forget them. This ensures that each word is reliably consolidated in "
+              "long-term memory with minimal effort on your part.",
+
+        "ru": "<b>Теория интервального повторения</b>\n\nВ основе обучения в нашем приложении "
+              "лежит научно доказанный метод интервальных повторений. Он создан с учетом закона памяти, "
+              "открытого Германом Эббингаузом: новая информация быстро забывается, если к ней не возвращаться. "
+              "Наша система строит ваш персональный график повторений, чтобы бороться с забыванием. "
+              "Вместо того чтобы заучивать все подряд каждый день, приложение само напомнит вам повторить "
+              "слова именно в тот момент, когда вы вот-вот готовы их забыть. Это гарантирует, что каждое "
+              "cлово надежно закрепится в долговрочной памяти с минимальными усилиями с вашей стороны",
+
+        "de": "<b>Theorie der verteilten Wiederholung</b>\n\nDas Lernen in unserer App basiert auf der "
+              "wissenschaftlich bewiesenen Methode der verteilten Wiederholung. Sie wurde unter Berücksichtigung "
+              "des Gedächtnisgesetzes entwickelt, das von Hermann Ebbinghaus entdeckt wurde: Neue Informationen "
+              "werden schnell vergessen, wenn man nicht auf sie zurückkommt. Unser System erstellt Ihren "
+              "persönlichen Wiederholungsplan, um das Vergessen zu bekämpfen. Anstatt jeden Tag alles "
+              "auswendig zu lernen, erinnert Sie die App selbst daran, Wörter genau in dem Moment zu "
+              "wiederholen, wenn Sie sie fast vergessen haben. Dies gewährleistet, dass jedes Wort mit "
+              "minimalem Aufwand Ihrerseits sicher im Langzeitgedächtnis verankert wird.",
+
+        "es": "<b>Teoría de la repetición espaciada</b>\n\nEl aprendizaje en nuestra aplicación se basa "
+              "en el método científicamente probado de la repetición espaciada. Se creó teniendo en cuenta "
+              "la ley de la memoria descubierta por Hermann Ebbinghaus: la nueva información se olvida "
+              "rápidamente si no se revisita. Nuestro sistema construye tu horario personal de repeticiones "
+              "para combatir el olvido. En lugar de memorizar todo cada día, la aplicación misma te recordará "
+              "que repitas las palabras exactamente en el momento en que estés a punto de olvidarlas. Esto "
+              "garantiza que cada palabra se consolide de manera confiable en la memoria a largo plazo con "
+              "un esfuerzo mínimo de tu parte.",
+
+        "zh": "<b>间隔重复理论</b>\n\n我们应用程序的学习基于科学证明的间隔重复方法。"
+              "该方法是根据赫尔曼·艾宾浩斯发现的记忆规律创建的：如果不复习，新信息会很快被遗忘。"
+              "我们的系统会建立您的个人复习时间表来对抗遗忘。与其每天死记硬背所有内容，"
+              "应用程序本身会在您即将忘记单词时提醒您复习。这确保了每个单词都能以您最少的努力可靠地巩固在长期记忆中。",
         },
         "daily_report": {
             "en": "📊 Your daily report with learned words:\n\n"

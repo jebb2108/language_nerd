@@ -9,6 +9,7 @@ from app.services.notification import notification_service
 from app.services.redis import redis_service
 from app.services.main_bot import main_bot
 from app.services.partner_bot import partner_bot
+from app.services.yookassa import yookassa_service
 from config import config
 
 if TYPE_CHECKING:
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
     from app.services.notification import NotificationService
     from app.services.main_bot import MainBot
     from app.services.partner_bot import PartnerBot
-
+    from app.services.yookassa import YookassaService
 
 async def get_main_bot() -> "MainBot":
     if not main_bot.initialized:
@@ -95,3 +96,6 @@ async def generate_notifications() -> "WeeklyReportScheduler":
     report_processor = ReportProcessor(question_generator, max_words_per_user=5)
     weekly_report_service = WeeklyReportScheduler(report_processor)
     return weekly_report_service
+
+
+async def get_yookassa() -> "YookassaService": return yookassa_service
