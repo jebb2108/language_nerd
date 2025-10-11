@@ -68,27 +68,27 @@ MESSAGES = dict(
         "active_sub_caption": {
             "en": "Your subscription is active until:\n"
                   "=========================\n"
-                  "    <b>{date}</b>\n"
+                  "\t\t<b>{date}</b>\n"
                   "=========================\n"
                   "After this date, the main features of the app will become unavailable",
             "ru": "Твоя подписка активна до:\n"
                   "=========================\n"
-                  "   <b>{date}</b>\n"
+                  "\t\t<b>{date}</b>\n"
                   "=========================\n"
                   "По истечении этого срока основные функции приложения станут недоступными",
             "de": "Dein Abonnement ist aktiv bis:\n"
                   "=========================\n"
-                  "   <b>{date}</b>\n"
+                  "\t\t<b>{date}</b>\n"
                   "=========================\n"
                   "Nach diesem Datum werden die Hauptfunktionen der App nicht mehr verfügbar sein",
             "es": "Tu suscripción está activa hasta:\n"
                   "=========================\n"
-                  "   <b>{date}</b>\n"
+                  "\t\t<b>{date}</b>\n"
                   "=========================\n"
                   "Después de esta fecha, las funciones principales de la aplicación dejarán de estar disponibles",
             "zh": "您的订阅有效至：\n"
                   "=========================\n"
-                  "   <b>{date}</b>\n"
+                  "\t\t<b>{date}</b>\n"
                   "=========================\n"
                   "此日期后，应用程序的主要功能将不可用"
         },
