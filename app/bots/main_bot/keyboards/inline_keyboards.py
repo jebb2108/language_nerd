@@ -165,6 +165,14 @@ def begin_daily_quiz_keyboard(lang_code, report_id, show_info: bool = True):
     builder.row(begin_quiz_button)
     return builder.as_markup()
 
+def thought_time_keyboard(lang_code):
+    builder = InlineKeyboardBuilder()
+    thought_time_button = InlineKeyboardButton(
+        text=WEEKLY_QUIZ["thought_time"][lang_code], callback_data="thougth_time"
+    )
+    builder.row(thought_time_button)
+    return builder.as_markup()
+
 def get_payment_keyboard(lang_code, url):
     builder = InlineKeyboardBuilder()
     payment_button = InlineKeyboardButton(

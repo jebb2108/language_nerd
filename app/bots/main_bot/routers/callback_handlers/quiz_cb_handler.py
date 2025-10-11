@@ -11,7 +11,9 @@ from aiogram.types import CallbackQuery
 from app.bots.main_bot.translations import WEEKLY_QUIZ
 from app.bots.main_bot.keyboards.inline_keyboards import (
     show_word_options_keyboard,
-    get_finish_button, begin_daily_quiz_keyboard,
+    get_finish_button,
+    begin_daily_quiz_keyboard,
+    thought_time_keyboard
 )
 from app.dependencies import get_db
 
@@ -189,6 +191,29 @@ async def send_question(callback, state, database):
 
     if not word_data:
         return logger.error("Ошибка: данные вопроса не найдены")
+    sentence, new_indx, total = word_data["sentence"], idx + 1, len(word_ids)
+    msg = WEEKLY_QUIZ["question_text"][lang_code]
+    await callback.bot.send_message(
+        chat_id=user_id,
+        text=msg.format(idx=new_indx, total=total, sentence=sentence),
+        reply_markup=thought_time_keyboard(lang_code),
+    )
+
+@router.callback_query(F.data == 'thougth_time')
+async def show_options_handler(callback: CallbackQuery, state: FSMContext):
+
+    await callback.answer()
+
+    database = await get_db()
+    data = await state.get_data()
+    idx = data.get("current_index")
+    word_ids = data.get("word_ids")
+    user_id = data.get("user_id")
+    lang_code = data.get("lang_code", "en")
+
+    word_id = word_ids[idx]
+    word_data = await database.get_word_data(word_id)
+
     sentence, new_indx, total = word_data["sentence"], idx + 1, len(word_ids)
     msg = WEEKLY_QUIZ["question_text"][lang_code]
     await callback.bot.send_message(

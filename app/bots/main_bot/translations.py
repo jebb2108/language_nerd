@@ -453,9 +453,8 @@ BUTTONS = dict(
     }
 )
 
-WEEKLY_QUIZ = dict(
-    {
-        "begin": {
+WEEKLY_QUIZ = dict({
+    "begin": {
             "en": "Start quiz",
             "ru": "Начать проверку знаний",
             "de": "Quiz starten",
@@ -526,6 +525,13 @@ WEEKLY_QUIZ = dict(
             "zh": "📊 你的每日学习单词报告：\n\n"
                   "总单词数：{total}\n\n"
                   "点击下方按钮继续 👇",
+        },
+        "thought_time": {
+            "en": "Thought",
+            "ru": "Подумал",
+            "de": "Gedanke",
+            "es": "Pensamiento",
+            "zh": "想",
         },
         "no_rights": {
             "en": "No right answers",
