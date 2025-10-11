@@ -19,7 +19,7 @@ from app.bots.partner_bot.keyboards.inline_keyboards import (
     get_go_back_keyboard,
     show_partner_menu_keyboard,
     get_search_keyboard,
-    get_shop_keyboard,
+    get_shop_keyboard, get_profile_keyboard,
 )
 from logging_config import opt_logger as log
 
@@ -97,7 +97,7 @@ async def profile_handler(callback: CallbackQuery, state: FSMContext):
 
         await callback.message.edit_caption(
             caption=msg,
-            reply_markup=get_go_back_keyboard(lang_code),
+            reply_markup=get_profile_keyboard(lang_code),
             parse_mode=ParseMode.HTML,
         )
 

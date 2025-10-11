@@ -21,6 +21,19 @@ def get_go_back_keyboard(lang_code):
     builder.add(go_back_button)
     return builder.as_markup()
 
+def get_profile_keyboard(lang_code):
+    builder = InlineKeyboardBuilder()
+    shop_button = InlineKeyboardButton(
+        text=BUTTONS["shop"][lang_code],
+        callback_data="shop:0",
+    )
+    go_back_button = InlineKeyboardButton(
+        text=BUTTONS["go_back"][lang_code],
+        callback_data="go_back",
+    )
+    builder.row(shop_button)
+    builder.row(go_back_button)
+    return builder.as_markup()
 
 def show_partner_menu_keyboard(lang_code):
     builder = InlineKeyboardBuilder()
@@ -33,10 +46,6 @@ def show_partner_menu_keyboard(lang_code):
         text=BUTTONS["search"][lang_code],
         callback_data="begin_search",
     )
-    shop_button = InlineKeyboardButton(
-        text=BUTTONS["shop"][lang_code],
-        callback_data="shop:0",
-    )
     profile_button = InlineKeyboardButton(
         text=BUTTONS["profile"][lang_code],
         callback_data="profile",
@@ -47,7 +56,6 @@ def show_partner_menu_keyboard(lang_code):
     )
     builder.row(back_to_main_menu)
     builder.row(search_button)
-    builder.row(shop_button)
     builder.row(profile_button, about_button)
     return builder.as_markup()
 
