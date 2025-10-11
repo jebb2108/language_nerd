@@ -16,12 +16,12 @@ logger = log.setup_logger('main start commands', config.LOG_LEVEL)
 router = Router(name=__name__)
 
 @router.message(Command("start", prefix="!/"))
-async def start_with_polling(message: Message, state: FSMContext, message_count: RateLimitInfo):
+async def start_with_polling(message: Message, state: FSMContext, rate_limit_info: RateLimitInfo):
     """
     Стартовая команда: проверяем в БД существование пользователя,
     сохраняем основные поля в state и либо идём в show_main_menu, либо стартуем опрос.
     """
-    logger.debug(f"Current message count: {message_count}")
+    logger.debug(f"Current message count: {rate_limit_info.message_count}")
 
     # Проверяем, есть ли запись в users
     user_id = message.from_user.id
