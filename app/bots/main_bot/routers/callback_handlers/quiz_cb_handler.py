@@ -199,7 +199,7 @@ async def send_question(callback, state, database):
         reply_markup=thought_time_keyboard(lang_code),
     )
 
-@router.callback_query(F.data == 'thougth_time')
+@router.callback_query(and_f(F.data == 'thougth_time', paytime))
 async def show_options_handler(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
@@ -216,8 +216,7 @@ async def show_options_handler(callback: CallbackQuery, state: FSMContext):
 
     sentence, new_indx, total = word_data["sentence"], idx + 1, len(word_ids)
     msg = WEEKLY_QUIZ["question_text"][lang_code]
-    await callback.bot.send_message(
-        chat_id=user_id,
+    await callback.message.edit_text(
         text=msg.format(idx=new_indx, total=total, sentence=sentence),
         reply_markup=show_word_options_keyboard(word_data),
     )
