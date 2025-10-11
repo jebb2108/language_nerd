@@ -27,7 +27,7 @@ class YookassaService:
                 "subscription_type": "monthly_auto",
                 "auto_payment": True
             },
-            "save_payment_method": True
+            # "save_payment_method": True
         }, uuid.uuid4())
 
         return payment.confirmation.confirmation_url

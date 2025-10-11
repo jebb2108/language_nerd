@@ -63,6 +63,20 @@ MESSAGES = dict(
             # "\t/restart - 重新启动机器人\n\n"
             "如果您发现我没有回答或其他问题，请联系支持人员。他们会帮助您",
         },
+        "shop_offer": {
+            "en": "Emoji statuses",
+            "ru": "Эмодзи статусы",
+            "de": "Emoji-Statusse",
+            "es": "De emoji más deseados",
+            "zh": "表情符号状态"
+        },
+        "shop_actions": {
+            "en": "Choose one of the options below:",
+            "ru": "Выберите одну из опций ниже:",
+            "de": "Wählen Sie eine der folgenden Optionen:",
+            "es": "Elige una de las opciones a continuación:",
+            "zh": "请选择以下选项之一:"
+        },
         "current_topic": {
             "en": "Current topic - <b>{topic}</b>\n\nChoose one of the options below to change it",
             "ru": "Текущая тема - <b>{topic}</b>\n\nВыберите новую тему для разговора из предложенного ниже выбора",
@@ -343,8 +357,35 @@ QUESTIONARY = dict(
     }
 )
 
-BUTTONS = dict(
-    {
+BUTTONS = dict({
+        "next": {
+            "en": "Next ➡️",
+            "ru": "Далее ➡️",
+            "de": "Weiter ➡️",
+            "es": "Siguiente ➡️",
+            "zh": "下一步 ➡️"
+        },
+        "prev": {
+            "en": "⬅️ Prev",
+            "ru": "⬅️ Назад",
+            "de": "⬅️ Zurück",
+            "es": "⬅️ Anterior",
+            "zh": "⬅️ 上一步"
+        },
+        "make_payment": {
+            "en": "🛒 Make payment N rubles",
+            "ru": "🛒 Оплатить N рублей",
+            "de": "🛒 Zahlung leisten N Rubel",
+            "es": "🛒 Realizar pago N rublos",
+            "zh": "🛒 支付 N 卢布"
+        },
+        "exit": {
+            "en": "🚶‍♂️Leave shop",
+            "ru": "🚶‍♂️Покинуть магазин",
+            "de": "🚶‍♂️Shop verlassen",
+            "es": "🚶‍♂️Salir de la tienda",
+            "zh": "🚶‍♂️离开商店"
+        },
         "topics": {
             "en": {
                 "general": "🗞️ General",
@@ -412,6 +453,13 @@ BUTTONS = dict(
             "de": "👾 Hauptmenü",
             "es": "👾 Menú principal",
             "zh": "👾 主菜单",
+        },
+        "shop": {
+            "en": "🏬 Shop",
+            "ru": "🏬 Магазин",
+            "de": "🏬 Shop",
+            "es": "🏬 Tienda",
+            "zh": "🏬 商店",
         },
         "profile": {
             "en": "👤 Profile",
@@ -697,3 +745,349 @@ TRANSCRIPTIONS = dict(
         },
     }
 )
+
+EMOJI_SHOP = dict({
+    0: {
+        "phoenix_rise": "🔥",      # Восход феникса
+        "dragon_hoard": "🐉",  # Драконья сокровищница
+        "unicorn_magic": "🦄",  # Магия единорога
+        "kraken_depth": "🐙"    # Глубина кракена
+    },
+    1: {
+        "phantom_creator": "👻",   # Фантомный творец
+        "jester_mode": "🃏",       # Режим шута
+        "masquerade_veil": "🎭",   # Маскарадная вуаль
+        "alchemist_lab": "🧪"      # Лаборатория алхимика
+    },
+    2: {
+        "stellar_mode": "🌠",      # Режим звезды
+        "orbit_focus": "🛰️",       # Орбитальный фокус
+        "nebula_dreams": "🌌",     # Туманность грёз
+        "quantum_leap": "⚛️"       # Квантовый скачок
+    },
+    3: {
+        "volcano_core": "🌋",      # Ядро вулкана
+        "tidal_force": "🌊",       # Приливная сила
+        "aurora_whisper": "🌠",    # Шёпот авроры
+        "crystal_cave": "🔮"       # Хрустальная пещера
+    },
+    4: {
+        "blacksmith_forge": "⚒️",  # Кузница кузнеца
+        "alchemist_elixir": "🧪",  # Эликсир алхимика
+        "bard_ballad": "🎻",       # Баллада барда
+        "wizard_tower": "🏰"       # Башня волшебника
+    },
+    5: {
+        "cyber_samurai": "🗡️",     # Кибер-самурай
+        "neon_dream": "💠",        # Неоновая мечта
+        "hologram_self": "👁️",     # Голографическое я
+        "time_traveler": "🕰️"      # Путешественник во времени
+    },
+    6: {
+        "dice_whisperer": "🎲",    # Шепчущий кости
+        "chess_mastermind": "♟️",  # Мозг шахмат
+        "puzzle_solver": "🧩",     # Решатель головоломок
+        "lotus_meditation": "🪷"   # Медитация лотоса
+    },
+    7: {
+        "mushroom_circle": "🍄",   # Круг грибов
+        "fox_spirit": "🦊",        # Дух лисы
+        "owl_wisdom": "🦉",        # Мудрость совы
+        "wolf_pack": "🐺"          # Волчья стая
+    },
+    8: {
+        "carousel_spin": "🎠",     # Вращение карусели
+        "ferris_view": "🎡",       # Вид с колеса обозрения
+        "mask_ball": "🥸",         # Бал масок
+        "confetti_rain": "🎉"      # Дождь конфетти
+    },
+    9: {
+        "rookie": "🌱",           # Я только начал!
+        "kinda_popular": "🪙",    # Популярный так-то
+        "your_king": "👑",        # Преклоняй голову перед королем
+        "one_in_million": "💎"    # Один такой на миллион
+    },
+})
+
+EMOJI_TRANSCRIPTIONS = {
+    "phoenix_rise": {
+        "en": "phoenix rise",
+        "ru": "восход феникса",
+        "de": "Phönix Aufstieg",
+        "es": "ascenso del fénix",
+        "zh": "凤凰崛起"
+    },
+    "dragon_hoard": {
+        "en": "dragon hoard",
+        "ru": "драконья сокровищница",
+        "de": "Drachenhort",
+        "es": "tesoro del dragón",
+        "zh": "龙宝藏"
+    },
+    "unicorn_magic": {
+        "en": "unicorn magic",
+        "ru": "магия единорога",
+        "de": "Einhorn Magie",
+        "es": "magia de unicornio",
+        "zh": "独角兽魔法"
+    },
+    "kraken_depth": {
+        "en": "kraken depth",
+        "ru": "глубина кракена",
+        "de": "Krakentiefe",
+        "es": "profundidad del kraken",
+        "zh": "海妖深渊"
+    },
+    "phantom_creator": {
+        "en": "phantom creator",
+        "ru": "фантомный творец",
+        "de": "Phantom Schöpfer",
+        "es": "creador fantasma",
+        "zh": "幻影创造者"
+    },
+    "jester_mode": {
+        "en": "jester mode",
+        "ru": "режим шута",
+        "de": "Hofnarr Modus",
+        "es": "modo bufón",
+        "zh": "小丑模式"
+    },
+    "masquerade_veil": {
+        "en": "masquerade veil",
+        "ru": "маскарадная вуаль",
+        "de": "Maskerade Schleier",
+        "es": "velo de mascarada",
+        "zh": "假面舞会面纱"
+    },
+    "alchemist_lab": {
+        "en": "alchemist lab",
+        "ru": "лаборатория алхимика",
+        "de": "Alchemist Labor",
+        "es": "laboratorio de alquimista",
+        "zh": "炼金术士实验室"
+    },
+    "stellar_mode": {
+        "en": "stellar mode",
+        "ru": "режим звезды",
+        "de": "Sterne Modus",
+        "es": "modo estelar",
+        "zh": "恒星模式"
+    },
+    "orbit_focus": {
+        "en": "orbit focus",
+        "ru": "орбитальный фокус",
+        "de": "Orbit Fokus",
+        "es": "enfoque orbital",
+        "zh": "轨道焦点"
+    },
+    "nebula_dreams": {
+        "en": "nebula dreams",
+        "ru": "туманность грёз",
+        "de": "Nebel Träume",
+        "es": "sueños de nebulosa",
+        "zh": "星云之梦"
+    },
+    "quantum_leap": {
+        "en": "quantum leap",
+        "ru": "квантовый скачок",
+        "de": "Quantensprung",
+        "es": "salto cuántico",
+        "zh": "量子飞跃"
+    },
+    "volcano_core": {
+        "en": "volcano core",
+        "ru": "ядро вулкана",
+        "de": "Vulkan Kern",
+        "es": "núcleo volcánico",
+        "zh": "火山核心"
+    },
+    "tidal_force": {
+        "en": "tidal force",
+        "ru": "приливная сила",
+        "de": "Gezeitenkraft",
+        "es": "fuerza de marea",
+        "zh": "潮汐力"
+    },
+    "aurora_whisper": {
+        "en": "aurora whisper",
+        "ru": "шёпот авроры",
+        "de": "Aurora Flüstern",
+        "es": "susurro de aurora",
+        "zh": "极光低语"
+    },
+    "crystal_cave": {
+        "en": "crystal cave",
+        "ru": "хрустальная пещера",
+        "de": "Kristallhöhle",
+        "es": "cueva de cristal",
+        "zh": "水晶洞穴"
+    },
+    "blacksmith_forge": {
+        "en": "blacksmith forge",
+        "ru": "кузница кузнеца",
+        "de": "Schmiede",
+        "es": "forja de herrero",
+        "zh": "铁匠铺"
+    },
+    "alchemist_elixir": {
+        "en": "alchemist elixir",
+        "ru": "эликсир алхимика",
+        "de": "Alchemist Elixier",
+        "es": "elixir de alquimista",
+        "zh": "炼金术士灵药"
+    },
+    "bard_ballad": {
+        "en": "bard ballad",
+        "ru": "баллада барда",
+        "de": "Barde Ballade",
+        "es": "balada de bardo",
+        "zh": "吟游诗人歌谣"
+    },
+    "wizard_tower": {
+        "en": "wizard tower",
+        "ru": "башня волшебника",
+        "de": "Zaubererturm",
+        "es": "torre de mago",
+        "zh": "巫师塔"
+    },
+    "cyber_samurai": {
+        "en": "cyber samurai",
+        "ru": "кибер самурай",
+        "de": "Cyber Samurai",
+        "es": "samurái cibernético",
+        "zh": "电子武士"
+    },
+    "neon_dream": {
+        "en": "neon dream",
+        "ru": "неоновая мечта",
+        "de": "Neon Traum",
+        "es": "sueño neón",
+        "zh": "霓虹之梦"
+    },
+    "hologram_self": {
+        "en": "hologram self",
+        "ru": "голографическое я",
+        "de": "Hologramm Selbst",
+        "es": "yo holográfico",
+        "zh": "全息自我"
+    },
+    "time_traveler": {
+        "en": "time traveler",
+        "ru": "путешественник во времени",
+        "de": "Zeitreisender",
+        "es": "viajero del tiempo",
+        "zh": "时间旅行者"
+    },
+    "dice_whisperer": {
+        "en": "dice whisperer",
+        "ru": "шепчущий кости",
+        "de": "Würfelflüsterer",
+        "es": "susurrador de dados",
+        "zh": "骰子低语者"
+    },
+    "chess_mastermind": {
+        "en": "chess mastermind",
+        "ru": "мозг шахмат",
+        "de": "Schachgenie",
+        "es": "genio del ajedrez",
+        "zh": "象棋大师"
+    },
+    "puzzle_solver": {
+        "en": "puzzle solver",
+        "ru": "решатель головоломок",
+        "de": "Rätsellöser",
+        "es": "resolvedor de rompecabezas",
+        "zh": "解谜者"
+    },
+    "lotus_meditation": {
+        "en": "lotus meditation",
+        "ru": "медитация лотоса",
+        "de": "Lotus Meditation",
+        "es": "meditación de loto",
+        "zh": "莲花冥想"
+    },
+    "mushroom_circle": {
+        "en": "mushroom circle",
+        "ru": "круг грибов",
+        "de": "Pilzkreis",
+        "es": "círculo de hongos",
+        "zh": "蘑菇圈"
+    },
+    "fox_spirit": {
+        "en": "fox spirit",
+        "ru": "дух лисы",
+        "de": "Fuchsgeist",
+        "es": "espíritu de zorro",
+        "zh": "狐狸精"
+    },
+    "owl_wisdom": {
+        "en": "owl wisdom",
+        "ru": "мудрость совы",
+        "de": "Eulenweisheit",
+        "es": "sabiduría de búho",
+        "zh": "猫头鹰智慧"
+    },
+    "wolf_pack": {
+        "en": "wolf pack",
+        "ru": "волчья стая",
+        "de": "Wolfsrudel",
+        "es": "manada de lobos",
+        "zh": "狼群"
+    },
+    "carousel_spin": {
+        "en": "carousel spin",
+        "ru": "вращение карусели",
+        "de": "Karussell Drehung",
+        "es": "giro de carrusel",
+        "zh": "旋转木马"
+    },
+    "ferris_view": {
+        "en": "ferris view",
+        "ru": "вид с колеса обозрения",
+        "de": "Riesenrad Blick",
+        "es": "vista de la noria",
+        "zh": "摩天轮景观"
+    },
+    "mask_ball": {
+        "en": "mask ball",
+        "ru": "бал масок",
+        "de": "Maskenball",
+        "es": "baile de máscaras",
+        "zh": "面具舞会"
+    },
+    "confetti_rain": {
+        "en": "confetti rain",
+        "ru": "дождь конфетти",
+        "de": "Konfetti Regen",
+        "es": "lluvia de confeti",
+        "zh": "彩纸雨"
+    },
+    "rookie": {
+        "en": "I just started!",
+        "ru": "Я только начал!",
+        "de": "Ich habe gerade angefangen!",
+        "es": "¡Acabo de empezar!",
+        "zh": "我刚起步！"
+    },
+    "kinda_popular": {
+        "en": "Kinda popular",
+        "ru": "Популярный так-то",
+        "de": "Irgendwie beliebt",
+        "es": "Algo popular",
+        "zh": "有点人气"
+    },
+    "your_king": {
+        "en": "Bow to the king",
+        "ru": "Преклоняй голову",
+        "de": "Verbeuge dich vor dem König",
+        "es": "Inclínate ante el rey",
+        "zh": "向国王低头"
+    },
+    "one_in_million": {
+        "en": "One in a million",
+        "ru": "Один такой на миллион",
+        "de": "Einer unter Millionen",
+        "es": "Uno en un millón",
+        "zh": "百万分之一"
+    }
+}

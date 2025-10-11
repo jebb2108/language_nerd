@@ -13,12 +13,14 @@ from app.dependencies import get_redis_client, get_db
 from app.models import UserMatchRequest
 from config import config
 from app.bots.partner_bot.utils.access_data import data_storage as ds
-from app.bots.partner_bot.translations import MESSAGES, TRANSCRIPTIONS
+from app.bots.partner_bot.translations import MESSAGES, TRANSCRIPTIONS, EMOJI_TRANSCRIPTIONS, EMOJI_SHOP
 
 from app.bots.partner_bot.keyboards.inline_keyboards import (
     get_go_back_keyboard,
     show_partner_menu_keyboard,
-    get_search_keyboard, )
+    get_search_keyboard,
+    get_shop_keyboard,
+)
 from logging_config import opt_logger as log
 
 router = Router(name=__name__)
@@ -26,9 +28,50 @@ router = Router(name=__name__)
 logger = log.setup_logger("partner_cb_handler")
 
 
-@router.callback_query(and_f(F.data == "main_bot", paytime))
-async def main_menu_handler(callback: CallbackQuery):
+@router.callback_query(and_f(F.data.startswith("shop:"), paytime))
+async def shop_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
+    user_id = callback.from_user.id
+    shop_indx, msg = int(callback.data.split(":")[1]), ""
+
+    try:
+        data = await ds.get_storage_data(user_id, state)
+        lang_code = data.get("lang_code")
+        msg = MESSAGES["shop_offer"][lang_code] + " "*20 + f"{shop_indx+1}/10\n\n"
+        for k, v in EMOJI_SHOP[shop_indx].items():
+            msg += v + " " + EMOJI_TRANSCRIPTIONS[k][lang_code] + "\n"
+        msg += "\n" + MESSAGES["shop_actions"][lang_code]
+
+        if callback.message.caption is not None:
+            await callback.bot.send_message(
+                chat_id=user_id,
+                text=msg,
+                reply_markup=get_shop_keyboard(lang_code, shop_indx),
+                parse_mode=ParseMode.HTML,
+            )
+
+        else:
+            await callback.message.edit_text(
+                text=msg,
+                reply_markup=get_shop_keyboard(lang_code, shop_indx),
+                parse_mode=ParseMode.HTML,
+        )
+
+    except Exception as e:
+        logger.error(f"Error in shop_handler: {e}")
+
+
+@router.callback_query(and_f(F.data == "exit_shop", paytime))
+async def exit_shop_handler(callback: CallbackQuery):
+    await callback.answer("Leaving shop ...")
+    await callback.message.delete()
+
+@router.callback_query(and_f(F.data.startswith("make_payment:"), paytime))
+async def make_payment_handler(callback: CallbackQuery):
+    item = callback.data.split(":")[1]
+    await callback.answer(f"Making payment for {item}")
+    await callback.message.delete()
+
 
 
 @router.callback_query(

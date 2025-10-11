@@ -208,8 +208,7 @@ async def show_options_handler(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     idx = data.get("current_index")
     word_ids = data.get("word_ids")
-    user_id = data.get("user_id")
-    lang_code = data.get("lang_code", "en")
+    lang_code = data.get("lang_code")
 
     word_id = word_ids[idx]
     word_data = await database.get_word_data(word_id)

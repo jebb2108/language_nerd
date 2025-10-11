@@ -177,7 +177,6 @@ class DatabaseService:
                             dating BOOLEAN DEFAULT FALSE,
                             gender VARCHAR(50) NULL,
                             about TEXT NULL,
-                            is_active BOOLEAN DEFAULT TRUE,
                             status VARCHAR(50) NOT NULL,
                             UNIQUE (user_id)
                             ); """

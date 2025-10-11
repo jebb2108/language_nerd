@@ -9,7 +9,7 @@ def show_topic_keyboard(lang_code):
     for key, value in BUTTONS["topics"][lang_code].items():
         builder.row(InlineKeyboardButton(text=value, callback_data=f"chtopic_{key}"))
     builder.row(InlineKeyboardButton(text=BUTTONS["cancel"][lang_code], callback_data="cancel_topic"))
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
 
 
 def get_go_back_keyboard(lang_code):
@@ -19,7 +19,7 @@ def get_go_back_keyboard(lang_code):
         callback_data="go_back",
     )
     builder.add(go_back_button)
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
 
 
 def show_partner_menu_keyboard(lang_code):
@@ -33,6 +33,10 @@ def show_partner_menu_keyboard(lang_code):
         text=BUTTONS["search"][lang_code],
         callback_data="begin_search",
     )
+    shop_button = InlineKeyboardButton(
+        text=BUTTONS["shop"][lang_code],
+        callback_data="shop:0",
+    )
     profile_button = InlineKeyboardButton(
         text=BUTTONS["profile"][lang_code],
         callback_data="profile",
@@ -41,9 +45,11 @@ def show_partner_menu_keyboard(lang_code):
         text=BUTTONS["about_bot"][lang_code],
         callback_data="about",
     )
-    builder.add(back_to_main_menu, search_button, profile_button, about_button)
-    builder.adjust(1, 1, 2)
-    return builder.as_markup(resize_keyboard=True)
+    builder.row(back_to_main_menu)
+    builder.row(search_button)
+    builder.row(shop_button)
+    builder.row(profile_button, about_button)
+    return builder.as_markup()
 
 
 def get_back_to_partner_menu_keyboard(lang_code):
@@ -54,7 +60,7 @@ def get_back_to_partner_menu_keyboard(lang_code):
         callback_data="main_bot",
     )
     builder.add(back_to_main_menu)
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
 
 
 def open_chat_keyboard(lang_code, link):
@@ -64,7 +70,7 @@ def open_chat_keyboard(lang_code, link):
         web_app=WebAppInfo(url=link),
     )
     builder.add(open_chat_button)
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
 
 
 def create_start_chat_button(lang_code, link):
@@ -74,7 +80,7 @@ def create_start_chat_button(lang_code, link):
         web_app=WebAppInfo(url=link),
     )
     builder.add(start_chat_button)
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
 
 
 def get_search_keyboard(lang_code):
@@ -87,7 +93,7 @@ def get_search_keyboard(lang_code):
     )
     builder.add(queue_info_button, cancel_button)
     builder.adjust(1)
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
 
 
 def get_payment_keyboard(lang_code, url):
@@ -96,4 +102,24 @@ def get_payment_keyboard(lang_code, url):
         text=BUTTONS["payment"][lang_code], url=url
     )
     builder.add(payment_button)
-    return builder.as_markup(resize_keyboard=True)
+    return builder.as_markup()
+
+def get_shop_keyboard(lang_code, indx):
+    builder = InlineKeyboardBuilder()
+    make_payment = InlineKeyboardButton(
+        text=BUTTONS["make_payment"][lang_code] if indx != 9 else "Приведи друга",
+        callback_data=f"make_payment:{indx}"
+    )
+    next_button = InlineKeyboardButton(
+        text=BUTTONS["next"][lang_code], callback_data=f"shop:{indx+1 if not indx==9 else 0}"
+    )
+    prev_button = InlineKeyboardButton(
+        text=BUTTONS["prev"][lang_code], callback_data=f"shop:{indx-1 if not indx==0 else 9}"
+    )
+    exit_button = InlineKeyboardButton(
+        text=BUTTONS["exit"][lang_code], callback_data="exit_shop"
+    )
+    builder.row(make_payment)
+    builder.row(prev_button, next_button)
+    builder.row(exit_button)
+    return builder.as_markup()
