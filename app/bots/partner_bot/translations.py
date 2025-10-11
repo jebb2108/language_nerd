@@ -455,11 +455,11 @@ BUTTONS = dict({
             "zh": "👾 主菜单",
         },
         "shop": {
-            "en": "🏬 Shop",
-            "ru": "🏬 Магазин",
-            "de": "🏬 Shop",
-            "es": "🏬 Tienda",
-            "zh": "🏬 商店",
+            "en": "🏬 Cool things` shop",
+            "ru": "🏬 Магазин плюшек",
+            "de": "🏬 Cooler shop",
+            "es": "🏬 Tienda genial",
+            "zh": "🏬 酷炫商店"
         },
         "profile": {
             "en": "👤 Profile",
