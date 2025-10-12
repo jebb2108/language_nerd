@@ -31,7 +31,7 @@ def get_profile_keyboard(lang_code):
         text=BUTTONS["go_back"][lang_code],
         callback_data="go_back",
     )
-    builder.row(shop_button)
+    # builder.row(shop_button)
     builder.row(go_back_button)
     return builder.as_markup()
 

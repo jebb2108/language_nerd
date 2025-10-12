@@ -528,7 +528,7 @@ WEEKLY_QUIZ = dict({
         },
         "thought_time": {
             "en": "Thought",
-            "ru": "Подумал",
+            "ru": "Подумал(а)",
             "de": "Gedanke",
             "es": "Pensamiento",
             "zh": "想",
