@@ -453,18 +453,21 @@ class ReportProcessor:
                         "correct_index": word_data.correct_index,
                     }
                 )
+        try:
+            # Сохраняем отчет в БД
+            if report_data:
+                report_id = await db.create_report(user_id)
+                await db.add_words_to_report(report_id, report_data)
+                logger.info(
+                    f"Generated report for user {user_id} with {len(report_data)} words"
+                )
+            else:
+                logger.warning(f"No questions generated for user {user_id}")
 
-        # Сохраняем отчет в БД
-        if report_data:
-            report_id = await db.create_report(user_id)
-            await db.add_words_to_report(report_id, report_data)
-            logger.info(
-                f"Generated report for user {user_id} with {len(report_data)} words"
-            )
-        else:
-            logger.warning(f"No questions generated for user {user_id}")
+            return len(report_data)
 
-        return len(report_data)
+        except Exception as e:
+            logger.error(f"Error in adding report in process_user_words: {e}")
 
 
 # ========== SCHEDULER ==========
