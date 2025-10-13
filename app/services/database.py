@@ -110,8 +110,8 @@ class DatabaseService:
                 """
                 CREATE TABLE IF NOT EXISTS audios (
                 id SERIAL PRIMARY KEY,
-                user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,,
-                audio_id INTEGER NOT NULL REFERENCES words(id) ON DELETE CASCADE,,
+                user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+                audio_id INTEGER NOT NULL REFERENCES words(id) ON DELETE CASCADE,
                 audio_url TEXT NOT NULL,
                 edited BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT NOW(),
