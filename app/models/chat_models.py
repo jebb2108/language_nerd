@@ -20,10 +20,11 @@ class RegistrationData(BaseModel):
     """
     user_id: int = Field(..., description="User ID")
     nickname: str = Field(..., description="Уникальный никнейм пользователя")
+    email: str = Field(..., description="Email пользователя")
     birthday: str = Field(..., description="Дата рождения пользователя (ISO)")
     gender: str = Field(..., description="Пол пользователя")
     about: str = Field(..., description="Краткая информация о пользователе")
-    dating_agreement: Optional[bool] = Field(None, description="Согласие на дэйтинг")
+    dating: Optional[bool] = Field(None, description="Согласие на дэйтинг")
     location: Optional[Coordinates] = None
 
 

@@ -170,6 +170,7 @@ class DatabaseService:
                             id SERIAL PRIMARY KEY,
                             user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                             nickname VARCHAR(50) NOT NULL,
+                            email VARCHAR(50) NOT NULL,
                             birthday DATE NOT NULL,
                             dating BOOLEAN DEFAULT FALSE,
                             gender VARCHAR(50) NULL,
@@ -395,7 +396,8 @@ class DatabaseService:
         self,
         user_id: int,
         nickname: str,
-        birthday: datetime,
+        email: str,
+        birthday: str,
         about: str,
         gender: bool = None,
         dating: bool = False,
@@ -406,31 +408,33 @@ class DatabaseService:
                 """
             INSERT INTO users_profile 
             (
-                user_id, status, 
-                nickname, birthday, 
+                user_id, nickname, 
+                email, birthday, 
                 dating, gender, 
-                about
+                about, status
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             ON CONFLICT (user_id) DO UPDATE
             SET status = EXCLUDED.status,
                 nickname = EXCLUDED.nickname,
+                email = EXCLUDED.email,
                 birthday = EXCLUDED.birthday,
                 dating = EXCLUDED.dating,
                 gender = EXCLUDED.gender,
                 about = EXCLUDED.about,
             """,
                 user_id,
-                status,
                 nickname,
+                email,
                 birthday,
                 dating,
                 gender,
                 about,
+                status
             )
             logger.info(
-                f"User {user_id} profile added. Their name: {nickname},"
-                f" birthday: {birthday}, dating: {dating}, gender: {gender}, "
+                f"User {user_id} profile added. Their name: {nickname}, "
+                f"email: {email}, birthday: {birthday}, dating: {dating}, gender: {gender}, "
                 f"status: {status},\n intro: {about}"
             )
             return
