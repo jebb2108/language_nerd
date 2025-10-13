@@ -33,10 +33,10 @@ async def check_user(user_id: str, database: "DatabaseService" = Depends(get_db)
 @router.post("/register")
 async def register_user(
         user_data: RegistrationData,
-        database: "DatabaseService" = Depends(get_db),
+        rabbit: "RabbitMQService" = Depends(get_rabbitmq)
 ):
     # Сохранение в базу данных профиля пользователя
-    await database.add_users_profile(**user_data.model_dump(exclude_none=True))
+    await rabbit.publish_profile(user_data)
     return {"message": "Пользователь успешно зарегистрирован", "status": "success"}
 
 

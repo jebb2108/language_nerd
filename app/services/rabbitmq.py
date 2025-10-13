@@ -1,14 +1,14 @@
 import json
 import aio_pika
 from typing import TYPE_CHECKING, Optional
-
-from app.models import Location
-from app.models import MessageContent
-from app.models import NewPayment
-from app.models import NewUser
-from app.models import UserMatchRequest
 from logging_config import opt_logger as log
 from config import config
+
+from app.models import (
+    Location, MessageContent,
+    NewPayment, NewUser,
+    RegistrationData, UserMatchRequest
+)
 
 if TYPE_CHECKING:
     from aio_pika.abc import AbstractChannel
@@ -93,7 +93,7 @@ class RabbitMQService:
         )
 
 
-    async def publish_profile(self, profile: "UserProfile"):
+    async def publish_profile(self, profile: "RegistrationData"):
         json_profile = json.dumps({
             "purpose": config.ADD_PROFILE_PURPOSE,
             "profile": profile.model_dump_json()

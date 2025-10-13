@@ -399,7 +399,7 @@ class DatabaseService:
         email: str,
         birthday: str,
         about: str,
-        gender: bool = None,
+        gender: str = None,
         dating: bool = False,
         status: str = "rookie",
     ) -> None:
@@ -421,7 +421,7 @@ class DatabaseService:
                 birthday = EXCLUDED.birthday,
                 dating = EXCLUDED.dating,
                 gender = EXCLUDED.gender,
-                about = EXCLUDED.about,
+                about = EXCLUDED.about
             """,
                 user_id,
                 nickname,

@@ -1,8 +1,9 @@
 import re
 from datetime import datetime
 from typing import Dict, Optional, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
+from app.api.endpoints.chatting import logger
 from app.models import Language, Topic
 from config import config
 
@@ -26,6 +27,26 @@ class RegistrationData(BaseModel):
     about: str = Field(..., description="Краткая информация о пользователе")
     dating: Optional[bool] = Field(None, description="Согласие на дэйтинг")
     location: Optional[Coordinates] = None
+
+    @classmethod
+    @field_validator('birthday')
+    def validate_birthday_format(cls, v):
+        # Пробуем распарсить дату в формате ДД-ММ-ГГГГ
+        try:
+            if v and '-' in v:
+                day, month, year = v.split('-')
+                # Проверяем, что это действительно ДД-ММ-ГГГГ
+                if len(day) == 2 and len(month) == 2 and len(year) == 4:
+                    # Преобразуем в ISO формат
+                    return f"{year}-{month}-{day}"
+
+        except Exception as e:
+            logger.error(f"Error in bday validation: {e}")
+            pass
+
+        # Если не получилось преобразовать, возвращаем как есть
+        # Pydantic сам проверит, что это валидная дата в ISO формате
+        return v
 
 
 
