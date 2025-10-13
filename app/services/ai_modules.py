@@ -453,6 +453,7 @@ class ReportProcessor:
                         "correct_index": word_data.correct_index,
                     }
                 )
+        # TODO: Fix this issue! Most likely the problem is in DB tables
         try:
             # Сохраняем отчет в БД
             if report_data:

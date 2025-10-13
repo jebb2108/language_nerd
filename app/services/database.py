@@ -76,7 +76,7 @@ class DatabaseService:
                 """
                 CREATE TABLE IF NOT EXISTS words (
                 id SERIAL PRIMARY KEY,
-                user_id BIGINT NOT NULL,
+                user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                 word VARCHAR(100) NOT NULL,
                 part_of_speech VARCHAR(50) NOT NULL,
                 translation TEXT NOT NULL,
