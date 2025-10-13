@@ -402,6 +402,7 @@ class DatabaseService:
         gender: str = None,
         dating: bool = False,
         status: str = "rookie",
+        location = None # TODO: временная болванка. Нужно подравить логику обработки местоплодения
     ) -> None:
         async with self.acquire_connection() as conn:
             await conn.execute(
@@ -437,6 +438,7 @@ class DatabaseService:
                 f"email: {email}, birthday: {birthday}, dating: {dating}, gender: {gender}, "
                 f"status: {status},\n intro: {about}"
             )
+
             return
 
     async def get_users_profile(self, user_id: int) -> dict:
