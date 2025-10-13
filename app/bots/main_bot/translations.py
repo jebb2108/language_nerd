@@ -1151,7 +1151,7 @@ EMOJI_SHOP = dict({
         },
         6: {
             "en": "Playful Enlightenment",
-            "ru": "Игриво-озарную",
+            "ru": "Игриво-азарную",
             "de": "Spielerische Erleuchtung",
             "es": "Iluminación Juguetona",
             "zh": "嬉戏开悟"

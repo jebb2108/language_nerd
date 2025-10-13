@@ -23,7 +23,7 @@ class DataStorage:
             s_data = await state.get_data()
 
             # Проверяем наличие необходимых ключей
-            keys = ["user_id", "first_name", "dating", "lang_code"]
+            keys = ["user_id", "first_name", "is_active", "lang_code"]
             if all(s_data.get(key, False) for key in keys):
                 return s_data
 

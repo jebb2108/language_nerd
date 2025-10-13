@@ -40,7 +40,6 @@ async def show_main_menu(message: Message, state: FSMContext, rate_limit_info: R
     )
 
     # Получаем данные из состояния
-    database = await get_db()
     user_id = message.from_user.id
     data = await ds.get_storage_data(user_id, state)
     lang_code = data.get("lang_code")
@@ -48,7 +47,7 @@ async def show_main_menu(message: Message, state: FSMContext, rate_limit_info: R
     if not is_active: return
 
     msg = f"{MESSAGES['welcome'][lang_code]}"
-    if not await database.check_profile_exists(user_id):
+    if await data.get("nickname", False):
         msg += MESSAGES["get_to_know"][lang_code]
     else:
         msg += MESSAGES["pin_me"][lang_code]
