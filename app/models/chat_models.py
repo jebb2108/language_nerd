@@ -28,26 +28,6 @@ class RegistrationData(BaseModel):
     dating: Optional[bool] = Field(None, description="Согласие на дэйтинг")
     location: Optional[Coordinates] = None
 
-    @classmethod
-    @field_validator('birthday')
-    def validate_birthday_format(cls, v):
-        # Пробуем распарсить дату в формате ДД-ММ-ГГГГ
-        try:
-            if v and '-' in v:
-                day, month, year = v.split('-')
-                # Проверяем, что это действительно ДД-ММ-ГГГГ
-                if len(day) == 2 and len(month) == 2 and len(year) == 4:
-                    # Преобразуем в ISO формат
-                    return f"{year}-{month}-{day}"
-
-        except:
-            pass
-
-        # Если не получилось преобразовать, возвращаем как есть
-        # Pydantic сам проверит, что это валидная дата в ISO формате
-        return v
-
-
 
 class MessageContent(BaseModel):
     """

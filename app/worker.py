@@ -255,7 +255,7 @@ async def handle_db_requests(data: dict, msg: "RabbitMessage"):
     elif data["purpose"] == config.ADD_PROFILE_PURPOSE:
         database = await get_db()
         profile = json.loads(data["profile"])
-        date_str = profile.get("birthday")
+        date_str = bday_to_iso(profile.get("birthday"))
         date_obj = datetime.fromisoformat(date_str).date()
         profile["birthday"] = date_obj
         await database.add_users_profile(**profile)
@@ -282,6 +282,10 @@ async def handle_db_requests(data: dict, msg: "RabbitMessage"):
         queue=config.RABBITMQ_NEW_USERS_QUEUE,
     )
     await msg.ack()
+
+def bday_to_iso(bday: str):
+    day, month, year = bday.split('-')
+    return f"{year}-{month}-{day}"
 
 
 async def main():
