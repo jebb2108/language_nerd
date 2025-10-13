@@ -3,9 +3,9 @@ from datetime import datetime
 from typing import Dict, Optional, Any
 from pydantic import BaseModel, Field, field_validator
 
-from app.api.endpoints.chatting import logger
 from app.models import Language, Topic
 from config import config
+
 
 class Coordinates(BaseModel):
     """
@@ -40,8 +40,7 @@ class RegistrationData(BaseModel):
                     # Преобразуем в ISO формат
                     return f"{year}-{month}-{day}"
 
-        except Exception as e:
-            logger.error(f"Error in bday validation: {e}")
+        except:
             pass
 
         # Если не получилось преобразовать, возвращаем как есть
