@@ -54,8 +54,7 @@ class DatabaseService:
             await conn.execute(
                 """
                             CREATE TABLE IF NOT EXISTS users (
-                            id SERIAL PRIMARY KEY,
-                            user_id BIGINT NOT NULL,
+                            user_id BIGINT PRIMARY KEY,
                             username VARCHAR(50) NOT NULL,
                             first_name VARCHAR(100) NOT NULL,
                             camefrom VARCHAR(50) NOT NULL,
@@ -95,12 +94,11 @@ class DatabaseService:
                 """
                 CREATE TABLE IF NOT EXISTS contexts (
                 id SERIAL PRIMARY KEY,
-                user_id BIGINT NOT NULL,
-                word_id INTEGER NOT NULL,
+                user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+                word_id INTEGER NOT NULL REFERENCES words(id) ON DELETE CASCADE,
                 context TEXT NOT NULL,
                 edited BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT NOW(),
-                FOREIGN KEY (word_id) REFERENCES words(id) ON DELETE CASCADE,
                 UNIQUE (user_id, word_id, context)
                 );
             """
@@ -112,12 +110,11 @@ class DatabaseService:
                 """
                 CREATE TABLE IF NOT EXISTS audios (
                 id SERIAL PRIMARY KEY,
-                user_id BIGINT NOT NULL,
-                audio_id INTEGER NOT NULL,
+                user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,,
+                audio_id INTEGER NOT NULL REFERENCES words(id) ON DELETE CASCADE,,
                 audio_url TEXT NOT NULL,
                 edited BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT NOW(),
-                FOREIGN KEY (audio_id) REFERENCES audios(id) ON DELETE CASCADE,
                 UNIQUE (user_id, audio_id, audio_url)
                 );
             """
