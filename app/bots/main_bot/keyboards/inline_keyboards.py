@@ -73,7 +73,7 @@ def show_fluency_keyboard(lang_code):
 def show_topic_keyboard(lang_code):
     builder = InlineKeyboardBuilder()
     for key, value in QUESTIONARY["topics"][lang_code].items():
-        builder.row(InlineKeyboardButton(text=value, callback_data=f"topic_{key}"))
+        builder.row(InlineKeyboardButton(text=value, callback_data=f"chtopic_{key}"))
 
     return builder.as_markup()
 
@@ -101,15 +101,20 @@ def confirm_choice_keyboard(lang_code):
 def get_on_main_menu_keyboard(lang_code):
     # Формируем URL с user_id для Web App
     web_app_url = f"https://dict.lllang.site/?v={config.VERSION}"
+    find_partner_url = f"https://chat.lllang.site/?v={config.VERSION}"
 
     builder = InlineKeyboardBuilder()
+    profile_button = InlineKeyboardButton(
+        text=BUTTONS["profile"][lang_code],
+        callback_data="profile",
+    )
     dict_button = InlineKeyboardButton(
         text=BUTTONS["dictionary"][lang_code],
         web_app=WebAppInfo(url=web_app_url),
     )
     find_partner_button = InlineKeyboardButton(
         text=BUTTONS["find_partner"][lang_code],
-        url="https://t.me/lllang_onlinebot",
+        web_app=WebAppInfo(url=find_partner_url)
     )
     subscription_details = InlineKeyboardButton(
         text=BUTTONS["sub_details"][lang_code],
@@ -123,12 +128,10 @@ def get_on_main_menu_keyboard(lang_code):
         text=BUTTONS["support"][lang_code],
         url="https://t.me/user_bot6426",
     )
-
-    builder.row(dict_button)
-    builder.row(find_partner_button)
+    builder.row(profile_button)
+    builder.row(dict_button, find_partner_button)
     builder.row(subscription_details)
     builder.row(about_bot_button, support_button)
-
     return builder.as_markup()
 
 
@@ -208,4 +211,53 @@ def get_subscription_keyboard(lang_code: str, is_active: bool, paused: bool = Fa
         builder.row(activate_subscription_button)
 
     builder.row(go_back_button)
+    return builder.as_markup()
+
+
+def get_profile_keyboard(lang_code):
+    builder = InlineKeyboardBuilder()
+    shop_button = InlineKeyboardButton(
+        text=BUTTONS["shop"][lang_code],
+        callback_data="shop:0",
+    )
+    go_back_button = InlineKeyboardButton(
+        text=BUTTONS["go_back"][lang_code],
+        callback_data="go_back",
+    )
+    builder.row(shop_button)
+    builder.row(go_back_button)
+    return builder.as_markup()
+
+
+def get_shop_keyboard(lang_code, indx):
+    builder = InlineKeyboardBuilder()
+    make_payment = InlineKeyboardButton(
+        text=BUTTONS["make_payment"][lang_code] if indx != 9 else "Приведи друга",
+        callback_data=f"make_payment:{indx}"
+    )
+    next_button = InlineKeyboardButton(
+        text=BUTTONS["next"][lang_code], callback_data=f"shop:{indx+1 if not indx==9 else 0}"
+    )
+    prev_button = InlineKeyboardButton(
+        text=BUTTONS["prev"][lang_code], callback_data=f"shop:{indx-1 if not indx==0 else 9}"
+    )
+    exit_button = InlineKeyboardButton(
+        text=BUTTONS["exit"][lang_code], callback_data="go_back"
+    )
+    builder.row(make_payment)
+    builder.row(prev_button, next_button)
+    builder.row(exit_button)
+    return builder.as_markup()
+
+
+def get_search_keyboard(lang_code):
+    builder = InlineKeyboardBuilder()
+    queue_info_button = InlineKeyboardButton(
+        text=BUTTONS["queue_info"][lang_code], callback_data="queue_info"
+    )
+    cancel_button = InlineKeyboardButton(
+        text=BUTTONS["cancel"][lang_code], callback_data="cancel"
+    )
+    builder.add(queue_info_button, cancel_button)
+    builder.adjust(1)
     return builder.as_markup()

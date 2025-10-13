@@ -17,7 +17,7 @@ from app.bots.partner_bot.keyboards.regular_keyboards import (
     show_location_keyboard,
     show_gender_keyboard,
 )
-from app.bots.partner_bot.translations import (
+from app.bots.main_bot.translations import (
     MESSAGES,
     QUESTIONARY,
     BUTTONS,

@@ -7,6 +7,20 @@ MESSAGES = dict(
             "es": "👋 Hola, ",
             "zh": "👋 你好，",
         },
+        "you_chose": {
+            "en": "➪ You chose:",
+            "ru": "➪ Ты выбрал:",
+            "de": "➪ Du hast gewählt:",
+            "es": "➪ Elegiste:",
+            "zh": "➪ 你选择了：",
+        },
+        "gratitude": {
+            "en": "Thank you for your patience",
+            "ru": "Спасибо за терпение",
+            "de": "Danke für deine Geduld",
+            "es": "Gracias por tu paciencia",
+            "zh": "谢谢你的耐心",
+        },
         "welcome": {
             "en": "I`m Sam! Your language learning assistant. Here's what I can do:\n\n"
             "✨ <b>Dictionary</b> — save and learn new words easily\n"
@@ -65,6 +79,38 @@ MESSAGES = dict(
                 "✨ 我会给你需要的一切，每周一次给你测试来巩固知识\n\n"
                 "🧘 有了我，你可以按照自己的节奏学习语言，并在此过程中结交朋友！",
         },
+        "user_info": {
+            "en": "=== <b>{nickname}</b> ===\n\n"
+            "Your age: <b>{age}</b>\n"
+            "Chosen language: <b>{language}</b>\n"
+            "Fluency: <b>{fluency}</b>\n"
+            "Topic: <b>{topic}</b>\n\n"
+            "About you: {about}",
+            "ru": "=== <b>{nickname}</b> ===\n\n"
+            "Твой возраст: <b>{age}</b>\n"
+            "Выбранный язык: <b>{language}</b>\n"
+            "Уровень владения: <b>{fluency}</b>\n"
+            "Тема для разговора: <b>{topic}</b>\n\n"
+            "О себе: {about}",
+            "de": "=== <b>{nickname}</b> ===\n\n"
+            "Ihr Alter: <b>{age}</b>\n"
+            "Gewählte Sprache: <b>{language}</b>\n"
+            "Sprachkenntnisse: <b>{fluency}</b>\n"
+            "Thema: <b>{topic}</b>\n\n"
+            "Über Sie: {about}",
+            "es": "=== <b>{nickname}</b> ===\n\n"
+            "Tu edad: <b>{age}</b>\n"
+            "Idioma elegido: <b>{language}</b>\n"
+            "Fluidez: <b>{fluency}</b>\n"
+            "Tema: <b>{topic}</b>\n\n"
+            "Sobre ti: {about}",
+            "zh": "=== <b>{nickname}</b> ===\n\n"
+            "您的年龄: <b>{age}</b>\n"
+            "选择的语言: <b>{language}</b>\n"
+            "流利程度: <b>{fluency}</b>\n"
+            "话题: <b>{topic}</b>\n\n"
+            "关于您: {about}",
+        },
         "active_sub_caption": {
             "en": "Your subscription is active until:\n"
                   "=========================\n"
@@ -106,6 +152,118 @@ MESSAGES = dict(
             "es": "El período de suscripción ha expirado :(\n\nPor favor, activa tu suscripción para restaurar el acceso a las funciones de la aplicación",
             "zh": "订阅期限已过期 :(\n\n请激活您的订阅以恢复应用程序功能的访问权限"
         },
+        "shop_offer": {
+            "en": "Vibe & Status Combo",
+            "ru": "Комбо: вайб + статус",
+            "de": "Vibe & Status-Kombo",
+            "es": "Combo de Vibra y Estado",
+            "zh": "氛围与状态组合"
+        },
+        "shop_actions": {
+            "en": "Activate <b>{description}</b> aura",
+            "ru": "Активировать <b>{description}</b> ауру",
+            "de": "Aktiviere <b>{description}</b> Aura",
+            "es": "Activar <b>{description}</b> aura",
+            "zh": "激活 <b>{description}</b> 光环"
+        },
+        "your_location": {
+            "en": "🌎 Your location",
+            "ru": "🌎 Твое местоположение",
+            "de": "🌎 Ihr Standort",
+            "es": "🌎 Tu ubicación",
+            "zh": "🌎 您的位置",
+        },
+        "no_username": {
+            "en": "You don't have a username, please, set one",
+            "ru": "У тебя нет @username, пожалуйста, установи его",
+            "de": "Sie haben keinen Benutzernamen, bitte setzen Sie einen",
+            "es": "No tienes un nombre de usuario, por favor, establece uno",
+            "zh": "您没有用户名，请设置一个",
+        },
+        "no_location": {
+            "en": "You didn't share your location",
+            "ru": "Ты не стал делиться своей геолокацией",
+            "de": "Du hast deinen Standort nicht geteilt",
+            "es": "No compartiste tu ubicación",
+            "zh": "你没有分享你的位置",
+        },
+        "search_began": {
+            "en": "🔍 Looking for a partner",
+            "ru": "🔍 Ищем партнера для общения",
+            "de": "🔍 Suche einen Partner für die Kommunikation",
+            "es": "🔍 Buscando un socio para comunicarse",
+            "zh": "🔍 寻找沟通伙伴",
+        },
+        "match_found": {
+            "en": "Match has been found! Their nickname is <b>{nickname}</b>\n\nTheir intro: {about}\n\nTap this button to start chat: ",
+            "ru": "Нашла тебе собеседника! Его псевдоним: <b>{nickname}</b>\n\nВкратце о нём: {about}\n\nНажми по кнопке ниже, чтобы перейти в чат: ",
+            "de": "Ein Match wurde gefunden! Ihr Spitzname ist <b>{nickname}</b>\n\nIhr intro: {about}\n\nTippen Sie auf diese Schaltfläche, um den Chat zu starten: ",
+            "es": "¡Se ha encontrado una coincidencia! Su apodo es <b>{nickname}</b>\n\nSu intro: {about}\n\nPulsa este botón para comenzar a chatear: ",
+            "zh": "已找到匹配！他们的昵称是 <b>{nickname}</b>\n\n他们的介绍：{about}\n\n点击此按钮开始聊天：",
+        },
+        "show_queue_info": {
+            "en": "Total in search: {total}\n\nMost spoken languages at the moment: {lans}",
+            "ru": "Всего в поиске: {total}\n\nИспользуемые языки в очереди: {lans}",
+            "de": "Gesamt in der Suche: {total}\n\nMeistgesprochene Sprachen im Moment: {lans}",
+            "es": "Total en búsqueda: {total}\n\nIdiomas más hablados en este momento: {lans}",
+            "zh": "搜索总数: {total}\n\n当前最常用的语言: {lans}",
+        },
+        "nobody_in_queue": {
+            "en": "No one is looking for a match",
+            "ru": "Никого нет, чтобы показать актуальные языки",
+            "de": "Niemand sucht nach einem Match",
+            "es": "Nadie está buscando una coincidencia",
+            "zh": "没人在寻找匹配",
+        },
+        "its_just_you": {
+            "en": "It`s just you",
+            "ru": "Кроме Вас никого нет",
+            "de": "Es sind nur Sie",
+            "es": "Eres solo tú",
+            "zh": "只有您一个人",
+        },
+        "timed_out": {
+            "en": "⏳ Timed out. Sorry, didn't find you a partner :(",
+            "ru": "⏳ Время истекло. Прости, не нашла тебе партнера :(",
+            "de": "⏳ Zeit abgelaufen. Tut mir leid, ich habe keinen Partner für dich gefunden :(",
+            "es": "⏳ Tiempo agotado. Lo siento, no te encontré un compañero :(",
+            "zh": "⏳ 超时了。抱歉，没有为你找到伙伴 :(",
+        },
+        "cancel_search": {
+            "en": "⚠️ Ended search",
+            "ru": "⚠️ Поиск завершен",
+            "de": "⚠️ Suche beendet",
+            "es": "⚠️ Búsqueda terminada",
+            "zh": "⚠️ 搜索已结束",
+        },
+        "current_topic": {
+            "en": "Current topic - <b>{topic}</b>\n\nChoose one of the options below to change it",
+            "ru": "Текущая тема - <b>{topic}</b>\n\nВыберите новую тему для разговора из предложенного ниже выбора",
+            "de": "Aktuelles Thema - <b>{topic}</b>\n\nWählen Sie eine der folgenden Optionen, um es zu ändern",
+            "es": "Tema actual - <b>{topic}</b>\n\nElija una de las opciones a continuación para cambiarla",
+            "zh": "当前主题 - <b>{topic}</b>\n\n选择以下选项之一进行更改",
+        },
+        "topic_changed": {
+            "en": "Topic has been successfully changed",
+            "ru": "Тема была успешно заменена",
+            "de": "Thema wurde erfolgreich geändert",
+            "es": "El tema se ha cambiado correctamente",
+            "zh": "主题已成功更改",
+        },
+        "fail_to_change": {
+            "en": "You chose the same topic you alreade have",
+            "ru": "Ты выбрал тему, которая уже установлена",
+            "de": "Sie haben dasselbe Thema gewählt, das Sie bereits haben",
+            "es": "Elegiste el mismo tema que ya tienes",
+            "zh": "你选择了与已有主题相同的主题",
+        },
+        "topic_change_canceled": {
+            "en": "Change of topic canceled",
+            "ru": "Смена темы отменена",
+            "de": "Themenwechsel abgesagt",
+            "es": "Cambio de tema cancelado",
+            "zh": "话题变更已取消",
+        },
         "payment_needed": {
             "en": " 🛎 Friendly Reminder\n"
                   "=========================================\n"
@@ -143,20 +301,6 @@ MESSAGES = dict(
             "de": "Drücken Sie /help, um Hilfe zu erhalten",
             "es": "Presiona /help para obtener ayuda",
             "zh": "按 /help 获取帮助",
-        },
-        "you_chose": {
-            "en": "➪ You chose:",
-            "ru": "➪ Ты выбрал:",
-            "de": "➪ Du hast gewählt:",
-            "es": "➪ Elegiste:",
-            "zh": "➪ 你选择了：",
-        },
-        "gratitude": {
-            "en": "Thank you for your patience",
-            "ru": "Спасибо за терпение",
-            "de": "Danke für deine Geduld",
-            "es": "Gracias por tu paciencia",
-            "zh": "谢谢你的耐心",
         },
     }
 )
@@ -366,6 +510,13 @@ QUESTIONARY = dict(
 
 BUTTONS = dict(
     {
+        "profile": {
+            "en": "👤 Profile",
+            "ru": "👤 Профиль",
+            "de": "👤 Profil",
+            "es": "👤 Perfil",
+            "zh": "👤 个人资料",
+        },
         "dictionary": {
             "en": "📚 Dictionary",
             "ru": "📚 Словарь",
@@ -374,10 +525,10 @@ BUTTONS = dict(
             "zh": "📚 词典",
         },
         "find_partner": {
-            "en": "🌐 Find partner",
-            "ru": "🌐 Найти собеседника",
-            "de": "🌐 Partner finden",
-            "es": "🌐 Encontrar compañero",
+            "en": "🌐 Partner",
+            "ru": "🌐 Cобеседник",
+            "de": "🌐 Partner",
+            "es": "🌐 Compañero",
             "zh": "🌐 寻找伙伴",
         },
         "sub_details": {
@@ -429,6 +580,13 @@ BUTTONS = dict(
             "es": "🔙 Volver",
             "zh": "🔙 返回",
         },
+        "cancel": {
+            "en": "❌ Cancel",
+            "ru": "❌ Отменить",
+            "de": "❌ Abbrechen",
+            "es": "❌ Cancelar",
+            "zh": "❌ 取消",
+        },
         "start_trial": {
             "en": "✅ Start 3-Day Free Trial",
             "ru": "✅ Начать 3 дня бесплатно",
@@ -442,6 +600,48 @@ BUTTONS = dict(
             "de": "Ich stimme zu",
             "es": "Estoy de acuerdo",
             "zh": "我同意",
+        },
+        "shop": {
+            "en": "🏬 Vibes` shop",
+            "ru": "🏬 Магазин Вайба",
+            "de": "🏬 Vibes laden",
+            "es": "🏬 Tienda de vibes",
+            "zh": "🏬 氛围商店"
+        },
+        "next": {
+            "en": "Next ➡️",
+            "ru": "Далее ➡️",
+            "de": "Weiter ➡️",
+            "es": "Siguiente ➡️",
+            "zh": "下一步 ➡️"
+        },
+        "prev": {
+            "en": "⬅️ Prev",
+            "ru": "⬅️ Назад",
+            "de": "⬅️ Zurück",
+            "es": "⬅️ Anterior",
+            "zh": "⬅️ 上一步"
+        },
+        "make_payment": {
+            "en": "🛒 Make payment N rubles",
+            "ru": "🛒 Оплатить N рублей",
+            "de": "🛒 Zahlung leisten N Rubel",
+            "es": "🛒 Realizar pago N rublos",
+            "zh": "🛒 支付 N 卢布"
+        },
+        "exit": {
+            "en": "🚶‍♂️Leave shop",
+            "ru": "🚶‍♂️Покинуть магазин",
+            "de": "🚶‍♂️Shop verlassen",
+            "es": "🚶‍♂️Salir de la tienda",
+            "zh": "🚶‍♂️离开商店"
+        },
+        "queue_info": {
+            "en": "❔Show queue info",
+            "ru": "❔Показать очередь",
+            "de": "❔Warteschlange anzeigen",
+            "es": "❔Mostrar información de cola",
+            "zh": "❔ 显示队列信息",
         },
         "payment": {
             "en": "💳 Renew your subscription",
@@ -641,137 +841,150 @@ WEEKLY_QUIZ = dict({
     }
 )
 
-TRANSCRIPTIONS = dict(
-    {
-        "languages": {
-            "russian": {
-                "en": "Russian",
-                "ru": "Русский",
-                "de": "Russisch",
-                "es": "Ruso",
-                "zh": "俄语",
-            },
-            "english": {
-                "en": "English",
-                "ru": "Английский",
-                "de": "Englisch",
-                "es": "Inglés",
-                "zh": "英语",
-            },
-            "german": {
-                "en": "German",
-                "ru": "Немецкий",
-                "de": "Deutsch",
-                "es": "Alemán",
-                "zh": "德语",
-            },
-            "spanish": {
-                "en": "Spanish",
-                "ru": "Испанский",
-                "de": "Spanisch",
-                "es": "Español",
-                "zh": "西班牙语",
-            },
-            "chinese": {
-                "en": "Chinese",
-                "ru": "Китайский",
-                "de": "Chinesisch",
-                "es": "Chino",
-                "zh": "中文",
-            },
+TRANSCRIPTIONS = dict({
+    "topics": {
+        "general": {
+            "en": "general",
+            "ru": "обо всем",
+            "de": "allgemein",
+            "es": "general",
+            "zh": "一般",
         },
-        "fluency": {
-            "beginer": {
-                "en": "beginer",
-                "ru": "начальный",
-                "de": "Anfänger",
-                "es": "principiante",
-                "zh": "初级",
-            },
-            "intermediate": {
-                "en": "intermediate",
-                "ru": "средний",
-                "de": "mittelstufe",
-                "es": "intermedio",
-                "zh": "中级",
-            },
-            "advanced": {
-                "en": "advanced",
-                "ru": "продвинутый",
-                "de": "fortgeschritten",
-                "es": "avanzado",
-                "zh": "高级",
-            },
-            "native": {
-                "en": "native",
-                "ru": "родной",
-                "de": "muttersprachler",
-                "es": "nativo",
-                "zh": "母语",
-            },
+        "music": {
+            "en": "music",
+            "ru": "музыка",
+            "de": "musik",
+            "es": "música",
+            "zh": "音乐",
         },
-        "topics": {
-            "general": {
-                "en": "general",
-                "ru": "обо всем",
-                "de": "allgemein",
-                "es": "general",
-                "zh": "一般",
-            },
-            "music": {
-                "en": "music",
-                "ru": "музыка",
-                "de": "musik",
-                "es": "música",
-                "zh": "音乐",
-            },
-            "sports": {
-                "en": "sports",
-                "ru": "спорт",
-                "de": "sport",
-                "es": "deportes",
-                "zh": "体育",
-            },
-            "technology": {
-                "en": "technology",
-                "ru": "технологии",
-                "de": "technologie",
-                "es": "tecnología",
-                "zh": "技术",
-            },
-            "travel": {
-                "en": "travel",
-                "ru": "путешествия",
-                "de": "reisen",
-                "es": "viajes",
-                "zh": "旅行",
-            },
-            "movies": {
-                "en": "movies",
-                "ru": "фильмы",
-                "de": "filme",
-                "es": "cine",
-                "zh": "电影",
-            },
-            "games": {
-                "en": "video games",
-                "ru": "видео-игры",
-                "de": "videospiele",
-                "es": "videojuegos",
-                "zh": "视频游戏",
-            },
+        "sports": {
+            "en": "sports",
+            "ru": "спорт",
+            "de": "sport",
+            "es": "deportes",
+            "zh": "体育",
         },
-        "status": {
-            "rookie": {
-                "en": "rookie",
-                "ru": "зеленый",
-                "de": "anfänger",
-                "es": "novato",
-                "zh": "新手",
-            }
+        "technology": {
+            "en": "technology",
+            "ru": "технологии",
+            "de": "technologie",
+            "es": "tecnología",
+            "zh": "技术",
         },
-    }
-)
+        "travel": {
+            "en": "travel",
+            "ru": "путешествия",
+            "de": "reisen",
+            "es": "viajes",
+            "zh": "旅行",
+        },
+        "movies": {
+            "en": "movies",
+            "ru": "фильмы",
+            "de": "filme",
+            "es": "cine",
+            "zh": "电影",
+        },
+        "games": {
+            "en": "video games",
+            "ru": "видео-игры",
+            "de": "videospiele",
+            "es": "videojuegos",
+            "zh": "视频游戏",
+        },
+    },
+
+    "came_from": {
+        "friends": {
+            "en": "through friends",
+            "ru": "через знакомых",
+            "de": "durch Freunde",
+            "es": "a través de amigos",
+            "zh": "通过朋友",
+        },
+        "search": {
+            "en": "on internet",
+            "ru": "по интернету",
+            "de": "im Internet",
+            "es": "en internet",
+            "zh": "在互联网上",
+        },
+        "other": {
+            "en": "through ads",
+            "ru": "через рекламу",
+            "de": "durch Werbung",
+            "es": "a través de anuncios",
+            "zh": "通过广告",
+        },
+    },
+    "languages": {
+        "russian": {
+            "en": "Russian",
+            "ru": "Русский",
+            "de": "Russisch",
+            "es": "Ruso",
+            "zh": "俄语",
+        },
+        "english": {
+            "en": "English",
+            "ru": "Английский",
+            "de": "Englisch",
+            "es": "Inglés",
+            "zh": "英语",
+        },
+        "german": {
+            "en": "German",
+            "ru": "Немецкий",
+            "de": "Deutsch",
+            "es": "Alemán",
+            "zh": "德语",
+        },
+        "spanish": {
+            "en": "Spanish",
+            "ru": "Испанский",
+            "de": "Spanisch",
+            "es": "Español",
+            "zh": "西班牙语",
+        },
+        "chinese": {
+            "en": "Chinese",
+            "ru": "Китайский",
+            "de": "Chinesisch",
+            "es": "Chino",
+            "zh": "中文",
+        },
+    },
+    "fluency": {
+        0: {
+            "en": "beginner",
+            "ru": "начальный",
+            "de": "anfänger",
+            "es": "principiante",
+            "zh": "初级",
+        },
+        1: {
+            "en": "intermediate",
+            "ru": "средний",
+            "de": "fortgeschritten",
+            "es": "intermedio",
+            "zh": "中级",
+        },
+        2: {
+            "en": "advanced",
+            "ru": "продвинутый",
+            "de": "weit fortgeschritten",
+            "es": "avanzado",
+            "zh": "高级",
+        },
+        3: {
+            "en": "native",
+            "ru": "родной",
+            "de": "muttersprache",
+            "es": "nativo",
+            "zh": "母语",
+        },
+    },
+})
 
 
 NOTIFICATIONS = dict({
@@ -828,3 +1041,424 @@ NOTIFICATIONS = dict({
         ],
     },
 })
+
+
+EMOJI_SHOP = dict({
+    "emojies": {
+        0: {
+            "phoenix_rise": "🔥",  # Восход феникса
+            "dragon_hoard": "🐉",  # Драконья сокровищница
+            "unicorn_magic": "🦄",  # Магия единорога
+            "kraken_depth": "🐙"  # Глубина кракена
+        },
+        1: {
+            "phantom_creator": "👻",  # Фантомный творец
+            "jester_mode": "🃏",  # Режим шута
+            "masquerade_veil": "🎭",  # Маскарадная вуаль
+            "alchemist_lab": "🧪"  # Лаборатория алхимика
+        },
+        2: {
+            "stellar_mode": "🌠",  # Режим звезды
+            "orbit_focus": "🛰️",  # Орбитальный фокус
+            "nebula_dreams": "🌌",  # Туманность грёз
+            "quantum_leap": "⚛️"  # Квантовый скачок
+        },
+        3: {
+            "volcano_core": "🌋",  # Ядро вулкана
+            "tidal_force": "🌊",  # Приливная сила
+            "aurora_whisper": "🌠",  # Шёпот авроры
+            "crystal_cave": "🔮"  # Хрустальная пещера
+        },
+        4: {
+            "blacksmith_forge": "⚒️",  # Кузница кузнеца
+            "alchemist_elixir": "🧪",  # Эликсир алхимика
+            "bard_ballad": "🎻",  # Баллада барда
+            "wizard_tower": "🏰"  # Башня волшебника
+        },
+        5: {
+            "cyber_samurai": "🗡️",  # Кибер-самурай
+            "neon_dream": "💠",  # Неоновая мечта
+            "hologram_self": "👁️",  # Голографическое я
+            "time_traveler": "🕰️"  # Путешественник во времени
+        },
+        6: {
+            "dice_whisperer": "🎲",  # Шепчущий кости
+            "chess_mastermind": "♟️",  # Мозг шахмат
+            "puzzle_solver": "🧩",  # Решатель головоломок
+            "lotus_meditation": "🪷"  # Медитация лотоса
+        },
+        7: {
+            "mushroom_circle": "🍄",  # Круг грибов
+            "fox_spirit": "🦊",  # Дух лисы
+            "owl_wisdom": "🦉",  # Мудрость совы
+            "wolf_pack": "🐺"  # Волчья стая
+        },
+        8: {
+            "carousel_spin": "🎠",  # Вращение карусели
+            "ferris_view": "🎡",  # Вид с колеса обозрения
+            "mask_ball": "🥸",  # Бал масок
+            "confetti_rain": "🎉"  # Дождь конфетти
+        },
+        9: {
+            "rookie": "🌱",  # Я только начал!
+            "kinda_popular": "🪙",  # Популярный так-то
+            "your_king": "👑",  # Преклоняй голову перед королем
+            "one_in_million": "💎"  # Один такой на миллион
+        },
+    },
+    "description": {
+        0: {
+            "en": "Mythical Realm",
+            "ru": "Мифическую",
+            "de": "Mythisches Reich",
+            "es": "Reino Mítico",
+            "zh": "神话领域"
+        },
+        1: {
+            "en": "Creative Alchemy",
+            "ru": "Творческую",
+            "de": "Kreative Alchemie",
+            "es": "Alquimia Creativa",
+            "zh": "创意炼金术"
+        },
+        2: {
+            "en": "Cosmic Odyssey",
+            "ru": "Космическую",
+            "de": "Kosmische Odyssee",
+            "es": "Odisea Cósmica",
+            "zh": "宇宙远征"
+        },
+        3: {
+            "en": "Elemental Force",
+            "ru": "Стихийную",
+            "de": "Elementare Kraft",
+            "es": "Fuerza Elemental",
+            "zh": "元素之力"
+        },
+        4: {
+            "en": "Medieval Legacy",
+            "ru": "Средневековую",
+            "de": "Mittelalterliches Erbe",
+            "es": "Legado Medieval",
+            "zh": "中世纪传承"
+        },
+        5: {
+            "en": "Futuristic Nexus",
+            "ru": "Футуристическую",
+            "de": "Futuristischer Nexus",
+            "es": "Nexo Futurista",
+            "zh": "未来枢纽"
+        },
+        6: {
+            "en": "Playful Enlightenment",
+            "ru": "Игриво-озарную",
+            "de": "Spielerische Erleuchtung",
+            "es": "Iluminación Juguetona",
+            "zh": "嬉戏开悟"
+        },
+        7: {
+            "en": "Natural Essence",
+            "ru": "Природную",
+            "de": "Natürliche Essenz",
+            "es": "Esencia Natural",
+            "zh": "自然本质"
+        },
+        8: {
+            "en": "Carnival Spirit",
+            "ru": "Карнавальную",
+            "de": "Karnevalsgeist",
+            "es": "Espíritu Carnaval",
+            "zh": "嘉年华精神"
+        },
+        9: {
+            "en": "Premium Aura",
+            "ru": "Премиум",
+            "de": "Premium-Aura",
+            "es": "Aura Premium",
+            "zh": "尊享光环"
+        }
+    }
+})
+
+EMOJI_TRANSCRIPTIONS = {
+    "phoenix_rise": {
+        "en": "- phoenix rise",
+        "ru": "- восход феникса",
+        "de": "- Phönix Aufstieg",
+        "es": "- ascenso del fénix",
+        "zh": "- 凤凰崛起"
+    },
+    "dragon_hoard": {
+        "en": "- dragon hoard",
+        "ru": "- драконья сокровищница",
+        "de": "- Drachenhort",
+        "es": "- tesoro del dragón",
+        "zh": "- 龙宝藏"
+    },
+    "unicorn_magic": {
+        "en": "- unicorn magic",
+        "ru": "- магия единорога",
+        "de": "- Einhorn Magie",
+        "es": "- magia de unicornio",
+        "zh": "- 独角兽魔法"
+    },
+    "kraken_depth": {
+        "en": "- kraken depth",
+        "ru": "- глубина кракена",
+        "de": "- Krakentiefe",
+        "es": "- profundidad del kraken",
+        "zh": "- 海妖深渊"
+    },
+    "phantom_creator": {
+        "en": "- phantom creator",
+        "ru": "- фантомный творец",
+        "de": "- Phantom Schöpfer",
+        "es": "- creador fantasma",
+        "zh": "- 幻影创造者"
+    },
+    "jester_mode": {
+        "en": "- jester mode",
+        "ru": "- режим шута",
+        "de": "- Hofnarr Modus",
+        "es": "- modo bufón",
+        "zh": "- 小丑模式"
+    },
+    "masquerade_veil": {
+        "en": "- masquerade veil",
+        "ru": "- маскарадная вуаль",
+        "de": "- Maskerade Schleier",
+        "es": "- velo de mascarada",
+        "zh": "- 假面舞会面纱"
+    },
+    "alchemist_lab": {
+        "en": "- alchemist lab",
+        "ru": "- лаборатория алхимика",
+        "de": "- Alchemist Labor",
+        "es": "- laboratorio de alquimista",
+        "zh": "- 炼金术士实验室"
+    },
+    "stellar_mode": {
+        "en": "- stellar mode",
+        "ru": "- режим звезды",
+        "de": "- Sterne Modus",
+        "es": "- modo estelar",
+        "zh": "- 恒星模式"
+    },
+    "orbit_focus": {
+        "en": "- orbit focus",
+        "ru": "- орбитальный фокус",
+        "de": "- Orbit Fokus",
+        "es": "- enfoque orbital",
+        "zh": "- 轨道焦点"
+    },
+    "nebula_dreams": {
+        "en": "- nebula dreams",
+        "ru": "- туманность грёз",
+        "de": "- Nebel Träume",
+        "es": "- sueños de nebulosa",
+        "zh": "- 星云之梦"
+    },
+    "quantum_leap": {
+        "en": "- quantum leap",
+        "ru": "- квантовый скачок",
+        "de": "- Quantensprung",
+        "es": "- salto cuántico",
+        "zh": "- 量子飞跃"
+    },
+    "volcano_core": {
+        "en": "- volcano core",
+        "ru": "- ядро вулкана",
+        "de": "- Vulkan Kern",
+        "es": "- núcleo volcánico",
+        "zh": "- 火山核心"
+    },
+    "tidal_force": {
+        "en": "- tidal force",
+        "ru": "- приливная сила",
+        "de": "- Gezeitenkraft",
+        "es": "- fuerza de marea",
+        "zh": "- 潮汐力"
+    },
+    "aurora_whisper": {
+        "en": "- aurora whisper",
+        "ru": "- шёпот авроры",
+        "de": "- Aurora Flüstern",
+        "es": "- susurro de aurora",
+        "zh": "- 极光低语"
+    },
+    "crystal_cave": {
+        "en": "- crystal cave",
+        "ru": "- хрустальная пещера",
+        "de": "- Kristallhöhle",
+        "es": "- cueva de cristal",
+        "zh": "- 水晶洞穴"
+    },
+    "blacksmith_forge": {
+        "en": "- blacksmith forge",
+        "ru": "- кузница кузнеца",
+        "de": "- Schmiede",
+        "es": "- forja de herrero",
+        "zh": "- 铁匠铺"
+    },
+    "alchemist_elixir": {
+        "en": "- alchemist elixir",
+        "ru": "- эликсир алхимика",
+        "de": "- Alchemist Elixier",
+        "es": "- elixir de alquimista",
+        "zh": "- 炼金术士灵药"
+    },
+    "bard_ballad": {
+        "en": "- bard ballad",
+        "ru": "- баллада барда",
+        "de": "- Barde Ballade",
+        "es": "- balada de bardo",
+        "zh": "- 吟游诗人歌谣"
+    },
+    "wizard_tower": {
+        "en": "- wizard tower",
+        "ru": "- башня волшебника",
+        "de": "- Zaubererturm",
+        "es": "- torre de mago",
+        "zh": "- 巫师塔"
+    },
+    "cyber_samurai": {
+        "en": "- cyber samurai",
+        "ru": "- кибер самурай",
+        "de": "- Cyber Samurai",
+        "es": "- samurái cibernético",
+        "zh": "- 电子武士"
+    },
+    "neon_dream": {
+        "en": "- neon dream",
+        "ru": "- неоновая мечта",
+        "de": "- Neon Traum",
+        "es": "- sueño neón",
+        "zh": "- 霓虹之梦"
+    },
+    "hologram_self": {
+        "en": "- hologram self",
+        "ru": "- голографическое я",
+        "de": "- Hologramm Selbst",
+        "es": "- yo holográfico",
+        "zh": "- 全息自我"
+    },
+    "time_traveler": {
+        "en": "- time traveler",
+        "ru": "- путешественник во времени",
+        "de": "- Zeitreisender",
+        "es": "- viajero del tiempo",
+        "zh": "- 时间旅行者"
+    },
+    "dice_whisperer": {
+        "en": "- dice whisperer",
+        "ru": "- шепчущий кости",
+        "de": "- Würfelflüsterer",
+        "es": "- susurrador de dados",
+        "zh": "- 骰子低语者"
+    },
+    "chess_mastermind": {
+        "en": "- chess mastermind",
+        "ru": "- мозг шахмат",
+        "de": "- Schachgenie",
+        "es": "- genio del ajedrez",
+        "zh": "- 象棋大师"
+    },
+    "puzzle_solver": {
+        "en": "- puzzle solver",
+        "ru": "- решатель головоломок",
+        "de": "- Rätsellöser",
+        "es": "- resolvedor de rompecabezas",
+        "zh": "- 解谜者"
+    },
+    "lotus_meditation": {
+        "en": "- lotus meditation",
+        "ru": "- медитация лотоса",
+        "de": "- Lotus Meditation",
+        "es": "- meditación de loto",
+        "zh": "- 莲花冥想"
+    },
+    "mushroom_circle": {
+        "en": "- mushroom circle",
+        "ru": "- круг грибов",
+        "de": "- Pilzkreis",
+        "es": "- círculo de hongos",
+        "zh": "- 蘑菇圈"
+    },
+    "fox_spirit": {
+        "en": "- fox spirit",
+        "ru": "- дух лисы",
+        "de": "- Fuchsgeist",
+        "es": "- espíritu de zorro",
+        "zh": "- 狐狸精"
+    },
+    "owl_wisdom": {
+        "en": "- owl wisdom",
+        "ru": "- мудрость совы",
+        "de": "- Eulenweisheit",
+        "es": "- sabiduría de búho",
+        "zh": "- 猫头鹰智慧"
+    },
+    "wolf_pack": {
+        "en": "- wolf pack",
+        "ru": "- волчья стая",
+        "de": "- Wolfsrudel",
+        "es": "- manada de lobos",
+        "zh": "- 狼群"
+    },
+    "carousel_spin": {
+        "en": "- carousel spin",
+        "ru": "- вращение карусели",
+        "de": "- Karussell Drehung",
+        "es": "- giro de carrusel",
+        "zh": "- 旋转木马"
+    },
+    "ferris_view": {
+        "en": "- ferris view",
+        "ru": "- вид с колеса обозрения",
+        "de": "- Riesenrad Blick",
+        "es": "- vista de la noria",
+        "zh": "- 摩天轮景观"
+    },
+    "mask_ball": {
+        "en": "- mask ball",
+        "ru": "- бал масок",
+        "de": "- Maskenball",
+        "es": "- baile de máscaras",
+        "zh": "- 面具舞会"
+    },
+    "confetti_rain": {
+        "en": "- confetti rain",
+        "ru": "- дождь конфетти",
+        "de": "- Konfetti Regen",
+        "es": "- lluvia de confeti",
+        "zh": "- 彩纸雨"
+    },
+    "rookie": {
+        "en": "- I just started!",
+        "ru": "- Я только начал!",
+        "de": "- Ich habe gerade angefangen!",
+        "es": "- ¡Acabo de empezar!",
+        "zh": "- 我刚起步！"
+    },
+    "kinda_popular": {
+        "en": "- Kinda popular",
+        "ru": "- Популярный так-то",
+        "de": "- Irgendwie beliebt",
+        "es": "- Algo popular",
+        "zh": "- 有点人气"
+    },
+    "your_king": {
+        "en": "- Bow to the king",
+        "ru": "- Преклоняй голову",
+        "de": "- Verbeuge dich vor dem König",
+        "es": "- Inclínate ante el rey",
+        "zh": "- 向国王低头"
+    },
+    "one_in_million": {
+        "en": "- One in a million",
+        "ru": "- Один такой на миллион",
+        "de": "- Einer unter Millionen",
+        "es": "- Uno en un millón",
+        "zh": "- 百万分之一"
+    }
+}

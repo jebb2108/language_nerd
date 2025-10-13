@@ -7,9 +7,7 @@ from aiogram import Dispatcher
 from aiogram.fsm.storage.redis import RedisStorage
 from asyncpg.pgproto.pgproto import timedelta
 
-from app.bots.partner_bot.middlewares.message_tracker_middleware import (
-    MessageTrackerMiddleware,
-)
+from app.bots.main_bot.middlewares.message_tracker_middleware import MessageTrackerMiddleware
 from app.bots.partner_bot.routers import router as main_router
 from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitMiddleware
 

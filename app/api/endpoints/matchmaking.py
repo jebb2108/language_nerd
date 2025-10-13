@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.models import UserMatchResponse
 from app.dependencies import get_rabbitmq, get_db, get_redis, get_partner_bot
-from app.bots.partner_bot.keyboards.inline_keyboards import create_start_chat_button
+from app.bots.main_bot.keyboards.inline_keyboards import create_start_chat_button
 from app.bots.partner_bot.translations import MESSAGES
 from app.services.database import DatabaseService
 from app.services.redis import RedisService

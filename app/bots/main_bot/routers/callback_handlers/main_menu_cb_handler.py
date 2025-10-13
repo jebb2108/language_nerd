@@ -1,6 +1,5 @@
 from aiogram.filters import and_f
 
-from app.bots.main_bot.utils.exc import StorageDataException
 from config import config
 from logging_config import opt_logger as log
 from aiogram import F, Router
@@ -10,12 +9,15 @@ from aiogram.types import CallbackQuery
 
 from app.dependencies import get_db, get_redis_client
 from app.bots.main_bot.filters.paytime import paytime
-from app.bots.main_bot.translations import MESSAGES
+from app.bots.main_bot.translations import MESSAGES, EMOJI_SHOP, TRANSCRIPTIONS, EMOJI_TRANSCRIPTIONS
 from app.bots.main_bot.utils.access_data import data_storage as ds
+from app.bots.main_bot.utils.exc import StorageDataException
 from app.bots.main_bot.keyboards.inline_keyboards import (
     get_on_main_menu_keyboard,
     get_go_back_keyboard,
-    get_subscription_keyboard
+    get_subscription_keyboard,
+    get_profile_keyboard,
+    get_shop_keyboard
 )
 
 logger = log.setup_logger("main_menu_cb_handler", config.LOG_LEVEL)
@@ -207,4 +209,74 @@ async def resume_subscription_handler(callback: CallbackQuery, state: FSMContext
         )
 
 
+@router.callback_query(
+    and_f(F.data == "profile", paytime)
+)
+async def profile_handler(callback: CallbackQuery, state: FSMContext):
+    """ Обработчик сведений о пользователе """
+    await callback.answer()
+    user_id = callback.from_user.id
+
+    try:
+        data = await ds.get_storage_data(user_id, state)
+        lang_code = data.get("lang_code", "en")
+
+        msg = MESSAGES["user_info"][lang_code].format(
+            nickname=data.get("nickname", callback.from_user.username),
+            age=data.get("age", 'not specified'),
+            fluency=TRANSCRIPTIONS["fluency"][data.get("fluency")][lang_code],
+            topic=TRANSCRIPTIONS["topics"][data.get("topic")][lang_code],
+            language=TRANSCRIPTIONS["languages"][data.get("language")][lang_code],
+            about=data.get("about", 'not specified'),
+        )
+
+        await callback.message.edit_caption(
+            caption=msg,
+            reply_markup=get_profile_keyboard(lang_code),
+            parse_mode=ParseMode.HTML,
+        )
+
+    except StorageDataException:
+        logger.error(f"User {user_id} trying to acces data but doesn`t exist in DB")
+        await callback.message.answer("You`re not registered. Press /start to do so")
+
+    except Exception as e:
+        logger.error(f"Error in profile_handler: {e}")
+
+
+@router.callback_query(and_f(F.data.startswith("shop:"), paytime))
+async def shop_handler(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    user_id = callback.from_user.id
+    shop_indx, msg = int(callback.data.split(":")[1]), ""
+
+    try:
+        data = await ds.get_storage_data(user_id, state)
+        lang_code = data.get("lang_code")
+        msg = MESSAGES["shop_offer"][lang_code] + " "*10 + f"{shop_indx+1}/10\n\n"
+        for k, v in EMOJI_SHOP["emojies"][shop_indx].items():
+            msg += v + " " + EMOJI_TRANSCRIPTIONS[k][lang_code] + "\n"
+        msg += "\n" + MESSAGES["shop_actions"][lang_code].format(description=EMOJI_SHOP["description"][shop_indx][lang_code])
+
+        await callback.message.edit_caption(
+            caption=msg,
+            reply_markup=get_shop_keyboard(lang_code, shop_indx),
+            parse_mode=ParseMode.HTML,
+        )
+
+    except Exception as e:
+        logger.error(f"Error in shop_handler: {e}")
+
+
+@router.callback_query(and_f(F.data == "exit_shop", paytime))
+async def exit_shop_handler(callback: CallbackQuery):
+    await callback.answer("Leaving shop ...")
+    await callback.message.delete()
+
+
+@router.callback_query(and_f(F.data.startswith("make_payment:"), paytime))
+async def make_payment_handler(callback: CallbackQuery):
+    item = callback.data.split(":")[1]
+    await callback.answer(f"Making payment for {item}")
+    await callback.message.delete()
 

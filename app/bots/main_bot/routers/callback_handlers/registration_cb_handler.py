@@ -6,7 +6,6 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, FSInputFile
 from asyncpg.pgproto.pgproto import timedelta
 
-from app.bots.partner_bot.translations import TRANSCRIPTIONS
 from app.dependencies import get_rabbitmq
 from app.models import NewUser, NewPayment
 from config import config
@@ -18,7 +17,7 @@ from app.bots.main_bot.keyboards.inline_keyboards import (
     payment_keyboard,
     get_on_main_menu_keyboard,
 )
-from app.bots.main_bot.translations import MESSAGES, QUESTIONARY
+from app.bots.main_bot.translations import MESSAGES, QUESTIONARY, TRANSCRIPTIONS
 from logging_config import opt_logger as log
 
 logger = log.setup_logger("registration_cb_handler", config.LOG_LEVEL)
