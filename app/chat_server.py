@@ -1,20 +1,18 @@
 import json
-
 import uvicorn
 import socketio
 from datetime import datetime
 from fastapi import FastAPI
-from pamqp.decode import timestamp
 from redis.asyncio import Redis
 
-from app.dependencies import get_redis_client, get_rabbitmq
+from app.dependencies import get_redis_client
 from app.models import MessageContent
-from app.services.rabbitmq import RabbitMQService
+# from app.services.rabbitmq import RabbitMQService
 from app.validators.tokens import convert_token
 from app.validators.validation import validate_access
 from config import config
 
-from app.api.endpoints.matchmaking import router as match_router
+from app.api.endpoints.chatting import router as match_router
 
 from logging_config import opt_logger as log
 

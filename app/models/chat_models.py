@@ -1,9 +1,31 @@
+import re
 from datetime import datetime
 from typing import Dict, Optional, Any
 from pydantic import BaseModel, Field
 
 from app.models import Language, Topic
 from config import config
+
+class Coordinates(BaseModel):
+    """
+    Модель первичной обработки геолокации пользователя
+    """
+    latitude: float
+    longitude: float
+
+
+class RegistrationData(BaseModel):
+    """
+    Модель профиля пользователя (для базы данных)
+    """
+    user_id: int = Field(..., description="User ID")
+    nickname: str = Field(..., description="Уникальный никнейм пользователя")
+    birthday: str = Field(..., description="Дата рождения пользователя (ISO)")
+    gender: str = Field(..., description="Пол пользователя")
+    about: str = Field(..., description="Краткая информация о пользователе")
+    dating_agreement: Optional[bool] = Field(None, description="Согласие на дэйтинг")
+    location: Optional[Coordinates] = None
+
 
 
 class MessageContent(BaseModel):

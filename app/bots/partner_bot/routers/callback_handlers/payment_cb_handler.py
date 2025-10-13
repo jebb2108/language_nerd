@@ -8,7 +8,7 @@ from aiogram.types import CallbackQuery
 from app.bots.partner_bot.keyboards.inline_keyboards import get_payment_keyboard
 from app.bots.partner_bot.translations import MESSAGES
 from app.bots.partner_bot.utils.access_data import data_storage
-from app.bots.partner_bot.utils.exc import StorageDataException
+from exc import StorageDataException
 from app.dependencies import get_redis_client, get_yookassa
 from logging_config import opt_logger as log
 

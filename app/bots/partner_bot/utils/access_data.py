@@ -1,9 +1,8 @@
 import asyncio
 from datetime import datetime, time
 from aiogram.fsm.context import FSMContext
-from app.bots.partner_bot.utils.exc import StorageDataException
+from exc import StorageDataException
 from app.dependencies import get_db
-from config import config
 from logging_config import opt_logger as log
 
 logger = log.setup_logger('partner_data_storage')

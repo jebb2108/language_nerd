@@ -119,7 +119,6 @@ async def process_age(message: Message, state: FSMContext):
     if this_year >= users_year >= 1900:
         if re.match(r"\d{1,2}\.\d{1,2}\.\d{4}", message.text):
             try:
-                datetime.strptime(message.text, "%d.%m.%Y")
                 await state.update_data(bday=message.text)
                 await message.answer(
                     text=QUESTIONARY["need_intro"][lang_code], parse_mode=ParseMode.HTML

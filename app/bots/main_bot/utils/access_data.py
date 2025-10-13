@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime, time
 from aiogram.fsm.context import FSMContext
-from app.bots.partner_bot.utils.exc import StorageDataException
+from app.bots.main_bot.utils.exc import StorageDataException
 from app.dependencies import get_db
 
 

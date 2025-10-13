@@ -400,7 +400,6 @@ class DatabaseService:
         gender: bool = None,
         dating: bool = False,
         status: str = "rookie",
-        is_active: bool = True,
     ) -> None:
         async with self.acquire_connection() as conn:
             await conn.execute(
@@ -410,9 +409,9 @@ class DatabaseService:
                 user_id, status, 
                 nickname, birthday, 
                 dating, gender, 
-                about, is_active
+                about
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             ON CONFLICT (user_id) DO UPDATE
             SET status = EXCLUDED.status,
                 nickname = EXCLUDED.nickname,
@@ -420,7 +419,6 @@ class DatabaseService:
                 dating = EXCLUDED.dating,
                 gender = EXCLUDED.gender,
                 about = EXCLUDED.about,
-                is_active = EXCLUDED.is_active
             """,
                 user_id,
                 status,
@@ -429,12 +427,11 @@ class DatabaseService:
                 dating,
                 gender,
                 about,
-                is_active,
             )
             logger.info(
                 f"User {user_id} profile added. Their name: {nickname},"
                 f" birthday: {birthday}, dating: {dating}, gender: {gender}, "
-                f"status: {status},\n intro: {about}, is_active: {is_active}"
+                f"status: {status},\n intro: {about}"
             )
             return
 

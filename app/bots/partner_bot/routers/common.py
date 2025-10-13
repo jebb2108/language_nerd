@@ -10,7 +10,7 @@ from app.bots.partner_bot.filters.paytime import paytime
 from app.bots.partner_bot.middlewares.rate_limit_middleware import RateLimitInfo
 from app.bots.partner_bot.translations import MESSAGES
 from app.bots.partner_bot.utils.access_data import data_storage as ds
-from app.bots.partner_bot.utils.exc import StorageDataException
+from exc import StorageDataException
 from app.dependencies import get_redis_client, get_yookassa
 from logging_config import opt_logger as log
 

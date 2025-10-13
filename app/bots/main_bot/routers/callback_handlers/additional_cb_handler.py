@@ -8,8 +8,8 @@ from aiogram.types import CallbackQuery
 
 from app.bots.main_bot.filters.paytime import paytime
 from app.bots.main_bot.utils.exc import StorageDataException
-from app.bots.partner_bot.translations import MESSAGES
-from app.bots.partner_bot.utils.access_data import data_storage as ds
+from app.bots.main_bot.translations import MESSAGES
+from app.bots.main_bot.utils.access_data import data_storage as ds
 from app.dependencies import get_db, get_redis_client
 from app.models import UserMatchRequest
 from logging_config import opt_logger as log

@@ -1,2 +1,0 @@
-class StorageDataException(Exception):
-    pass

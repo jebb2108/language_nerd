@@ -1,10 +1,10 @@
 __all__ = [
     "NewUser",
     "NewPayment",
-    "UserProfile",
     "Location",
     "Topic",
     "Language",
+    "RegistrationData",
     "UserMatchRequest",
     "UserMatchResponse",
     "MatchCriteria",
@@ -17,6 +17,7 @@ __all__ = [
     "UserReport",
     "PendingReport",
     "DeliveryResult",
+    "MessageContent",
     "SentMessage",
 ]
 
