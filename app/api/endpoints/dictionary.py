@@ -51,7 +51,7 @@ async def api_add_word_handler(
 
     except PaymentException:
         logger.error("User is not active")
-        return HTTPException(status_code=403, detail="User is not active")
+        raise HTTPException(status_code=403, detail="User is not active")
 
     except Exception as e:
         logger.error(f"Error in api_add_word_handler: {str(e)}")
