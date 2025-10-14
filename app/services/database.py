@@ -380,8 +380,8 @@ class DatabaseService:
                 t.untill 
                 FROM users u 
                 LEFT JOIN transactions t
-                    ON u,user_id = t.user_id
-                WHERE user_id = $1""",
+                    ON u.user_id = t.user_id
+                WHERE u.user_id = $1""",
                 user_id,
             )
             return row["untill"] if row and row["is_active"] else None
