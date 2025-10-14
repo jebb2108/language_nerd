@@ -1,3 +1,4 @@
+from asyncpg.pgproto.pgproto import timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from typing import TYPE_CHECKING
@@ -51,7 +52,11 @@ async def api_add_word_handler(
         raise HTTPException(status_code=400, detail="Missing fields")
 
     if not await redis_service.get(f"user_paid:{user_id}"):
-        raise HTTPException(status_code=403, detail="User is not active")
+        due_to, is_active = await db.get_user_due_to(user_id)
+        if not is_active:
+            raise HTTPException(status_code=403, detail="User is not active")
+        due_date_db = due_to.replace(tzinfo=None) if due_to.tzinfo else due_to
+        await redis_service.setex(f"user_paid:{user_id}", timedelta(hours=2), due_date_db.isoformat())
 
     try:
         await db.add_word(user_id, word, part_of_speech, translation, is_public, context)
