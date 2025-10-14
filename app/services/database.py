@@ -593,10 +593,12 @@ class DatabaseService:
                         user_id, row["id"], audio
                     )
 
+            except PaymentException:
+                raise PaymentException
 
             except Exception as e:
                 logger.error(f"Database error: {e}")
-                return False
+                return e
 
     async def search_word(
         self, user_id: int, word: str
