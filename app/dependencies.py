@@ -2,6 +2,8 @@ from typing import TYPE_CHECKING
 
 from app.services.ai_modules import TelegramRateLimiter, ReportDeliveryManager, \
     PendingReportsProcessor, DeepSeekClient, QuestionGenerator, ReportProcessor, WeeklyReportScheduler
+from app.services.connection import ConnectionService
+from app.services.queue import queue_service
 from app.services.rabbitmq import rabbitmq_service
 from app.services.database import database_service
 from app.services.matching import matching_service
@@ -9,6 +11,7 @@ from app.services.notification import notification_service
 from app.services.redis import redis_service
 from app.services.main_bot import main_bot
 from app.services.partner_bot import partner_bot
+from app.services.connection import connection_service
 from app.services.yookassa import yookassa_service
 from config import config
 
@@ -16,6 +19,7 @@ if TYPE_CHECKING:
     from redis.asyncio import Redis
     from app.services.database import DatabaseService
     from app.services.redis import RedisService
+    from app.services.queue import QueueService
     from app.services.rabbitmq import RabbitMQService
     from app.services.matching import MatchingService
     from app.services.notification import NotificationService
@@ -74,6 +78,11 @@ async def get_redis_client() -> "Redis":
 
     return redis_service.get_client()
 
+async def get_queue_service() -> "QueueService":
+    if not queue_service.initialized:
+        await queue_service.connect()
+    return queue_service
+
 
 async def get_report_processer() -> "PendingReportsProcessor":
     # Создает объект из AI классов для отправки отчетов
@@ -96,6 +105,10 @@ async def generate_notifications() -> "WeeklyReportScheduler":
     report_processor = ReportProcessor(question_generator, max_words_per_user=5)
     weekly_report_service = WeeklyReportScheduler(report_processor)
     return weekly_report_service
+
+
+async def get_ws_connection() -> "ConnectionService":
+    return connection_service
 
 
 async def get_yookassa() -> "YookassaService": return yookassa_service

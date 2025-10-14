@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from logging_config import opt_logger
 
-from app.models import UserMatchResponse
+# from app.models import UserMatchResponse
 from config import config
 from faststream import FastStream
 from faststream.rabbit import RabbitBroker
@@ -91,7 +91,7 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
     global users_to_delete
 
     matcher = await get_match()
-    notifier = await get_notification()
+    # notifier = await get_notification()
     redis = await get_redis()
 
     logger.debug(f"Received message ID: {data["user_id"]}")
@@ -150,7 +150,8 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
             partner.user_id,
         )
         logger.debug("Currently only msg %s will be acked imedietly", data["user_id"])
-        await notifier.notify_match(room_id, user, partner)
+        # await notifier.notify_match(room_id, user, partner)
+        logger.info("Found a mattch for %s and %s", user, partner)
         return await msg.ack()
 
     # Если пара не найдена, отправляем сообщение снова
@@ -191,14 +192,17 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
         )
 
     else:
-        user_data = UserMatchResponse(
-            status=config.WAITING_TIME_EXPIRED,
-            user_id=data["user_id"],
-            lang_code=data["lang_code"],
-        )
+        # user_data = UserMatchResponse(
+        #     status=config.WAITING_TIME_EXPIRED,
+        #     user_id=data["user_id"],
+        #     lang_code=data["lang_code"],
+        #     username=data["username"],
+        #     criteria=data["criteria"],
+        #     gender=data["gender"],
+        # )
         logger.info(f"User {user_id} has run out of time")
         # Очищаем timestamp при превышении лимита попыток
-        await notifier.execute_time_out(user_data=user_data)
+        # await notifier.execute_time_out(user_data=user_data)
 
     return await msg.ack()
 

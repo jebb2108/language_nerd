@@ -26,3 +26,5 @@ async def create_token(user_id, room_id, exp: timedelta = timedelta(minutes=15))
 def convert_token(token: str):
     """Декодирует токен по секретному ключу"""
     return jwt.decode(jwt=token, key=config.SECRET_KEY, algorithms=["HS256"])
+
+

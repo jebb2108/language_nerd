@@ -147,7 +147,6 @@ class RabbitMQService:
         )
 
 
-
     async def disconnect(self):
         """Закрытие подключения"""
         if self.connection:

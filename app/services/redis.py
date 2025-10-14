@@ -37,39 +37,14 @@ class RedisService:
             logger.debug(f"Redis connection error: {e}")
             self.redis_client = None
 
-    async def get_searching_user(self, user_id: int) -> Awaitable[str] | None:
-        return await self.redis_client.get(f"searching:{user_id}")
+    async def is_user_in_queue(self, user_id: id) -> bool:
+        """Проверяем, находится ли пользователь в очереди"""
+        queue = await self.redis_client.lrange("waiting_queue", 0, -1)
+        return user_id in queue
 
-    async def get_sent_queue(self, chat_id: int) -> Awaitable[list]:
-        return await self.redis_client.lrange(f"sent_messages:{chat_id}", 0, -1)
-
-    async def delete_msg_from_queue(self, chat_id: int, message_id: int):
-        name = "sent_messages:{}".format(chat_id)
-        await self.redis_client.lrem(name, 1, message_id)
-
-    async def save_sent_message(self, message: "Message"):
-        # Сохряняет все сообщения пользователя, включая search msg
-        name = f"sent_messages:{message.chat.id}"
-        await self.redis_client.rpush(name, message.message_id)
-        await self.redis_client.expire(name, timedelta(minutes=config.WAIT_TIMER))
-        logger.debug(f"Message %s was put to %s queue w/ TTL equel to waiting time", message.message_id, name)
-
-    async def mark_msg_as_search(self, message: "Message") -> None:
-        # Сохраняет сообщения со специальной меткой в ед. экземпляре
-        name = f"search_message:{message.chat.id}"
-        await self.redis_client.setex(name, config.WAIT_TIMER+5, message.message_id)
-        logger.debug("search key: %s", name)
-        logger.debug("Message ID %s of user %s masrked as search on Redis", message.message_id, message.chat.id)
-
-    async def check_search_msg(self, chat_id: int, message_id) -> bool:
-        # Проверяет, если это поисковое сообщение, возвращает True, иначе False
-        res = await self.redis_client.get(f"search_message:{chat_id}")
-        return res == message_id
-
-    async def get_search_message_id(self, chat_id: int) -> Awaitable[int]:
-        # Достает определенное сообщение
-        key = f"search_message:{chat_id}"
-        return await self.redis_client.get(key)
+    async def get_queue_size(self) -> int:
+        """Получаем размер очереди"""
+        return await self.redis_client.llen("waiting_queue")
 
     async def exists(self, *kwargs: str) -> bool:
         # Проверяет наличие ключей в Redis

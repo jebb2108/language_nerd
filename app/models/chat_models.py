@@ -39,6 +39,12 @@ class MessageContent(BaseModel):
     room_id: str = Field(..., description="Комната сессии, где слово было использовано")
 
 
+class WebMatchToggleRequest(BaseModel):
+    """Упрощенная модель для переключения состояния очереди через веб-интерфейс"""
+    user_id: int = Field(..., description="Уникальный идентификатор пользователя")
+    action: str = Field(..., description="Действие: 'join' или 'leave'")
+
+
 class UserMatchRequest(BaseModel):
     """
     Модель запроса на поиск собеседника
@@ -63,19 +69,14 @@ class UserMatchRequest(BaseModel):
 
 
 class UserMatchResponse(BaseModel):
-    """
-    Модель ответа после успешного добавления в очередь.
-    """
-
-    status: str = Field(..., description="Статус операции")
-    user_id: int = Field(..., description="ID пользователя")
-    lang_code: str = Field(..., description="Код языка пользователя")
-    queue_position: Optional[int] = Field(
-        None, description="Позиция в очереди (если применимо)"
-    )
-    estimated_wait: Optional[int] = Field(
-        None, description="Примерное время ожидания в секундах"
-    )
+    """Модель ответа с данными пользователя для матчинга"""
+    user_id: int
+    username: str
+    criteria: Dict[str, Any]
+    gender: str
+    lang_code: str
+    status: str
+    source: str = "web"
 
 
 class MatchCriteria(BaseModel):

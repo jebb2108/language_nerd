@@ -5,6 +5,7 @@ __all__ = [
     "Topic",
     "Language",
     "RegistrationData",
+    "WebMatchToggleRequest",
     "UserMatchRequest",
     "UserMatchResponse",
     "MatchCriteria",
