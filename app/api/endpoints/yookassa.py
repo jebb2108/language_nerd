@@ -33,7 +33,7 @@ def verify_signature(body, signature):
     # Генерируем подпись из тела запроса
     message = json.dumps(body, separators=(',', ':'), ensure_ascii=False).encode()
     expected_signature = hmac.new(
-        config.YOOKASSA_WEBHOOK_SECRET.encode(),
+        config.YOOKASSA_SECRET_KEY.encode(),
         message,
         hashlib.sha256
     ).hexdigest()

@@ -563,11 +563,12 @@ class DatabaseService:
 
     async def add_word(self, user_id: int, word: str, pos: str, value: str, is_public: bool, context: str=None, audio=None) -> bool:
         async with self.acquire_connection() as conn:
+
+            is_active = await conn.fetchval(
+                "SELECT is_active FROM users WHERE user_id = $1", user_id
+            )
+            if not is_active: raise PaymentException
             try:
-                is_active = await conn.fetchval(
-                    "SELECT is_active FROM users WHERE user_id = $1", user_id
-                )
-                if not is_active: raise PaymentException
                 row = await conn.fetchrow(
                     """INSERT INTO words (user_id, word, part_of_speech, translation, is_public) 
                     VALUES ($1, $2, $3, $4, $5) RETURNING id""",
@@ -593,8 +594,6 @@ class DatabaseService:
                         user_id, row["id"], audio
                     )
 
-            except PaymentException:
-                raise PaymentException
 
             except Exception as e:
                 logger.error(f"Database error: {e}")
