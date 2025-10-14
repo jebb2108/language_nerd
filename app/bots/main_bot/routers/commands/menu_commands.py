@@ -15,7 +15,7 @@ from app.models import UserMatchRequest
 from config import config
 from app.bots.main_bot.keyboards.inline_keyboards import (
     get_on_main_menu_keyboard,
-    show_new_topic_keyboard,
+    show_topic_keyboard,
     get_search_keyboard
 )
 from app.bots.main_bot.utils.access_data import data_storage as ds
@@ -97,7 +97,7 @@ async def change_topic_handler(message: Message, state: FSMContext):
             topic=TRANSCRIPTIONS["topics"][topic][lang_code]
         )
         await message.answer(
-            text=msg, reply_markup=show_new_topic_keyboard(lang_code), parse_mode=ParseMode.HTML
+            text=msg, reply_markup=show_topic_keyboard(lang_code, True), parse_mode=ParseMode.HTML
         )
 
     except StorageDataException:
