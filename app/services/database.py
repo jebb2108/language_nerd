@@ -7,6 +7,7 @@ from collections import defaultdict
 from contextlib import asynccontextmanager
 
 from config import config
+from exc import PaymentException
 from logging_config import opt_logger as log
 
 logger = log.setup_logger("database")
@@ -563,6 +564,10 @@ class DatabaseService:
     async def add_word(self, user_id: int, word: str, pos: str, value: str, is_public: bool, context: str=None, audio=None) -> bool:
         async with self.acquire_connection() as conn:
             try:
+                is_active = await conn.fetchval(
+                    "SELECT is_active FROM users WHERE user_is = $1", user_id
+                )
+                if not is_active: raise PaymentException
                 row = await conn.fetchrow(
                     """INSERT INTO words (user_id, word, part_of_speech, translation, is_public) 
                     VALUES ($1, $2, $3, $4, $5) RETURNING id""",
