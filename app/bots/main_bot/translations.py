@@ -672,7 +672,7 @@ WEEKLY_QUIZ = dict({
         "en": "<b>Spaced Repetition Theory</b>\n\nThe learning in our app is based on the "
               "scientifically proven method of spaced repetition. It was created taking into "
               "account the law of memory discovered by Hermann Ebbinghaus: new information is "
-              "quickly forgotten if not revisited. Our system builds your personal repetition "
+              "quickly forgotten if not revisited.\n\nOur system builds your personal repetition "
               "schedule to combat forgetting. Instead of cramming everything every day, the "
               "app itself will remind you to repeat words exactly at the moment when you are "
               "about to forget them. This ensures that each word is reliably consolidated in "
@@ -680,7 +680,7 @@ WEEKLY_QUIZ = dict({
 
         "ru": "<b>Теория интервального повторения</b>\n\nВ основе обучения в нашем приложении "
               "лежит научно доказанный метод интервальных повторений. Он создан с учетом закона памяти, "
-              "открытого Германом Эббингаузом: новая информация быстро забывается, если к ней не возвращаться. "
+              "открытого Германом Эббингаузом: новая информация быстро забывается, если к ней не возвращаться.\n\n"
               "Наша система строит ваш персональный график повторений, чтобы бороться с забыванием. "
               "Вместо того чтобы заучивать все подряд каждый день, приложение само напомнит вам повторить "
               "слова именно в тот момент, когда вы вот-вот готовы их забыть. Это гарантирует, что каждое "
