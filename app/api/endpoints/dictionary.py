@@ -1,9 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.dependencies import get_db
+from typing import TYPE_CHECKING
+
+from app.dependencies import get_db, get_redis_client
 from app.models.dict_models import UserDictionaryRequest
 from config import config
 from logging_config import opt_logger as log
+
+if TYPE_CHECKING:
+    from redis.asyncio import Redis
 
 logger = log.setup_logger('dictionary_endpoints', config.LOG_LEVEL)
 
@@ -32,6 +37,7 @@ async def api_words_handler(
 @router.post("/words")
 async def api_add_word_handler(
     request: UserDictionaryRequest,
+    redis_service: "Redis" = Depends(get_redis_client),
     db=Depends(get_db),
 ):
     user_id = request.user_id
@@ -44,8 +50,10 @@ async def api_add_word_handler(
     if not all([user_id, word, part_of_speech, translation]):
         raise HTTPException(status_code=400, detail="Missing fields")
 
-    try:
+    if not await redis_service.get(f"user_paid:{user_id}"):
+        raise HTTPException(status_code=403, detail="User is not active")
 
+    try:
         await db.add_word(user_id, word, part_of_speech, translation, is_public, context)
 
     except Exception as e:

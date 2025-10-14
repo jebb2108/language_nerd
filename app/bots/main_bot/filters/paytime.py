@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from app.dependencies import get_db, get_redis_client
 from logging_config import opt_logger as log
 from typing import TYPE_CHECKING, Union
-from config import config
 
 if TYPE_CHECKING:
     from aiogram.types import CallbackQuery, Message

@@ -371,13 +371,20 @@ class DatabaseService:
             )
 
     async def get_users_due_to(self, user_id: int) -> datetime:
+        """ Отправляет данные о времени следующей оплаты, если пользователь активен """
         async with self.acquire_connection() as conn:
             row = await conn.fetchrow(
                 """
-                SELECT untill FROM transactions WHERE user_id = $1""",
+                SELECT 
+                u.is_active,
+                t.untill 
+                FROM users u 
+                LEFT JOIN transactions t
+                    ON u,user_id = t.user_id
+                WHERE user_id = $1""",
                 user_id,
             )
-            return row["untill"] if row else None
+            return row["untill"] if row and row["is_active"] else None
 
 
     async def deactivate_subscription(self, user_id: int):

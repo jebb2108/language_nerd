@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from aiogram.filters import and_f
 
 from config import config
@@ -41,7 +43,7 @@ async def about(callback: CallbackQuery, state: FSMContext):
         data = await ds.get_storage_data(user_id, state)
         lang_code = data.get("lang_code")
         is_active = data.get("is_active")
-        if not is_active: return await callback.answer("Your subscriotion on pause")
+        if not is_active: return await callback.answer("Your subscription on pause")
 
         msg = MESSAGES["about"][lang_code]
 
@@ -142,6 +144,7 @@ async def cancel_subscription_handler(callback: CallbackQuery, state: FSMContext
     user_id = callback.from_user.id
     data = await ds.get_storage_data(user_id, state)
     lang_code = data.get("lang_code")
+    await redis_client.delete(f"user_paid:{user_id}")
     is_active = False
 
     if await paytime(callback):
@@ -160,6 +163,7 @@ async def cancel_subscription_handler(callback: CallbackQuery, state: FSMContext
                 reply_markup=get_subscription_keyboard(lang_code, False, True),
                 parse_mode=ParseMode.HTML
             )
+
     else:
         cap = MESSAGES["expired_sub_caption"][lang_code]
         await callback.message.edit_caption(
@@ -220,6 +224,8 @@ async def profile_handler(callback: CallbackQuery, state: FSMContext):
     try:
         data = await ds.get_storage_data(user_id, state)
         lang_code = data.get("lang_code", "en")
+        is_active = data.get("is_active")
+        if not is_active: return await callback.answer("Your subscription on pause")
 
         msg = MESSAGES["user_info"][lang_code].format(
             nickname=data.get("nickname", callback.from_user.username),

@@ -30,7 +30,6 @@ router = APIRouter()
 async def websocket_queue(
         websocket: WebSocket,
         user_id: int = Query(..., alias="user_id"),
-        # nickname: str = Query(..., alias="nickname")
 ):
     """WebSocket для управления очередью в реальном времени"""
 
@@ -82,7 +81,6 @@ async def websocket_queue(
                     await handle_toggle_queue(
                         websocket=websocket,
                         user_id=user_id,
-                        nickname=nickname,
                         queue_service=queue_service,
                         connection=connection
                     )
@@ -169,23 +167,21 @@ async def handle_toggle_queue(
 async def websocket_chat(
         websocket: WebSocket,
         room_id: str = Query(..., alias="room_id"),
-        # token: str = Query(..., alias="token")
-        username: str = Query(..., alias="username")
+        token: str = Query(..., alias="token"),
+        # username: str = Query(..., alias="username")
 ):
     """Обработчик подключения клиента к чату"""
 
     logger.info(f"=== NEW CONNECTION ATTEMPT ===")
     logger.info(f"Room ID: {room_id}")
-    logger.info(f"Username: {username}")
+    logger.info(f"Token: {token}")
 
     connection: "ConnectionService" = await get_ws_connection()
 
     try:
         # Проверяем токен и получаем данные пользователя
-        # userdata = convert_token(token)
-        # username = userdata["nickname"]
-
-        # username = "jebb"
+        userdata = convert_token(token)
+        username = userdata["nickname"]
 
         logger.info(f"User: {username}")
 
@@ -194,15 +190,15 @@ async def websocket_chat(
             return
 
         # Проверка валидности токена и прав доступа к комнате
-        # is_valid = await validate_access(token, room_id)
-        # if not is_valid:
-        #     await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-        #     return
+        is_valid = await validate_access(token, room_id)
+        if not is_valid:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
 
         # Подключаем пользователя
         success = await connection.connect(websocket, room_id, {
             "nickname": username,
-            # "token": token
+            "token": token
         })
 
         if not success:

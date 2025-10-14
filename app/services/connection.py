@@ -21,8 +21,8 @@ class ConnectionService:
         # Сохраняем сессию
         self.sessions[websocket] = {
             "room_id": room_id,
-            # "username": user_data["nickname"],
-            # "token": user_data.get("token")
+            "username": user_data["nickname"],
+            "token": user_data.get("token")
         }
 
         return True
