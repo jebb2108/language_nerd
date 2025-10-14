@@ -27,18 +27,19 @@ async def paytime(callback: Union["CallbackQuery", "Message"]):
             return True
 
     # 2. Проверяем базу данных
-    due_to_db = await db.get_users_due_to(user_id)
-    if due_to_db:
+    due_to, is_active = await db.get_users_due_to(user_id)
+    if due_to:
         # Приводим к naive datetime
-        due_date_db = due_to_db.replace(tzinfo=None) if due_to_db.tzinfo else due_to_db
+        due_date_db = due_to.replace(tzinfo=None) if due_to.tzinfo else due_to
 
-        if due_date_db > datetime.now().replace(tzinfo=None):
+        if is_active and due_date_db > datetime.now().replace(tzinfo=None):
             # Сохраняем в кэш как ISO строку без временной зоны
             await redis_client.setex(
                 f"user_paid:{user_id}",
                 timedelta(hours=2),
                 due_date_db.isoformat()
             )
-            return True
+
+        return True
 
     return False

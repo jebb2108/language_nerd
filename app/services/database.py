@@ -384,7 +384,7 @@ class DatabaseService:
                 WHERE u.user_id = $1""",
                 user_id,
             )
-            return row["untill"] if row and row["is_active"] else None
+            return row["untill"], row["is_active"] if row else None, None
 
 
     async def deactivate_subscription(self, user_id: int):
