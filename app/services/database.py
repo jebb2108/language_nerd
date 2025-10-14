@@ -565,7 +565,7 @@ class DatabaseService:
         async with self.acquire_connection() as conn:
             try:
                 is_active = await conn.fetchval(
-                    "SELECT is_active FROM users WHERE user_is = $1", user_id
+                    "SELECT is_active FROM users WHERE user_id = $1", user_id
                 )
                 if not is_active: raise PaymentException
                 row = await conn.fetchrow(
