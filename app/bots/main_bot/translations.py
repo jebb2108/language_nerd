@@ -525,11 +525,11 @@ BUTTONS = dict(
             "zh": "📚 词典",
         },
         "find_partner": {
-            "en": "🌐 Partner",
-            "ru": "🌐 Cобеседник",
-            "de": "🌐 Partner",
-            "es": "🌐 Compañero",
-            "zh": "🌐 寻找伙伴",
+            "en": "🌐 Practice",
+            "ru": "🌐 Практика",
+            "de": "🌐 Üben",
+            "es": "🌐 Práctica",
+            "zh": "🌐 实践",
         },
         "sub_details": {
             "en": "💳 Manage subscription",

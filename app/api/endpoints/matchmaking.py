@@ -80,8 +80,10 @@ async def toggle_match_status(
         action=request.action
     )
 
-    if result["status"] == "error":
+    if result["status"] == "error" and result["message"] == "User not found":
         raise HTTPException(status_code=400, detail=result["message"])
+    if result["status"] == "error" and result["message"] == "User not active":
+        raise HTTPException(status_code=403, detail=result["message"])
 
     return result
 

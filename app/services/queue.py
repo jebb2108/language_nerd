@@ -30,7 +30,7 @@ class QueueService:
             if not user_profile:
                 return {"status": "error", "message": "User not found"}
             if not user_profile.get("is_active"):
-                return {"status": "error", "message": "User is not active"}
+                return {"status": "error", "message": "User not active"}
 
             # Определяем статус
             status = config.SEARCH_STARTED if action == "join" else config.SEARCH_CANCELED
