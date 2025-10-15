@@ -160,7 +160,8 @@ class DatabaseService:
                 id SERIAL PRIMARY KEY,
                 user_id BIGINT NOT NULL,
                 payment_method_id TEXT NOT NULL,
-                updated_at TIMESTAMP DEFAULT NOW()
+                updated_at TIMESTAMP DEFAULT NOW(),
+                UNIQUE (user_id) 
                 );"""
             )
 
