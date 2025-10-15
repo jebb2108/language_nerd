@@ -91,8 +91,8 @@ async def handle_auto_payment_success(payment: dict):
 
 async def handle_auto_payment_failed(payment: dict):
     """Обработка неудачного автоматического списания"""
+    user_id = int(payment['metadata']['user_id'])
     try:
-        user_id = int(payment['metadata']['user_id'])
 
         # Деактивируем подписку
         await deactivate_subscription(user_id)
@@ -100,10 +100,11 @@ async def handle_auto_payment_failed(payment: dict):
         # Уведомляем пользователя
         await notify_user_auto_failed(user_id)
 
-        logger.info(f"Auto-payment failed for user {user_id}, payment {payment['id']}")
 
     except Exception as e:
-        logger.error(f"Failed to process auto-payment failure: {e}")
+        logger.info(f"Auto-payment failed for user {user_id}, payment {payment['id']}")
+
+
 
 
 async def handle_regular_payment_success(payment: dict):
@@ -130,7 +131,7 @@ async def activate_subscription(user_id: int, payment: dict):
     """Активация подписки после успешного платежа"""
     database: DatabaseService = await get_db()
     redis_client = await get_redis_client()
-    payment_method_id = payment["payment_method_id"].get("id")
+    payment_method_id = payment["payment_method"].get("id")
     new_untill = datetime.now(tz=config.TZINFO) + timedelta(days=31)
 
     await database.create_payment(
