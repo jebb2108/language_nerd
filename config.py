@@ -2,7 +2,6 @@ import os
 from asyncio import Semaphore
 from dataclasses import dataclass
 from datetime import timezone, timedelta
-
 from dotenv import load_dotenv
 
 
@@ -88,7 +87,6 @@ class Config:
     YOOKASSA_SECRET_KEY: str = os.getenv("YOOKASSA_SHOP_KEY")
 
     ABS_PATH_TO_IMG_ONE: str = os.getenv("ABS_PATH_TO_IMG_ONE", '/')
-    ABS_PATH_TO_IMG_TWO: str = os.getenv("ABS_PATH_TO_IMG_TWO", '/')
     ABS_PATH_TO_CHAT_INDX: str = os.getenv("ABS_PATH_TO_CHAT_INDX", '/')
 
     WAIT_TIMER: int = 150

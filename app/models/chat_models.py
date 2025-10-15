@@ -1,8 +1,6 @@
-import re
 from datetime import datetime
 from typing import Dict, Optional, Any
-from pydantic import BaseModel, Field, field_validator
-
+from pydantic import BaseModel, Field
 from app.models import Language, Topic
 from config import config
 

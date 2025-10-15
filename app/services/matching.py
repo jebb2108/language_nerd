@@ -1,13 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, Set, Tuple, Union
 from redis.asyncio import Redis as aioredis
 from uuid import uuid4
 
-from asyncpg.pgproto.pgproto import timedelta
-
 from app.models import ChatSessionRequest, MatchFoundEvent
-from config import config
 from logging_config import opt_logger as log
+from config import config
 
 logger = log.setup_logger('matching')
 

@@ -1,17 +1,14 @@
 from collections import defaultdict
-
 import redis.asyncio as redis
-from typing import TYPE_CHECKING, Optional, Awaitable
-
-from asyncpg.pgproto.pgproto import timedelta
-
+from typing import TYPE_CHECKING, Optional
 from app.models import UserMatchRequest
-from config import config
 from logging_config import opt_logger as log
+from config import config
+
 
 if TYPE_CHECKING:
     from redis.asyncio import Redis
-    from aiogram.types import Message
+
 
 logger = log.setup_logger('redis')
 

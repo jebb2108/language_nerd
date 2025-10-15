@@ -1,28 +1,20 @@
-import asyncio
 from typing import TYPE_CHECKING
-from aiogram.enums import ParseMode
 from fastapi import APIRouter, Depends, HTTPException
-
-from app.models import UserMatchResponse
-from app.dependencies import get_rabbitmq, get_db, get_redis, get_partner_bot, get_redis_client, get_queue_service
-# from app.bots.main_bot.keyboards.inline_keyboards import create_start_chat_button
-from app.bots.partner_bot.translations import MESSAGES
+from app.dependencies import get_rabbitmq, get_db, get_redis, get_redis_client, get_queue_service
 from app.services.database import DatabaseService
-from app.services.redis import RedisService
-# from app.validators.tokens import create_token
-from config import config
-from logging_config import opt_logger as log
 from app.models import UserMatchRequest, RegistrationData, WebMatchToggleRequest
 from app.services.rabbitmq import RabbitMQService
 from app.services.queue import QueueService
+from logging_config import opt_logger as log
+from config import config
+
 
 if TYPE_CHECKING:
     from redis.asyncio import Redis
 
-logger = log.setup_logger("endpoints", config.LOG_LEVEL)
-
 
 router = APIRouter(prefix="/api")
+logger = log.setup_logger("endpoints")
 
 
 @router.get("/check_user")

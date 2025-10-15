@@ -1,15 +1,16 @@
+from aiogram import Bot
 from datetime import datetime, timedelta
 from fastapi import Request, BackgroundTasks, APIRouter
-from aiogram import Bot
 
 from app.dependencies import get_main_bot, get_db, get_redis_client
 from app.services.database import DatabaseService
-from config import config
 from logging_config import opt_logger as log
+from config import config
 
-logger = log.setup_logger('webhook_payments')
 
 router = APIRouter(prefix="/api")
+logger = log.setup_logger('webhook_payments')
+
 
 
 @router.post("/webhook/yookassa")

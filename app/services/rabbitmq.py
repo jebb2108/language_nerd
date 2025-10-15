@@ -15,7 +15,9 @@ if TYPE_CHECKING:
     from aio_pika.abc import AbstractRobustConnection
     from app.models.bot_models import NewUser
 
+
 logger = log.setup_logger('rabbitmq')
+
 
 class RabbitMQService:
     def __init__(self):

@@ -1,8 +1,8 @@
-import asyncio
-import random
 import re
 import time
 import aiohttp
+import asyncio
+import random
 from datetime import datetime
 from typing import List, Optional, Dict, Any, TYPE_CHECKING
 
@@ -35,6 +35,8 @@ if TYPE_CHECKING:
 
 # Настройка логирования
 logger = log.setup_logger('ai modules')
+
+
 # ========== ERROR HANDLING ==========
 class APIErrorHandler:
     """Обработчик ошибок API"""
@@ -709,8 +711,8 @@ class ReportSender:
     async def send_report_message(self, user_report: UserReport) -> bool:
         """Отправляет сообщение с отчетом пользователю"""
 
-        from app.bots.main_bot.translations import WEEKLY_QUIZ
-        from app.bots.main_bot.keyboards.inline_keyboards import begin_daily_quiz_keyboard
+        from app.bot.translations import WEEKLY_QUIZ
+        from app.bot.keyboards.inline_keyboards import begin_daily_quiz_keyboard
 
         try:
             lang_code = user_report.user_info["lang_code"]

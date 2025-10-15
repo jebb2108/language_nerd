@@ -1,10 +1,9 @@
 import asyncio
 from app.dependencies import generate_notifications
-from config import config
 from logging_config import opt_logger as log
 
 # Настройка логирования
-logger = log.setup_logger('schedulers', config.LOG_LEVEL)
+logger = log.setup_logger('schedulers')
 
 
 async def main() -> None:
