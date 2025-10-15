@@ -338,7 +338,7 @@ class DatabaseService:
         """Сохранение payment_method_id для автоматических списаний"""
         async with self.acquire_connection() as conn:
             try:
-                new_updated_at = datetime.now(tz=config.TZINFO).replace(tzinfo=None).isoformat()
+                new_updated_at = datetime.now(tz=config.TZINFO).replace(tzinfo=None)
                 await conn.execute(
                     """
                     INSERT INTO payment_methods (user_id, payment_method_id, updated_at) 
