@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 logger = log.setup_logger("paytime", "debug")
 
 
-async def paytime(callback: Union["CallbackQuery", "Message"]):
+async def approved(callback: Union["CallbackQuery", "Message"]):
     """Проверяет, не истекла ли подписка пользователя"""
     user_id = callback.from_user.id
     db = await get_db()

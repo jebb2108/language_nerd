@@ -6,7 +6,7 @@ from aiogram.filters import and_f
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from app.bot.filters.paytime import paytime
+from app.bot.filters.approved import approved
 from app.bot.translations import MESSAGES
 from app.bot.utils.access_data import data_storage as ds
 from app.dependencies import get_db, get_redis_client
@@ -19,7 +19,7 @@ logger = log.setup_logger("additional_cb_handler")
 
 router = Router(name=__name__)
 
-@router.callback_query(and_f(F.data == "queue_info", paytime))
+@router.callback_query(and_f(F.data == "queue_info", approved))
 async def show_queue_info_handler(callback: CallbackQuery, state: FSMContext):
 
     common_lans = dict()
@@ -55,7 +55,7 @@ async def show_queue_info_handler(callback: CallbackQuery, state: FSMContext):
 
 
 
-@router.callback_query(and_f(F.data.startswith("chtopic_"), paytime))
+@router.callback_query(and_f(F.data.startswith("chtopic_"), approved))
 async def change_topic_handler(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
@@ -87,7 +87,7 @@ async def change_topic_handler(callback: CallbackQuery, state: FSMContext):
 
 
 
-@router.callback_query(and_f(F.data == "cancel_topic", paytime))
+@router.callback_query(and_f(F.data == "cancel_topic", approved))
 async def cancel_choosing_topic(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
@@ -107,7 +107,7 @@ async def cancel_choosing_topic(callback: CallbackQuery, state: FSMContext):
         logger.error(f"Error in cancel_choosing_topic: {e}")
 
 
-@router.callback_query(and_f(F.data == "cancel", paytime))
+@router.callback_query(and_f(F.data == "cancel", approved))
 async def cancel_search(callback: CallbackQuery, state: FSMContext):
     """Обработчик callback(а) отменяет поиск партнера"""
 

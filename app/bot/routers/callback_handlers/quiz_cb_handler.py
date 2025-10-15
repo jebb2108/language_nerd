@@ -4,7 +4,7 @@ from aiogram.filters import and_f
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from app.bot.filters.paytime import paytime
+from app.bot.filters.approved import approved
 from app.bot.keyboards.inline_keyboards import (
     show_word_options_keyboard,
     get_finish_button,
@@ -23,7 +23,7 @@ logger = log.setup_logger("weekly_message_cb_handler", config.LOG_LEVEL)
 router = Router(name=__name__)
 
 
-@router.callback_query(F.data.startswith("how_it_works:"), paytime)
+@router.callback_query(F.data.startswith("how_it_works:"), approved)
 async def how_it_works_handler(callback: types.CallbackQuery, state: FSMContext):
     await callback.answer()
     report_id = int(callback.data.split(":", 1)[1])
@@ -44,7 +44,7 @@ async def how_it_works_handler(callback: types.CallbackQuery, state: FSMContext)
 
 
 @router.callback_query(
-    and_f(F.data.startswith("start_report:"), paytime)
+    and_f(F.data.startswith("start_report:"), approved)
 )
 async def start_report_handler(
     callback: types.CallbackQuery,
@@ -94,7 +94,7 @@ async def start_report_handler(
 
 
 @router.callback_query(
-    and_f(lambda callback: callback.data.startswith("quiz:"), paytime)
+    and_f(lambda callback: callback.data.startswith("quiz:"), approved)
 )
 async def handle_word_quiz(callback: CallbackQuery, state: FSMContext):
 
@@ -200,7 +200,7 @@ async def send_question(callback, state, database):
         reply_markup=thought_time_keyboard(lang_code),
     )
 
-@router.callback_query(and_f(F.data == 'thougth_time', paytime))
+@router.callback_query(and_f(F.data == 'thougth_time', approved))
 async def show_options_handler(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
@@ -223,7 +223,7 @@ async def show_options_handler(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(
-    and_f(lambda callback: callback.data.startswith("end_quiz"), paytime)
+    and_f(lambda callback: callback.data.startswith("end_quiz"), approved)
 )
 async def do_nothing(callback: CallbackQuery):
     await callback.answer()

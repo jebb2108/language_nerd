@@ -1,12 +1,10 @@
-from datetime import datetime
-
 from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import and_f
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from app.bot.filters.paytime import paytime
+from app.bot.filters.approved import approved
 from app.bot.keyboards.inline_keyboards import (
     get_on_main_menu_keyboard,
     get_go_back_keyboard,
@@ -27,7 +25,7 @@ router = Router(name=__name__)
 
 
 @router.callback_query(
-    and_f(F.data == "about", paytime)
+    and_f(F.data == "about", approved)
 )
 async def about(callback: CallbackQuery, state: FSMContext):
     """
@@ -103,7 +101,7 @@ async def manage_subscription_handler(callback: CallbackQuery, state: FSMContext
     redis_client = await get_redis_client()
     user_id = callback.from_user.id
 
-    if await paytime(callback):
+    if await approved(callback):
 
         # После обновления Storage, делаю проверку на статус
         data = await ds.get_storage_data(user_id, state)
@@ -153,7 +151,7 @@ async def cancel_subscription_handler(callback: CallbackQuery, state: FSMContext
     await redis_client.delete(f"user_paid:{user_id}")
     is_active = False
 
-    if await paytime(callback):
+    if await approved(callback):
         if is_active:
             date_str = await redis_client.get(f"user_paid:{user_id}")
             cap = MESSAGES["active_sub_caption"][lang_code].format(date=date_str.split('T')[0])
@@ -194,7 +192,7 @@ async def resume_subscription_handler(callback: CallbackQuery, state: FSMContext
     lang_code = data.get("lang_code")
     is_active = True
 
-    if await paytime(callback):
+    if await approved(callback):
         if is_active:
             date_str = await redis_client.get(f"user_paid:{user_id}")
             cap = MESSAGES["active_sub_caption"][lang_code].format(date=date_str.split('T')[0])
@@ -220,7 +218,7 @@ async def resume_subscription_handler(callback: CallbackQuery, state: FSMContext
 
 
 @router.callback_query(
-    and_f(F.data == "profile", paytime)
+    and_f(F.data == "profile", approved)
 )
 async def profile_handler(callback: CallbackQuery, state: FSMContext):
     """ Обработчик сведений о пользователе """
@@ -256,7 +254,7 @@ async def profile_handler(callback: CallbackQuery, state: FSMContext):
         logger.error(f"Error in profile_handler: {e}")
 
 
-@router.callback_query(and_f(F.data.startswith("shop:"), paytime))
+@router.callback_query(and_f(F.data.startswith("shop:"), approved))
 async def shop_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     user_id = callback.from_user.id

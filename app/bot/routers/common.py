@@ -5,7 +5,7 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from app.bot.filters.paytime import paytime
+from app.bot.filters.approved import approved
 from app.bot.keyboards.inline_keyboards import get_payment_keyboard
 from app.bot.middlewares.rate_limit_middleware import RateLimitInfo
 from app.bot.translations import MESSAGES
@@ -18,7 +18,7 @@ logger = log.setup_logger('common')
 
 router = Router(name=__name__)
 
-@router.message(paytime)
+@router.message(approved)
 async def get_help_handler(message: Message, state: FSMContext, rate_limit_info: RateLimitInfo):
     """ Обрабатывает остальные сообщения пользователя """
 

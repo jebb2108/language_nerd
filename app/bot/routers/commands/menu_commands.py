@@ -7,7 +7,7 @@ from aiogram.filters import Command, and_f
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, FSInputFile, CallbackQuery
 
-from app.bot.filters.paytime import paytime
+from app.bot.filters.approved import approved
 from app.bot.keyboards.inline_keyboards import (
     get_on_main_menu_keyboard,
     show_topic_keyboard,
@@ -29,7 +29,7 @@ router = Router(name=__name__)
 
 
 @router.message(
-    and_f(Command("menu", prefix="!/"), paytime)
+    and_f(Command("menu", prefix="!/"), approved)
 )
 async def show_main_menu(message: Message, state: FSMContext, rate_limit_info: RateLimitInfo):
 
@@ -60,7 +60,7 @@ async def show_main_menu(message: Message, state: FSMContext, rate_limit_info: R
     )
 
 
-@router.message(and_f(Command("location", prefix="!/"), paytime))
+@router.message(and_f(Command("location", prefix="!/"), approved))
 async def get_my_location(message: Message, state: FSMContext):
     """Обработчик команды /location"""
 
@@ -84,7 +84,7 @@ async def get_my_location(message: Message, state: FSMContext):
     )
 
 
-@router.message(and_f(Command("change_topic", prefix="!/"), paytime))
+@router.message(and_f(Command("change_topic", prefix="!/"), approved))
 async def change_topic_handler(message: Message, state: FSMContext):
     user_id = message.from_user.id
 
@@ -107,7 +107,7 @@ async def change_topic_handler(message: Message, state: FSMContext):
         logger.error(f"Error in change_topic_handler: {e}")
 
 
-@router.message(and_f(Command("new_session", prefix="!/"), paytime))
+@router.message(and_f(Command("new_session", prefix="!/"), approved))
 async def new_session_handler(
     message: Union[Message, CallbackQuery], state: FSMContext
 ):
