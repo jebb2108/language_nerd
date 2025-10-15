@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import and_f

@@ -299,7 +299,7 @@ class DatabaseService:
 
                 await conn.execute(
                     """
-                    INSERT INTO payment_info_status (user_id, period, amount, currency, trial, untill) 
+                    INSERT INTO payment_status_info (user_id, period, amount, currency, trial, untill) 
                     VALUES ($1, $2, $3, $4, $5, $6)
                     ON CONFLICT (user_id) DO UPDATE 
                     SET period = EXCLUDED.period, 
@@ -359,7 +359,7 @@ class DatabaseService:
                 """
                 SELECT u.user_id, t.amount, t.untill
                 FROM users u
-                LEFT JOIUN payment_info_status pis
+                LEFT JOIN payment_status_info pis
                     ON u.user_id = pis.user_id
                 LEFT JOIN transaction_history th
                     ON u.user_id = th.user_id
@@ -395,9 +395,9 @@ class DatabaseService:
                 """
                 SELECT 
                 u.is_active,
-                t.untill 
+                pis.untill 
                 FROM users u 
-                LEFT JOIN payment_info_status pis
+                LEFT JOIN payment_status_info pis
                     ON u.user_id = pis.user_id
                 WHERE u.user_id = $1""",
                 user_id,
