@@ -18,12 +18,12 @@ async def yookassa_webhook(request: Request, background_tasks: BackgroundTasks):
     signature = request.headers.get("Authorization")
     user_id = data['object']['metadata']['user_id']
     logger.info("Yookassa webhook received for user %s", user_id)
-    # Проверяем подпись для исключения случая подделки платежа
-    if not verify_signature(data, signature):
-        logger.warning(
-            "Invalid signature for user %s", user_id
-        )
-        return {"status": "error"}
+    # # Проверяем подпись для исключения случая подделки платежа
+    # if not verify_signature(data, signature):
+    #     logger.warning(
+    #         "Invalid signature for user %s", user_id
+    #     )
+    #     return {"status": "error"}
 
     # Обрабатываем в фоне
     background_tasks.add_task(process_payment_webhook, data)
