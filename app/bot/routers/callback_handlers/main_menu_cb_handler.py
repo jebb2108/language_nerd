@@ -98,6 +98,7 @@ async def go_back(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "sub_details")
 async def manage_subscription_handler(callback: CallbackQuery, state: FSMContext):
+
     await callback.answer()
     redis_client = await get_redis_client()
     user_id = callback.from_user.id
@@ -125,6 +126,9 @@ async def manage_subscription_handler(callback: CallbackQuery, state: FSMContext
                 parse_mode=ParseMode.HTML
             )
     else:
+        # Уже по новой вызывается ds, чтобы вытащить lang_code
+        data = await ds.get_storage_data(user_id, state)
+        lang_code = data.get("lang_code")
         cap = MESSAGES["expired_sub_caption"][lang_code]
         await callback.message.edit_caption(
             caption=cap,
