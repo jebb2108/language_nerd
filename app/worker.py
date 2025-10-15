@@ -1,17 +1,16 @@
 import asyncio
 import json
 from datetime import datetime, timedelta
+from typing import TYPE_CHECKING
 
-from logging_config import opt_logger
-
-# from app.models import UserMatchResponse
-from config import config
 from faststream import FastStream
 from faststream.rabbit import RabbitBroker
 from faststream.rabbit.annotations import RabbitMessage
-from app.dependencies import get_match, get_notification, get_redis, get_db
 
-from typing import TYPE_CHECKING
+from app.dependencies import get_match, get_redis, get_db
+# from app.models import UserMatchResponse
+from config import config
+from logging_config import opt_logger
 
 if TYPE_CHECKING:
     from app.services.matching import MatchingService

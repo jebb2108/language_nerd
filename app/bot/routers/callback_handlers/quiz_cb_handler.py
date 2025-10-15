@@ -1,22 +1,22 @@
-from aiogram.filters import and_f
-from app.bot.filters.paytime import paytime
-from config import config
-from logging_config import opt_logger as log
 from aiogram import Router, types, F
 from aiogram.enums import ParseMode
+from aiogram.filters import and_f
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
-from app.bot.translations import WEEKLY_QUIZ
-from app.bot.utils.access_data import data_storage as ds
+
+from app.bot.filters.paytime import paytime
 from app.bot.keyboards.inline_keyboards import (
     show_word_options_keyboard,
     get_finish_button,
     begin_daily_quiz_keyboard,
     thought_time_keyboard
 )
+from app.bot.translations import WEEKLY_QUIZ
+from app.bot.utils.access_data import data_storage as ds
 from app.dependencies import get_db
+from config import config
 from exc import StorageDataException
-
+from logging_config import opt_logger as log
 
 logger = log.setup_logger("weekly_message_cb_handler", config.LOG_LEVEL)
 

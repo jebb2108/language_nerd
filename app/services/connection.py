@@ -1,5 +1,7 @@
-from fastapi import WebSocket
 from typing import Dict, List, Optional
+
+from fastapi import WebSocket
+
 
 # Менеджер соединений для комнат
 class ConnectionService:

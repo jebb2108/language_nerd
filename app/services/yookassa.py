@@ -1,5 +1,7 @@
 import uuid
+
 from yookassa import Payment, Configuration
+
 from config import config
 
 

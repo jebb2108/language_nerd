@@ -1,12 +1,13 @@
 import asyncio
 from datetime import datetime, timedelta
-from tenacity import retry, stop_after_attempt, wait_exponential
 from typing import TYPE_CHECKING
+
 import aiohttp
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from app.dependencies import get_db, get_main_bot
-from logging_config import opt_logger as log
 from config import config
+from logging_config import opt_logger as log
 
 if TYPE_CHECKING:
     from aiogram import Bot

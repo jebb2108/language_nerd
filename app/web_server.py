@@ -1,9 +1,11 @@
+from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI
-from contextlib import asynccontextmanager
-from app.dependencies import get_db
+
 from app.api.endpoints.dictionary import router as dict_router
 from app.api.endpoints.yookassa import router as webhook_router
+from app.dependencies import get_db
 from config import config
 
 

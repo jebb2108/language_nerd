@@ -1,15 +1,16 @@
+from datetime import timedelta
+
 from aiogram import Router
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
-from datetime import timedelta
 
+from app.bot.keyboards.inline_keyboards import get_payment_keyboard
 from app.bot.translations import MESSAGES
 from app.bot.utils.access_data import data_storage as ds
 from app.dependencies import get_redis_client, get_yookassa
-from app.bot.keyboards.inline_keyboards import get_payment_keyboard
-from logging_config import opt_logger as log
 from exc import StorageDataException
+from logging_config import opt_logger as log
 
 logger = log.setup_logger('payment_cb_handler')
 

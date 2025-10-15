@@ -2,9 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.dependencies import get_db
 from app.models.dict_models import UserDictionaryRequest
-from logging_config import opt_logger as log
 from exc import PaymentException
-
+from logging_config import opt_logger as log
 
 router = APIRouter(prefix="/api")
 logger = log.setup_logger('dictionary_endpoints')

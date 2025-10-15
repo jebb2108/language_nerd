@@ -1,7 +1,7 @@
 import asyncio
+
 from app.dependencies import get_db
 from logging_config import opt_logger as log
-
 
 logger = log.setup_logger('ai_cleanup_maker')
 

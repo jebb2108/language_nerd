@@ -1,4 +1,5 @@
 import asyncio
+
 from app.dependencies import generate_notifications
 from logging_config import opt_logger as log
 

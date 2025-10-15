@@ -1,16 +1,10 @@
-from config import config
-from logging_config import opt_logger as log
 from aiogram import F, Router
 from aiogram.enums import ParseMode
-from aiogram.fsm.context import FSMContext
 from aiogram.filters import and_f
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 
-from app.dependencies import get_db, get_redis_client
 from app.bot.filters.paytime import paytime
-from app.bot.translations import MESSAGES, EMOJI_SHOP, TRANSCRIPTIONS, EMOJI_TRANSCRIPTIONS
-from app.bot.utils.access_data import data_storage as ds
-from exc import StorageDataException
 from app.bot.keyboards.inline_keyboards import (
     get_on_main_menu_keyboard,
     get_go_back_keyboard,
@@ -18,6 +12,12 @@ from app.bot.keyboards.inline_keyboards import (
     get_profile_keyboard,
     get_shop_keyboard
 )
+from app.bot.translations import MESSAGES, EMOJI_SHOP, TRANSCRIPTIONS, EMOJI_TRANSCRIPTIONS
+from app.bot.utils.access_data import data_storage as ds
+from app.dependencies import get_db, get_redis_client
+from config import config
+from exc import StorageDataException
+from logging_config import opt_logger as log
 
 logger = log.setup_logger("main_menu_cb_handler", config.LOG_LEVEL)
 

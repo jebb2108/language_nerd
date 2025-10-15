@@ -1,10 +1,10 @@
+from datetime import datetime, timedelta
+
 from aiogram import Router, F
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, FSInputFile
-from datetime import datetime, timedelta
 
-from app.dependencies import get_rabbitmq
 from app.bot.keyboards.inline_keyboards import (
     show_language_keyboard,
     show_fluency_keyboard,
@@ -14,10 +14,10 @@ from app.bot.keyboards.inline_keyboards import (
     get_on_main_menu_keyboard,
 )
 from app.bot.translations import MESSAGES, QUESTIONARY, TRANSCRIPTIONS
+from app.dependencies import get_rabbitmq
 from app.models import NewUser, NewPayment
-from logging_config import opt_logger as log
 from config import config
-
+from logging_config import opt_logger as log
 
 logger = log.setup_logger("registration_cb_handler", config.LOG_LEVEL)
 router = Router(name=__name__)

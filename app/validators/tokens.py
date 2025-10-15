@@ -1,5 +1,7 @@
-import jwt
 from datetime import datetime, timedelta
+
+import jwt
+
 from app.dependencies import get_db
 from config import config
 

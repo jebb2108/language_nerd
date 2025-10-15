@@ -5,7 +5,7 @@ from aiogram.enums import ParseMode
 from config import config
 
 
-class MainBot:
+class PartnerBot:
 
     def __init__(self):
         self.bot = None
@@ -16,7 +16,7 @@ class MainBot:
 
     async def connect(self):
         self.bot = Bot(
-            token=config.BOT_TOKEN_MAIN,
+            token=config.BOT_TOKEN_PARTNER,
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
         )
         self.initialized = True
@@ -25,8 +25,4 @@ class MainBot:
         await self.bot.close()
 
 
-
-main_bot = MainBot()
-
-
-
+partner_bot = PartnerBot()

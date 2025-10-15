@@ -2,8 +2,8 @@ import os
 from asyncio import Semaphore
 from dataclasses import dataclass
 from datetime import timezone, timedelta
-from dotenv import load_dotenv
 
+from dotenv import load_dotenv
 
 # Определите путь относительно текущего файла
 base_dir = os.path.dirname(os.path.abspath(__file__))

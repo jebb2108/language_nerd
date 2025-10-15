@@ -1,14 +1,15 @@
 import json
-import aio_pika
 from typing import TYPE_CHECKING, Optional
-from logging_config import opt_logger as log
-from config import config
+
+import aio_pika
 
 from app.models import (
     Location, MessageContent,
     NewPayment, NewUser,
     RegistrationData, UserMatchRequest
 )
+from config import config
+from logging_config import opt_logger as log
 
 if TYPE_CHECKING:
     from aio_pika.abc import AbstractChannel

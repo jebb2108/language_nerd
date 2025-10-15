@@ -1,12 +1,13 @@
-import sys
 import logging
+import sys
+
 from colorama import init, Fore, Style
+
 from config import config
 
 
 class RootLogger:
     """Простой логгер, работающий с корневым регистром"""
-    import logging.config
 
     def __init__(self):
         # Базовая конфигурация корневого логгера

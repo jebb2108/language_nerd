@@ -1,13 +1,14 @@
 from typing import TYPE_CHECKING
-from fastapi import APIRouter, Depends, HTTPException
-from app.dependencies import get_rabbitmq, get_db, get_redis, get_redis_client, get_queue_service
-from app.services.database import DatabaseService
-from app.models import UserMatchRequest, RegistrationData, WebMatchToggleRequest
-from app.services.rabbitmq import RabbitMQService
-from app.services.queue import QueueService
-from logging_config import opt_logger as log
-from config import config
 
+from fastapi import APIRouter, Depends, HTTPException
+
+from app.dependencies import get_rabbitmq, get_db, get_redis, get_redis_client, get_queue_service
+from app.models import UserMatchRequest, RegistrationData, WebMatchToggleRequest
+from app.services.database import DatabaseService
+from app.services.queue import QueueService
+from app.services.rabbitmq import RabbitMQService
+from config import config
+from logging_config import opt_logger as log
 
 if TYPE_CHECKING:
     from redis.asyncio import Redis

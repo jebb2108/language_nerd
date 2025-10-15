@@ -1,5 +1,6 @@
 from aiogram.types import InlineKeyboardButton, WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+
 from app.bot.translations import QUESTIONARY, BUTTONS, WEEKLY_QUIZ
 from config import config
 

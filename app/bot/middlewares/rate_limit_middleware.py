@@ -2,11 +2,12 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Callable, Any, Awaitable
+
 from aiogram import BaseMiddleware
 from aiogram.types import Message
+
 from app.bot.utils.async_timed_queue import AsyncTimedQueue
 from logging_config import opt_logger as log
-
 
 logger = log.setup_logger('rate_limit_middleware')
 

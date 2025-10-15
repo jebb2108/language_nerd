@@ -1,11 +1,11 @@
-import re
-import time
-import aiohttp
 import asyncio
 import random
+import re
+import time
 from datetime import datetime
 from typing import List, Optional, Dict, Any, TYPE_CHECKING
 
+import aiohttp
 from aiogram.exceptions import (
     TelegramRetryAfter,
     TelegramForbiddenError,
@@ -14,9 +14,6 @@ from aiogram.exceptions import (
     TelegramServerError,
     TelegramAPIError
 )
-
-from app.models import UserWords, ReportData
-
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -26,6 +23,7 @@ from tenacity import (
 )
 
 from app.models import DeliveryResult, UserReport, PendingReport
+from app.models import UserWords, ReportData
 from config import config
 from logging_config import opt_logger as log
 

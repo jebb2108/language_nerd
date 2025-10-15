@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 from typing import TYPE_CHECKING
+
 from fastapi import WebSocket, APIRouter, Query, WebSocketDisconnect
 from starlette import status
 
@@ -9,9 +10,8 @@ from app.models import MessageContent
 from app.services.queue import QueueService
 from app.services.redis import RedisService
 from app.validators.tokens import convert_token, validate_access
-from logging_config import opt_logger as log
 from config import config
-
+from logging_config import opt_logger as log
 
 if TYPE_CHECKING:
     from app.services.connection import ConnectionService

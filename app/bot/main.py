@@ -1,18 +1,15 @@
 import asyncio
-from logging_config import opt_logger as log
+from typing import Optional
 
 from aiogram import Dispatcher
 from aiogram.fsm.storage.redis import RedisStorage
-from typing import Optional
-
 from asyncpg.pgproto.pgproto import timedelta
 
-from app.dependencies import get_redis_client, get_main_bot
-from app.bot.middlewares.rate_limit_middleware import RateLimitMiddleware
 from app.bot.middlewares.quiz_middleware import QuizMiddleware
-
+from app.bot.middlewares.rate_limit_middleware import RateLimitMiddleware
+from app.dependencies import get_redis_client, get_main_bot
 from config import config
-
+from logging_config import opt_logger as log
 from routers import router as main_router
 
 logger = log.setup_logger("main bot", config.LOG_LEVEL)

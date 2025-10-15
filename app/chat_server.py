@@ -1,11 +1,10 @@
 import uvicorn
 from fastapi import FastAPI
-from config import config
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.endpoints.matchmaking import router as match_router
 from app.api.endpoints.websockets import router as websockets
-
+from config import config
 from logging_config import opt_logger as log
 
 logger = log.setup_logger("chat server")

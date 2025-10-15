@@ -1,8 +1,9 @@
-import sys
 import logging
-from aiogram.types import CallbackQuery
+import sys
 from collections import defaultdict
 from pathlib import Path
+
+from aiogram.types import CallbackQuery
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 

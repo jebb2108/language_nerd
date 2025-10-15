@@ -1,6 +1,7 @@
 import asyncio
 from collections import deque
 from datetime import timedelta, datetime
+
 from logging_config import opt_logger as log
 
 logger = log.setup_logger('message time queue')

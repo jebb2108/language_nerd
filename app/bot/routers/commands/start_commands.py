@@ -3,12 +3,12 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from app.bot.keyboards.inline_keyboards import show_where_from_keyboard
 from app.bot.middlewares.rate_limit_middleware import RateLimitInfo
 from app.bot.translations import QUESTIONARY, MESSAGES
 from app.dependencies import get_db
-from app.bot.keyboards.inline_keyboards import show_where_from_keyboard
-from logging_config import opt_logger as log
 from config import config
+from logging_config import opt_logger as log
 
 logger = log.setup_logger('main start commands', config.LOG_LEVEL)
 
