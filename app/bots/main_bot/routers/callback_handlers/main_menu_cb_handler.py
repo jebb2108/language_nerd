@@ -273,16 +273,3 @@ async def shop_handler(callback: CallbackQuery, state: FSMContext):
     except Exception as e:
         logger.error(f"Error in shop_handler: {e}")
 
-
-@router.callback_query(and_f(F.data == "exit_shop", paytime))
-async def exit_shop_handler(callback: CallbackQuery):
-    await callback.answer("Leaving shop ...")
-    await callback.message.delete()
-
-
-@router.callback_query(and_f(F.data.startswith("make_payment:"), paytime))
-async def make_payment_handler(callback: CallbackQuery):
-    item = callback.data.split(":")[1]
-    await callback.answer(f"Making payment for {item}")
-    await callback.message.delete()
-

@@ -235,7 +235,7 @@ def get_shop_keyboard(lang_code, indx):
     builder = InlineKeyboardBuilder()
     make_payment = InlineKeyboardButton(
         text=BUTTONS["make_payment"][lang_code] if indx != 9 else "Приведи друга",
-        callback_data=f"make_payment:{indx}"
+        callback_data=f"go_back"
     )
     next_button = InlineKeyboardButton(
         text=BUTTONS["next"][lang_code], callback_data=f"shop:{indx+1 if not indx==9 else 0}"
