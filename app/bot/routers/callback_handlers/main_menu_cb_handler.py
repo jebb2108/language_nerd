@@ -101,11 +101,14 @@ async def manage_subscription_handler(callback: CallbackQuery, state: FSMContext
     await callback.answer()
     redis_client = await get_redis_client()
     user_id = callback.from_user.id
-    data = await ds.get_storage_data(user_id, state)
-    lang_code = data.get("lang_code")
-    is_active = data.get("is_active")
 
     if await paytime(callback):
+
+        # После обновления Storage, делаю проверку на статус
+        data = await ds.get_storage_data(user_id, state)
+        lang_code = data.get("lang_code")
+        is_active = data.get("is_active")
+
         if is_active:
             date_str = await redis_client.get(f"user_paid:{user_id}")
             cap = MESSAGES["active_sub_caption"][lang_code].format(date=date_str.split('T')[0])
