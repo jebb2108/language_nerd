@@ -70,13 +70,14 @@ async def pay_cmd(message: Message, state: FSMContext, rate_limit_info: RateLimi
         )
 
         await redis_client.setex(
-            f'user_payment:{user_id}', timedelta(minutes=10), sent.message_id
+            f'user_payment:{user_id}', timedelta(days=3), sent.message_id
         )
 
 
     except StorageDataException:
         logger.error(f"User {user_id} trying to access data but doesn`t exist in DB")
         await message.answer("You`re not registered. Press /start to do so")
+        return
 
     except Exception as e:
-        logger.error(f"Error in pay_cmd handler: {e}")
+        return logger.error(f"Error in pay_cmd handler: {e}")

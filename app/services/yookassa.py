@@ -26,10 +26,10 @@ class YookassaService:
             "description": "Оплата подписки",
             "metadata": {
                 "user_id": user_id,
+                "auto_payment": True,
                 "subscription_type": "monthly_auto",
-                "auto_payment": True
             },
-            # "save_payment_method": True
+            "save_payment_method": True
         }, uuid.uuid4())
 
         return payment.confirmation.confirmation_url

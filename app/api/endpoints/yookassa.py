@@ -12,13 +12,17 @@ router = APIRouter(prefix="/api")
 logger = log.setup_logger('webhook_payments')
 
 
-
 @router.post("/webhook/yookassa")
 async def yookassa_webhook(request: Request, background_tasks: BackgroundTasks):
     data = await request.json()
     signature = request.headers.get("Authorization")
-
+    user_id = data['object']['metadata']['user_id']
+    logger.info("Yookassa webhook received for user %s", user_id)
+    # Проверяем подпись для исключения случая подделки платежа
     if not verify_signature(data, signature):
+        logger.warning(
+            "Invalid signature for user %s", user_id
+        )
         return {"status": "error"}
 
     # Обрабатываем в фоне
@@ -46,20 +50,25 @@ async def process_payment_webhook(data):
     try:
         if data['event'] == 'payment.succeeded':
             payment = data['object']
+            user_id = payment['metadata']['user_id']
 
             # Проверяем, это автоматический платеж или обычный
             is_auto_payment = payment['metadata'].get('auto_payment', False)
 
-            if is_auto_payment:
+            if is_auto_payment and payment['payment_method'].get('saved', False):
+                logger.info("Auto-payment being processed for user %s...", user_id)
                 await handle_auto_payment_success(payment)
             else:
+                logger.info("Regular payment being processed for user %s...", user_id)
                 await handle_regular_payment_success(payment)
 
         elif data['event'] == 'payment.canceled':
             payment = data['object']
+            user_id = payment['metadata']['user_id']
             is_auto_payment = payment['metadata'].get('auto_payment', False)
 
             if is_auto_payment:
+                logger.info("Auto-payment declined for user %s", user_id)
                 await handle_auto_payment_failed(payment)
 
     except Exception as e:
@@ -121,7 +130,7 @@ async def activate_subscription(user_id: int, payment: dict):
     """Активация подписки после успешного платежа"""
     database: DatabaseService = await get_db()
     redis_client = await get_redis_client()
-
+    payment_method_id = payment["payment_method_id"].get("id")
     new_untill = datetime.now(tz=config.TZINFO) + timedelta(days=31)
 
     await database.create_payment(
@@ -135,6 +144,7 @@ async def activate_subscription(user_id: int, payment: dict):
     )
 
     await database.activate_subscription(user_id)
+    await database.save_payment_method(user_id, payment_method_id)
 
     await redis_client.setex(
         f"user_paid:{user_id}",
@@ -154,7 +164,6 @@ async def save_payment_method(user_id: int, payment_method_id: str):
     """Сохранение payment_method_id для автоматических списаний"""
     database: DatabaseService = await get_db()
     await database.save_payment_method(user_id, payment_method_id)
-
 
 
 async def notify_user_auto_failed(user_id: int):

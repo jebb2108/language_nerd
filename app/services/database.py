@@ -31,7 +31,7 @@ class DatabaseService:
 
             # Создаем таблицы
             await self.__create_users()
-            await self.__create_transactions()
+            await self.__create_payment_status_info()
             await self.__create_transaction_history()
             await self.__create_payment_methods()
             await self.__create_users_profile()
@@ -121,13 +121,13 @@ class DatabaseService:
             """
             )
 
-    async def __create_transactions(self):
+    async def __create_payment_status_info(self):
         async with self.acquire_connection() as conn:
             await conn.execute(
                 """
-                CREATE TABLE IF NOT EXISTS transactions (
+                CREATE TABLE IF NOT EXISTS payment_status_info (
                 id SERIAL PRIMARY KEY,
-                user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+                user_id BIGINT NOT NULL,
                 amount NUMERIC NULL,
                 currency VARCHAR(10) NULL,
                 period TEXT NULL,
@@ -144,8 +144,9 @@ class DatabaseService:
                 CREATE TABLE IF NOT EXISTS transaction_history (
                 id SERIAL PRIMARY KEY,
                 user_id BIGINT NOT NULL,
+                amount NUMERIC NOT NULL,
+                currency VARCHAR(10) NOT NULL,
                 payment_id TEXT NOT NULL,
-                payment_method_id TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT NOW(),
                 UNIQUE (user_id, payment_id)
                 ); """
@@ -287,54 +288,70 @@ class DatabaseService:
         payment_id: Optional[str] = None,
     ) -> None:
         async with self.acquire_connection() as conn:
-            # Преобразуем aware datetime в UTC и делаем naive
-            if untill.tzinfo is not None:
-                untill_moscow = untill.astimezone(tz=config.TZINFO)
-                untill_naive = untill_moscow.replace(tzinfo=None)
-            else:
-                untill_naive = untill
+            try:
 
-            await conn.execute(
-                """
-                INSERT INTO transactions (user_id, period, amount, currency, trial, untill) 
-                VALUES ($1, $2, $3, $4, $5, $6)
-                ON CONFLICT (user_id) DO UPDATE 
-                SET period = EXCLUDED.period, 
-                currency = EXCLUDED.currency,
-                amount = EXCLUDED.amount, 
-                trial = EXCLUDED.trial,
-                untill = EXCLUDED.untill 
-                """,
-                user_id,
-                period,
-                amount,
-                currency,
-                trial,
-                untill_naive,
-            )
-
-            # Проверка на реальный платеж
-            if payment_id:
-                created_at = datetime.now(tz=config.TZINFO).replace(tzinfo=None)
+                # Преобразуем aware datetime в UTC и делаем naive
+                if untill.tzinfo is not None:
+                    untill_moscow = untill.astimezone(tz=config.TZINFO)
+                    untill_naive = untill_moscow.replace(tzinfo=None)
+                else:
+                    untill_naive = untill
 
                 await conn.execute(
                     """
-                    INSERT INTO transaction_history (user_id, payment_id, created_at) VALUES ($1, $2, $3)
-                    """, user_id, payment_id, created_at
+                    INSERT INTO payment_info_status (user_id, period, amount, currency, trial, untill) 
+                    VALUES ($1, $2, $3, $4, $5, $6)
+                    ON CONFLICT (user_id) DO UPDATE 
+                    SET period = EXCLUDED.period, 
+                    currency = EXCLUDED.currency,
+                    amount = EXCLUDED.amount, 
+                    trial = EXCLUDED.trial,
+                    untill = EXCLUDED.untill 
+                    """,
+                    user_id,
+                    period,
+                    amount,
+                    currency,
+                    trial,
+                    untill_naive,
                 )
+
+                # Проверка на реальный платеж
+                if payment_id:
+                    created_at = datetime.now(tz=config.TZINFO).replace(tzinfo=None)
+
+                    await conn.execute(
+                        """
+                        INSERT INTO transaction_history (user_id, amount, currency, payment_id, created_at) VALUES ($1, $2, $3, $4, $5)
+                        """, user_id, amount, currency, payment_id, created_at
+                    )
+
+            except Exception as e:
+                return logger.error(f"Error creating payment for user {user_id}: {e}")
+
+            finally:
+                return logger.info(f"Payment successfully created for user {user_id}")
+
+
 
     async def save_payment_method(self, user_id: int, payment_method_id: str) -> None:
         """Сохранение payment_method_id для автоматических списаний"""
         async with self.acquire_connection() as conn:
-            await conn.execute(
-                """
-                INSERT INTO user_payment_methods (user_id, payment_method_id, created_at) 
-                VALUES ($1, $2, $3) 
-                ON CONFLICT (user_id) DO UPDATE SET 
-                payment_method_id = $2, updated_at = $3
-                """,
-                user_id, payment_method_id, datetime.now(tz=config.TZINFO)
-            )
+            try:
+                await conn.execute(
+                    """
+                    INSERT INTO payment_methods (user_id, payment_method_id, created_at) 
+                    VALUES ($1, $2, $3) 
+                    ON CONFLICT (user_id) DO UPDATE SET 
+                    payment_method_id = $2, updated_at = $3
+                    """,
+                    user_id, payment_method_id, datetime.now(tz=config.TZINFO)
+                )
+            except Exception as e:
+                return logger.error(f"Error in saving method payment id for user %s: {e}", user_id)
+
+            finally:
+                return logger.info(f"Payment method successfully saved for user %s", user_id)
 
     async def get_sub_due_to_info(self, limit, offset) -> List[dict]:
         async with self.acquire_connection() as conn:
@@ -342,8 +359,8 @@ class DatabaseService:
                 """
                 SELECT u.user_id, t.amount, t.untill
                 FROM users u
-                LEFT JOIUN transactions t
-                    ON u.user_id = t.user_id
+                LEFT JOIUN payment_info_status pis
+                    ON u.user_id = pis.user_id
                 LEFT JOIN transaction_history th
                     ON u.user_id = th.user_id
                 WHERE u.is_active = true
@@ -380,8 +397,8 @@ class DatabaseService:
                 u.is_active,
                 t.untill 
                 FROM users u 
-                LEFT JOIN transactions t
-                    ON u.user_id = t.user_id
+                LEFT JOIN payment_info_status pis
+                    ON u.user_id = pis.user_id
                 WHERE u.user_id = $1""",
                 user_id,
             )
@@ -391,14 +408,24 @@ class DatabaseService:
     async def deactivate_subscription(self, user_id: int):
         async with self.acquire_connection() as conn:
             await conn.execute(
+                "DELETE FROM payment_methods WHERE user_id = $1", user_id
+            )
+            await conn.execute(
                 "UPDATE users SET is_active = false WHERE user_id = $1", user_id
             )
 
     async def activate_subscription(self, user_id: int):
         async with self.acquire_connection() as conn:
-            await conn.execute(
-                "UPDATE users SET is_active = true WHERE user_id = $1", user_id
-            )
+            try:
+                await conn.execute(
+                    "UPDATE users SET is_active = true WHERE user_id = $1", user_id
+                )
+
+            except Exception as e:
+                return logger.error(f"Error in activate_subscription: {e}")
+
+            finally:
+                return logger.info("User %s marked as active successfully", user_id)
 
     async def add_users_profile(
         self,
