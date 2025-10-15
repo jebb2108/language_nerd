@@ -44,11 +44,11 @@ MESSAGES = dict(
             "🛠 <b>技术支持</b> — 如果出现问题我会帮忙\n\n",
         },
         "get_to_know": {
-            "en": "Don`t forget to complete your registration! Just click 'Find partner' to do so",
-            "ru": "Не забудь завершить регистрацию! Просто нажми на 'Найти собеседника' для продолжения",
-            "de": "Vergiss nicht, deine Registrierung abzuschließen! Klicke einfach auf 'Partner finden'",
-            "es": "¡No olvides completar tu registro! Simplemente haz clic en 'Encontrar compañero'",
-            "zh": "不要忘记完成注册！只需点击'寻找伙伴'即可继续",
+            "en": "Don`t forget to complete your registration! Just click 'Practice' to do so",
+            "ru": "Не забудь завершить регистрацию! Просто нажми на 'Практика' для продолжения",
+            "de": "Vergiss nicht, deine Registrierung abzuschließen! Klicke einfach auf 'Üben'",
+            "es": "¡No olvides completar tu registro! Simplemente haz clic en 'Práctica'",
+            "zh": "不要忘记完成注册！只需点击'实践'即可继续",
         },
         "pin_me": {
             "en": "📌 Pin this chat, so you will never loose me",
