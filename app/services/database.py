@@ -282,7 +282,7 @@ class DatabaseService:
         self,
         user_id: int,
         period: str,
-        amount: int,
+        amount: float,
         currency: str,
         trial: bool,
         untill: datetime,
@@ -314,7 +314,7 @@ class DatabaseService:
                     amount,
                     currency,
                     trial,
-                    untill_naive,
+                    untill_naive.replace(microsecond=None),
                 )
 
                 # Проверка на реальный платеж
@@ -324,7 +324,7 @@ class DatabaseService:
                     await conn.execute(
                         """
                         INSERT INTO transaction_history (user_id, amount, currency, payment_id, created_at) VALUES ($1, $2, $3, $4, $5)
-                        """, user_id, amount, currency, payment_id, created_at
+                        """, user_id, amount, currency, payment_id, created_at.replace(microsecond=None)
                     )
 
             except Exception as e:
