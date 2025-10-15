@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timedelta
 
 from aiogram import Bot
@@ -183,6 +184,7 @@ async def notify_user_via_bot(user_id):
         bot: "Bot" = await get_main_bot()
         redis_client = await get_redis_client()
         message_id = await redis_client.get(f"user_payment:{user_id}")
+        await asyncio.sleep(1)
         await bot.edit_message_text(
             text="✅ Платеж прошел успешно! Подписка активирована",
             chat_id=user_id,
