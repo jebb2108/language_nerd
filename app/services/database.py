@@ -338,6 +338,7 @@ class DatabaseService:
         """Сохранение payment_method_id для автоматических списаний"""
         async with self.acquire_connection() as conn:
             try:
+                new_updated_at = datetime.now(tz=config.TZINFO).replace(tzinfo=None).isoformat()
                 await conn.execute(
                     """
                     INSERT INTO payment_methods (user_id, payment_method_id, updated_at) 
@@ -345,10 +346,10 @@ class DatabaseService:
                     ON CONFLICT (user_id) DO UPDATE SET 
                     payment_method_id = $2, updated_at = $3
                     """,
-                    user_id, payment_method_id, datetime.now(tz=config.TZINFO)
+                    user_id, payment_method_id, new_updated_at
                 )
             except Exception as e:
-                return logger.error(f"Error in saving method payment id for user %s: {e}", user_id)
+                return logger.error(f"Error in saving method_payment_id for user %s: {e}", user_id)
 
             finally:
                 return logger.info(f"Payment method successfully saved for user %s", user_id)
