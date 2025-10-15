@@ -120,7 +120,7 @@ async def handle_regular_payment_success(payment: dict):
         await activate_subscription(user_id, payment)
 
         # Уведомляем пользователя
-        await notify_user_via_bot(user_id)
+        # await notify_user_via_bot(user_id)
 
     except Exception as e:
         logger.error(f"Failed to process regular payment: {e}")
@@ -142,9 +142,15 @@ async def activate_subscription(user_id: int, payment: dict):
         untill=new_untill,
         payment_id=payment['id']
     )
+    logger.info("Created payment info for user %s", user_id)
+
 
     await database.activate_subscription(user_id)
+    logger.info("Activated acc 4 user %s", user_id)
+
+
     await database.save_payment_method(user_id, payment_method_id)
+    logger.info("Saved payment method 4 user %s", user_id)
 
     await redis_client.setex(
         f"user_paid:{user_id}",
