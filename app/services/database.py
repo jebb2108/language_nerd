@@ -340,7 +340,7 @@ class DatabaseService:
             try:
                 await conn.execute(
                     """
-                    INSERT INTO payment_methods (user_id, payment_method_id, created_at) 
+                    INSERT INTO payment_methods (user_id, payment_method_id, updated_at) 
                     VALUES ($1, $2, $3) 
                     ON CONFLICT (user_id) DO UPDATE SET 
                     payment_method_id = $2, updated_at = $3
