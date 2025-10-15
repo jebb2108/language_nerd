@@ -81,6 +81,7 @@ async def handle_auto_payment_success(payment: dict):
         # Активируем подписку
         user_id = int(payment['metadata']['user_id'])
         await activate_subscription(user_id, payment)
+        await notify_user_via_bot(user_id)
 
     except Exception as e:
         logger.error(f"Failed to process auto-payment success: {e}")
