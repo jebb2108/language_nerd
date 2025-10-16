@@ -245,7 +245,12 @@ def get_edit_options(lang_code):
         text = BUTTONS["edit_topic"][lang_code],
         callback_data="profile_change:topics"
     )
+    go_back = InlineKeyboardButton(
+        text=BUTTONS["go_back"][lang_code],
+        callback_data="go_back"
+    )
     builder.row(change_topic_button)
+    builder.row(go_back)
     return builder.as_markup()
 
 
