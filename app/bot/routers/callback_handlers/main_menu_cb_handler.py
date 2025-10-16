@@ -235,7 +235,7 @@ async def profile_handler(callback: CallbackQuery, state: FSMContext):
             nickname=data.get("nickname", callback.from_user.username),
             age=data.get("age", 'not specified'),
             fluency=TRANSCRIPTIONS["fluency"][data.get("fluency")][lang_code],
-            topic=TRANSCRIPTIONS["topics"][data.get("topic")][lang_code],
+            topic=TRANSCRIPTIONS["topics"][data.get("topics")][lang_code],
             language=TRANSCRIPTIONS["languages"][data.get("language")][lang_code],
             about=data.get("about", 'not specified'),
         )
