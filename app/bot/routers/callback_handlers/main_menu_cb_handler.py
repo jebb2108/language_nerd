@@ -267,7 +267,7 @@ async def edit_profile_handler(callback: CallbackQuery, state: FSMContext):
         data = await ds.get_storage_data(user_id, state)
         lang_code = data.get("lang_code")
         await callback.message.edit_caption(
-            caption="Choose the following options below:",
+            caption=MESSAGES["change_profile_options"][lang_code],
             reply_markup=get_edit_options(lang_code)
         )
 

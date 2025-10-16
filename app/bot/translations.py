@@ -111,6 +111,10 @@ MESSAGES = dict(
             "话题: <b>{topic}</b>\n\n"
             "关于您: {about}",
         },
+        "change_profile_options": {
+            "en": "Choose one of the following options:",
+            "ru": "Выбери одну из следющих опций ниже:"
+        },
         "active_sub_caption": {
             "en": "Your subscription is active until:\n"
                   "=========================\n"
