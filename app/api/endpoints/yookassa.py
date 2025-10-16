@@ -16,35 +16,10 @@ logger = log.setup_logger('webhook_payments')
 @router.post("/webhook/yookassa")
 async def yookassa_webhook(request: Request, background_tasks: BackgroundTasks):
     data = await request.json()
-    signature = request.headers.get("Authorization")
     user_id = data['object']['metadata']['user_id']
     logger.info("Yookassa webhook received for user %s", user_id)
-    # # Проверяем подпись для исключения случая подделки платежа
-    # if not verify_signature(data, signature):
-    #     logger.warning(
-    #         "Invalid signature for user %s", user_id
-    #     )
-    #     return {"status": "error"}
-
-    # Обрабатываем в фоне
     background_tasks.add_task(process_payment_webhook, data)
     return {"status": "ok"}
-
-
-def verify_signature(body, signature):
-    import hmac
-    import hashlib
-    import json
-
-    # Генерируем подпись из тела запроса
-    message = json.dumps(body, separators=(',', ':'), ensure_ascii=False).encode()
-    expected_signature = hmac.new(
-        config.YOOKASSA_SECRET_KEY.encode(),
-        message,
-        hashlib.sha256
-    ).hexdigest()
-
-    return hmac.compare_digest(signature, expected_signature)
 
 
 async def process_payment_webhook(data):
@@ -58,31 +33,41 @@ async def process_payment_webhook(data):
 
             if is_auto_payment and payment['payment_method'].get('saved', False):
                 logger.info("Auto-payment being processed for user %s...", user_id)
-                await handle_auto_payment_success(payment)
+                await handle_auto_payment_succeeded(payment)
             else:
                 logger.info("Regular payment being processed for user %s...", user_id)
-                await handle_regular_payment_success(payment)
+                # await handle_regular_payment_success(payment)
 
         elif data['event'] == 'payment.canceled':
             payment = data['object']
             user_id = payment['metadata']['user_id']
             is_auto_payment = payment['metadata'].get('auto_payment', False)
 
-            if is_auto_payment:
-                logger.info("Auto-payment declined for user %s", user_id)
+            expired_on_confirmation = \
+                payment["cancellation_details"]["reason"]  == "expired_on_confirmation"
+
+            logger.info("Auto-payment declined for user %s", user_id)
+            logger.info("Initiator: %s", payment["cancellation_details"]["party"])
+            logger.info("Reason: %s", payment["cancellation_details"]["reason"])
+
+            if expired_on_confirmation: return
+
+            elif is_auto_payment:
                 await handle_auto_payment_failed(payment)
+
 
     except Exception as e:
         logger.error(f"Webhook processing failed: {e}")
 
 
-async def handle_auto_payment_success(payment: dict):
+async def handle_auto_payment_succeeded(payment: dict):
     """Обработка успешного автоматического списания"""
+    user_id = int(payment['metadata']['user_id'])
     try:
         # Активируем подписку
-        user_id = int(payment['metadata']['user_id'])
         await activate_subscription(user_id, payment)
-        await notify_user_via_bot(user_id)
+        # Уведомляем пользователя
+        await notify_user_auto_succeeded(user_id)
 
     except Exception as e:
         logger.error(f"Failed to process auto-payment success: {e}")
@@ -92,38 +77,13 @@ async def handle_auto_payment_failed(payment: dict):
     """Обработка неудачного автоматического списания"""
     user_id = int(payment['metadata']['user_id'])
     try:
-
         # Деактивируем подписку
         await deactivate_subscription(user_id)
-
         # Уведомляем пользователя
         await notify_user_auto_failed(user_id)
 
-
     except Exception as e:
-        logger.info(f"Auto-payment failed for user {user_id}, payment {payment['id']}")
-
-
-
-
-async def handle_regular_payment_success(payment: dict):
-    """Обработка обычного успешного платежа (существующая логика)"""
-    try:
-        user_id = int(payment['metadata']['user_id'])
-
-        # Сохраняем payment_method_id для будущих автоматических списаний
-        if payment.get('payment_method'):
-            payment_method_id = payment['payment_method']['id']
-            await save_payment_method(user_id, payment_method_id)
-
-        # Активируем подписку
-        await activate_subscription(user_id, payment)
-
-        # Уведомляем пользователя
-        # await notify_user_via_bot(user_id)
-
-    except Exception as e:
-        logger.error(f"Failed to process regular payment: {e}")
+        logger.info(f"Failed to process auto-payment failure: {e}")
 
 
 async def activate_subscription(user_id: int, payment: dict):
@@ -179,7 +139,7 @@ async def notify_user_auto_failed(user_id: int):
         logger.error(f"Can't notify user {user_id} about auto-failure: {e}")
 
 
-async def notify_user_via_bot(user_id):
+async def notify_user_auto_succeeded(user_id):
     try:
         bot: "Bot" = await get_main_bot()
         redis_client = await get_redis_client()
