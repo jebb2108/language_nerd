@@ -29,9 +29,11 @@ async def approved(callback: Union["CallbackQuery", "Message"]):
             return True
 
     # 2. Проверяем базу данных
+    native_now = datetime.now().astimezone(tz=config.TZINFO).replace(tzinfo=None)
     due_to, is_active = await db.get_users_due_to(user_id)
-    due_date_db = due_to.replace(tzinfo=None) if due_to else due_to
-    if due_date_db > datetime.now(tz=config.TZINFO).replace(tzinfo=None):
+    due_date_db = due_to.replace(tzinfo=None) if due_to else native_now
+    # Дата и время в базе данных больше текущего
+    if due_date_db > native_now:
         # Приводим к naive datetime
         if is_active:
             # Сохраняем в кэш как ISO строку без временной зоны
