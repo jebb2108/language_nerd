@@ -299,10 +299,13 @@ class DatabaseService:
                     untill_naive = untill
 
                 logger.info(
-                    f"user_id: {user_id}, period: {period}, "
-                    f"amount: {amount}, currency: {currency}, "
-                    f"trial: {trial}, untill: {untill}, "
-                    f"payment_id: {payment_id}"
+                    f"Parameters for payment_status_info: "
+                    f"user_id={user_id} (type: {type(user_id)}), "
+                    f"period={period} (type: {type(period)}), "
+                    f"amount={amount} (type: {type(amount)}), "
+                    f"currency={currency} (type: {type(currency)}), "
+                    f"trial={trial} (type: {type(trial)}), "
+                    f"untill_naive={untill_naive} (type: {type(untill_naive)})"
                 )
 
                 await conn.execute(
