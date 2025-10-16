@@ -10,6 +10,7 @@ from app.bot.keyboards.inline_keyboards import (
     get_go_back_keyboard,
     get_subscription_keyboard,
     get_profile_keyboard,
+    get_edit_options,
     get_shop_keyboard
 )
 from app.bot.translations import MESSAGES, EMOJI_SHOP, TRANSCRIPTIONS, EMOJI_TRANSCRIPTIONS
@@ -252,6 +253,25 @@ async def profile_handler(callback: CallbackQuery, state: FSMContext):
 
     except Exception as e:
         logger.error(f"Error in profile_handler: {e}")
+
+
+@router.callback_query(and_f(F.data == "edit_profile", approved))
+async def edit_profile_handler(callback: CallbackQuery, state: FSMContext):
+
+    await callback.answer()
+    user_id = callback.from_user.id
+    try:
+        data = await ds.get_storage_data(user_id, state)
+        lang_code = data.get("lang_code")
+        await callback.message.edit_caption(
+            caption="Choose the following options below:",
+            reply_markup=get_edit_options(lang_code)
+        )
+
+
+    except Exception as e:
+        logger.error(f"Error in shop_handler: {e}")
+
 
 
 @router.callback_query(and_f(F.data.startswith("shop:"), approved))

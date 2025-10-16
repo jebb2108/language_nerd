@@ -221,6 +221,10 @@ def get_subscription_keyboard(lang_code: str, is_active: bool, paused: bool = Fa
 
 def get_profile_keyboard(lang_code):
     builder = InlineKeyboardBuilder()
+    edit_profile_button = InlineKeyboardButton(
+        text=BUTTONS["edit_profile"][lang_code],
+        callback_data="edit_profile"
+    )
     shop_button = InlineKeyboardButton(
         text=BUTTONS["shop"][lang_code],
         callback_data="shop:0",
@@ -229,8 +233,19 @@ def get_profile_keyboard(lang_code):
         text=BUTTONS["go_back"][lang_code],
         callback_data="go_back",
     )
+    builder.row(edit_profile_button)
     builder.row(shop_button)
     builder.row(go_back_button)
+    return builder.as_markup()
+
+
+def get_edit_options(lang_code):
+    builder = InlineKeyboardBuilder()
+    change_topic_button = InlineKeyboardButton(
+        text = BUTTONS["edit_topic"][lang_code],
+        callback_data="profile_change:topic"
+    )
+    builder.row(change_topic_button)
     return builder.as_markup()
 
 

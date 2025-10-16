@@ -608,6 +608,15 @@ BUTTONS = dict(
             "es": "Estoy de acuerdo",
             "zh": "我同意",
         },
+        "edit_profile": {
+            "en": "Edit profile",
+            "ru": "Ред. провиль",
+        },
+
+        "edit_topic": {
+            "en": "Change topic",
+            "ru": "Изменить тему",
+        },
         "shop": {
             "en": "🏬 Vibes` shop",
             "ru": "🏬 Магазин Вайба",
@@ -850,13 +859,6 @@ WEEKLY_QUIZ = dict({
 
 TRANSCRIPTIONS = dict({
     "topics": {
-        "general": {
-            "en": "general",
-            "ru": "обо всем",
-            "de": "allgemein",
-            "es": "general",
-            "zh": "一般",
-        },
         "music": {
             "en": "music",
             "ru": "музыка",

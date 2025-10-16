@@ -550,10 +550,10 @@ class DatabaseService:
             )
             return dict(row) if row else None
 
-    async def change_topic(self, user_id: int, new_topic: str) -> None:
+    async def change_topic(self, user_id: int, new_topics: str) -> None:
         async with self.acquire_connection() as conn:
             await conn.execute(
-                """UPDATE users SET topic = $1 WHERE user_id = $2""", new_topic, user_id
+                """UPDATE users SET topics = $1 WHERE user_id = $2""", new_topics, user_id
             )
 
     async def get_users_location(self, user_id: int) -> dict:
