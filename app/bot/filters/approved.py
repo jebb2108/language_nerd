@@ -29,18 +29,18 @@ async def approved(callback: Union["CallbackQuery", "Message"]):
             return True
 
     # 2. Проверяем базу данных
-    native_now = datetime.now().astimezone(tz=config.TZINFO).replace(tzinfo=None)
     due_to, is_active = await db.get_users_due_to(user_id)
-    due_date_db = due_to.replace(tzinfo=None) if due_to else native_now
+    native_db_dueto = due_to.replace(tzinfo=None) if due_to else None
     # Дата и время в базе данных больше текущего
-    if due_date_db > native_now:
+    if native_db_dueto and \
+            native_db_dueto > datetime.now().astimezone(tz=config.TZINFO).replace(tzinfo=None):
         # Приводим к naive datetime
         if is_active:
             # Сохраняем в кэш как ISO строку без временной зоны
             await redis_client.setex(
                 f"user_paid:{user_id}",
                 timedelta(hours=2),
-                due_date_db.isoformat()
+                native_db_dueto.isoformat()
             )
 
         return True
