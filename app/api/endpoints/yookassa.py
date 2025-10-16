@@ -64,6 +64,7 @@ async def handle_auto_payment_succeeded(payment: dict):
     """Обработка успешного автоматического списания"""
     user_id = int(payment['metadata']['user_id'])
     try:
+        logger.info("payment: %s", payment)
         # Активируем подписку
         await activate_subscription(user_id, payment)
         # Уведомляем пользователя
