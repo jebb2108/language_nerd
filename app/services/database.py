@@ -54,20 +54,20 @@ class DatabaseService:
         async with self.acquire_connection() as conn:
             await conn.execute(
                 """
-                            CREATE TABLE IF NOT EXISTS users (
-                            user_id BIGINT PRIMARY KEY,
-                            username VARCHAR(50) NOT NULL,
-                            first_name VARCHAR(100) NOT NULL,
-                            camefrom VARCHAR(50) NOT NULL,
-                            language VARCHAR(20) NOT NULL,
-                            fluency SMALLINT NOT NULL,
-                            topic VARCHAR(20) NOT NULL,
-                            lang_code TEXT NOT NULL,
-                            is_active BOOLEAN DEFAULT TRUE,
-                            blocked_bot BOOLEAN DEFAULT FALSE,
-                            last_notified TIMESTAMP DEFAULT NOW(),
-                            UNIQUE (user_id)
-                            ); """
+                CREATE TABLE IF NOT EXISTS users (
+                user_id BIGINT PRIMARY KEY,
+                username VARCHAR(50) NOT NULL,
+                first_name VARCHAR(100) NOT NULL,
+                camefrom VARCHAR(50) NOT NULL,
+                language VARCHAR(20) NOT NULL,
+                fluency SMALLINT NOT NULL,
+                topics TEXT[] NOT NULL,
+                lang_code TEXT NOT NULL,
+                is_active BOOLEAN DEFAULT TRUE,
+                blocked_bot BOOLEAN DEFAULT FALSE,
+                last_notified TIMESTAMP DEFAULT NOW()
+                ); 
+                """
             )
 
     async def __create_words(self):
@@ -84,6 +84,7 @@ class DatabaseService:
                 word_state VARCHAR(20) DEFAULT 'NEW',
                 emotion VARCHAR(20) DEFAULT 'NEUTRAL',
                 correct_spelling BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT NOW(),
                 UNIQUE (user_id, word)
                 ); 
             """
@@ -127,13 +128,12 @@ class DatabaseService:
                 """
                 CREATE TABLE IF NOT EXISTS payment_status_info (
                 id SERIAL PRIMARY KEY,
-                user_id BIGINT NOT NULL,
+                user_id BIGINT NOT NULL REFERENCES users(user_id),
                 amount NUMERIC NOT NULL,
                 currency VARCHAR(10) NULL,
                 period TEXT NULL,
                 trial BOOLEAN DEFAULT TRUE,
-                untill TIMESTAMP DEFAULT NOW(),
-                UNIQUE (user_id)
+                untill TIMESTAMP DEFAULT NOW()
                 ); """
             )
 
@@ -143,13 +143,14 @@ class DatabaseService:
                 """
                 CREATE TABLE IF NOT EXISTS transaction_history (
                 id SERIAL PRIMARY KEY,
-                user_id BIGINT NOT NULL,
+                user_id BIGINT NOT NULL REFERENCES users(user_id),
                 amount NUMERIC NOT NULL,
                 currency VARCHAR(10) NOT NULL,
                 payment_id TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT NOW(),
                 UNIQUE (user_id, payment_id)
-                ); """
+                ); 
+                """
             )
 
     async def __create_payment_methods(self):
@@ -158,72 +159,72 @@ class DatabaseService:
                 """
                 CREATE TABLE IF NOT EXISTS payment_methods (
                 id SERIAL PRIMARY KEY,
-                user_id BIGINT NOT NULL,
+                user_id BIGINT NOT NULL REFERENCES users(user_id),
                 payment_method_id TEXT NOT NULL,
-                updated_at TIMESTAMP DEFAULT NOW(),
-                UNIQUE (user_id) 
-                );"""
+                updated_at TIMESTAMP DEFAULT NOW()
+                );
+                """
             )
 
     async def __create_users_profile(self):
         async with self.acquire_connection() as conn:
             await conn.execute(
                 """
-                            CREATE TABLE IF NOT EXISTS users_profile (
-                            id SERIAL PRIMARY KEY,
-                            user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-                            nickname VARCHAR(50) NOT NULL,
-                            email VARCHAR(50) NOT NULL,
-                            birthday DATE NOT NULL,
-                            dating BOOLEAN DEFAULT FALSE,
-                            gender VARCHAR(50) NULL,
-                            about TEXT NULL,
-                            status VARCHAR(50) NOT NULL,
-                            UNIQUE (user_id)
-                            ); """
+                CREATE TABLE IF NOT EXISTS users_profile (
+                user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+                nickname VARCHAR(50) NOT NULL,
+                email VARCHAR(50) NOT NULL,
+                birthday DATE NOT NULL,
+                dating BOOLEAN DEFAULT FALSE,
+                gender VARCHAR(50) NULL,
+                about TEXT NULL,
+                status VARCHAR(50) NOT NULL
+                ); 
+                """
             )
 
     async def __create_locations(self):
         async with self.acquire_connection() as conn:
             await conn.execute(
                 """
-                            CREATE TABLE IF NOT EXISTS locations (
-                            id SERIAL PRIMARY KEY,
-                            user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-                            latitude TEXT NULL,
-                            longitude TEXT NULL,
-                            city TEXT NULL,
-                            country TEXT NULL,
-                            timezone TEXT NULL,
-                            UNIQUE (user_id)
-                            ); """
+                CREATE TABLE IF NOT EXISTS locations (
+                user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+                latitude TEXT NULL,
+                longitude TEXT NULL,
+                city TEXT NULL,
+                country TEXT NULL,
+                timezone TEXT NULL
+                ); 
+                """
             )
 
     async def __create_weekly_reports(self):
         async with self.acquire_connection() as conn:
             await conn.execute(
                 """
-                            CREATE TABLE IF NOT EXISTS weekly_reports (
-                            report_id SERIAL PRIMARY KEY,
-                            user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-                            status TEXT DEFAULT 'OK',
-                            generation_date TIMESTAMP DEFAULT NOW(),
-                            sent BOOLEAN DEFAULT FALSE
-                            ); """
+                CREATE TABLE IF NOT EXISTS weekly_reports (
+                report_id SERIAL PRIMARY KEY,
+                user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+                status TEXT DEFAULT 'OK',
+                generation_date TIMESTAMP DEFAULT NOW(),
+                sent BOOLEAN DEFAULT FALSE
+                ); 
+                """
             )
 
     async def __create_report_words(self):
         async with self.acquire_connection() as conn:
             await conn.execute(
                 """
-                            CREATE TABLE IF NOT EXISTS report_words (
-                            word_id SERIAL PRIMARY KEY,
-                            report_id INT REFERENCES weekly_reports(report_id) ON DELETE CASCADE,
-                            word TEXT NOT NULL,
-                            sentence TEXT NOT NULL,
-                            options TEXT[] NOT NULL,
-                            correct_index INT NOT NULL
-                            ); """
+                CREATE TABLE IF NOT EXISTS report_words (
+                word_id SERIAL PRIMARY KEY,
+                report_id INT REFERENCES weekly_reports(report_id) ON DELETE CASCADE,
+                word TEXT NOT NULL,
+                sentence TEXT NOT NULL,
+                options TEXT[] NOT NULL,
+                correct_index INT NOT NULL
+                ); 
+                """
             )
 
     # Контекстный менеджер для работы с соединениями
@@ -244,7 +245,7 @@ class DatabaseService:
         camefrom: str,
         language: str,
         fluency: int,
-        topic: str,
+        topics: List[str],
         lang_code: str,
     ):
 
@@ -252,7 +253,7 @@ class DatabaseService:
             async with self.acquire_connection() as conn:
                 result = await conn.execute(
                     """
-                    INSERT INTO users (user_id, username, first_name, camefrom, language, fluency, topic, lang_code) 
+                    INSERT INTO users (user_id, username, first_name, camefrom, language, fluency, topics, lang_code) 
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                     ON CONFLICT (user_id) DO UPDATE 
                     SET username = EXCLUDED.username,
@@ -260,7 +261,7 @@ class DatabaseService:
                         first_name = EXCLUDED.first_name,
                         language = EXCLUDED.language,
                         fluency = EXCLUDED.fluency,
-                        topic = EXCLUDED.topic,
+                        topics = EXCLUDED.topics,
                         lang_code = EXCLUDED.lang_code
                 """,
                     user_id,
@@ -269,7 +270,7 @@ class DatabaseService:
                     camefrom,
                     language,
                     fluency,
-                    topic,
+                    topics,
                     lang_code,
                 )
                 logger.info(f"User {user_id} created/updated: {result}")
@@ -312,12 +313,6 @@ class DatabaseService:
                     """
                     INSERT INTO payment_status_info (user_id, period, amount, currency, trial, untill) 
                     VALUES ($1, $2, $3, $4, $5, $6)
-                    ON CONFLICT (user_id) DO UPDATE 
-                    SET period = EXCLUDED.period, 
-                    currency = EXCLUDED.currency,
-                    amount = EXCLUDED.amount, 
-                    trial = EXCLUDED.trial,
-                    untill = EXCLUDED.untill 
                     """,
                     user_id,
                     period,
@@ -354,8 +349,6 @@ class DatabaseService:
                     """
                     INSERT INTO payment_methods (user_id, payment_method_id, updated_at) 
                     VALUES ($1, $2, $3) 
-                    ON CONFLICT (user_id) DO UPDATE SET 
-                    payment_method_id = $2, updated_at = $3
                     """,
                     user_id, payment_method_id, new_updated_at
                 )

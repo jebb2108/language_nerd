@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import BaseModel, Field
 
@@ -40,7 +40,7 @@ class NewUser(BaseModel):
     first_name: str
     language: str
     fluency: int
-    topic: str
+    topics: List[str]
     lang_code: str
 
 

@@ -51,7 +51,7 @@ class DataStorage:
             "first_name": user_info["first_name"],
             "language": user_info["language"],
             "fluency": user_info["fluency"],
-            "topic": user_info["topic"],
+            "topics": ', '.join(user_info["topics"]),
             "lang_code": user_info["lang_code"],
             "is_active": user_info["is_active"]
         }

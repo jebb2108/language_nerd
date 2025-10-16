@@ -109,7 +109,7 @@ async def handle_transaction_offer(callback: CallbackQuery, state: FSMContext):
         reply_markup=payment_keyboard(lang_code),
     )
 
-    await state.update_data(topic=users_choice)
+    await state.update_data(topic=[users_choice,])
 
 
 @router.callback_query(F.data == "start_trial")
@@ -162,7 +162,7 @@ async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
             camefrom=data.get("camefrom"),
             language=data.get("language"),
             fluency=int(data.get("fluency")),
-            topic=data.get("topic"),
+            topics=data.get("topic"),
             lang_code=lang_code,
         ),
         NewPayment(user_id=int(data.get("user_id")), untill=trial_dt_obj),
