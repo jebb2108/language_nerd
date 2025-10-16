@@ -70,14 +70,17 @@ def show_fluency_keyboard(lang_code):
 
     return builder.as_markup()
 
-def show_topic_keyboard(lang_code, new=False):
+def show_topic_keyboard(lang_code, selected_options: set, new=False):
     builder = InlineKeyboardBuilder()
     for key, value in QUESTIONARY["topics"][lang_code].items():
         builder.row(InlineKeyboardButton(
-            text=value, callback_data=f"topic_{key}" if not new else f"chtopic_{key}")
+            text=value if not key in selected_options else value + " ✅",
+            callback_data=f"topic_{key}" if not new else f"chtopic_{key}")
         )
 
     return builder.as_markup()
+
+
 
 def payment_keyboard(lang_code):
     builder = InlineKeyboardBuilder()

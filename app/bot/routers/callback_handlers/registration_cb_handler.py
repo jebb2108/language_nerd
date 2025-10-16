@@ -1,8 +1,11 @@
 from datetime import datetime, timedelta
+from pydoc_data.topics import topics
 
 from aiogram import Router, F
 from aiogram.enums import ParseMode
+from aiogram.filters import and_f
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import CallbackQuery, FSInputFile
 
 from app.bot.keyboards.inline_keyboards import (
@@ -21,6 +24,11 @@ from logging_config import opt_logger as log
 
 logger = log.setup_logger("registration_cb_handler", config.LOG_LEVEL)
 router = Router(name=__name__)
+
+
+class MultiSelect(StatesGroup):
+    waiting_selection = State()
+    end_selection = State()
 
 
 @router.callback_query(F.data.startswith("camefrom_"))
@@ -86,30 +94,43 @@ async def handle_language_choice(callback: CallbackQuery, state: FSMContext):
     )
     await callback.message.edit_text(
         text=msg,
-        reply_markup=show_topic_keyboard(lang_code),
+        reply_markup=show_topic_keyboard(lang_code, set()),
     )
 
-    await state.update_data(fluency=users_choice)
+    await state.update_data(fluency=users_choice, topics=[])
+    await state.set_state(MultiSelect.waiting_selection)
 
 
-@router.callback_query(F.data.startswith("topic_"))
+@router.callback_query(and_f(F.data.startswith("topic_"), MultiSelect.waiting_selection))
 async def handle_transaction_offer(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
     data = await state.get_data()
     lang_code = data.get("lang_code")
     users_choice = callback.data.split("_", 1)[1]
-    msg = (
-        f"{MESSAGES["you_chose"][lang_code]} {TRANSCRIPTIONS["topics"][users_choice][lang_code]}\n\n"
-        f"{QUESTIONARY['payment_offer'][lang_code]}"
-    )
 
-    await callback.message.edit_text(
-        text=msg,
-        reply_markup=payment_keyboard(lang_code),
-    )
+    if users_choice == 'endselection':
+        if len(data.get("topics", [])):
+            choices_str = ", ".join([TRANSCRIPTIONS["topics"][topic][lang_code] for topic in data.get("topics")])
+            msg = (
+                f"{MESSAGES["you_chose"][lang_code]} {choices_str}\n\n"
+                f"{QUESTIONARY['payment_offer'][lang_code]}"
+            )
 
-    await state.update_data(topic=[users_choice,])
+            await callback.message.edit_text(
+                text=msg,
+                reply_markup=payment_keyboard(lang_code),
+            )
+
+            return await state.set_state(MultiSelect.end_selection)
+
+
+    current_topics = data.get("topics", [])
+    current_topics.append(users_choice) if users_choice not in current_topics else current_topics.remove(users_choice)
+    if len(current_topics) > 3: current_topics.pop(0)
+    await state.update_data(topics=current_topics)
+    await callback.message.edit_reply_markup(reply_markup=show_topic_keyboard(lang_code, current_topics))
+    await state.set_state(MultiSelect.waiting_selection)
 
 
 @router.callback_query(F.data == "start_trial")
@@ -162,7 +183,7 @@ async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
             camefrom=data.get("camefrom"),
             language=data.get("language"),
             fluency=int(data.get("fluency")),
-            topics=data.get("topic"),
+            topics=data.get("topics"),
             lang_code=lang_code,
         ),
         NewPayment(user_id=int(data.get("user_id")), untill=trial_dt_obj),

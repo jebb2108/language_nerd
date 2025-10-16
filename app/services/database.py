@@ -299,7 +299,7 @@ class DatabaseService:
                 else:
                     untill_naive = untill
 
-                logger.info(
+                logger.debug(
                     f"Parameters for payment_status_info: "
                     f"user_id={user_id} (type: {type(user_id)}), "
                     f"period={period} (type: {type(period)}), "
