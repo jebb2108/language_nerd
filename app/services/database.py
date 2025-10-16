@@ -128,7 +128,7 @@ class DatabaseService:
                 CREATE TABLE IF NOT EXISTS payment_status_info (
                 id SERIAL PRIMARY KEY,
                 user_id BIGINT NOT NULL,
-                amount FLOAT NOT NULL,
+                amount NUMERIC NOT NULL,
                 currency VARCHAR(10) NULL,
                 period TEXT NULL,
                 trial BOOLEAN DEFAULT TRUE,
