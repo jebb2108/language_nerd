@@ -610,7 +610,7 @@ BUTTONS = dict(
         },
         "edit_profile": {
             "en": "Edit profile",
-            "ru": "Ред. провиль",
+            "ru": "Ред. профиль",
         },
 
         "edit_topic": {
