@@ -298,6 +298,13 @@ class DatabaseService:
                 else:
                     untill_naive = untill
 
+                logger.info(
+                    f"user_id: {user_id}, period: {period}, "
+                    f"amount: {amount}, currency: {currency}, "
+                    f"trial: {trial}, untill: {untill}, "
+                    f"payment_id: {payment_id}"
+                )
+
                 await conn.execute(
                     """
                     INSERT INTO payment_status_info (user_id, period, amount, currency, trial, untill) 
