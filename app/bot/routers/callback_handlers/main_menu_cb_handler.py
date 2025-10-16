@@ -234,11 +234,12 @@ async def profile_handler(callback: CallbackQuery, state: FSMContext):
         is_active = data.get("is_active")
         if not is_active: return await callback.answer("Your subscription on pause")
 
+        topics = [TRANSCRIPTIONS["topics"][topic][lang_code] for topic in data.get("topics").split(", ")]
         msg = MESSAGES["user_info"][lang_code].format(
             nickname=data.get("nickname", callback.from_user.username),
             age=data.get("age", 'not specified'),
             fluency=TRANSCRIPTIONS["fluency"][data.get("fluency")][lang_code],
-            topic=TRANSCRIPTIONS["topics"][data.get("topics")][lang_code],
+            topic=", ".join(topics),
             language=TRANSCRIPTIONS["languages"][data.get("language")][lang_code],
             about=data.get("about", 'not specified'),
         )
@@ -362,10 +363,10 @@ async def change_topic_handler(callback: CallbackQuery, state: FSMContext):
                 await callback.answer(MESSAGES["topic_changed"][lang_code])
                 await state.update_data(new_topics=[], topics=", ".join(new_topics))
                 await state.update_data(topic=users_choice)
-                return go_back_handler(callback, state)
+                return await go_back_handler(callback, state)
 
             await callback.answer(MESSAGES["fail_to_change"][lang_code])
-            return go_back_handler(callback, state)
+            return await go_back_handler(callback, state)
 
         await state.update_data(new_topics=new_topics)
         await callback.message.edit_reply_markup(
