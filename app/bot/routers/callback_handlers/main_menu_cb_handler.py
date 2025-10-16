@@ -352,7 +352,9 @@ async def change_topic_handler(callback: CallbackQuery, state: FSMContext):
         new_topics = data.get("new_topics", [])
         if users_choice not in new_topics:
             new_topics.append(users_choice)
-        if len(new_topics) > 3: new_topics.pop(0)
+        if len(new_topics) > 3:
+            if users_choice != "endselection":
+                new_topics.pop(0)
         if users_choice == "endselection":
             new_topics.remove("endselection")
             profile_data = await ds.get_storage_data(user_id, state)
