@@ -50,8 +50,8 @@ class NewPayment(BaseModel):
     """
 
     user_id: int = Field(..., description="User ID")
-    amount: Optional[int] = Field(
-        199, description="Amount of payment in rubles user agreed to pay"
+    amount: Optional[float] = Field(
+        199.00, description="Amount of payment in rubles user agreed to pay"
     )
     period: Optional[str] = Field(
         "trial", description="Period of payment", examples=["month", "year"]

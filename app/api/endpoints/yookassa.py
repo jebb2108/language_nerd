@@ -97,7 +97,7 @@ async def activate_subscription(user_id: int, payment: dict):
     await database.create_payment(
         user_id=user_id,
         period="month",
-        amount=payment['amount']['value'],
+        amount=float(payment['amount']['value']),
         currency=payment['amount']['currency'],
         trial=False,
         untill=new_untill,
