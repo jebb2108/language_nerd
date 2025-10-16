@@ -362,7 +362,6 @@ async def change_topic_handler(callback: CallbackQuery, state: FSMContext):
                 await database.change_topic(user_id, new_topics)
                 await callback.answer(MESSAGES["topic_changed"][lang_code])
                 await state.update_data(new_topics=[], topics=", ".join(new_topics))
-                await state.update_data(topic=users_choice)
                 return await go_back_handler(callback, state)
 
             await callback.answer(MESSAGES["fail_to_change"][lang_code])
