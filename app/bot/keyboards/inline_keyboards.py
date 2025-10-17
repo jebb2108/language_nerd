@@ -46,7 +46,7 @@ def show_language_keyboard(new=False):
     )
     german_button = InlineKeyboardButton(
         text="🇩🇪 Deutsch",
-        callback_data="lang_german" if new else "chlang_german",
+        callback_data="chlang_german" if new else "lang_german",
     )
     spanish_button = InlineKeyboardButton(
         text="🇪🇸 Español",
@@ -258,7 +258,7 @@ def get_edit_options(lang_code):
     )
     change_lang_button = InlineKeyboardButton(
         text=BUTTONS["edit_lang"][lang_code],
-        callback_data="profile_change:lang"
+        callback_data="profile_change:language"
     )
     change_topic_button = InlineKeyboardButton(
         text=BUTTONS["edit_topic"][lang_code],
@@ -272,10 +272,8 @@ def get_edit_options(lang_code):
         text=BUTTONS["go_back"][lang_code],
         callback_data="go_back"
     )
-    builder.row(change_nickname_button)
-    builder.row(change_lang_button)
-    builder.row(change_topic_button)
-    builder.row(change_intro_button)
+    builder.row(change_nickname_button, change_lang_button)
+    builder.row(change_topic_button, change_intro_button)
     builder.row(go_back)
     return builder.as_markup()
 

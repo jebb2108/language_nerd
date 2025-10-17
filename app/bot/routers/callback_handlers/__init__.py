@@ -11,9 +11,9 @@ router = Router(name=__name__)
 
 router.include_routers(
     main_menu_cb_handler_router,
+    change_profile_cb_handler_router,
     registration_cb_handler_router,
     weekly_message_cb_handler_router,
-    change_profile_cb_handler_router
 )
 
 # this has to be the last one

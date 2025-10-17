@@ -69,7 +69,8 @@ async def profile_change_handler(callback: CallbackQuery, state: FSMContext):
             current_language = data.get("language")
             msg = MESSAGES["current_lang"][lang_code].format(language=current_language)
             await callback.message.edit_caption(caption=msg)
-            await callback.message.edit_reply_markup(reply_markup=show_language_keyboard(True))
+            await callback.message.edit_reply_markup(reply_markup=show_language_keyboard(new=True))
+            await state.set_state(MultiSelection.waiting_language)
 
 
         elif users_choice == "topics":
@@ -97,7 +98,7 @@ async def profile_change_handler(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(
-    and_f(F.data.startswith("chlang_", MultiSelection.waiting_language, approved))
+    and_f(F.data.startswith("chlang_"), MultiSelection.waiting_language, approved)
 )
 async def change_lang_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
@@ -131,8 +132,8 @@ async def change_fluency_handler(callback: CallbackQuery, state: FSMContext):
     users_choice = callback.data.split('_', 1)[1]
     try:
         data = await ds.get_storage_data(user_id, state)
-        new_language = await data.get("new_lang")
-        await database.change_language(user_id, new_language, users_choice)
+        new_language = data.get("new_lang")
+        await database.change_language(user_id, new_language, int(users_choice))
         await state.set_state(MultiSelection.ended_change)
         return await go_back_handler(callback, state)
 
@@ -167,8 +168,8 @@ async def change_topic_handler(callback: CallbackQuery, state: FSMContext):
                 new_topics.pop(0)
         if users_choice == "endselection":
             new_topics.remove("endselection")
+            if not new_topics: return
             profile_data = await ds.get_storage_data(user_id, state)
-
             if set(profile_data.get("topics").split(", ")) != set(new_topics):
 
                 await database.change_topic(user_id, new_topics)

@@ -112,8 +112,8 @@ MESSAGES = dict(
             "关于您: {about}",
         },
         "change_profile_options": {
-            "en": "Choose one of the following options:",
-            "ru": "Выбери одну из следющих опций ниже:"
+            "en": "Which one do we want to change?",
+            "ru": "Что мы хотим поменять?"
         },
         "active_sub_caption": {
             "en": "Your subscription is active until:\n"
@@ -226,7 +226,7 @@ MESSAGES = dict(
         },
         "no_nickname": {
             "en": "You don`t have one. Please, register in <b>Practice</b>",
-            "ru": "у тебя еще нет никнейма. Зарегистрируйся в <b>Практика</b>",
+            "ru": "У тебя еще нет никнейма. Зарегистрируйся в <b>Практика</b>",
         },
         "nickname_change_succeeded": {
             "en": "Nickname was successfully changed!",
@@ -602,20 +602,20 @@ BUTTONS = dict(
             "ru": "Ред. профиль",
         },
         "edit_nickname": {
-            "en": "Change nickname",
-            "ru": "Изменить никнейм",
+            "en": "Nickname",
+            "ru": "Никнейм",
         },
         "edit_lang": {
-            "en": "Change language",
-            "ru": "Изменить язык",
+            "en": "Language",
+            "ru": "Язык",
         },
         "edit_intro": {
-            "en": "Change intro",
-            "ru": "Изменить интро"
+            "en": "Intro",
+            "ru": "Интро"
         },
         "edit_topic": {
-            "en": "Change topic",
-            "ru": "Изменить тему",
+            "en": "Topic",
+            "ru": "Тему",
         },
         "shop": {
             "en": "🏬 Vibes` shop",

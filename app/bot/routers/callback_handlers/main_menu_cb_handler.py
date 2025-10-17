@@ -67,6 +67,7 @@ async def profile_handler(callback: CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
 
     try:
+        await state.clear()
         data = await ds.get_storage_data(user_id, state)
         lang_code = data.get("lang_code", "en")
         is_active = data.get("is_active")
