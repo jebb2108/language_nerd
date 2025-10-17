@@ -41,8 +41,6 @@ async def edit_nickname_handler(message: Message, state: FSMContext) -> None:
         await state.set_state(MultiSelection.waiting_nickname)
         return await nickname_exception_handler(message, lang_code, e)
     else:
-        msg = MESSAGES['welcome'][lang_code]+MESSAGES["get_to_know"][lang_code]
-        await message.edit_caption(caption=msg)
         await state.update_data(nickname=new_nickname)
         await message.answer(text=MESSAGES["nickname_change_succeeded"][lang_code])
         await database.change_nickname(user_id, new_nickname)
