@@ -240,12 +240,24 @@ MESSAGES = dict(
             "es": "⚠️ Búsqueda terminada",
             "zh": "⚠️ 搜索已结束",
         },
+        "current_nickname": {
+            "en": "Current nickname - <b>{nickname}</b>\n\nPlease, type a new nickname below",
+            "ru": "Текущий никнейм - <b>{nickname}</b>\n\nПожалуйста, введи новый никнейм ниже",
+        },
+        "current_lang": {
+            "en": "Current language - <b>{language}</b>\n\nChoose one of the options below to change it",
+            "ru": "Текущий язык - <b>{language}</b>\n\nВыбери новый язык изучения из предложенного ниже выбора",
+        },
         "current_topic": {
             "en": "Current topic - <b>{topic}</b>\n\nChoose one of the options below to change it",
             "ru": "Текущая тема - <b>{topic}</b>\n\nВыберите новую тему для разговора из предложенного ниже выбора",
             "de": "Aktuelles Thema - <b>{topic}</b>\n\nWählen Sie eine der folgenden Optionen, um es zu ändern",
             "es": "Tema actual - <b>{topic}</b>\n\nElija una de las opciones a continuación para cambiarla",
             "zh": "当前主题 - <b>{topic}</b>\n\n选择以下选项之一进行更改",
+        },
+        "current_intro": {
+            "en": "Current intro - <b>{intro}</b>\n\nPlease, type a new intro for you below in the chosen language",
+            "ru": "Текущее интро - <b>{intro}</b>\n\nПожалуйста, напиши про себя в чате ниже на выбранном языке",
         },
         "topic_changed": {
             "en": "Topic has been successfully changed",
@@ -616,7 +628,18 @@ BUTTONS = dict(
             "en": "Edit profile",
             "ru": "Ред. профиль",
         },
-
+        "edit_nickname": {
+            "en": "Change nickname",
+            "ru": "Изменить никнейм",
+        },
+        "edit_lang": {
+            "en": "Change language",
+            "ru": "Изменить язык",
+        },
+        "edit_intro": {
+            "en": "Change intro",
+            "ru": "Изменить интро"
+        },
         "edit_topic": {
             "en": "Change topic",
             "ru": "Изменить тему",

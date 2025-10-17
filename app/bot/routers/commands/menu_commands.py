@@ -26,7 +26,10 @@ router = Router(name=__name__)
 
 
 class MultiSelection(StatesGroup):
-    waiting_selection = State()
+    waiting_nickname = State()
+    waiting_language = State()
+    waiting_topic = State()
+    waiting_intro = State()
 
 
 @router.message(

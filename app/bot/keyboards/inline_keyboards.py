@@ -241,15 +241,30 @@ def get_profile_keyboard(lang_code):
 
 def get_edit_options(lang_code):
     builder = InlineKeyboardBuilder()
+    change_nickname_button = InlineKeyboardButton(
+        text=BUTTONS["edit_nickname"][lang_code],
+        callback_data="profile_change:nickname"
+    )
+    change_lang_button = InlineKeyboardButton(
+        text=BUTTONS["edit_lang"][lang_code],
+        callback_data="profile_change:lang"
+    )
     change_topic_button = InlineKeyboardButton(
-        text = BUTTONS["edit_topic"][lang_code],
+        text=BUTTONS["edit_topic"][lang_code],
         callback_data="profile_change:topics"
+    )
+    change_intro_button = InlineKeyboardButton(
+        text=BUTTONS["edit_intro"][lang_code],
+        callback_data="profile_change:intro"
     )
     go_back = InlineKeyboardButton(
         text=BUTTONS["go_back"][lang_code],
         callback_data="go_back"
     )
+    builder.row(change_nickname_button)
+    builder.row(change_lang_button)
     builder.row(change_topic_button)
+    builder.row(change_intro_button)
     builder.row(go_back)
     return builder.as_markup()
 
