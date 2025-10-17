@@ -226,20 +226,6 @@ MESSAGES = dict(
             "es": "Eres solo tú",
             "zh": "只有您一个人",
         },
-        "timed_out": {
-            "en": "⏳ Timed out. Sorry, didn't find you a partner :(",
-            "ru": "⏳ Время истекло. Прости, не нашла тебе партнера :(",
-            "de": "⏳ Zeit abgelaufen. Tut mir leid, ich habe keinen Partner für dich gefunden :(",
-            "es": "⏳ Tiempo agotado. Lo siento, no te encontré un compañero :(",
-            "zh": "⏳ 超时了。抱歉，没有为你找到伙伴 :(",
-        },
-        "cancel_search": {
-            "en": "⚠️ Ended search",
-            "ru": "⚠️ Поиск завершен",
-            "de": "⚠️ Suche beendet",
-            "es": "⚠️ Búsqueda terminada",
-            "zh": "⚠️ 搜索已结束",
-        },
         "current_nickname": {
             "en": "Current nickname - <b>{nickname}</b>\n\nPlease, type a new nickname below",
             "ru": "Текущий никнейм - <b>{nickname}</b>\n\nПожалуйста, введи новый никнейм ниже",
@@ -258,6 +244,10 @@ MESSAGES = dict(
         "current_intro": {
             "en": "Current intro - <b>{intro}</b>\n\nPlease, type a new intro for you below in the chosen language",
             "ru": "Текущее интро - <b>{intro}</b>\n\nПожалуйста, напиши про себя в чате ниже на выбранном языке",
+        },
+        "nickname_change_succeeded": {
+            "en": "Nickname was successfully changed!",
+            "ru": "Никнейм успешно заменен!"
         },
         "topic_changed": {
             "en": "Topic has been successfully changed",
@@ -1498,3 +1488,51 @@ EMOJI_TRANSCRIPTIONS = {
         "zh": "- 百万分之一"
     }
 }
+
+
+ERROR_MESSAGES = dict(
+    {
+        "empty_space_error": {
+            "en": "Nickname cannot contain empty spaces",
+            "ru": "Никнейм не может содержать пробелы",
+            "de": "Nickname darf keine Leerzeichen enthalten",
+            "es": "El apodo no puede contener espacios vacíos",
+            "zh": "昵称不能包含空格",
+        },
+        "already_exists_error": {
+            "en": "Nickname already exists",
+            "ru": "Такой никнейм уже существует",
+            "de": "Nickname existiert bereits",
+            "es": "El apodo ya existe",
+            "zh": "昵称已存在",
+        },
+        "too_short_error": {
+            "en": "Nickname must be at least 6 characters long",
+            "ru": "Никнейм должен быть не менее 6 символов",
+            "de": "Nickname muss mindestens 6 Zeichen lang sein",
+            "es": "El apodo debe tener al menos 6 caracteres",
+            "zh": "昵称必须至少6个字符",
+        },
+        "too_long_error": {
+            "en": "Nickname must be at most 16 characters long",
+            "ru": "Никнейм должен быть не более 16 символов",
+            "de": "Nickname darf höchstens 16 Zeichen lang sein",
+            "es": "El apodo debe tener como máximo 16 caracteres",
+            "zh": "昵称最多16个字符",
+        },
+        "invalid_characters_error": {
+            "en": "Nickname must contain only latin characters and numbers",
+            "ru": "Никнейм должен содержать только латинские буквы и цифры",
+            "de": "Nickname darf nur lateinische Zeichen und Zahlen enthalten",
+            "es": "El apodo debe contener solo caracteres latinos y números",
+            "zh": "昵称只能包含拉丁字符和数字",
+        },
+        "unknown_error": {
+            "en": "Unknown error. PLease, try again",
+            "ru": "Неизвестная ошибка. Пожалуйста, попробуйте снова",
+            "de": "Unbekannter Fehler. Bitte versuchen Sie es erneut",
+            "es": "Error desconocido. Inténtalo de nuevo",
+            "zh": "未知错误。请重试",
+        }
+    }
+)

@@ -30,6 +30,7 @@ class MultiSelection(StatesGroup):
     waiting_language = State()
     waiting_topic = State()
     waiting_intro = State()
+    ended_change = State()
 
 
 @router.message(

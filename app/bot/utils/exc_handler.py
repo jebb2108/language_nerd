@@ -8,9 +8,8 @@ from exc import EmptySpaceError, AlreadyExistsError, TooShortError, TooLongError
 
 async def nickname_exception_handler(
         message: Message,
-        state: FSMContext,
+        lang_code: str,
         error: Exception,
-        lang_code: str
 ):
     """Обработчик исключений для валидации имени"""
     error_messages = {
