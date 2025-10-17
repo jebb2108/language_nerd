@@ -550,6 +550,13 @@ class DatabaseService:
             )
             return dict(row) if row else None
 
+    async def change_nickname(self, user_id: int, new_nickname: str):
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+                "UPDATE users_profile SET nickname = $1 WHERE user_id = $2",
+                user_id, new_nickname
+            )
+
     async def change_topic(self, user_id: int, new_topics: str) -> None:
         async with self.acquire_connection() as conn:
             await conn.execute(

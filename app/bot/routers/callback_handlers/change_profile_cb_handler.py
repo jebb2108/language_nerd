@@ -84,10 +84,6 @@ async def profile_change_handler(callback: CallbackQuery, state: FSMContext):
         logger.error(f"Error in cancel_choosing_topic: {e}")
 
 
-@router.callback_query(and_f(MultiSelection.waiting_nickname, approved))
-async def edit_nickname_handler(callback: CallbackQuery, state: FSMContext):
-    pass
-
 
 @router.callback_query(
     and_f(F.data.startswith("chtopic_"), MultiSelection.waiting_topic, approved)
