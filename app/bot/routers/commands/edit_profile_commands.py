@@ -39,9 +39,7 @@ async def edit_nickname_handler(message: Message, state: FSMContext) -> None:
         EmptySpaceError
     ) as e:
         await state.set_state(MultiSelection.waiting_nickname)
-        return await message.answer(
-            text=await nickname_exception_handler(message, lang_code, e)
-    )
+        return await nickname_exception_handler(message, lang_code, e)
     else:
         msg = MESSAGES['welcome'][lang_code]+MESSAGES["get_to_know"][lang_code]
         await message.edit_caption(caption=msg)
