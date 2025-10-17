@@ -556,6 +556,12 @@ class DatabaseService:
                 "UPDATE users_profile SET nickname = $1 WHERE user_id = $2",
                 user_id, new_nickname
             )
+    async def change_language(self, user_id: int, language:str, fluency: int):
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+                "UPDATE users SET language = $1, fluency = $2 WHERE user_id = $3",
+                language, fluency, user_id
+            )
 
     async def change_topic(self, user_id: int, new_topics: str) -> None:
         async with self.acquire_connection() as conn:

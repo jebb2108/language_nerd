@@ -2,9 +2,19 @@ import asyncio
 from datetime import datetime, time
 
 from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
 
 from app.dependencies import get_db
 from exc import StorageDataException
+
+
+class MultiSelection(StatesGroup):
+    waiting_nickname = State()
+    waiting_language = State()
+    waiting_fluency = State()
+    waiting_topic = State()
+    waiting_intro = State()
+    ended_change = State()
 
 
 class DataStorage:
@@ -15,6 +25,7 @@ class DataStorage:
     async def init(self):
         self.database = await get_db()
         self._initialized = True
+
 
     async def get_storage_data(
         self, user_id: int, state: FSMContext) -> dict:

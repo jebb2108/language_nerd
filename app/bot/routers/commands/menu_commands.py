@@ -1,11 +1,7 @@
-from typing import Union
-
-import aiohttp
 from aiogram import Router
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, and_f
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, FSInputFile
 
 from app.bot.filters.approved import approved
@@ -13,7 +9,7 @@ from app.bot.keyboards.inline_keyboards import (
     get_on_main_menu_keyboard,
 )
 from app.bot.middlewares.rate_limit_middleware import RateLimitInfo
-from app.bot.translations import MESSAGES, TRANSCRIPTIONS
+from app.bot.translations import MESSAGES
 from app.bot.utils.access_data import data_storage as ds
 from app.dependencies import get_db
 from config import config
@@ -23,14 +19,6 @@ logger = log.setup_logger("main menu commands", config.LOG_LEVEL)
 
 # Инициализируем роутер
 router = Router(name=__name__)
-
-
-class MultiSelection(StatesGroup):
-    waiting_nickname = State()
-    waiting_language = State()
-    waiting_topic = State()
-    waiting_intro = State()
-    ended_change = State()
 
 
 @router.message(

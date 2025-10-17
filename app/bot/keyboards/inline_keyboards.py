@@ -34,27 +34,27 @@ def show_where_from_keyboard(lang_code):
     return builder.as_markup()
 
 
-def show_language_keyboard():
+def show_language_keyboard(new=False):
     builder = InlineKeyboardBuilder()
     russian_button = InlineKeyboardButton(
         text="🇷🇺 Русский",
-        callback_data="lang_russian",
+        callback_data="chlang_russian" if new else "lang_russian",
     )
     english_button = InlineKeyboardButton(
         text="🇺🇸 English",
-        callback_data="lang_english",
+        callback_data="chlang_english" if new else "lang_english",
     )
     german_button = InlineKeyboardButton(
         text="🇩🇪 Deutsch",
-        callback_data="lang_german",
+        callback_data="lang_german" if new else "chlang_german",
     )
     spanish_button = InlineKeyboardButton(
         text="🇪🇸 Español",
-        callback_data="lang_spanish",
+        callback_data="chlang_spanish" if new else "lang_spanish",
     )
     chinese_button = InlineKeyboardButton(
         text="🇨🇳 中文",
-        callback_data="lang_chinese",
+        callback_data="chlang_chinese" if new else "lang_chinese",
     )
     builder.add(
         russian_button, english_button, german_button, spanish_button, chinese_button
@@ -63,10 +63,12 @@ def show_language_keyboard():
     return builder.as_markup()
 
 
-def show_fluency_keyboard(lang_code):
+def show_fluency_keyboard(lang_code, new=False):
     builder = InlineKeyboardBuilder()
     for key, value in QUESTIONARY["fluency_levels"][lang_code].items():
-        builder.row(InlineKeyboardButton(text=value, callback_data=f"fluency_{key}"))
+        builder.row(InlineKeyboardButton(
+            text=value, callback_data=f"chfluency_{key}" if new else f"fluency_{key}"
+        ))
 
     return builder.as_markup()
 
@@ -75,7 +77,7 @@ def show_topic_keyboard(lang_code, selected_options: set, new=False):
     for key, value in QUESTIONARY["topics"][lang_code].items():
         builder.row(InlineKeyboardButton(
             text=value if not key in selected_options else value + " ✅",
-            callback_data=f"topic_{key}" if not new else f"chtopic_{key}")
+            callback_data=f"chtopic_{key}" if new else f"topic_{key}")
         )
 
     return builder.as_markup()
@@ -236,6 +238,15 @@ def get_profile_keyboard(lang_code):
     builder.row(edit_profile_button)
     builder.row(shop_button)
     builder.row(go_back_button)
+    return builder.as_markup()
+
+def choose_nickname_keyboard(lang_code):
+    builder = InlineKeyboardBuilder()
+    cancel_button = InlineKeyboardButton(
+        text=BUTTONS["cancel"][lang_code],
+        callback_data="go_back"
+    )
+    builder.row(cancel_button)
     return builder.as_markup()
 
 

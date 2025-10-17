@@ -13,7 +13,7 @@ from app.bot.keyboards.inline_keyboards import (
     get_shop_keyboard
 )
 from app.bot.translations import MESSAGES, EMOJI_SHOP, TRANSCRIPTIONS, EMOJI_TRANSCRIPTIONS
-from app.bot.utils.access_data import data_storage as ds
+from app.bot.utils.access_data import data_storage as ds, MultiSelection
 from app.dependencies import get_db, get_redis_client
 from config import config
 from exc import StorageDataException
@@ -102,6 +102,7 @@ async def go_back_handler(callback: CallbackQuery, state: FSMContext):
     Возвращает пользователя назад в главное меню, повторно вызывая те же кнопки.
     """
     await callback.answer()
+    await state.set_state(MultiSelection.ended_change)
     database = await get_db()
     user_id = callback.from_user.id
 

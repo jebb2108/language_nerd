@@ -205,27 +205,6 @@ MESSAGES = dict(
             "es": "¡Se ha encontrado una coincidencia! Su apodo es <b>{nickname}</b>\n\nSu intro: {about}\n\nPulsa este botón para comenzar a chatear: ",
             "zh": "已找到匹配！他们的昵称是 <b>{nickname}</b>\n\n他们的介绍：{about}\n\n点击此按钮开始聊天：",
         },
-        "show_queue_info": {
-            "en": "Total in search: {total}\n\nMost spoken languages at the moment: {lans}",
-            "ru": "Всего в поиске: {total}\n\nИспользуемые языки в очереди: {lans}",
-            "de": "Gesamt in der Suche: {total}\n\nMeistgesprochene Sprachen im Moment: {lans}",
-            "es": "Total en búsqueda: {total}\n\nIdiomas más hablados en este momento: {lans}",
-            "zh": "搜索总数: {total}\n\n当前最常用的语言: {lans}",
-        },
-        "nobody_in_queue": {
-            "en": "No one is looking for a match",
-            "ru": "Никого нет, чтобы показать актуальные языки",
-            "de": "Niemand sucht nach einem Match",
-            "es": "Nadie está buscando una coincidencia",
-            "zh": "没人在寻找匹配",
-        },
-        "its_just_you": {
-            "en": "It`s just you",
-            "ru": "Кроме Вас никого нет",
-            "de": "Es sind nur Sie",
-            "es": "Eres solo tú",
-            "zh": "只有您一个人",
-        },
         "current_nickname": {
             "en": "Current nickname - <b>{nickname}</b>\n\nPlease, type a new nickname below",
             "ru": "Текущий никнейм - <b>{nickname}</b>\n\nПожалуйста, введи новый никнейм ниже",
@@ -244,6 +223,10 @@ MESSAGES = dict(
         "current_intro": {
             "en": "Current intro - <b>{intro}</b>\n\nPlease, type a new intro for you below in the chosen language",
             "ru": "Текущее интро - <b>{intro}</b>\n\nПожалуйста, напиши про себя в чате ниже на выбранном языке",
+        },
+        "no_nickname": {
+            "en": "You don`t have one. Please, register in <b>Practice</b>",
+            "ru": "у тебя еще нет никнейма. Зарегистрируйся в <b>Практика</b>",
         },
         "nickname_change_succeeded": {
             "en": "Nickname was successfully changed!",
