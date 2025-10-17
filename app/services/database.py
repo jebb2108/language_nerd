@@ -554,7 +554,7 @@ class DatabaseService:
         async with self.acquire_connection() as conn:
             await conn.execute(
                 "UPDATE users_profile SET nickname = $1 WHERE user_id = $2",
-                user_id, new_nickname
+                new_nickname, user_id
             )
     async def change_language(self, user_id: int, language:str, fluency: int):
         async with self.acquire_connection() as conn:
