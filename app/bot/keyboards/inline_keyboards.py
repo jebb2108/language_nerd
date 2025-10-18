@@ -249,6 +249,15 @@ def choose_nickname_keyboard(lang_code):
     builder.row(cancel_button)
     return builder.as_markup()
 
+def choose_intro_keyboard(lang_code):
+    builder = InlineKeyboardBuilder()
+    cancel_button = InlineKeyboardButton(
+        text=BUTTONS["cancel"][lang_code],
+        callback_data="go_back"
+    )
+    builder.row(cancel_button)
+    return builder.as_markup()
+
 def get_menu_keyboard(lang_code):
     builder = InlineKeyboardBuilder()
     menu_button = InlineKeyboardButton(

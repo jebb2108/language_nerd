@@ -8,7 +8,7 @@ from app.bot.filters.approved import approved
 from app.bot.keyboards.inline_keyboards import (
     get_edit_options, choose_nickname_keyboard,
     show_topic_keyboard, show_fluency_keyboard,
-    show_language_keyboard,
+    show_language_keyboard, choose_intro_keyboard,
     get_go_back_keyboard
 )
 from app.bot.routers.callback_handlers.main_menu_cb_handler import go_back_handler
@@ -106,6 +106,9 @@ async def profile_change_handler(callback: CallbackQuery, state: FSMContext):
             current_intro = data.get("about", "")
             msg = MESSAGES["current_intro"][lang_code].format(intro=current_intro)
             await callback.message.edit_caption(caption=msg)
+            await callback.message.edit_reply_markup(
+                reply_markup=choose_intro_keyboard(lang_code)
+            )
             return await state.set_state(MultiSelection.waiting_intro)
 
     except StorageDataException:
