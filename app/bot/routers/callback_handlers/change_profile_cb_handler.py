@@ -103,7 +103,7 @@ async def profile_change_handler(callback: CallbackQuery, state: FSMContext):
                 return await callback.message.edit_reply_markup(
                     reply_markup=get_go_back_keyboard(lang_code)
                 )
-            current_intro = data.get("intro", "")
+            current_intro = data.get("about", "")
             msg = MESSAGES["current_intro"][lang_code].format(intro=current_intro)
             await callback.message.edit_caption(caption=msg)
             return await state.set_state(MultiSelection.waiting_intro)

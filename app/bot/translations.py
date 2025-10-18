@@ -573,6 +573,10 @@ BUTTONS = dict(
             "es": "🛠 Soporte",
             "zh": "🛠 支持",
         },
+        "menu": {
+            "en": "🏠 menu",
+            "ru": "🏠 меню"
+        },
         "go_back": {
             "en": "🔙 Go Back",
             "ru": "🔙 Назад",

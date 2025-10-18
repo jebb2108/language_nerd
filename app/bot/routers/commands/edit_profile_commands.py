@@ -1,9 +1,11 @@
 from aiogram import Router
+from aiogram.enums import ParseMode
 from aiogram.filters import and_f
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from app.bot.filters.approved import approved
+from app.bot.keyboards.inline_keyboards import get_menu_keyboard
 from app.bot.translations import MESSAGES
 from app.bot.utils.access_data import MultiSelection
 from app.bot.utils.exc_handler import nickname_exception_handler, intro_exception_handler
@@ -42,7 +44,11 @@ async def edit_nickname_handler(message: Message, state: FSMContext) -> None:
         return await nickname_exception_handler(message, lang_code, e)
     else:
         await state.update_data(nickname=new_nickname)
-        await message.answer(text=MESSAGES["nickname_change_succeeded"][lang_code])
+        await message.answer(
+            text=MESSAGES["nickname_change_succeeded"][lang_code],
+            reply_markup=get_menu_keyboard(lang_code),
+            parse_mode=ParseMode.HTML
+        )
         await database.change_nickname(user_id, new_nickname)
         return await state.set_state(MultiSelection.ended_change)
 
@@ -61,7 +67,11 @@ async def edit_intro_handler(message: Message, state: FSMContext):
         return await intro_exception_handler(message, lang_code, e)
     else:
         await state.update_data(intro=new_intro)
-        await message.answer(text=MESSAGES["intro_change_succeeded"][lang_code])
+        await message.answer(
+            text=MESSAGES["intro_change_succeeded"][lang_code],
+            reply_markup=get_menu_keyboard(lang_code),
+            parse_mode=ParseMode.HTML
+        )
         await database.change_intro(user_id, new_intro)
         return await state.set_state(MultiSelection.ended_change)
 
