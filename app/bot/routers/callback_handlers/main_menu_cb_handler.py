@@ -30,7 +30,8 @@ async def start_main_page_handler(callback: CallbackQuery, state: FSMContext):
     Возвращает пользователя назад в главное меню, создавая новое сообщение
     """
     await callback.answer()
-    await state.set_state(MultiSelection.ended_change)
+    await callback.message.delete()
+
     database = await get_db()
     user_id = callback.from_user.id
 
