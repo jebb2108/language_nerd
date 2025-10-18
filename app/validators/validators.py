@@ -19,6 +19,6 @@ async def validate_name(nickname: str, db: "DatabaseService") -> Union[True, Exc
 
 def validate_intro(intro: str) -> Union[True, Exception]:
     intro_wo_spaces = intro.replace(' ', '')
-    if len(intro_wo_spaces) < 50: raise TooShortError
+    if len(intro_wo_spaces) < 10: raise TooShortError
     if len(intro_wo_spaces) > 500: raise TooLongError
     return True
