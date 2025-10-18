@@ -147,9 +147,13 @@ async def profile_handler(callback: CallbackQuery, state: FSMContext):
         is_active = data.get("is_active")
         if not is_active: return await callback.answer("Your subscription on pause")
 
+
+        nickname = data.get("nickname", callback.from_user.username)
+        sidebar = "=" * (20 - len(nickname))
+        formated_nickname = sidebar + nickname + sidebar
         topics = [TRANSCRIPTIONS["topics"][topic][lang_code] for topic in data.get("topics").split(", ")]
         msg = MESSAGES["user_info"][lang_code].format(
-            nickname=data.get("nickname", callback.from_user.username),
+            nickname=formated_nickname,
             age=data.get("age", 'not specified'),
             fluency=TRANSCRIPTIONS["fluency"][data.get("fluency")][lang_code],
             topic=", ".join(topics),

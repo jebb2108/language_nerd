@@ -80,31 +80,31 @@ MESSAGES = dict(
                 "🧘 有了我，你可以按照自己的节奏学习语言，并在此过程中结交朋友！",
         },
         "user_info": {
-            "en": "=== <b>{nickname}</b> ===\n\n"
+            "en": " <b>{nickname}</b> \n\n"
             "Your age: <b>{age}</b>\n"
             "Chosen language: <b>{language}</b>\n"
             "Fluency: <b>{fluency}</b>\n"
             "Topic: <b>{topic}</b>\n\n"
             "About you: {about}",
-            "ru": "=== <b>{nickname}</b> ===\n\n"
+            "ru": " <b>{nickname}</b> \n\n"
             "Твой возраст: <b>{age}</b>\n"
             "Выбранный язык: <b>{language}</b>\n"
             "Уровень владения: <b>{fluency}</b>\n"
             "Тема для разговора: <b>{topic}</b>\n\n"
             "О себе: {about}",
-            "de": "=== <b>{nickname}</b> ===\n\n"
+            "de": " <b>{nickname}</b> \n\n"
             "Ihr Alter: <b>{age}</b>\n"
             "Gewählte Sprache: <b>{language}</b>\n"
             "Sprachkenntnisse: <b>{fluency}</b>\n"
             "Thema: <b>{topic}</b>\n\n"
             "Über Sie: {about}",
-            "es": "=== <b>{nickname}</b> ===\n\n"
+            "es": " <b>{nickname}</b> \n\n"
             "Tu edad: <b>{age}</b>\n"
             "Idioma elegido: <b>{language}</b>\n"
             "Fluidez: <b>{fluency}</b>\n"
             "Tema: <b>{topic}</b>\n\n"
             "Sobre ti: {about}",
-            "zh": "=== <b>{nickname}</b> ===\n\n"
+            "zh": " <b>{nickname}</b> \n\n"
             "您的年龄: <b>{age}</b>\n"
             "选择的语言: <b>{language}</b>\n"
             "流利程度: <b>{fluency}</b>\n"
