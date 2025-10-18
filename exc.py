@@ -6,6 +6,10 @@ class PaymentException(Exception):
 class StorageDataException(Exception):
     pass
 
+class EmojiesNotAllowed(Exception):
+    """Исключение для эмодзи в никнейме"""
+    pass
+
 
 class EmptySpaceError(Exception):
     """Исключение для пустых пробелов в никнейме"""

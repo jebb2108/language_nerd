@@ -1490,6 +1490,10 @@ ERROR_MESSAGES = dict(
             "es": "El apodo no puede contener espacios vacíos",
             "zh": "昵称不能包含空格",
         },
+        "emojies_not_allowed_error": {
+            "en": "Emojies are not allowed",
+            "ru": "Эмодзи не разрегены в никнейме",
+        },
         "nickname_already_exists_error": {
             "en": "Nickname already exists",
             "ru": "Такой никнейм уже существует",

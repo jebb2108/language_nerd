@@ -3,7 +3,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from app.bot.translations import ERROR_MESSAGES
-from exc import EmptySpaceError, AlreadyExistsError, TooShortError, TooLongError, InvalidCharactersError
+from exc import (
+    EmptySpaceError, EmojiesNotAllowed,
+    AlreadyExistsError,  TooShortError,
+    TooLongError, InvalidCharactersError
+)
 
 
 async def nickname_exception_handler(
@@ -14,6 +18,7 @@ async def nickname_exception_handler(
     """Обработчик исключений для валидации имени"""
     error_messages = {
         EmptySpaceError: "nickname_empty_space_error",
+        EmojiesNotAllowed: "emojies_not_allowed_error",
         AlreadyExistsError: "nickname_already_exists_error",
         TooShortError: "nickname_too_short_error",
         TooLongError: "nickname_too_long_error",
