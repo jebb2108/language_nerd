@@ -119,7 +119,7 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
             f"{data["criteria"]["fluency"]}, "
             f"{data["criteria"]["dating"]}, "
             f"{data["gender"]}, "
-            f"{data["criteria"]["topic"]}"
+            f"{data["criteria"]["topics"]}"
         )
 
         # Откладываем ack и публикуем сообщение снова через задержку
@@ -164,7 +164,7 @@ async def handle_match_request(data: dict, msg: RabbitMessage):
         await redis.update_user(user_id=user_id, user_data=data)
 
     elif retry_count == 10:
-        data["criteria"]["topic"] = "general"
+        data["criteria"]["topics"] = ["general"]
         logger.debug("User %s topic criterion changed to General", data["user_id"])
         await redis.update_user(user_id=user_id, user_data=data)
 

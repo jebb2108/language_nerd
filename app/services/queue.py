@@ -37,7 +37,7 @@ class QueueService:
 
             criteria = {
                 "language": user_profile.get("language"),
-                "topic": user_profile.get("topic"),
+                "topics": user_profile.get("topics"),
                 "fluency": user_profile.get("fluency"),
                 "dating": str(user_profile.get("dating"))
             }
