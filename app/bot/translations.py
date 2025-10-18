@@ -1492,7 +1492,7 @@ ERROR_MESSAGES = dict(
         },
         "emojies_not_allowed_error": {
             "en": "Emojies are not allowed",
-            "ru": "Эмодзи не разрегены в никнейме",
+            "ru": "Эмодзи не разрешены в никнейме",
         },
         "nickname_already_exists_error": {
             "en": "Nickname already exists",
