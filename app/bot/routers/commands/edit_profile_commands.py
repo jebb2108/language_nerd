@@ -11,7 +11,8 @@ from app.bot.utils.access_data import MultiSelection
 from app.bot.utils.exc_handler import nickname_exception_handler, intro_exception_handler
 from app.dependencies import get_db
 from app.validators.validators import validate_name, validate_intro
-from exc import AlreadyExistsError, TooShortError, TooLongError, InvalidCharactersError, EmptySpaceError
+from exc import AlreadyExistsError, TooShortError, TooLongError, InvalidCharactersError, EmptySpaceError, \
+    EmojiesNotAllowed
 from logging_config import opt_logger as log
 
 router = Router(name=__name__)
@@ -35,6 +36,7 @@ async def edit_nickname_handler(message: Message, state: FSMContext) -> None:
         await validate_name(new_nickname, database)
     except (
         AlreadyExistsError,
+        EmojiesNotAllowed,
         TooShortError,
         TooLongError,
         InvalidCharactersError,
