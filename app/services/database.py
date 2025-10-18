@@ -566,7 +566,15 @@ class DatabaseService:
     async def change_topic(self, user_id: int, new_topics: str) -> None:
         async with self.acquire_connection() as conn:
             await conn.execute(
-                """UPDATE users SET topics = $1 WHERE user_id = $2""", new_topics, user_id
+                """UPDATE users SET topics = $1 WHERE user_id = $2""",
+                new_topics, user_id
+            )
+
+    async def change_intro(self, user_id: int, new_intro: str):
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+                "UPDATE users_profile SET about = $1 WHERE user_id = $2",
+                new_intro, user_id
             )
 
     async def get_users_location(self, user_id: int) -> dict:

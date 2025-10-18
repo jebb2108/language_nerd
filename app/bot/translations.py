@@ -224,13 +224,17 @@ MESSAGES = dict(
             "en": "Current intro - <b>{intro}</b>\n\nPlease, type a new intro for you below in the chosen language",
             "ru": "Текущее интро - <b>{intro}</b>\n\nПожалуйста, напиши про себя в чате ниже на выбранном языке",
         },
-        "no_nickname": {
-            "en": "You don`t have one. Please, register in <b>Practice</b>",
-            "ru": "У тебя еще нет никнейма. Зарегистрируйся в <b>Практика</b>",
-        },
         "nickname_change_succeeded": {
             "en": "Nickname was successfully changed!",
             "ru": "Никнейм успешно заменен!"
+        },
+        "intro_change_succeeded": {
+            "en": "Intro was successfully changed!",
+            "ru": "Информация о тебе успешно заменена!"
+        },
+        "registration_required": {
+            "en": "In order to set it up, please, register in <b>Practice</b>",
+            "ru": "Чтобы ввести новое значение, пожалуйста, сначала зарегистрируйся в <b>Практика</b>"
         },
         "topic_changed": {
             "en": "Topic has been successfully changed",
@@ -1475,40 +1479,48 @@ EMOJI_TRANSCRIPTIONS = {
 
 ERROR_MESSAGES = dict(
     {
-        "empty_space_error": {
+        "nickname_empty_space_error": {
             "en": "Nickname cannot contain empty spaces",
             "ru": "Никнейм не может содержать пробелы",
             "de": "Nickname darf keine Leerzeichen enthalten",
             "es": "El apodo no puede contener espacios vacíos",
             "zh": "昵称不能包含空格",
         },
-        "already_exists_error": {
+        "nickname_already_exists_error": {
             "en": "Nickname already exists",
             "ru": "Такой никнейм уже существует",
             "de": "Nickname existiert bereits",
             "es": "El apodo ya existe",
             "zh": "昵称已存在",
         },
-        "too_short_error": {
+        "nickname_too_short_error": {
             "en": "Nickname must be at least 6 characters long",
             "ru": "Никнейм должен быть не менее 6 символов",
             "de": "Nickname muss mindestens 6 Zeichen lang sein",
             "es": "El apodo debe tener al menos 6 caracteres",
             "zh": "昵称必须至少6个字符",
         },
-        "too_long_error": {
+        "nickname_too_long_error": {
             "en": "Nickname must be at most 16 characters long",
             "ru": "Никнейм должен быть не более 16 символов",
             "de": "Nickname darf höchstens 16 Zeichen lang sein",
             "es": "El apodo debe tener como máximo 16 caracteres",
             "zh": "昵称最多16个字符",
         },
-        "invalid_characters_error": {
+        "nickname_invalid_characters_error": {
             "en": "Nickname must contain only latin characters and numbers",
             "ru": "Никнейм должен содержать только латинские буквы и цифры",
             "de": "Nickname darf nur lateinische Zeichen und Zahlen enthalten",
             "es": "El apodo debe contener solo caracteres latinos y números",
             "zh": "昵称只能包含拉丁字符和数字",
+        },
+        "intro_too_short_error": {
+            "en": "Introduction must be at least 50 characters long",
+            "ru": "Представься о себе не менее чем в 50 символов в длину"
+        },
+        "intro_too_long_intro": {
+            "en": "Introduction must be at most 500 characters long",
+            "ru": "Представься о себе не более чем в 500 символов в длину"
         },
         "unknown_error": {
             "en": "Unknown error. PLease, try again",

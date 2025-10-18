@@ -6,9 +6,9 @@ from aiogram.types import Message
 from app.bot.filters.approved import approved
 from app.bot.translations import MESSAGES
 from app.bot.utils.access_data import MultiSelection
-from app.bot.utils.exc_handler import nickname_exception_handler
+from app.bot.utils.exc_handler import nickname_exception_handler, intro_exception_handler
 from app.dependencies import get_db
-from app.validators.validators import validate_name
+from app.validators.validators import validate_name, validate_intro
 from exc import AlreadyExistsError, TooShortError, TooLongError, InvalidCharactersError, EmptySpaceError
 from logging_config import opt_logger as log
 
@@ -44,6 +44,25 @@ async def edit_nickname_handler(message: Message, state: FSMContext) -> None:
         await state.update_data(nickname=new_nickname)
         await message.answer(text=MESSAGES["nickname_change_succeeded"][lang_code])
         await database.change_nickname(user_id, new_nickname)
+        return await state.set_state(MultiSelection.ended_change)
+
+
+@router.message(and_f(MultiSelection.waiting_intro, approved))
+async def edit_intro_handler(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+    new_intro = message.text.strip()
+    database = await get_db()
+    data = await state.get_data()
+    lang_code = data.get("lang_code")
+    try:
+        validate_intro(new_intro)
+    except (TooShortError, TooLongError) as e:
+        await state.set_state(MultiSelection.waiting_intro)
+        return await intro_exception_handler(message, lang_code, e)
+    else:
+        await state.update_data(intro=new_intro)
+        await message.answer(text=MESSAGES["intro_change_succeeded"][lang_code])
+        await database.change_intro(user_id, new_intro)
         return await state.set_state(MultiSelection.ended_change)
 
 

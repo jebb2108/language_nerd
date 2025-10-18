@@ -8,7 +8,8 @@ from app.bot.filters.approved import approved
 from app.bot.keyboards.inline_keyboards import (
     get_edit_options, choose_nickname_keyboard,
     show_topic_keyboard, show_fluency_keyboard,
-    show_language_keyboard
+    show_language_keyboard,
+    get_go_back_keyboard
 )
 from app.bot.routers.callback_handlers.main_menu_cb_handler import go_back_handler
 from app.bot.translations import MESSAGES, TRANSCRIPTIONS
@@ -55,7 +56,12 @@ async def profile_change_handler(callback: CallbackQuery, state: FSMContext):
             if current_nickname:
                 msg = MESSAGES["current_nickname"][lang_code].format(nickname=current_nickname)
             else:
-                msg = MESSAGES["no_nickname"][lang_code]
+                await callback.message.edit_caption(
+                    caption=MESSAGES["registration_required"][lang_code]
+                )
+                return await callback.message.edit_reply_markup(
+                    reply_markup=get_go_back_keyboard(lang_code)
+                )
 
             await callback.message.edit_caption(
                 caption=msg, parse_mode=ParseMode.HTML
@@ -63,14 +69,14 @@ async def profile_change_handler(callback: CallbackQuery, state: FSMContext):
             await callback.message.edit_reply_markup(
                 reply_markup=choose_nickname_keyboard(lang_code)
             )
-            await state.set_state(MultiSelection.waiting_nickname)
+            return await state.set_state(MultiSelection.waiting_nickname)
 
         elif users_choice == "language":
             current_language = data.get("language")
             msg = MESSAGES["current_lang"][lang_code].format(language=current_language)
             await callback.message.edit_caption(caption=msg)
             await callback.message.edit_reply_markup(reply_markup=show_language_keyboard(new=True))
-            await state.set_state(MultiSelection.waiting_language)
+            return await state.set_state(MultiSelection.waiting_language)
 
 
         elif users_choice == "topics":
@@ -87,7 +93,20 @@ async def profile_change_handler(callback: CallbackQuery, state: FSMContext):
                 , parse_mode=ParseMode.HTML
             )
 
-            await state.set_state(MultiSelection.waiting_topic)
+            return await state.set_state(MultiSelection.waiting_topic)
+
+        else:
+            if not data.get("nickname", False):
+                await callback.message.edit_caption(
+                    caption=MESSAGES["registration_required"][lang_code]
+                )
+                return await callback.message.edit_reply_markup(
+                    reply_markup=get_go_back_keyboard(lang_code)
+                )
+            current_intro = data.get("intro", "")
+            msg = MESSAGES["current_intro"][lang_code].format(intro=current_intro)
+            await callback.message.edit_caption(caption=msg)
+            return await state.set_state(MultiSelection.waiting_intro)
 
     except StorageDataException:
         logger.error(f"User {user_id} trying to access data but doesn`t exist in DB")
