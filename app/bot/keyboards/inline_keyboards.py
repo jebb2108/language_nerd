@@ -253,7 +253,7 @@ def get_menu_keyboard(lang_code):
     builder = InlineKeyboardBuilder()
     menu_button = InlineKeyboardButton(
         text=BUTTONS["menu"][lang_code],
-        callback_data="go_back"
+        callback_data="start_main_page"
     )
     builder.row(menu_button)
     return builder.as_markup()

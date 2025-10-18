@@ -2,7 +2,7 @@ from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import and_f
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, FSInputFile
 
 from app.bot.filters.approved import approved
 from app.bot.keyboards.inline_keyboards import (
@@ -22,6 +22,79 @@ from logging_config import opt_logger as log
 logger = log.setup_logger("main_menu_cb_handler", config.LOG_LEVEL)
 
 router = Router(name=__name__)
+
+
+@router.callback_query(and_f(F.data == "start_main_page", approved))
+async def start_main_page_handler(callback: CallbackQuery, state: FSMContext):
+    """
+    Возвращает пользователя назад в главное меню, создавая новое сообщение
+    """
+    await callback.answer()
+    await state.set_state(MultiSelection.ended_change)
+    database = await get_db()
+    user_id = callback.from_user.id
+
+    try:
+        data = await ds.get_storage_data(user_id, state)
+        lang_code = data.get("lang_code")
+
+        msg = f"{MESSAGES['welcome'][lang_code]}"
+
+        if not await database.check_profile_exists(user_id):
+            msg += MESSAGES["get_to_know"][lang_code]
+        else:
+            msg += MESSAGES["pin_me"][lang_code]
+
+        image_from_file = FSInputFile(config.ABS_PATH_TO_IMG_ONE)
+        await callback.message.answer_photo(
+            photo=image_from_file,
+            caption=msg,
+            reply_markup=get_on_main_menu_keyboard(lang_code),
+            parse_mode=ParseMode.HTML,
+        )
+
+    except StorageDataException:
+        logger.error(f"User {user_id} trying to acces data, but doesn`t exist in DB")
+        return await callback.message.answer("You`re not registered. Press /start to do so")
+
+    except Exception as e:
+        return logger.error(f"Error in go_back handler: {e}")
+
+
+@router.callback_query(F.data == "go_back")
+async def go_back_handler(callback: CallbackQuery, state: FSMContext):
+    """
+    Возвращает пользователя назад в главное меню, повторно вызывая те же кнопки.
+    """
+    await callback.answer()
+    await state.set_state(MultiSelection.ended_change)
+    database = await get_db()
+    user_id = callback.from_user.id
+
+    try:
+        data = await ds.get_storage_data(user_id, state)
+        lang_code = data.get("lang_code")
+
+        msg = f"{MESSAGES['welcome'][lang_code]}"
+
+        if not await database.check_profile_exists(user_id):
+            msg += MESSAGES["get_to_know"][lang_code]
+        else:
+            msg += MESSAGES["pin_me"][lang_code]
+
+        await callback.message.edit_caption(
+            caption=msg,
+            reply_markup=get_on_main_menu_keyboard(lang_code),
+            parse_mode=ParseMode.HTML,
+        )
+
+    except StorageDataException:
+        logger.error(f"User {user_id} trying to acces data, but doesn`t exist in DB")
+        return await callback.message.answer("You`re not registered. Press /start to do so")
+
+    except Exception as e:
+        return logger.error(f"Error in go_back handler: {e}")
+
 
 
 @router.callback_query(
