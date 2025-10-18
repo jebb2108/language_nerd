@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 async def validate_name(nickname: str, db: "DatabaseService") -> Union[True, Exception]:
     string_pattern = r"^(?=.*[a-zA-Z]{1,})(?=.*[\d]{0,})[a-zA-Z0-9]{1,15}$"
     if await db.check_nickname_exists(nickname): raise AlreadyExistsError
+    if any([ch for ch in nickname if not ch.isascii() and not ch.isdigit()]): raise InvalidCharactersError
     if not 6 <= len(nickname): raise TooShortError
     if not len(nickname) <= 16: raise TooLongError
     if not re.sub(r"\s", "", nickname) == nickname: raise EmptySpaceError
