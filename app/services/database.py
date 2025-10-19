@@ -366,8 +366,6 @@ class DatabaseService:
                 FROM users u
                 LEFT JOIN payment_status_info pis
                     ON u.user_id = pis.user_id
-                LEFT JOIN transaction_history th
-                    ON u.user_id = th.user_id
                 WHERE u.is_active = true
                 LIMIT $1 OFFSET $2
                 """, limit, offset
@@ -386,9 +384,8 @@ class DatabaseService:
             return await conn.fetchval(
                 """
                 SELECT payment_method_id 
-                FROM transaction_history 
+                FROM payment_methods
                 WHERE user_id = $1 
-                ORDER BY created_at DISC 
                 LIMIT 1
                 """, user_id
             )
