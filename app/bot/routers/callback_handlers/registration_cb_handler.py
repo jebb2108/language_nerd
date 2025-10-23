@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from pydoc_data.topics import topics
 
 from aiogram import Router, F
 from aiogram.enums import ParseMode
