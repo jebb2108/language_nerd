@@ -1,18 +1,10 @@
-from typing import TYPE_CHECKING
+from fastapi import APIRouter, Depends
 
-from fastapi import APIRouter, Depends, HTTPException
-
-from app.dependencies import get_rabbitmq, get_db, get_redis, get_redis_client, get_queue_service
-from app.models import UserMatchRequest, RegistrationData, WebMatchToggleRequest
+from app.dependencies import get_rabbitmq, get_db
+from app.models import RegistrationData
 from app.services.database import DatabaseService
-from app.services.queue import QueueService
 from app.services.rabbitmq import RabbitMQService
-from config import config
 from logging_config import opt_logger as log
-
-if TYPE_CHECKING:
-    from redis.asyncio import Redis
-
 
 router = APIRouter(prefix="/api")
 logger = log.setup_logger("endpoints")
@@ -34,81 +26,12 @@ async def register_user(
     return {"message": "Пользователь успешно зарегистрирован", "status": "success"}
 
 
-@router.get("/queue/status")
-async def get_queue_status(
-        redis_client: "Redis" = Depends(get_redis_client)
+@router.post("/match_found")
+async def save_match_id_for_users(
+        match_id: str,
+        rabbit: "RabbitMQService" = Depends(get_rabbitmq)
 ):
-    """Получение текущего статуса очереди"""
-    queue_size = await redis_client.llen("waiting_queue")
-    return {
-        "queue_size": queue_size,
-        "status": "active" if queue_size > 0 else "empty"
-    }
+    """ Сохраняет в БД match_id для пары """
+    await rabbit.publish_match_id(match_id)
+    return {"message": "Match id успешно добавлено в БД", "status": "success"}
 
-
-@router.get("/queue/user/{user_id}/status")
-async def get_user_queue_status(
-        user_id: str,
-        redis_client: "Redis" = Depends(get_redis_client)
-):
-    """Получение статуса пользователя в очереди"""
-    queue = await redis_client.lrange("waiting_queue", 0, -1)
-    in_queue = user_id in queue
-
-    return {
-        "user_id": user_id,
-        "in_queue": in_queue,
-        "position": queue.index(user_id) + 1 if in_queue else None
-    }
-
-
-@router.post("/match/toggle")
-async def toggle_match_status(
-        request: WebMatchToggleRequest,
-        queue_service: QueueService = Depends(get_queue_service)
-):
-    """Профессиональный endpoint для управления очередью"""
-    result = await queue_service.toggle_user_queue_status(
-        user_id=request.user_id,
-        action=request.action
-    )
-
-    if result["status"] == "error" and result["message"] == "User not found":
-        raise HTTPException(status_code=400, detail=result["message"])
-    if result["status"] == "error" and result["message"] == "User not active":
-        raise HTTPException(status_code=403, detail=result["message"])
-
-    return result
-
-
-@router.post("/match")
-async def request_match(
-        request: "UserMatchRequest",
-        database: "DatabaseService" = Depends(get_db),
-        rabbitmq: "RabbitMQService" = Depends(get_rabbitmq),
-):
-    """Основной обработчик поиска собеседника"""
-    # Проверяем пользователя в базе
-    user_exists = await database.check_user_exists(user_id=request.user_id)
-    if not user_exists:
-        raise HTTPException(status_code=404, detail=f"User {request.user_id} not found")
-
-    logger.info(
-        f"Match request - User: {request.user_id}, "
-        f"Criteria: {request.criteria}, "
-        f"Status: {request.status}"
-    )
-
-    redis = await get_redis()
-
-    # Сохраняем статус поиска в Redis
-    if request.status == config.SEARCH_STARTED:
-        logger.info(f"Adding user {request.user_id} to queue")
-        await redis.add_to_queue(request)
-    elif request.status == config.SEARCH_CANCELED:
-        logger.info(f"Removing user {request.user_id} from queue")
-        await redis.remove_from_queue(request.user_id)
-
-    # Отправляем запрос в очередь RabbitMQ
-    await rabbitmq.publish_request(request.model_dump())
-    return {"status": "success", "action": request.status}

@@ -39,6 +39,7 @@ class DatabaseService:
             await self.__create_words()
             await self.__create_contexts()
             await self.__create_audios()
+            await self.__create_match_ids()
             await self.__create_weekly_reports()
             await self.__create_report_words()
 
@@ -224,6 +225,17 @@ class DatabaseService:
                 options TEXT[] NOT NULL,
                 correct_index INT NOT NULL
                 ); 
+                """
+            )
+
+    async def __create_match_ids(self):
+        async with self.acquire_connection() as conn:
+            await conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS match_ids (
+                id SERIAL PRIMATY KEY,
+                match_id VARCHAR(256) NOT NULL
+                );
                 """
             )
 
@@ -951,6 +963,13 @@ class DatabaseService:
                 cutoff_date,
             )
             return len(reports_rows), len(words_rows)
+
+    async def create_match_id(self, match_id: str) -> None:
+        async with self.acquire_connection() as conn:
+            await conn.execute("""
+            INSERT INTO match_ids (match_id) VALUES ($1)
+            """, match_id
+            )
 
     def clean_locks(self):
         """Периодически очищаем неиспользуемые блокировки"""

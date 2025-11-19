@@ -149,6 +149,21 @@ class RabbitMQService:
             routing_key=config.RABBITMQ_QUEUE,
         )
 
+    async def publish_match_id(self, match_id: str):
+        """ Публикация match id в базу данных """
+        json_message = json.dumps({
+            "purpose": config.ADD_MATCHID_PURPOSE,
+            "match_id": match_id
+        }).encode()
+
+        await self.default_exchange.publish(
+            aio_pika.Message(
+                body=json_message, delivery_mode=aio_pika.DeliveryMode.PERSISTENT
+            ),
+            routing_key=config.RABBITMQ_QUEUE,
+        )
+
+
 
     async def disconnect(self):
         """Закрытие подключения"""

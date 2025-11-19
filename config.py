@@ -103,6 +103,7 @@ class Config:
     ADD_LOCATION_PURPOSE = "add_location_purpose"
     ADD_PROFILE_PURPOSE = "add_profile_purpose"
     ADD_PAYMENT_PURPOSE = "add_payment_purpose"
+    ADD_MATCHID_PURPOSE = "add_match_id_purpose"
 
 
 
