@@ -5,9 +5,8 @@ from typing import TYPE_CHECKING
 from fastapi import WebSocket, APIRouter, Query, WebSocketDisconnect
 from starlette import status
 
-from app.dependencies import get_ws_connection, get_redis_client, get_redis, get_queue_service
+from app.dependencies import get_ws_connection, get_redis_client, get_redis
 from app.models import MessageContent
-from app.services.queue import QueueService
 from app.services.redis import RedisService
 from app.validators.tokens import convert_token, validate_access
 from config import config
@@ -20,142 +19,6 @@ if TYPE_CHECKING:
 
 router = APIRouter()
 logger = log.setup_logger("websockets")
-
-
-# WebSocket endpoint для управления очередью
-@router.websocket("/ws/queue")
-async def websocket_queue(
-        websocket: WebSocket,
-        user_id: int = Query(..., alias="user_id"),
-):
-    """WebSocket для управления очередью в реальном времени"""
-
-    logger.info(f"=== NEW QUEUE CONNECTION ===")
-    logger.info(f"User ID: {user_id}")
-
-    try:
-        if not user_id:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
-            return
-
-        # Получаем сервисы
-        redis_service: "RedisService" = await get_redis()
-        connection: "ConnectionService" = await get_ws_connection()
-
-        # Создаем QueueService
-        queue_service = await get_queue_service()
-
-        # Подключаем пользователя к комнате очереди
-        success = await connection.connect(websocket, "queue", {
-            "user_id": user_id,
-            # "nickname": nickname
-        })
-
-        if not success:
-            await websocket.close(code=status.WS_1011_INTERNAL_ERROR)
-            return
-
-        # Отправляем текущее состояние очереди
-        queue_size = await redis_service.get_queue_size()
-        user_in_queue = await redis_service.is_user_in_queue(user_id)
-
-        await connection.send_personal_message({
-            "type": "queue_initial_state",
-            "queue_size": queue_size,
-            "user_in_queue": user_in_queue,
-            "user_id": user_id
-        }, websocket)
-
-        logger.info(f"User {user_id} connected to queue, current size: {queue_size}")
-
-        # Основной цикл обработки сообщений
-        try:
-            while True:
-                data = await websocket.receive_text()
-                message_data = json.loads(data)
-
-                if message_data.get("type") == "toggle_queue":
-                    await handle_toggle_queue(
-                        websocket=websocket,
-                        user_id=user_id,
-                        queue_service=queue_service,
-                        connection=connection
-                    )
-
-        except WebSocketDisconnect:
-            logger.info(f"User {user_id} disconnected from queue")
-
-    except Exception as e:
-        logger.error(f"Queue connection error: {e}")
-        await websocket.close(code=status.WS_1011_INTERNAL_ERROR)
-    finally:
-        connection_service = await get_ws_connection()
-        connection_service.disconnect(websocket)
-
-
-async def handle_toggle_queue(
-        websocket: WebSocket,
-        user_id: int,
-        queue_service: "QueueService",
-        connection: "ConnectionService"
-):
-    """Обработка переключения состояния очереди с использованием QueueService"""
-    try:
-
-        # Определяем действие на основе текущего состояния
-        redis: "RedisService" = await get_redis()
-        user_in_queue = await redis.is_user_in_queue(user_id)
-        action = "leave" if user_in_queue else "join"
-
-        logger.info(f"User {user_id} requesting to {action} queue")
-
-        # Используем QueueService для переключения состояния
-        result = await queue_service.toggle_user_queue_status(user_id, action)
-
-        if result["status"] == "success":
-            # Обновляем всех подключенных клиентов
-            queue_size = await redis.get_queue_size()
-
-            # Рассылаем обновление всем клиентам
-            await connection.broadcast_to_room({
-                "type": "queue_update",
-                "queue_size": queue_size,
-                "timestamp": datetime.now().isoformat()
-            }, "queue")
-
-            # Отправляем персональное подтверждение
-            await connection.send_personal_message({
-                "type": "queue_toggle_success",
-                "action": action,
-                "user_in_queue": not user_in_queue,
-                "queue_size": queue_size,
-                "criteria": result.get("criteria", {})
-            }, websocket)
-
-            logger.info(f"User {user_id} successfully {action}ed queue. New size: {queue_size}")
-
-        else:
-            # Отправляем ошибку
-            await connection.send_personal_message({
-                "type": "queue_toggle_error",
-                "message": result["message"],
-                "action": action
-            }, websocket)
-
-            logger.error(f"Failed to {action} queue for user {user_id}: {result['message']}")
-
-    except Exception as e:
-        logger.error(f"Error handling toggle queue for user {user_id}: {e}")
-
-        # Отправляем ошибку клиенту
-        try:
-            await connection.send_personal_message({
-                "type": "queue_toggle_error",
-                "message": "Internal server error",
-                "action": "unknown"
-            }, websocket)
-        except:
-            pass  # Если WebSocket уже закрыт
 
 
 
