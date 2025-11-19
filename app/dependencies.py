@@ -6,9 +6,6 @@ from app.services.connection import ConnectionService
 from app.services.connection import connection_service
 from app.services.database import database_service
 from app.services.main_bot import main_bot
-from app.services.matching import matching_service
-from app.services.notification import notification_service
-from app.services.queue import queue_service
 from app.services.rabbitmq import rabbitmq_service
 from app.services.redis import redis_service
 from app.services.yookassa import yookassa_service
