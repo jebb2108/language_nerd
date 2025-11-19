@@ -1,13 +1,9 @@
-import json
-from datetime import datetime
-
 from fastapi import APIRouter, Depends
 
 from app.dependencies import get_rabbitmq, get_db
 from app.models import RegistrationData
 from app.services.database import DatabaseService
 from app.services.rabbitmq import RabbitMQService
-from config import config
 from logging_config import opt_logger as log
 
 router = APIRouter(prefix="/usr/v0")
