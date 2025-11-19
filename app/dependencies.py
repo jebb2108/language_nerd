@@ -18,10 +18,7 @@ if TYPE_CHECKING:
     from redis.asyncio import Redis
     from app.services.database import DatabaseService
     from app.services.redis import RedisService
-    from app.services.queue import QueueService
     from app.services.rabbitmq import RabbitMQService
-    from app.services.matching import MatchingService
-    from app.services.notification import NotificationService
     from app.services.main_bot import MainBot
     from app.services.yookassa import YookassaService
 
@@ -45,16 +42,6 @@ async def get_db() -> "DatabaseService":
     return database_service
 
 
-async def get_match() -> "MatchingService":
-    """Зависимость для получения Mathcing Service"""
-    if not matching_service.redis:
-        await matching_service.initialize()
-    return matching_service
-
-
-async def get_notification() -> "NotificationService":
-    return notification_service
-
 
 async def get_redis() -> "RedisService":
     """Зависимость для получения Redis сервиса"""
@@ -69,11 +56,6 @@ async def get_redis_client() -> "Redis":
         await redis_service.connect()
 
     return redis_service.get_client()
-
-async def get_queue_service() -> "QueueService":
-    if not queue_service.initialized:
-        await queue_service.connect()
-    return queue_service
 
 
 async def get_report_processer() -> "PendingReportsProcessor":

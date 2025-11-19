@@ -233,7 +233,7 @@ class DatabaseService:
             await conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS match_ids (
-                id SERIAL PRIMATY KEY,
+                id SERIAL PRIMARY KEY,
                 match_id VARCHAR(256) NOT NULL
                 );
                 """
