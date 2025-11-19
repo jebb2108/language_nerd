@@ -6,7 +6,7 @@ from app.services.database import DatabaseService
 from app.services.rabbitmq import RabbitMQService
 from logging_config import opt_logger as log
 
-router = APIRouter(prefix="/api")
+router = APIRouter(prefix="/usr/v0")
 logger = log.setup_logger("endpoints")
 
 
