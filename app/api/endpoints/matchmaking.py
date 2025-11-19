@@ -1,9 +1,13 @@
+import json
+from datetime import datetime
+
 from fastapi import APIRouter, Depends
 
 from app.dependencies import get_rabbitmq, get_db
 from app.models import RegistrationData
 from app.services.database import DatabaseService
 from app.services.rabbitmq import RabbitMQService
+from config import config
 from logging_config import opt_logger as log
 
 router = APIRouter(prefix="/usr/v0")
@@ -24,6 +28,24 @@ async def register_user(
     # Сохранение в базу данных профиля пользователя
     await rabbit.publish_profile(user_data)
     return {"message": "Пользователь успешно зарегистрирован", "status": "success"}
+
+
+@router.get("/user_info/{user_id}")
+async def get_user_info(user_id: int, database=Depends(get_db)):
+    user_info = await database.get_all_user_info(user_id)
+
+    return {
+        'user_id': user_id,
+        'username': user_info.get("username"),
+        'gender': user_info.get('gender'),
+        'criteria': {
+            'language': user_info.get('language'),
+            'fluency': user_info.get('fluency'),
+            'topics': user_info.get('topics'),
+            'dating': user_info.get('dating')
+        },
+        'lang_code': user_info.get('lang_code')
+    }
 
 
 @router.post("/match_found")
