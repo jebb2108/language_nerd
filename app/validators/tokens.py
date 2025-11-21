@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 
 import jwt
 
-from app.api.endpoints.matchmaking import logger
 from app.dependencies import get_db
 from config import config
 from exc import FailToCreateToken
