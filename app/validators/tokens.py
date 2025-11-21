@@ -2,27 +2,33 @@ from datetime import datetime, timedelta
 
 import jwt
 
+from app.api.endpoints.matchmaking import logger
 from app.dependencies import get_db
 from config import config
+from exc import FailToCreateToken
 
 
 async def create_token(user_id, room_id, exp: timedelta = timedelta(minutes=15)):
     """Функция для выдачи уникального токена пользоватеою, содержащую его данные"""
+    try:
 
-    db = await get_db()
-    users_profile = await db.get_users_profile(user_id)
-    nickname = users_profile["nickname"]
-    time_obj = datetime.now() + exp
+        db = await get_db()
+        users_profile = await db.get_users_profile(user_id)
+        nickname = users_profile["nickname"]
+        time_obj = datetime.now(tz=config.TZINFO) + exp
 
-    payload = {
-        "user_id": user_id,
-        "nickname": nickname,
-        "room_id": room_id,
-        "expires_at": time_obj.isoformat(),
-    }
+        payload = {
+            "user_id": user_id,
+            "nickname": nickname,
+            "room_id": room_id,
+            "expires_at": time_obj.isoformat(),
+        }
 
-    token = jwt.encode(payload=payload, key=config.SECRET_KEY, algorithm="HS256")
-    return token
+        token = jwt.encode(payload=payload, key=config.SECRET_KEY, algorithm="HS256")
+        return token
+
+    except Exception:
+        raise FailToCreateToken
 
 
 def convert_token(token: str):

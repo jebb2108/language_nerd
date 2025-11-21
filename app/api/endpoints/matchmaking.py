@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.params import Query
 
 from app.dependencies import get_rabbitmq, get_db
 from app.models import RegistrationData
 from app.services.database import DatabaseService
 from app.services.rabbitmq import RabbitMQService
+from app.validators.tokens import create_token
+from exc import FailToCreateToken
 from logging_config import opt_logger as log
 
 router = APIRouter(prefix="/usr/v0")
@@ -11,13 +14,13 @@ logger = log.setup_logger("endpoints")
 
 
 @router.get("/check_user")
-async def check_user(user_id: str, database: "DatabaseService" = Depends(get_db)):
+async def check_user_handler(user_id: str, database: "DatabaseService" = Depends(get_db)):
     """Проверяет, существует ли пользователь в БД"""
     exists = await database.check_profile_exists(int(user_id))
     return {"exists": exists}
 
 @router.post("/register")
-async def register_user(
+async def register_user_handler(
         user_data: RegistrationData,
         rabbit: "RabbitMQService" = Depends(get_rabbitmq)
 ):
@@ -27,7 +30,7 @@ async def register_user(
 
 
 @router.get("/user_info/{user_id}")
-async def get_user_info(user_id: int, database=Depends(get_db)):
+async def get_user_info_handler(user_id: int, database=Depends(get_db)):
     user_info = await database.get_all_user_info(user_id)
 
     return {
@@ -43,13 +46,22 @@ async def get_user_info(user_id: int, database=Depends(get_db)):
         'lang_code': user_info.get('lang_code')
     }
 
-
-@router.post("/match_found")
-async def save_match_id_for_users(
-        match_id: str,
-        rabbit: "RabbitMQService" = Depends(get_rabbitmq)
+@router.get("/create_token")
+async def create_token_handler(
+        user_id: int = Query(..., description="ID пользователя"),
+        room_id: str = Query(..., description="Уникальный идентификатор комнаты"),
+        database: "DatabaseService" = Depends(get_db)
 ):
-    """ Сохраняет в БД match_id для пары """
-    await rabbit.publish_match_id(match_id)
-    return {"message": "Match id успешно добавлено в БД", "status": "success"}
+    """ Обработчик создания токена """
+    try:
+        if not await database.check_user_exists(user_id):
+            raise HTTPException(status_code=403, detail="Unauthorized attempt to create token")
 
+        token = await create_token(user_id, room_id)
+        return {"token": token}
+
+    except FailToCreateToken:
+        raise HTTPException(status_code=500, detail="Error creating token")
+
+    except Exception as e:
+        logger.error(f"Error in create_token_handler: {e}")
