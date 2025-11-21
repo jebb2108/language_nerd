@@ -20,20 +20,17 @@ router = APIRouter()
 logger = log.setup_logger("websockets")
 
 
-
-# WebSocket endpoint для создания чата
+# WebSocket endpoint для чата
 @router.websocket("/ws/chat")
 async def websocket_chat(
         websocket: WebSocket,
         room_id: str = Query(..., alias="room_id"),
         token: str = Query(..., alias="token"),
-        # username: str = Query(..., alias="username")
 ):
     """Обработчик подключения клиента к чату"""
 
     logger.info(f"=== NEW CONNECTION ATTEMPT ===")
     logger.info(f"Room ID: {room_id}")
-    logger.info(f"Token: {token}")
 
     connection: "ConnectionService" = await get_ws_connection()
 
@@ -93,15 +90,15 @@ async def websocket_chat(
             logger.info(f"User {username} disconnected from room {room_id}")
 
         except Exception as e:
-            logger.info(f"Error in WebSocket connection: {e}")
+            logger.error(f"Error in WebSocket connection: {e}")
 
     except Exception as e:
-        logger.info(f"Connection error: {e}")
+        logger.error(f"Connection error: {e}")
         await websocket.close(code=status.WS_1011_INTERNAL_ERROR)
 
     finally:
         # Всегда отключаем при завершении
-        connection.disconnect(websocket)
+        await connection.disconnect(websocket)
 
 
 async def handle_send_message(websocket: WebSocket, message_data: dict):
@@ -156,23 +153,15 @@ async def get_message_history(room_id: str) -> list:
     return [json.loads(msg) for msg in messages]
 
 
-# Дополнительно: эндпоинт для получения статуса комнат (опционально)
+# Эндпоинт для получения статуса комнаты
 @router.get("/chat/rooms/{room_id}/status")
 async def get_room_status(room_id: str):
+    """Получение статуса комнаты"""
     connection: "ConnectionService" = await get_ws_connection()
-    """Получение статуса комнаты (количество участников)"""
-    if room_id in connection.active_connections:
-        user_count = len(connection.active_connections[room_id])
-        users = []
-        for ws in connection.active_connections[room_id]:
-            session = connection.sessions.get(ws)
-            if session:
-                users.append(session["username"])
 
-        return {
-            "room_id": room_id,
-            "user_count": user_count,
-            "users": users
-        }
-    else:
-        return {"room_id": room_id, "user_count": 0, "users": []}
+    online_users = connection.get_online_users(room_id)
+    return {
+        "room_id": room_id,
+        "user_count": len(online_users),
+        "online_users": online_users
+    }
