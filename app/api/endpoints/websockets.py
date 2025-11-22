@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from fastapi import WebSocket, APIRouter, Query, WebSocketDisconnect
+from fastapi import WebSocket, APIRouter, Query, WebSocketDisconnect, HTTPException
 from starlette import status
 
 from app.dependencies import get_ws_connection, get_redis_client
@@ -18,6 +18,31 @@ if TYPE_CHECKING:
 
 router = APIRouter()
 logger = log.setup_logger("websockets")
+
+
+@router.post("/notify_session_end")
+async def notify_session_end(request: dict):
+    """Уведомление всех участников комнаты о завершении сессии"""
+    try:
+        room_id = request.get("room_id")
+        reason = request.get("reason", "Session ended")
+
+        if not room_id:
+            raise HTTPException(status_code=400, detail="room_id is required")
+
+        connection: "ConnectionService" = await get_ws_connection()
+
+        # Отправляем уведомление всем в комнате
+        await connection.broadcast_to_room({
+            "type": "session_ended",
+            "reason": reason
+        }, room_id)
+
+        return {"status": "success", "message": "Session end notification sent"}
+
+    except Exception as e:
+        logger.error(f"Error notifying session end: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # WebSocket endpoint для чата
