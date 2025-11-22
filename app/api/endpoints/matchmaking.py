@@ -76,13 +76,25 @@ async def create_token_handler(
 async def notify_session_end(request: dict):
     """Уведомление всех участников комнаты о завершении сессии"""
     try:
+        logger.info(f"=== NOTIFY_SESSION_END CALLED ===")
+        logger.info(f"Request data: {request}")
+
         room_id = request.get("room_id")
         reason = request.get("reason", "Session ended")
 
         if not room_id:
+            logger.error("room_id is missing")
             raise HTTPException(status_code=400, detail="room_id is required")
 
         connection: "ConnectionService" = await get_ws_connection()
+
+        # Логируем информацию о комнате
+        logger.info(f"Active connections: {connection.active_connections}")
+        logger.info(f"Room {room_id} connections: {connection.active_connections.get(room_id, {})}")
+
+        # Получаем список пользователей в комнате
+        users_in_room = list(connection.active_connections.get(room_id, {}).keys())
+        logger.info(f"Users in room {room_id}: {users_in_room}")
 
         # Отправляем уведомление всем в комнате
         await connection.broadcast_to_room({
@@ -90,6 +102,7 @@ async def notify_session_end(request: dict):
             "reason": reason
         }, room_id)
 
+        logger.info(f"Session end notification sent successfully to room {room_id}")
         return {"status": "success", "message": "Session end notification sent"}
 
     except Exception as e:
