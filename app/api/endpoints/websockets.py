@@ -20,7 +20,7 @@ router = APIRouter()
 logger = log.setup_logger("websockets")
 
 
-@router.post("/ws/notify_session_end")
+@router.post("/notify_session_end")
 async def notify_session_end(request: dict):
     """Уведомление всех участников комнаты о завершении сессии"""
     try:
