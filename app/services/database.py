@@ -681,7 +681,7 @@ class DatabaseService:
 
     async def search_word(
             self, user_id: int, word: str
-    ) -> Tuple[str, str, str, str]:
+    ) -> Optional[Tuple[str, str, str, str]]:
         async with self.acquire_connection() as conn:
             row = await conn.fetchrow(
                 """

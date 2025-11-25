@@ -2,7 +2,7 @@ import json
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import timedelta
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Dict, Any
 
 import redis.asyncio as redis
 from redis.asyncio.utils import pipeline
@@ -27,12 +27,12 @@ class RedisService:
     def get_client(self) -> "Redis":
         return self.redis_client
 
-    async def get_searched_words(self, word: str) -> dict:
+    async def get_searched_words(self, word: str) -> Optional[Dict[str, Any]]:
         async with self.transaction() as pipe:
             words_dict = await pipe.hget(f"searched_word:{word}")
         return { k: json.loads(v) for k ,v in words_dict } if words_dict else None
 
-    async def save_search_result(self, word, all_users_words, interval: timedelta):
+    async def save_search_result(self, word, all_users_words, interval: timedelta) -> None:
         async with self.transaction() as pipe:
             key = f"searched_word:{word}"
             for nickname, word_data in all_users_words.items():
