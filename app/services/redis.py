@@ -38,9 +38,15 @@ class RedisService:
             return None
 
     async def save_search_result(self, word, all_users_words, interval: timedelta) -> None:
+        """ Сохраняем переводы одно слова от разных пользователй в оперативной памяти """
+
+        # При отсутствии слов, выходим из метода
+        if not all_users_words:
+            logger.debug("No data to save in Redis for word: %s", word)
+            return
+
         try:
             key = f"searched_word:{word}"
-
             # Подготавливаем данные для hset
             mapping = {}
             for nickname, word_data in all_users_words.items():
