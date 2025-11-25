@@ -614,11 +614,11 @@ class DatabaseService:
                     "word": row["word"],
                     "pos": row["part_of_speech"],
                     "translation": row["translation"],
-                    "created_at": row["created_at"]
+                    "created_at": row["created_at"].isoformat()
                 }
             return word_dict
 
-    async def get_words(self, user_id: int) -> List[Tuple[str, str, str, str]]:
+    async def get_words(self, user_id: int):
         async with self.acquire_connection() as conn:
             rows = await conn.fetch(
                 """
@@ -697,7 +697,7 @@ class DatabaseService:
                         "word": row["word"],
                         "part_of_speech": row["part_of_speech"],
                         "translation": row["translation"],
-                        "created_at": row["created_at"].isoformat() if row["created_at"] else None
+                        "created_at": row["created_at"].isoformat()
                     }
                 return None
 
