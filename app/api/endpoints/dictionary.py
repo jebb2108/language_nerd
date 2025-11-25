@@ -78,23 +78,23 @@ async def api_search_word_handler(
         # Находим слово самого пользователя
         this_user_word = await db.search_word(int(user_id), word)
 
-        # Если слово пользователя найдено, добавляем его в общий словарь
-        user_word_data = None
-        if this_user_word and user_id in this_user_word:
-            user_word_data = this_user_word[user_id]
-            # Добавляем слово пользователя в общий словарь (если его там нет)
-            if user_id not in all_users_words:
-                all_users_words[user_id] = user_word_data
-
-        # Удаляем слово текущего пользователя из all_users_words для исключения дублирования
+        # Создаем копию для слов других пользователей
         other_users_words = all_users_words.copy()
-        if user_id in other_users_words:
-            del other_users_words[user_id]
 
-        return {
-            "user_word": user_word_data,  # Объект слова пользователя или None
-            "all_users_words": other_users_words  # Словарь слов других пользователей
+        # Удаляем слово текущего пользователя из other_users_words
+        if str(user_id) in other_users_words:
+            del other_users_words[str(user_id)]
+
+        # Если слово пользователя найдено и его нет в all_users_words, добавляем
+        if this_user_word and str(user_id) not in all_users_words:
+            all_users_words[str(user_id)] = this_user_word
+
+        response_data = {
+            "user_word": this_user_word,
+            "all_users_words": other_users_words
         }
+
+        return response_data
 
     except Exception as e:
         logger.error(f"Error in api_search_word_handler: {str(e)}")

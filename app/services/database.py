@@ -609,10 +609,10 @@ class DatabaseService:
 
             word_dict = {}
             for row in rows:
-                user_id = row["user_id"]
+                user_id = str(row["user_id"])
                 word_dict[user_id] = {
                     "word": row["word"],
-                    "pos": row["part_of_speech"],
+                    "part_of_speech": row["part_of_speech"],
                     "translation": row["translation"],
                     "nickname": row["nickname"],
                     "created_at": row["created_at"].isoformat()
@@ -677,8 +677,8 @@ class DatabaseService:
 
 
             except Exception as e:
-                logger.error(f"Database error: {e}")
-                return e
+                raise logger.error(f"Database error: {e}")
+
 
     async def search_word(self, user_id: int, word: str) -> Optional[Dict[str, Any]]:
         async with self.acquire_connection() as conn:
