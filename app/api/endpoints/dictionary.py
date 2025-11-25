@@ -66,7 +66,6 @@ async def api_search_word_handler(
 ):
     if not user_id or not word:
         raise HTTPException(status_code=400, detail="Missing parameters")
-
     try:
         # Ищем слово от других участников
         interval = config.CACHE_INTERVAL_PER_SEARCH
@@ -77,7 +76,6 @@ async def api_search_word_handler(
 
         # Находим слово самого пользователя
         this_user_word = await db.search_word(int(user_id), word)
-
         # Создаем копию для слов других пользователей
         other_users_words = all_users_words.copy()
 
@@ -88,13 +86,9 @@ async def api_search_word_handler(
         # Если слово пользователя найдено и его нет в all_users_words, добавляем
         if this_user_word and str(user_id) not in all_users_words:
             all_users_words[str(user_id)] = this_user_word
+            await redis.save_search_result(word, all_users_words, interval)
 
-        response_data = {
-            "user_word": this_user_word,
-            "all_users_words": other_users_words
-        }
-
-        return response_data
+        return { "user_word": this_user_word, "all_users_words": other_users_words }
 
     except Exception as e:
         logger.error(f"Error in api_search_word_handler: {str(e)}")
