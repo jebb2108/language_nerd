@@ -59,12 +59,12 @@ async def api_add_word_handler(
 
 @router.get("/words/search")
 async def api_search_word_handler(
-        request: UserDictionaryRequest,
+        user_id: int = Query(..., description="User ID пользователя"),
+        word: str = Query(..., description="Слово для поиска среди пользователей"),
         redis=Depends(get_redis),
         db=Depends(get_db)
 ):
-    user_id = request.user_id
-    word = request.word
+
     if not user_id or not word:
         raise HTTPException(status_code=400, detail="Missing parameters")
 
