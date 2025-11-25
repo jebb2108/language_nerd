@@ -683,15 +683,18 @@ class DatabaseService:
             self, user_id: int, word: str
     ) -> Optional[Tuple[str, str, str, str]]:
         async with self.acquire_connection() as conn:
-            row = await conn.fetchrow(
-                """
-                SELECT 
-                id, word, part_of_speech, translation
-                FROM words WHERE user_id = $1 AND word = $2
-                """, user_id, word
-            )
-            row_tuple = (row["id"], row["word"], row["part_of_speech"], row["translation"])
-            return row_tuple if row_tuple else None
+            try:
+                row = await conn.fetchrow(
+                    """
+                    SELECT 
+                    id, word, part_of_speech, translation
+                    FROM words WHERE user_id = $1 AND word = $2
+                    """, user_id, word
+                )
+                return row["id"], row["word"], row["part_of_speech"], row["translation"] if row else None
+
+            except Exception as e:
+                logger.error(f"Database error in search_word: {e}")
 
     async def delete_word(self, user_id: int, word_id: int) -> bool:
         async with self.acquire_connection() as conn:
