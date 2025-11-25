@@ -5,6 +5,8 @@ from datetime import timezone, timedelta
 
 from dotenv import load_dotenv
 
+CACHE_INTERVAL_PER_SEARCH = cache_interval_per_search
+
 # Определите путь относительно текущего файла
 base_dir = os.path.dirname(os.path.abspath(__file__))
 env_path = os.path.join(base_dir, ".env")
@@ -105,6 +107,7 @@ class Config:
     ADD_PAYMENT_PURPOSE = "add_payment_purpose"
     ADD_MATCHID_PURPOSE = "add_match_id_purpose"
 
+    CACHE_INTERVAL_PER_SEARCH = timedelta(hours=12)
 
 
 config = Config()

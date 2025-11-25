@@ -2,7 +2,7 @@ import asyncio
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
-from typing import Dict, Tuple, List, Optional
+from typing import Dict, Tuple, List, Optional, Any
 
 import asyncpg
 
@@ -250,15 +250,15 @@ class DatabaseService:
             await self._pool.release(conn)
 
     async def create_user(
-        self,
-        user_id: int,
-        username: str,
-        first_name: str,
-        camefrom: str,
-        language: str,
-        fluency: int,
-        topics: List[str],
-        lang_code: str,
+            self,
+            user_id: int,
+            username: str,
+            first_name: str,
+            camefrom: str,
+            language: str,
+            fluency: int,
+            topics: List[str],
+            lang_code: str,
     ):
 
         try:
@@ -292,14 +292,14 @@ class DatabaseService:
             return False
 
     async def create_payment(
-        self,
-        user_id: int,
-        period: str,
-        amount: float,
-        currency: str,
-        trial: bool,
-        untill: datetime,
-        payment_id: Optional[str] = None,
+            self,
+            user_id: int,
+            period: str,
+            amount: float,
+            currency: str,
+            trial: bool,
+            untill: datetime,
+            payment_id: Optional[str] = None,
     ) -> None:
         async with self.acquire_connection() as conn:
             try:
@@ -349,8 +349,6 @@ class DatabaseService:
 
             finally:
                 return logger.info(f"Payment successfully created for user {user_id}")
-
-
 
     async def save_payment_method(self, user_id: int, payment_method_id: str) -> None:
         """Сохранение payment_method_id для автоматических списаний"""
@@ -418,7 +416,6 @@ class DatabaseService:
             )
             return [row["untill"], row["is_active"]] if row else [None, None]
 
-
     async def deactivate_subscription(self, user_id: int):
         async with self.acquire_connection() as conn:
             await conn.execute(
@@ -442,16 +439,16 @@ class DatabaseService:
                 return logger.info("User %s marked as active successfully", user_id)
 
     async def add_users_profile(
-        self,
-        user_id: int,
-        nickname: str,
-        email: str,
-        birthday: str,
-        about: str,
-        gender: str = None,
-        dating: bool = False,
-        status: str = "rookie",
-        location = None # TODO: временная болванка. Нужно подравить логику обработки местоплодения
+            self,
+            user_id: int,
+            nickname: str,
+            email: str,
+            birthday: str,
+            about: str,
+            gender: str = None,
+            dating: bool = False,
+            status: str = "rookie",
+            location=None  # TODO: временная болванка. Нужно подравить логику обработки местоплодения
     ) -> None:
         async with self.acquire_connection() as conn:
             await conn.execute(
@@ -516,16 +513,16 @@ class DatabaseService:
             reports = await conn.fetch(
                 "SELECT DISTINCT user_id, last_notified FROM users WHERE user_id IS NOT NULL AND blocked_bot = false"
             )
-            return [ (int(report["user_id"]), report["last_notified"]) for report in reports ]
+            return [(int(report["user_id"]), report["last_notified"]) for report in reports]
 
     async def add_users_location(
-        self,
-        user_id: int,
-        latitude: Optional[str] = None,
-        longitude: Optional[str] = None,
-        city: Optional[str] = None,
-        country: Optional[str] = None,
-        tzone: Optional[str] = None,
+            self,
+            user_id: int,
+            latitude: Optional[str] = None,
+            longitude: Optional[str] = None,
+            city: Optional[str] = None,
+            country: Optional[str] = None,
+            tzone: Optional[str] = None,
     ) -> None:
         async with self.acquire_connection() as conn:
             await conn.execute(
@@ -565,7 +562,8 @@ class DatabaseService:
                 "UPDATE users_profile SET nickname = $1 WHERE user_id = $2",
                 new_nickname, user_id
             )
-    async def change_language(self, user_id: int, language:str, fluency: int):
+
+    async def change_language(self, user_id: int, language: str, fluency: int):
         async with self.acquire_connection() as conn:
             await conn.execute(
                 "UPDATE users SET language = $1, fluency = $2 WHERE user_id = $3",
@@ -600,6 +598,26 @@ class DatabaseService:
             logger.debug(f"User {user_id} info: {dict(row) if row else None}")
             return dict(row) if row else None
 
+    async def get_words_by_different_users(self, word: str) -> Dict[str, Dict[str, Any]]:
+        async with self.acquire_connection() as conn:
+            rows = await conn.fetch("""
+                SELECT up.nickname, w.word, w.part_of_speech, w.translation, w.created_at
+                FROM words w
+                LEFT JOIN users_profile up ON w.user_id = up.user_id
+                WHERE w.word = $1 AND w.is_public = true AND up.nickname IS NOT NULL
+            """, word)
+
+            word_dict = {}
+            for row in rows:
+                nickname = row["nickname"]
+                word_dict[nickname] = {
+                    "word": row["word"],
+                    "pos": row["part_of_speech"],
+                    "translation": row["translation"],
+                    "created_at": row["created_at"]
+                }
+            return word_dict
+
     async def get_words(self, user_id: int) -> List[Tuple[str, str, str, str]]:
         async with self.acquire_connection() as conn:
             rows = await conn.fetch(
@@ -623,7 +641,8 @@ class DatabaseService:
                 for row in rows
             ]
 
-    async def add_word(self, user_id: int, word: str, pos: str, value: str, is_public: bool, context: str=None, audio=None) -> bool:
+    async def add_word(self, user_id: int, word: str, pos: str, value: str, is_public: bool, context: str = None,
+                       audio=None) -> bool:
         async with self.acquire_connection() as conn:
 
             is_active = await conn.fetchval(
@@ -648,7 +667,6 @@ class DatabaseService:
                         user_id, row["id"], context
                     )
 
-
                 if audio:
                     await conn.execute(
                         """INSERT INTO audios (user_id, audio_id, audio_url) 
@@ -662,15 +680,18 @@ class DatabaseService:
                 return e
 
     async def search_word(
-        self, user_id: int, word: str
-    ) -> List[Tuple[str, str, str, str]]:
+            self, user_id: int, word: str
+    ) -> Tuple[str, str, str, str]:
         async with self.acquire_connection() as conn:
             row = await conn.fetchrow(
-                "SELECT id, word, part_of_speech, translation FROM words WHERE user_id = $1 AND word = $2",
-                user_id,
-                word,
+                """
+                SELECT 
+                id, word, part_of_speech, translation
+                FROM words WHERE user_id = $1 AND word = $2
+                """, user_id, word
             )
-            return [(row["id"], row["word"], row["part_of_speech"], row["translation"] if row["translation"] else None)]
+            row_tuple = (row["id"], row["word"], row["part_of_speech"], row["translation"])
+            return row_tuple if row_tuple else None
 
     async def delete_word(self, user_id: int, word_id: int) -> bool:
         async with self.acquire_connection() as conn:
@@ -680,7 +701,7 @@ class DatabaseService:
             return "DELETE" in result
 
     async def update_word(
-        self, user_id: int, old_word: str, new_word: str, pos: str, value: str
+            self, user_id: int, old_word: str, new_word: str, pos: str, value: str
     ) -> bool:
         async with self.user_locks[user_id]:
             async with self.acquire_connection() as conn:
@@ -969,7 +990,7 @@ class DatabaseService:
             await conn.execute("""
             INSERT INTO match_ids (match_id) VALUES ($1)
             """, match_id
-            )
+                               )
 
     def clean_locks(self):
         """Периодически очищаем неиспользуемые блокировки"""

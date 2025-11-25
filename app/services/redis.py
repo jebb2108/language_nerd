@@ -1,7 +1,11 @@
+import json
 from collections import defaultdict
+from contextlib import asynccontextmanager
+from datetime import timedelta
 from typing import TYPE_CHECKING, Optional
 
 import redis.asyncio as redis
+from redis.asyncio.utils import pipeline
 
 from app.models import UserMatchRequest
 from config import config
@@ -22,6 +26,29 @@ class RedisService:
 
     def get_client(self) -> "Redis":
         return self.redis_client
+
+    async def get_searched_words(self, word: str) -> dict:
+        async with self.transaction() as pipe:
+            words_dict = await pipe.hget(f"searched_word:{word}")
+        return { k: json.loads(v) for k ,v in words_dict } if words_dict else None
+
+    async def save_search_result(self, word, all_users_words, interval: timedelta):
+        async with self.transaction() as pipe:
+            key = f"searched_word:{word}"
+            for nickname, word_data in all_users_words.items():
+                await pipe.hset(key, nickname, json.dumps(word_data))
+            await pipe.expire(key, interval)
+
+    @asynccontextmanager
+    async def transaction(self):
+        try:
+            async with self.redis_client.pipeline() as pipe:
+                yield pipe
+                await pipe.execute()
+
+        except Exception as e:
+            logger.warning(f"Error handling redis transaction: {e}")
+            raise
 
     async def connect(self):
         """Установка подключения к Redis"""

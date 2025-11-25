@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.dependencies import get_db
+from app.dependencies import get_db, get_redis
 from app.models.dict_models import UserDictionaryRequest
+from config import config
 from exc import PaymentException
 from logging_config import opt_logger as log
 
@@ -57,21 +58,27 @@ async def api_add_word_handler(
 
 
 @router.get("/words/search")
-async def api_search_word_handler(request: UserDictionaryRequest, db=Depends(get_db)):
+async def api_search_word_handler(
+        request: UserDictionaryRequest,
+        redis=Depends(get_redis),
+        db=Depends(get_db)
+):
     user_id = request.user_id
     word = request.word
     if not user_id or not word:
         raise HTTPException(status_code=400, detail="Missing parameters")
+
     try:
-        result = await db.search_word(int(user_id), word)
-        if result:
-            return {
-                "id": result[0],
-                "word": result[1],
-                "part_of_speech": result[2],
-                "translation": result[3],
-            }
-        return {}
+        # Ищем слово от других участников
+        all_users_words = await redis.get_searched_words(word)
+        if not all_users_words:
+            all_users_words: dict = await db.get_words_by_different_users(word)
+            interval = config.CACHE_INTERVAL_PER_SEARCH
+            await redis.save_search_result(word, all_users_words, interval)
+
+        # Находим слово самого пользователя (если есть)
+        this_user_word = await db.search_word(int(user_id), word)
+        return {"user_word": this_user_word, "all_users_words": all_users_words}
 
     except Exception as e:
         logger.error(f"Error in api_search_word_handler: {str(e)}")
