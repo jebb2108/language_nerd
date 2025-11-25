@@ -29,7 +29,7 @@ class RedisService:
 
     async def get_searched_words(self, word: str) -> Optional[Dict[str, Any]]:
         async with self.transaction() as pipe:
-            words_dict = await pipe.hget(f"searched_word:{word}")
+            words_dict = await pipe.hgetall(f"searched_word:{word}")
         return { k: json.loads(v) for k ,v in words_dict } if words_dict else None
 
     async def save_search_result(self, word, all_users_words, interval: timedelta) -> None:
