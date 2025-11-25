@@ -5,15 +5,12 @@ from datetime import timedelta
 from typing import TYPE_CHECKING, Optional, Dict, Any
 
 import redis.asyncio as redis
-from redis.asyncio.utils import pipeline
 
-from app.models import UserMatchRequest
 from config import config
 from logging_config import opt_logger as log
 
 if TYPE_CHECKING:
     from redis.asyncio import Redis
-
 
 logger = log.setup_logger('redis')
 
@@ -28,38 +25,65 @@ class RedisService:
         return self.redis_client
 
     async def get_searched_words(self, word: str) -> Optional[Dict[str, Any]]:
-        async with self.transaction() as pipe:
-            words_dict = await pipe.hgetall(f"searched_word:{word}")
-        return { k: json.loads(v) for k ,v in words_dict } if words_dict else None
+        try:
+            # Используем клиент напрямую
+            words_dict = await self.redis_client.hgetall(f"searched_word:{word}")
+            if words_dict:
+                # Декодируем значения из JSON
+                return {k: json.loads(v) for k, v in words_dict.items()}
+            return None
+
+        except Exception as e:
+            logger.error(f"Error getting searched words from Redis: {e}")
+            return None
 
     async def save_search_result(self, word, all_users_words, interval: timedelta) -> None:
-        async with self.transaction() as pipe:
+        try:
             key = f"searched_word:{word}"
+
+            # Подготавливаем данные для hset
+            mapping = {}
             for nickname, word_data in all_users_words.items():
-                await pipe.hset(key, nickname, json.dumps(word_data))
-            await pipe.expire(key, interval)
+                mapping[nickname] = json.dumps(word_data)
+
+            # Используем pipeline для batch операций
+            async with self.redis_client.pipeline() as pipe:
+                await pipe.hset(key, mapping=mapping)
+                await pipe.expire(key, interval)
+                await pipe.execute()
+
+        except Exception as e:
+            logger.error(f"Error saving search result to Redis: {e}")
+            raise
 
     @asynccontextmanager
     async def transaction(self):
+        """Контекстный менеджер для транзакций (если все еще нужен для других операций)"""
         try:
             async with self.redis_client.pipeline() as pipe:
                 yield pipe
                 await pipe.execute()
-
         except Exception as e:
             logger.warning(f"Error handling redis transaction: {e}")
             raise
 
     async def connect(self):
         """Установка подключения к Redis"""
-        if not self.q: self.q = defaultdict[int](list)
+        if not self.q:
+            self.q = defaultdict(list)
 
         try:
-            self.redis_client = redis.Redis.from_url(url=config.REDIS_URL, decode_responses=True)
-            logger.debug("Connected successfully")
+            self.redis_client = redis.Redis.from_url(
+                url=config.REDIS_URL,
+                decode_responses=True,
+                encoding='utf-8'
+            )
+            # Проверяем подключение
+            await self.redis_client.ping()
+            logger.debug("Connected successfully to Redis")
 
         except Exception as e:
-            logger.debug(f"Redis connection error: {e}")
+            logger.error(f"Redis connection error: {e}")
             self.redis_client = None
 
 
