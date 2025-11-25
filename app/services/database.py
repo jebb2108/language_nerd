@@ -680,11 +680,8 @@ class DatabaseService:
                 logger.error(f"Database error: {e}")
                 return e
 
-    async def search_word(
-            self, user_id: int, word: str
-    ) -> Dict[str, dict]:
+    async def search_word(self, user_id: int, word: str) -> Optional[Dict[str, Any]]:
         async with self.acquire_connection() as conn:
-            user_dict = {}
             try:
                 row = await conn.fetchrow(
                     """
@@ -693,20 +690,18 @@ class DatabaseService:
                     """, user_id, word
                 )
                 if row:
-                    user_id = row["user_id"]
-                    user_word_body = {
+                    return {
+                        "user_id": row["user_id"],
                         "word": row["word"],
                         "part_of_speech": row["part_of_speech"],
                         "translation": row["translation"],
                         "created_at": row["created_at"].isoformat()
                     }
-                    # Определяю словарик с ключем user id
-                    user_dict[user_id] = user_word_body
-
-                return user_dict
+                return None
 
             except Exception as e:
-                raise logger.error(f"Database error in search_word: {e}")
+                logger.error(f"Database error in search_word: {e}")
+                return None
 
 
     async def delete_word(self, user_id: int, word_id: int) -> bool:

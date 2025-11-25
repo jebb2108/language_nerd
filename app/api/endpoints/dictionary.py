@@ -64,7 +64,6 @@ async def api_search_word_handler(
         redis=Depends(get_redis),
         db=Depends(get_db)
 ):
-
     if not user_id or not word:
         raise HTTPException(status_code=400, detail="Missing parameters")
 
@@ -73,25 +72,33 @@ async def api_search_word_handler(
         interval = config.CACHE_INTERVAL_PER_SEARCH
         all_users_words: dict = await redis.get_searched_words(word)
         if not all_users_words:
-            all_users_words: dict = await db.get_words_by_different_users(word)
+            all_users_words = await db.get_words_by_different_users(word)
             await redis.save_search_result(word, all_users_words, interval)
 
-        # Проверяет, если слово пользователя уже есть в памяти
-        if user_id in all_users_words:
-            return {
-                "user_word": all_users_words.get(user_id),
-                "all_users_words": all_users_words.pop(user_id)
-            }
-        # Находим слово самого пользователя (если есть)
+        # Находим слово самого пользователя
         this_user_word = await db.search_word(int(user_id), word)
-        all_users_words[user_id] = this_user_word
-        await redis.save_search_result(word, all_users_words, interval)
-        return {"user_word": this_user_word, "all_users_words": all_users_words.pop(user_id)}
+
+        # Если слово пользователя найдено, добавляем его в общий словарь
+        user_word_data = None
+        if this_user_word and user_id in this_user_word:
+            user_word_data = this_user_word[user_id]
+            # Добавляем слово пользователя в общий словарь (если его там нет)
+            if user_id not in all_users_words:
+                all_users_words[user_id] = user_word_data
+
+        # Удаляем слово текущего пользователя из all_users_words для исключения дублирования
+        other_users_words = all_users_words.copy()
+        if user_id in other_users_words:
+            del other_users_words[user_id]
+
+        return {
+            "user_word": user_word_data,  # Объект слова пользователя или None
+            "all_users_words": other_users_words  # Словарь слов других пользователей
+        }
 
     except Exception as e:
         logger.error(f"Error in api_search_word_handler: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
-
 
 @router.delete("/words/{word_id}")
 async def api_delete_word_handler(word_id: int, user_id: int, db=Depends(get_db)):
