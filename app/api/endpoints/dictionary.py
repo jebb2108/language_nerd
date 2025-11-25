@@ -70,15 +70,23 @@ async def api_search_word_handler(
 
     try:
         # Ищем слово от других участников
-        all_users_words = await redis.get_searched_words(word)
+        interval = config.CACHE_INTERVAL_PER_SEARCH
+        all_users_words: dict = await redis.get_searched_words(word)
         if not all_users_words:
             all_users_words: dict = await db.get_words_by_different_users(word)
-            interval = config.CACHE_INTERVAL_PER_SEARCH
             await redis.save_search_result(word, all_users_words, interval)
 
+        # Проверяет, если слово пользователя уже есть в памяти
+        if user_id in all_users_words:
+            return {
+                "user_word": all_users_words.get(user_id),
+                "all_users_words": all_users_words.pop(user_id)
+            }
         # Находим слово самого пользователя (если есть)
         this_user_word = await db.search_word(int(user_id), word)
-        return {"user_word": this_user_word, "all_users_words": all_users_words}
+        all_users_words[user_id] = this_user_word
+        await redis.save_search_result(word, all_users_words, interval)
+        return {"user_word": this_user_word, "all_users_words": all_users_words.pop(user_id)}
 
     except Exception as e:
         logger.error(f"Error in api_search_word_handler: {str(e)}")

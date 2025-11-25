@@ -601,7 +601,7 @@ class DatabaseService:
     async def get_words_by_different_users(self, word: str) -> Dict[str, Dict[str, Any]]:
         async with self.acquire_connection() as conn:
             rows = await conn.fetch("""
-                SELECT up.nickname, w.word, w.part_of_speech, w.translation, w.created_at
+                SELECT up.nickname, w.user_id, w.word, w.part_of_speech, w.translation, w.created_at
                 FROM words w
                 LEFT JOIN users_profile up ON w.user_id = up.user_id
                 WHERE w.word = $1 AND w.is_public = true AND up.nickname IS NOT NULL
@@ -609,11 +609,12 @@ class DatabaseService:
 
             word_dict = {}
             for row in rows:
-                nickname = row["nickname"]
-                word_dict[nickname] = {
+                user_id = row["user_id"]
+                word_dict[user_id] = {
                     "word": row["word"],
                     "pos": row["part_of_speech"],
                     "translation": row["translation"],
+                    "nickname": row["nickname"],
                     "created_at": row["created_at"].isoformat()
                 }
             return word_dict
@@ -681,28 +682,32 @@ class DatabaseService:
 
     async def search_word(
             self, user_id: int, word: str
-    ) -> Optional[Dict[str, str]]:
+    ) -> Dict[str, dict]:
         async with self.acquire_connection() as conn:
+            user_dict = {}
             try:
                 row = await conn.fetchrow(
                     """
-                    SELECT 
-                    id, word, part_of_speech, translation, created_at
+                    SELECT user_id, word, part_of_speech, translation, created_at
                     FROM words WHERE user_id = $1 AND word = $2
                     """, user_id, word
                 )
                 if row:
-                    return {
-                        "id": row["id"],
+                    user_id = row["user_id"]
+                    user_word_body = {
                         "word": row["word"],
                         "part_of_speech": row["part_of_speech"],
                         "translation": row["translation"],
                         "created_at": row["created_at"].isoformat()
                     }
-                return None
+                    # Определяю словарик с ключем user id
+                    user_dict[user_id] = user_word_body
+
+                return user_dict
 
             except Exception as e:
-                logger.error(f"Database error in search_word: {e}")
+                raise logger.error(f"Database error in search_word: {e}")
+
 
     async def delete_word(self, user_id: int, word_id: int) -> bool:
         async with self.acquire_connection() as conn:
