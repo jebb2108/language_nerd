@@ -681,17 +681,17 @@ class DatabaseService:
 
     async def search_word(
             self, user_id: int, word: str
-    ) -> Optional[Tuple[str, str, str, str]]:
+    ) -> Optional[Tuple[str, str, str, str, str]]:
         async with self.acquire_connection() as conn:
             try:
                 row = await conn.fetchrow(
                     """
                     SELECT 
-                    id, word, part_of_speech, translation
+                    id, word, part_of_speech, translation, created_at
                     FROM words WHERE user_id = $1 AND word = $2
                     """, user_id, word
                 )
-                return row["id"], row["word"], row["part_of_speech"], row["translation"] if row else None
+                return row["id"], row["word"], row["part_of_speech"], row["translation"], row["created_at"] if row else None
 
             except Exception as e:
                 logger.error(f"Database error in search_word: {e}")
