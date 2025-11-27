@@ -141,14 +141,15 @@ def get_on_main_menu_keyboard(lang_code):
     builder.row(about_bot_button, support_button)
     return builder.as_markup()
 
-def about_me_keyboard(lang_code):
+def about_me_keyboard(lcode):
+    lang_code =  lcode if lcode in ['en', 'ru'] else 'en'
     builder = InlineKeyboardBuilder()
     community_button = InlineKeyboardButton(
-        text=BUTTONS["community"][lang_code],
-        url="https://t.me/lllanguage_nerds"
+        text=BUTTONS["community"][lcode],
+        url=f"https://t.me/language_nerds_{lang_code}"
     )
     go_back_button = InlineKeyboardButton(
-        text=BUTTONS["go_back"][lang_code],
+        text=BUTTONS["go_back"][lcode],
         callback_data="go_back",
     )
     builder.row(community_button)
