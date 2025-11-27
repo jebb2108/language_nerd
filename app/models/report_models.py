@@ -22,7 +22,8 @@ class ReportData(BaseModel):
     """Модель данных для отчета"""
 
     word: str
-    sentence: str
+    sentence: Optional[str]
+    audio_url: Optional[str]
     options: List[str]
     correct_index: int
 

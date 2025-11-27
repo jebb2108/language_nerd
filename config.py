@@ -52,6 +52,10 @@ class Config:
     GEO_API_KEY: str = os.getenv("GEO_API_KEY")
     GEO_API_URL: str = os.getenv("GEO_API_URL")
 
+    TEXT_TO_VOICE_API_KEY: str = os.getenv("AI_VOICE_API_KEY")
+    TEXT_TO_VOICE_URL: str = os.getenv("TEXT_TO_VOICE_URL")
+    VOICE_ID: str = os.getenv("VOICE_ID")
+
 
     DEFAULT_DEEPSEEK_URL: str = os.getenv("DEFAULT_DEEPSEEK_URL","https://api.deepseek.com/v1/chat/completions")
 
@@ -68,6 +72,12 @@ class Config:
     TELEGRAM_LAST_REQUEST_TIME = 0.0
     # Для проактивного лимита 20 сообщений/сек (1/20)
     TELEGRAM_MIN_DELAY_BETWEEN_REQUESTS = 0.05
+
+    SENTENCE = 'SENTENCE'
+    TRANSLATION = 'TRANSLATION'
+    SYNONYM = 'SYNONYM'
+
+    AUDIO_BASE = '/var/audios'
 
     # Версия FRONTEND
     VERSION = "20251119"

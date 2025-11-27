@@ -2,8 +2,11 @@ import asyncio
 import random
 import re
 import time
+from collections import defaultdict
 from datetime import datetime
+from pathlib import Path
 from typing import List, Optional, Dict, Any, TYPE_CHECKING
+from uuid import uuid4
 
 import aiohttp
 from aiogram.exceptions import (
@@ -14,6 +17,19 @@ from aiogram.exceptions import (
     TelegramServerError,
     TelegramAPIError
 )
+
+from typecast.exceptions import (
+    UnauthorizedError,         # 401
+    PaymentRequiredError,      # 402
+    TypecastError              # Base exception
+)
+
+from typecast import AsyncTypecast, LanguageCode, Output
+
+from typecast.client import Typecast
+from typecast.models import TTSRequest, Prompt
+
+
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -48,16 +64,16 @@ class APIErrorHandler:
     def is_payment_required_error(exception: Exception) -> bool:
         """Проверяет, является ли ошибка Payment Required (402)"""
         return (
-            isinstance(exception, aiohttp.ClientResponseError)
-            and exception.status == 402
+                isinstance(exception, aiohttp.ClientResponseError)
+                and exception.status == 402
         )
 
     @staticmethod
     def is_rate_limit_error(exception: Exception) -> bool:
         """Проверяет, является ли ошибка Rate Limit (429)"""
         return (
-            isinstance(exception, aiohttp.ClientResponseError)
-            and exception.status == 429
+                isinstance(exception, aiohttp.ClientResponseError)
+                and exception.status == 429
         )
 
 
@@ -66,20 +82,21 @@ class ResponseParser:
 
     @staticmethod
     def parse_deepseek_response(
-        content: str, original_word: str
+            content: str, original_word: str
     ) -> Optional[Dict[str, Any]]:
         """Парсит ответ от DeepSeek в нужный формат"""
         try:
             cleaned_content = ResponseParser._clean_content(content)
             lines = ResponseParser._split_and_clean_lines(cleaned_content)
 
-            sentence = ResponseParser._extract_sentence(lines)
             options = ResponseParser._extract_options(lines)
 
+            sentence = ResponseParser._extract_sentence(lines)
             if not ResponseParser._validate_response(sentence, options, original_word):
                 return None
 
             return {"sentence": sentence, "options": options[:4]}
+
 
         except Exception as e:
             logger.error(f"Parse error for '{original_word}': {e}", exc_info=True)
@@ -130,7 +147,7 @@ class ResponseParser:
 
     @staticmethod
     def _parse_options_from_line(
-        current_line: str, lines: List[str], current_index: int
+            current_line: str, lines: List[str], current_index: int
     ) -> List[str]:
         """Парсит варианты из текущей строки и следующих строк"""
         options = []
@@ -171,7 +188,7 @@ class ResponseParser:
 
     @staticmethod
     def _validate_response(
-        sentence: Optional[str], options: List[str], original_word: str
+            sentence: Optional[str], options: List[str], original_word: str
     ) -> bool:
         """Валидирует ответ от API"""
         if not sentence:
@@ -195,6 +212,58 @@ class ResponseParser:
         return True
 
 
+class TypeCastClient:
+
+    def __init__(self, api_key: str, base_url: str, voice_id: str):
+        self.cli = api_key
+        self.base_url = base_url
+        self.voice_id = voice_id
+
+    async def text_to_voice(self, txt: str) -> str:
+        """ Преобразует текст в голос и возвращает локальный путь к аудио файлу """
+
+        # Конвертируем текст в речь
+        async with AsyncTypecast(
+                api_key=self.cli,
+                verify_ssl=config.VERIFY_SSL
+        ) as cli:
+
+            try:
+                response = await cli.text_to_speech(TTSRequest(
+                    text=txt,
+                    model="ssfm-v21",
+                    voice_id=self.voice_id,
+                    language=LanguageCode.ENG,
+                    output=Output(audio_format="mp3")
+                ))
+
+                # Создаем директорию для аудио
+                # файлов, если не существует
+                audio_dir = Path(config.AUDIO_BASE)
+                audio_dir.mkdir(exist_ok=True)
+
+                # Генерируем уникальное имя файла
+                random_str = uuid4()
+                logger.error(random_str)
+                filename = f"audio_{random_str}.mp3"
+                file_path = audio_dir / filename
+
+                with open(str(file_path), 'wb') as f:
+                    f.write(response.audio_data)
+
+                # Возвращает ссылку на
+                # локальное место хранения аудио
+                return str(file_path)
+
+            except UnauthorizedError:
+                logger.critical("Invalid API key")
+
+            except PaymentRequiredError:
+                logger.critical("Insufficient credits")
+
+            except TypecastError as e:
+                logger.critical(f"Error: {e.message}, Status: {e.status_code}")
+
 # ========== API CLIENT ==========
 class DeepSeekClient:
     """Клиент для работы с DeepSeek API"""
@@ -214,21 +283,20 @@ class DeepSeekClient:
             wait_time = self.request_delay - time_since_last_request
             await asyncio.sleep(wait_time)
 
-
     async def _make_api_request(
-        self, session: aiohttp.ClientSession, url: str, data: Dict[str, Any]
-    ) -> None:
+            self, session: aiohttp.ClientSession, url: str, data: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
 
         """Выполняет запрос к API"""
         async with session.post(
-            url,
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json",
-            },
-            json=data,
-            timeout=60,
-            verify_ssl=config.VERIFY_SSL,  # Для разработки
+                url,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=data,
+                timeout=60,
+                verify_ssl=config.VERIFY_SSL,  # Для разработки
 
         ) as response:
 
@@ -242,8 +310,14 @@ class DeepSeekClient:
             response.raise_for_status()
             return await response.json()
 
-
-    async def generate_question(self, word: str) -> Optional[Dict[str, Any]]:
+    async def generate_question(
+            self,
+            word: str,
+            language: str,
+            fluency: str,
+            r_type: str,
+            lang_code: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
         """Генерирует вопрос для слова через API"""
         word_str = str(word).strip()
         if not word_str:
@@ -251,9 +325,16 @@ class DeepSeekClient:
 
         await self._ensure_rate_limit()
 
+        prompt = None
         api_url = self._get_api_url()
-        prompt = self._build_prompt(word_str)
-        request_data = self._build_request_data(prompt)
+        if r_type == config.SENTENCE:
+            prompt = self._build_prompt_for_sentence(word)
+        elif r_type == config.TRANSLATION:
+            prompt = self._build_prompt_for_translation(word, lang_code)
+        elif r_type == config.SYNONYM:
+            prompt = self._build_prompt_for_synonyms(word, language)
+
+        request_data = self._build_request_data(prompt, language, fluency)
 
         async with aiohttp.ClientSession() as session:
             data = await self._make_api_request(session, api_url, request_data)
@@ -264,10 +345,9 @@ class DeepSeekClient:
             content = data["choices"][0]["message"]["content"].strip()
             return ResponseParser.parse_deepseek_response(content, word_str)
 
-
     @staticmethod
-    def _build_prompt(word: str) -> str:
-        """Строит промпт для генерации вопроса"""
+    def _build_prompt_for_sentence(word: str) -> str:
+        """ Строит промпт для генерации вопроса с предложением"""
         safe_word = word.replace("'", "\\'").replace('"', '\\"')
 
         return (
@@ -282,14 +362,54 @@ class DeepSeekClient:
         )
 
     @staticmethod
-    def _build_request_data(prompt: str) -> Dict[str, Any]:
+    def _build_prompt_for_translation(word: str, lang_code: str) -> str:
+        """ Строит промпт для генерации вопроса с переводом """
+        safe_word = word.replace("'", "\\'").replace('"', '\\"')
+
+        return (
+            f"Создай вопрос для проверки знания слова '{safe_word}'. "
+            f"Напиши это слово, поставь тире и троеточие, "
+            f"которое заменяет правильный перевод на {lang_code} (языковой код). "
+            "Предоставь один правильный вариант ответа и три неправильных, "
+            "но похожих по значению. Варианты должны быть в случайном порядке.\n\n"
+            "Формат ответа:\n"
+            f"Предложение: [{safe_word} - ...]\n"
+            "Варианты: [правильный, неправильный1, неправильный2, неправильный3]\n\n"
+            "ВАЖНО: Не добавляй дополнительные пояснения, комментарии или разметку!"
+        )
+
+    @staticmethod
+    def _build_prompt_for_synonyms(word: str, language: str) -> str:
+        """ Строит промпт для генерации вопроса с синонимами """
+        safe_word = word.replace("'", "\\'").replace('"', '\\"')
+        return (
+            f"Создай вопрос для проверки знания слова '{safe_word}'. "
+            f"Напиши перевод этого слова с {language}, поставь тире и троеточие, "
+            f"на месте короторого должно быть проверяемое слово. "
+            "Предоставь один правильный вариант ответа и три неправильных, "
+            "но похожих по значению. Варианты должны быть в случайном порядке.\n\n"
+            "Формат ответа:\n"
+            f"Предложение: [Перевод слова {safe_word} на {language} - ...]\n"
+            "Варианты: [правильный, неправильный1, неправильный2, неправильный3]\n\n"
+            "ВАЖНО: Не добавляй дополнительные пояснения, комментарии или разметку!"
+        )
+
+    @staticmethod
+    def _build_request_data(prompt: str, language: str, fluency: str) -> Dict[str, Any]:
         """Строит данные для запроса"""
+
+        content = (
+            f"Ты полезный помощник для изучения языка: {language}. "
+            f"Уровень владения пользователя - {fluency}. "
+            f"Отвечай строго в указанном формате без дополнительных пояснений."
+        )
+
         return {
             "model": "deepseek-chat",
             "messages": [
                 {
                     "role": "system",
-                    "content": "Ты полезный помощник для изучения английского языка. Отвечай строго в указанном формате без дополнительных пояснений.",
+                    "content": content
                 },
                 {"role": "user", "content": prompt},
             ],
@@ -321,9 +441,9 @@ class DeepSeekClient:
         )
 
     @staticmethod
-    def _handle_payment_required() -> None:
+    def _handle_payment_required() -> Optional[Dict[str, Any]]:
         """Обрабатывает ошибку оплаты (402)"""
-        logger.critical("DeepSeek API requires payment. Please upgrade your account.")
+        logger.critical("TypeCast API requires payment. Please upgrade your account.")
         return None
 
     @staticmethod
@@ -360,7 +480,7 @@ class QuestionGenerator:
         | retry_if_result(APIErrorHandler.should_retry),
         reraise=True,
     )
-    async def generate_question_for_word(self, word: str) -> Optional[Dict[str, Any]]:
+    async def generate_question_for_word(self, word: str, r_type: str, **kwargs) -> Optional[Dict[str, Any]]:
         """Генерирует вопрос с вариантами ответов для слова"""
         word_str = str(word).strip()
         if not word_str:
@@ -370,7 +490,7 @@ class QuestionGenerator:
         try:
             async with config.REQUEST_SEMAPHORE:
                 async with config.REQUEST_RATE_LIMITER:
-                    return await self.api_client.generate_question(word_str)
+                    return await self.api_client.generate_question(word_str, r_type, **kwargs)
 
         except aiohttp.ClientResponseError as e:
             if e.status == 402:
@@ -388,26 +508,65 @@ class QuestionGenerator:
             return None
 
 
+class VoiceGenerator:
+
+    def __init__(self, api_client: "TypeCastClient"):
+        self.api_client = api_client
+
+    async def generate_voice(self, text: str) -> Optional[str]:
+        """Генерирует голос для текста и возвращает локальный путь к аудио файлу"""
+        return await self.api_client.text_to_voice(text)
+
+
 # ========== REPORT PROCESSOR ==========
 class ReportProcessor:
     """Обработчик отчетов пользователей"""
 
     def __init__(
-        self, q_gen: QuestionGenerator, max_words_per_user: int = 5
+            self, q_gen: QuestionGenerator, v_gen: VoiceGenerator, max_words_per_user: int = 5
     ):
         self.question_generator = q_gen
+        self.voice_generator = v_gen
         self.max_words_per_user = max_words_per_user
 
-    async def process_single_word(self, word: str) -> Optional[ReportData]:
-        """Обрабатывает одно слово и возвращает данные для отчета"""
+    async def process_single_report(
+            self,
+            word: str,
+            report_type: str,
+            language: str = None,
+            fluency: str = None,
+            lang_code: str = None
+    ) -> Optional[ReportData]:
+
+        """ Обрабатывает одно слово и возвращает данные для отчета о предложении """
+
         word_str = str(word).strip()
         if not word_str:
             return None
 
+        question_data, voice_data = None, None
+
         try:
-            question_data = await self.question_generator.generate_question_for_word(
-                word_str
-            )
+            if report_type == config.SENTENCE:
+                question_data = await self.question_generator.generate_question_for_word(
+                    word_str, language, fluency
+                )
+                if question_data:
+                    voice_data = await self.voice_generator.generate_voice(question_data.get("sentence"))
+
+            elif report_type == config.TRANSLATION:
+                question_data = await self.question_generator.generate_question_for_word(word_str, config.TRANSLATION,
+                                                                                          lang_code=lang_code)
+                if question_data:
+                    voice_data = await self.voice_generator.generate_voice(question_data.get("sentence"))
+
+            elif report_type == config.SYNONYM:
+                question_data = await self.question_generator.generate_question_for_word(word_str, config.SYNONYM,
+                                                                                          language=language)
+                if question_data:
+                    voice_data = await self.voice_generator.generate_voice(question_data.get("sentence"))
+
+
         except Exception as e:
             logger.error(f"Failed to generate question for '{word_str}': {e}")
             return None
@@ -426,7 +585,8 @@ class ReportProcessor:
 
             return ReportData(
                 word=word_str,
-                sentence=question_data["sentence"],
+                sentence=question_data.get("sentence", None),
+                audio_url=voice_data,
                 options=options,
                 correct_index=correct_index,
             )
@@ -441,31 +601,75 @@ class ReportProcessor:
         """Обрабатывает слова пользователя и сохраняет отчет"""
         selected_words = random.sample(words, min(len(words), self.max_words_per_user))
 
-        report_data = []
-        for word in selected_words:
-            word_data = await self.process_single_word(word)
-            if word_data:
-                report_data.append(
-                    {
-                        "word": word_data.word,
-                        "sentence": word_data.sentence,
-                        "options": word_data.options,
-                        "correct_index": word_data.correct_index,
-                    }
-                )
-        # TODO: Fix this issue! Most likely the problem is in DB tables
+        # Извлекаем дополнительные характеристики пользователя
+        user_data = await db.get_user_info(user_id)
+        language = user_data.get("language")
+        fluency = {
+            0: "beginer", 1: "intermediate",
+            2: "advanced", 3: "native"
+        }.get(int(user_data.get("fluency")), 0)
+        lang_code = user_data.get("lang_code")
+
+        report_data = defaultdict[str](list)
+        for indx, word in enumerate(selected_words, 0):
+            sentence_data = await self.process_single_report(word, config.SENTENCE, language=language, fluency=fluency)
+            if sentence_data:
+                report_data[config.SENTENCE].append({
+                    "word": sentence_data.word,
+                    "sentence": sentence_data.sentence,
+                    "audio_url": sentence_data.audio_url,
+                    "options": sentence_data.options,
+                    "correct_index": sentence_data.correct_index,
+                })
+            translation_data = await self.process_single_report(word, config.TRANSLATION, lang_code=lang_code)
+            if translation_data:
+                report_data[config.TRANSLATION].append({
+                    "word": translation_data.word,
+                    "audio_url": translation_data.audio_url,
+                    "options": translation_data.options,
+                    "correct_index": translation_data.correct_index
+                })
+
+            synonym_data = await self.process_single_report(word, config.SYNONYM, language=language)
+            if synonym_data:
+                report_data[config.SYNONYM].append({
+                    "word": synonym_data.word,
+                    "options": synonym_data.options,
+                    "correct_index": synonym_data.correct_index
+                })
+
         try:
-            # Сохраняем отчет в БД
+            # Сохраняем отчеты в БД
             if report_data:
                 report_id = await db.create_report(user_id)
-                await db.add_words_to_report(report_id, report_data)
+                if report_data.get(config.SENTENCE, False):
+                    r_type = config.SENTENCE
+                    await db.add_words_to_report(
+                        report_id, r_type, report_data.get(r_type)
+                    )
+
+                if report_data.get(config.TRANSLATION, False):
+                    r_type = config.TRANSLATION
+                    await db.add_words_to_report_translations(
+                        report_id, r_type, report_data.get(r_type)
+                    )
+
+                if report_data.get(config.SYNONYM, False):
+                    r_type = config.SYNONYM
+                    await db.add_words_to_report_synonyms(
+                        report_id, r_type, report_data.get(r_type)
+                    )
+
+                count = max([len(ls) for ls in report_data.values()])
+
                 logger.info(
-                    f"Generated report for user {user_id} with {len(report_data)} words"
+                    f"Generated report for user {user_id} with {count} words"
                 )
+                return count
+
             else:
                 logger.warning(f"No questions generated for user {user_id}")
-
-            return len(report_data)
+                return 0
 
         except Exception as e:
             logger.error(f"Error in adding report in process_user_words: {e}")
@@ -476,11 +680,10 @@ class WeeklyReportScheduler:
     """Планировщик недельных отчетов"""
 
     def __init__(
-        self, report_prc: ReportProcessor, max_users_per_minute: int = 3
+            self, report_prc: ReportProcessor, max_users_per_minute: int = 3
     ):
         self.report_processor = report_prc
         self.max_users_per_minute = max_users_per_minute
-
 
     async def process_single_user(self, user_record: UserWords, db) -> bool:
         """Обрабатывает одного пользователя"""
@@ -544,7 +747,6 @@ class WeeklyReportScheduler:
     async def should_skip_user(user_id: int, db) -> bool:
         """Проверяет, нужно ли пропустить пользователя"""
         return await db.is_user_blocked(user_id)
-
 
 
 # ========== RATE LIMITER ==========
@@ -848,7 +1050,7 @@ class PendingReportsProcessor:
         pending_reports = await self._get_pending_reports()
         if not pending_reports:
             logger.info("Нет ожидающих отчетов")
-            return {"success_count": 0, "failed_count": 0, "success_ids":[], "failed_reports": []}
+            return {"success_count": 0, "failed_count": 0, "success_ids": [], "failed_reports": []}
 
         logger.info(f"Попытка отправить {len(pending_reports)} ожидающих отчетов.")
 
@@ -870,7 +1072,6 @@ class PendingReportsProcessor:
             PendingReport(report_id=rec["report_id"], user_id=rec["user_id"])
             for rec in reports_data
         ]
-
 
     @staticmethod
     def _analyze_results(results: List[Any], pending_reports: List[PendingReport]) -> Dict[str, Any]:
@@ -933,8 +1134,10 @@ class PendingReportsProcessor:
         }
 
 
+typecast_api_client = TypeCastClient(api_key=config.TEXT_TO_VOICE_API_KEY, base_url=config.TEXT_TO_VOICE_API_URL)
+voice_generator = VoiceGenerator(typecast_api_client)
 
 deepseek_api_client = DeepSeekClient(api_key=config.AI_API_KEY, base_url=config.AI_API_URL)
 question_generator = QuestionGenerator(deepseek_api_client)
-report_processor = ReportProcessor(question_generator, max_words_per_user=5)
+report_processor = ReportProcessor(question_generator, voice_generator, max_words_per_user=5)
 weekly_report_service = WeeklyReportScheduler(report_processor)

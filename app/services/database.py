@@ -41,7 +41,9 @@ class DatabaseService:
             await self.__create_audios()
             await self.__create_match_ids()
             await self.__create_weekly_reports()
-            await self.__create_report_words()
+            await self.__create_report_sentences()
+            await self.__creaate_report_translations()
+            await self.__create_report_synonyms()
 
             self.initialized = True
             logger.debug("Database pool initialized successfully")
@@ -213,20 +215,49 @@ class DatabaseService:
                 """
             )
 
-    async def __create_report_words(self):
+    async def __create_report_sentences(self):
         async with self.acquire_connection() as conn:
             await conn.execute(
                 """
-                CREATE TABLE IF NOT EXISTS report_words (
+                CREATE TABLE IF NOT EXISTS report_sentences (
                 word_id SERIAL PRIMARY KEY,
                 report_id INT REFERENCES weekly_reports(report_id) ON DELETE CASCADE,
-                word TEXT NOT NULL,
+                word VARCHAR(100) NOT NULL,
                 sentence TEXT NOT NULL,
+                audio_url TEXT NOT NULL,
                 options TEXT[] NOT NULL,
                 correct_index INT NOT NULL
                 ); 
                 """
             )
+
+    async def __creaate_report_translations(self):
+        async with self.acquire_connection() as  conn:
+            await conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS report_translations (
+                word_id SERIAL PRIMARY KEY,
+                report_id INT REFERENCES weekly_reports(report_id) ON DELETE CASCADE,
+                word VARCHAR(100) NOT NULL,
+                audio_url TEXT NOT NULL,
+                options TEXT[] NOT NULL,
+                correct_index INT NOT NULL
+                );
+                """
+            )
+
+    async def __create_report_synonyms(self):
+        async with self.acquire_connection() as conn:
+            await conn.execute("""
+            CREATE TABLE IF NOT EXISTS report_synonyms (
+            word_id SERIAL PRIMARY KEY,
+            report_id INT REFERENCES weekly_reports(report_id) ON DELETE CASCADE,
+            word VARCHAR(100) NOT NULL,
+            options TEXT[] NOT NULL,
+            correct_index INT NOT NULL
+            );
+            """
+        )
 
     async def __create_match_ids(self):
         async with self.acquire_connection() as conn:
@@ -888,18 +919,41 @@ class DatabaseService:
                 user_id,
             )
 
-    async def add_words_to_report(self, report_id: int, words: List[Dict]):
+    async def add_words_to_report(self, report_id: int, report_type: str, words: List[Dict]):
         async with self.acquire_connection() as conn:
-            for item in words:
-                await conn.execute(
-                    "INSERT INTO report_words (report_id, word, sentence, options, correct_index) "
-                    "VALUES ($1, $2, $3, $4, $5)",
-                    report_id,
-                    item["word"],
-                    item["sentence"],
-                    item["options"],
-                    item["correct_index"],
-                )
+            if report_type == config.SENTENCE:
+                for item in words:
+                    await conn.execute(
+                        "INSERT INTO report_sentences (report_id, word, sentence, audio_url, options, correct_index) "
+                        "VALUES ($1, $2, $3, $4, $5, $6)",
+                        report_id,
+                        item["word"],
+                        item["sentence"],
+                        item["audio_url"],
+                        item["options"],
+                        item["correct_index"],
+                    )
+            elif report_type == config.TRANSLATION:
+                for item in words:
+                    await conn.execute(
+                        "INSERT INTO report_translations (report_id, word, audio_url, options, correct_index) "
+                        "VALUES ($1, $2, $3, $4, $5)",
+                        report_id,
+                        item["word"],
+                        item["audio_url"],
+                        item["options"],
+                        item["correct_index"],
+                    )
+            elif report_type == config.SYNONYM:
+                for item in words:
+                    await conn.execute(
+                        "INSERT INTO report_synonyms (report_id, word, options, correct_index) "
+                        "VALUES ($1, $2, $3, $4)",
+                        report_id,
+                        item["word"],
+                        item["options"],
+                        item["correct_index"],
+                    )
 
     async def get_report(self, report_id):
         async with self.acquire_connection() as conn:
