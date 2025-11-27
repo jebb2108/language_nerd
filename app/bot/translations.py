@@ -532,8 +532,8 @@ BUTTONS = dict(
             "zh": "🌐 实践",
         },
         "community": {
-            "en": "👥 Community",
-            "ru": "👥 Сообщество",
+            "en": "👥 Group",
+            "ru": "👥 Группа",
         },
         "sub_details": {
             "en": "💳 Manage subscription",
