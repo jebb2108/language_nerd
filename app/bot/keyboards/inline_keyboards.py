@@ -1,3 +1,5 @@
+import logging
+
 from aiogram.types import InlineKeyboardButton, WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -144,6 +146,7 @@ def get_on_main_menu_keyboard(lang_code):
 def about_me_keyboard(lcode):
     lang_code =  lcode if lcode in ['en', 'ru'] else 'en'
     builder = InlineKeyboardBuilder()
+    print(f"https://t.me/language_nerds_{lang_code}")
     community_button = InlineKeyboardButton(
         text=BUTTONS["community"][lcode],
         url=f"https://t.me/language_nerds_{lang_code}"
