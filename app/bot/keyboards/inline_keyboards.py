@@ -123,6 +123,10 @@ def get_on_main_menu_keyboard(lang_code):
         text=BUTTONS["find_partner"][lang_code],
         web_app=WebAppInfo(url=find_partner_url)
     )
+    community_button = InlineKeyboardButton(
+        text=BUTTONS["community"][lang_code],
+        url="https://t.me/lllanguage_nerds"
+    )
     subscription_details = InlineKeyboardButton(
         text=BUTTONS["sub_details"][lang_code],
         callback_data="sub_details",
@@ -137,6 +141,7 @@ def get_on_main_menu_keyboard(lang_code):
     )
     builder.row(profile_button)
     builder.row(dict_button, find_partner_button)
+    builder.row(community_button)
     builder.row(subscription_details)
     builder.row(about_bot_button, support_button)
     return builder.as_markup()
