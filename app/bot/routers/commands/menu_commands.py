@@ -40,9 +40,9 @@ async def show_main_menu(message: Message, state: FSMContext, rate_limit_info: R
 
     msg = f"{MESSAGES['welcome'][lang_code]}"
     if data.get("nickname", False):
-        msg += MESSAGES["get_to_know"][lang_code]
-    else:
         msg += MESSAGES["pin_me"][lang_code]
+    else:
+        msg += MESSAGES["get_to_know"][lang_code]
 
     image_from_file = FSInputFile(config.ABS_PATH_TO_IMG_ONE)
     await message.answer_photo(
