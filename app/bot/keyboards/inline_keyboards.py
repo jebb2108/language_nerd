@@ -141,8 +141,9 @@ def get_on_main_menu_keyboard(lang_code):
     )
     builder.row(profile_button)
     builder.row(dict_button, find_partner_button)
+    builder.row(community_button, )
     builder.row(subscription_details)
-    builder.row(about_bot_button, community_button, support_button)
+    builder.row(about_bot_button, support_button)
     return builder.as_markup()
 
 

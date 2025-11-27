@@ -19,7 +19,6 @@ class MultiSelection(StatesGroup):
 
 class DataStorage:
     def __init__(self):
-        self.lock = asyncio.Lock()
         self._initialized = False
 
     async def init(self):
@@ -32,21 +31,20 @@ class DataStorage:
         """Достаем нужные данные о пользователе"""
         if not self._initialized: await self.init()
 
-        async with self.lock:
-            s_data = await state.get_data()
+        s_data = await state.get_data()
 
-            # Проверяем наличие необходимых ключей
-            keys = ["user_id", "first_name", "is_active", "lang_code"]
-            if all(s_data.get(key, False) for key in keys):
-                return s_data
+        # Проверяем наличие необходимых ключей
+        keys = ["user_id", "first_name", "nickname", "is_active", "lang_code"]
+        if all(s_data.get(key, False) for key in keys):
+            return s_data
 
-            # Если данных нет в Redis, получаем из базы и сохраняем в Redis
-            user_data = await self.set_user_info(user_id)
-            if not user_data:
-                raise StorageDataException
+        # Если данных нет в Redis, получаем из базы и сохраняем в Redis
+        user_data = await self.set_user_info(user_id)
+        if not user_data:
+            raise StorageDataException
 
-            await state.update_data(user_data)
-            return user_data
+        await state.update_data(user_data)
+        return user_data
 
 
     async def set_user_info(self, user_id: int) -> dict:

@@ -24,24 +24,19 @@ MESSAGES = dict(
         "welcome": {
             "en": "I`m Sam! Your language learning assistant. Here's what I can do:\n\n"
             "✨ <b>Dictionary</b> — save and learn new words easily\n"
-            "🤝 <b>Practice</b> — chat with other students (coming soon!)\n"
-            "🛠 <b>Technical support</b> — I'll help if something breaks\n\n",
+            "🤝 <b>Practice</b> — chat with other students (coming soon!)\n\n",
             "ru": "Я Сэм! Помогу тебе в закреплении изученного. Вот что я умею:\n\n"
             "✨ <b>Словарь</b> — сохраняй и закрепляй новые слова легко\n"
-            "🤝 <b>Практика</b> — общайся с другими учениками\n"
-            "🛠 <b>Техподдержка</b> — помогу, если что-то сломалось\n\n",
+            "🤝 <b>Практика</b> — общайся с другими учениками\n\n",
             "de": "Ich bin Sam! Dein Sprachlern-Assistent. Hier ist, was ich kann:\n\n"
             "✨ <b>Wörterbuch</b> — neue Wörter einfach speichern und lernen\n"
-            "🤝 <b>Üben</b> — mit anderen Lernenden chatten (demnächst!)\n"
-            "🛠 <b>Technischer Support</b> — ich helfe, wenn etwas kaputt geht\n\n",
+            "🤝 <b>Üben</b> — mit anderen Lernenden chatten (demnächst!)\n\n",
             "es": "¡Soy Sam! Tu asistente de aprendizaje de idiomas. Esto es lo que puedo hacer:\n\n"
             "✨ <b>Diccionario</b> — guarda y aprende nuevas palabras fácilmente\n"
-            "🤝 <b>Práctica</b> — chatea con otros estudiantes (próximamente!)\n"
-            "🛠 <b>Soporte técnico</b> — te ayudo si algo se rompe\n\n",
+            "🤝 <b>Práctica</b> — chatea con otros estudiantes (próximamente!)\n\n",
             "zh": "我是Sam！你的语言学习助手。这是我能做的：\n\n"
             "✨ <b>词典</b> — 轻松保存和学习新单词\n"
-            "🤝 <b>练习</b> — 与其他学生聊天（即将推出！）\n"
-            "🛠 <b>技术支持</b> — 如果出现问题我会帮忙\n\n",
+            "🤝 <b>练习</b> — 与其他学生聊天（即将推出！\n\n"
         },
         "get_to_know": {
             "en": "Don`t forget to complete your registration! Just click 'Practice' to do so",
@@ -532,8 +527,8 @@ BUTTONS = dict(
             "zh": "🌐 实践",
         },
         "community": {
-            "en": "👥 Group",
-            "ru": "👥 Группа",
+            "en": "👥 Our community",
+            "ru": "👥 Наше сообщетсво",
         },
         "sub_details": {
             "en": "💳 Manage subscription",
