@@ -7,10 +7,10 @@ from aiogram.types import CallbackQuery, FSInputFile
 from app.bot.filters.approved import approved
 from app.bot.keyboards.inline_keyboards import (
     get_on_main_menu_keyboard,
-    get_go_back_keyboard,
     get_subscription_keyboard,
     get_profile_keyboard,
-    get_shop_keyboard
+    get_shop_keyboard,
+    about_me_keyboard
 )
 from app.bot.translations import MESSAGES, EMOJI_SHOP, TRANSCRIPTIONS, EMOJI_TRANSCRIPTIONS
 from app.bot.utils.access_data import data_storage as ds, MultiSelection
@@ -121,7 +121,7 @@ async def about(callback: CallbackQuery, state: FSMContext):
         # Редактируем текущее сообщение
         await callback.message.edit_caption(
             caption=msg,
-            reply_markup=get_go_back_keyboard(lang_code),
+            reply_markup=about_me_keyboard(lang_code),
             parse_mode=ParseMode.HTML,
         )
 
