@@ -1,0 +1,26 @@
+[project]
+name = "tg-bot-service"
+version = "0.1.0"
+description = "Telegram Bot for Learning Languages"
+authors = [
+    {name = "Gabriel Bouchard",email = "gabouchard2002@gmail.com"}
+]
+readme = "README.md"
+requires-python = "3.13.3"
+dependencies = [
+    "aiogram>=3.0.0",
+    "colorama>=0.4.0",
+    "dotenv (>=0.9.9,<0.10.0)",
+    "emoji (>=2.15.0,<3.0.0)",
+    "fastapi (>=0.122.0,<0.123.0)",
+    "uvicorn (>=0.38.0,<0.39.0)",
+    "httpx (>=0.28.1,<0.29.0)",
+    "redis (>=7.1.0,<8.0.0)"
+]
+
+[tool.poetry]
+package-mode = false
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
