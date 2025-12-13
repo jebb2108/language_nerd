@@ -1,10 +1,8 @@
-import aiohttp.client_exceptions
 from aiogram import F, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import and_f
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
-from aiohttp import ClientResponse
 
 from src.dependencies import get_gateway
 from src.exc import StorageDataException
@@ -16,16 +14,17 @@ from src.keyboards.inline_keyboards import (
     get_go_back_keyboard
 )
 from src.logconf import opt_logger as log
+from src.models import User
 from src.routers.callback_handlers.main_menu_cb_handler import go_back_handler
 from src.translations import MESSAGES, TRANSCRIPTIONS
 from src.utils.access_data import data_storage as ds, MultiSelection
 
-logger = log.setup_logger("additional_cb_handler")
+logger = log.setup_logger("change_profile_cb_handler")
 
 router = Router(name=__name__)
 
 
-@router.callback_query(and_f(F.data == "edit_profile", approved))
+@router.callback_query(and_f(F.data == "edit_profile", approved)) # noqa
 async def edit_profile_handler(callback: CallbackQuery, state: FSMContext):
 
     await callback.answer()
@@ -131,7 +130,7 @@ async def change_lang_handler(callback: CallbackQuery, state: FSMContext):
         data = await ds.get_storage_data(user_id, state)
         lang_code = data.get("lang_code")
         users_choice = callback.data.split('_', 1)[1]
-        await state.update_data(new_lang=users_choice)
+        await state.update_data(new_language=users_choice)
         await callback.message.edit_reply_markup(
             reply_markup=show_fluency_keyboard(lang_code, True)
         )
@@ -154,11 +153,28 @@ async def change_fluency_handler(callback: CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
     try:
         gateway = await get_gateway()
-        async with gateway() as session:
+        async with gateway:
             data = await ds.get_storage_data(user_id, state)
-            new_lang = data.get("new_lang")
+            new_language = data.get("new_language")
             users_choice = int(callback.data.split('_', 1)[1])
-            await session.post('update_language', user_id, new_lang, users_choice)
+            # Возвращает всю информацию о пользователе
+            data = await ds.get_storage_data(user_id, state)
+            topics = data.get('topics')
+            new_topics = topics.split(', ') if ', ' in topics else list(topics)
+            new_user = User(
+                user_id=user_id,
+                username=data.get('username'),
+                camefrom=data.get('camefrom'),
+                first_name=data.get('first_name'),
+                language=new_language,
+                fluency=users_choice,
+                topics=new_topics,
+                lang_code=data.get('lang_code')
+            )
+            await gateway.put(
+                'update_profile',new_data=new_user
+            )
+            await state.update_data(language=new_language, fluency=users_choice)
 
         await state.set_state(MultiSelection.ended_change)
         return await go_back_handler(callback, state)
@@ -169,7 +185,6 @@ async def change_fluency_handler(callback: CallbackQuery, state: FSMContext):
 
     except Exception as e:
         logger.error(f"Error in change_fluency_handler: {e}")
-
 
 
 @router.callback_query(
@@ -198,9 +213,23 @@ async def change_topic_handler(callback: CallbackQuery, state: FSMContext):
             if not new_topics: return
             profile_data = await ds.get_storage_data(user_id, state)
             if set(profile_data.get("topics").split(", ")) != set(new_topics):
+                # Возвращает всю информацию о пользователе
+                data = await ds.get_storage_data(user_id, state)
+                new_user = User(
+                    user_id=user_id,
+                    username=data.get('username'),
+                    camefrom=data.get('camefrom'),
+                    first_name=data.get('first_name'),
+                    language=data.get('language'),
+                    fluency=data.get('fluency'),
+                    topics=new_topics,
+                    lang_code=data.get('lang_code')
+                )
 
-                async with gateway() as session:
-                    await session.post('update_topics', user_id, new_topics)
+                async with gateway:
+                    await gateway.put(
+                        'update_profile', new_data=new_user
+                    )
 
                 await callback.answer(MESSAGES["topic_changed"][lang_code])
                 await state.update_data(new_topics=[], topics=", ".join(new_topics))

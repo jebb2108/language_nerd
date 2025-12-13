@@ -1,3 +1,7 @@
+class StorageDataException(Exception):
+    """ Исключение при запросе информации о пользователе """
+    pass
+
 class PaymentException(Exception):
     """ Класс исключения для оплаты """
     pass

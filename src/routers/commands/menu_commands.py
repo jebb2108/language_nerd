@@ -3,7 +3,7 @@ from aiogram.enums import ParseMode
 from aiogram.filters import Command, and_f
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, FSInputFile
-from aiohttp import ClientResponse
+
 
 from src.filters.approved import approved
 from src.keyboards.inline_keyboards import (
@@ -45,7 +45,7 @@ async def show_main_menu(message: Message, state: FSMContext, rate_limit_info: R
     else:
         msg += MESSAGES["get_to_know"][lang_code]
 
-    image_from_file = FSInputFile(config.ABS_PATH_TO_IMG_ONE)
+    image_from_file = FSInputFile(config.bot.abs_img_path)
     await message.answer_photo(
         photo=image_from_file,
         caption=msg,

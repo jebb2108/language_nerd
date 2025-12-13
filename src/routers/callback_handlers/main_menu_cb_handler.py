@@ -75,12 +75,7 @@ async def go_back_handler(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await state.set_state(MultiSelection.ended_change)
 
-    profile_exists = None
     user_id = callback.from_user.id
-
-    gateway = await get_gateway()
-    async with gateway() as session:
-        profile_exists = await session.get('profile_exists', user_id)
 
     try:
         data = await ds.get_storage_data(user_id, state)
@@ -88,7 +83,7 @@ async def go_back_handler(callback: CallbackQuery, state: FSMContext):
 
         msg = f"{MESSAGES['welcome'][lang_code]}"
 
-        if not profile_exists:
+        if not data.get('nickname', False):
             msg += MESSAGES["get_to_know"][lang_code]
         else:
             msg += MESSAGES["pin_me"][lang_code]
@@ -143,7 +138,7 @@ async def about(callback: CallbackQuery, state: FSMContext):
         return logger.error(f"Error in about handler: {e}")
 
 @router.callback_query(
-    and_f(F.data == "profile", approved)
+    and_f(F.data == "profile", approved) # noqa
 )
 async def profile_handler(callback: CallbackQuery, state: FSMContext):
     """ Обработчик сведений о пользователе """
@@ -151,7 +146,6 @@ async def profile_handler(callback: CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
 
     try:
-        await state.clear()
         data = await ds.get_storage_data(user_id, state)
         lang_code = data.get("lang_code", "en")
         is_active = data.get("is_active")
@@ -195,17 +189,13 @@ async def go_back_handler(callback: CallbackQuery, state: FSMContext):
 
     user_id = callback.from_user.id
 
-    gateway = await get_gateway()
-    async with gateway() as session:
-        profile_exists = await session.get('profile_exists', user_id)
-
     try:
         data = await ds.get_storage_data(user_id, state)
         lang_code = data.get("lang_code")
 
         msg = f"{MESSAGES['welcome'][lang_code]}"
 
-        if not profile_exists:
+        if not data.get('nickname', False):
             msg += MESSAGES["get_to_know"][lang_code]
         else:
             msg += MESSAGES["pin_me"][lang_code]

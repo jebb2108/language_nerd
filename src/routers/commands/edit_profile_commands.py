@@ -8,8 +8,10 @@ from aiohttp import ClientResponse
 
 from src.filters.approved import approved
 from src.keyboards.inline_keyboards import get_menu_keyboard
+from src.models import User, Profile
 from src.translations import MESSAGES
 from src.utils.access_data import MultiSelection
+from src.utils.access_data import data_storage as ds
 from src.utils.exc_handler import nickname_exception_handler, intro_exception_handler
 from src.validators.validators import validate_name, validate_intro
 from src.exc import AlreadyExistsError, TooShortError, TooLongError, InvalidCharactersError, EmptySpaceError, \
@@ -54,8 +56,23 @@ async def edit_nickname_handler(message: Message, state: FSMContext) -> None:
         )
 
         gateway = await get_gateway()
-        async with gateway() as session:
-            resp: "ClientResponse" = await session.post('update_nickname', user_id, new_nickname)
+        user_data = ds.get_storage_data(user_id, state)
+        new_profile = Profile(
+            user_id=user_id,
+            nickname=new_nickname,
+            email=user_data.get('email', None),
+            gender=user_data.get('gender', None),
+            intro=user_data.get('intro', None),
+            birthday=user_data.get('birthday', None),
+            dating=user_data.get('dating', None),
+            status=user_data.get('status', None),
+        )
+
+        async with gateway:
+            resp: "ClientResponse" = await gateway.put(
+                'update_profile',
+                new_profile
+            )
             if resp.status != 200: raise aiohttp.client_exceptions.ClientError
 
         return await state.set_state(MultiSelection.ended_change)
@@ -81,8 +98,12 @@ async def edit_intro_handler(message: Message, state: FSMContext):
         )
 
         gateway = await get_gateway()
-        async with gateway() as session:
-            resp: "ClientResponse" = await session.post('update_intro', user_id, new_intro)
+        async with gateway:
+            resp: "ClientResponse" = await gateway.post(
+                'update_profile',
+                user_id, new_intro,
+                target='intro'
+            )
             if resp.status != 200: raise aiohttp.client_exceptions.ClientError
 
         return await state.set_state(MultiSelection.ended_change)

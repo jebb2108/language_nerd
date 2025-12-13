@@ -2,15 +2,18 @@ services:
   app:
     build: .
     ports:
-      - "${PAYMENT_PORT}:${PAYMENT_PORT}"
+      - "${TG_BOT_PORT}:${TG_BOT_PORT}"
     environment:
       DEBUG: ${DEBUG}
       LOG_LEVEL: ${LOG_LEVEL}
-      PAYMENT_PORT: ${PAYMENT_PORT}
+      TG_BOT_PORT: ${TG_BOT_PORT}
+      GATEWAY_HOST: ${GATEWAY_HOST}
+      GATEWAY_PORT: ${GATEWAY_PORT}
       ADMIN_ID: ${ADMIN_ID}
       REDIS_URL: ${REDIS_URL}
       BOT_TOKEN: ${BOT_TOKEN}
       ABS_IMG_PATH: ${ABS_IMG_PATH}
+      VERSION: ${VERSION}
     depends_on:
       redis:
         condition: service_healthy

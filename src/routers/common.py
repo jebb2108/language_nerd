@@ -1,10 +1,7 @@
-from datetime import timedelta
-import aiohttp
 from aiogram import Router
 from aiogram.enums import ParseMode
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from aiohttp import ClientResponse
 
 from src.filters.approved import approved
 from src.keyboards.inline_keyboards import get_payment_keyboard
@@ -51,8 +48,18 @@ async def pay_cmd(message: Message, state: FSMContext, rate_limit_info: RateLimi
 
     user_id = message.from_user.id
     gateway = await get_gateway()
-    async with gateway() as session:
-        link = await session.get('yookassa_link', user_id)
+
+    async with gateway:
+        response = await gateway.get('check_user_exists', user_id)
+
+        if response.status_code == 200:
+            response = await gateway.get('yookassa_link', user_id)
+            link = response.json()
+        elif response.status_code == 404:
+            await message.answer("You`re not registered. Press /start to do so")
+            return
+        else:
+            return
 
     logger.debug(
         f"User %s message count: %s",

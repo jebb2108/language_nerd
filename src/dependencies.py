@@ -12,5 +12,5 @@ async def get_gateway() -> "GatewayService":
 
 async def get_redis() -> "RedisService":
     if not redis_service.initialized:
-        redis_service.connect()
+        await redis_service.connect()
     return redis_service

@@ -16,7 +16,7 @@ from src.keyboards.inline_keyboards import (
     get_on_main_menu_keyboard,
 )
 from src.logconf import opt_logger as log
-from src.models import NewUser
+from src.models import User
 from src.translations import MESSAGES, QUESTIONARY, TRANSCRIPTIONS
 
 logger = log.setup_logger("registration_cb_handler")
@@ -162,7 +162,7 @@ async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
     msg = f"{MESSAGES['welcome'][lang_code]}"
     msg += MESSAGES["get_to_know"][lang_code]
 
-    image_from_file = FSInputFile(config.ABS_PATH_TO_IMG_ONE)
+    image_from_file = FSInputFile(config.bot.abs_img_path)
     await callback.message.answer_photo(
         photo=image_from_file,
         caption=msg,
@@ -170,18 +170,18 @@ async def go_to_main_menu(callback: CallbackQuery, state: FSMContext):
         parse_mode=ParseMode.HTML,
     )
     # Отправляем нового пользователя на БД сервер
-    async with gateway() as session:
-        await session.post(
+    async with gateway:
+        await gateway.post(
             'add_user',
-            NewUser(
-            user_id=int(data.get("user_id")),
-            username=data.get("username"),
-            first_name=data.get("first_name"),
-            camefrom=data.get("camefrom"),
-            language=data.get("language"),
-            fluency=int(data.get("fluency")),
-            topics=data.get("topics"),
-            lang_code=lang_code,
+            user_data = User(
+                user_id=int(data.get("user_id")),
+                username=data.get("username"),
+                first_name=data.get("first_name"),
+                camefrom=data.get("camefrom"),
+                language=data.get("language"),
+                fluency=int(data.get("fluency")),
+                topics=data.get("topics"),
+                lang_code=lang_code,
             )
         )
 

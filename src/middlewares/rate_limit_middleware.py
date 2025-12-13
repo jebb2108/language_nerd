@@ -7,7 +7,7 @@ from aiogram import BaseMiddleware
 from aiogram.types import Message
 
 from src.utils.async_timed_queue import AsyncTimedQueue
-from logconf import opt_logger as log
+from src.logconf import opt_logger as log
 
 logger = log.setup_logger('rate_limit_middleware')
 

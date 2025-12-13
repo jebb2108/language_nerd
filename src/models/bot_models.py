@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import Optional, List
 
 from pydantic import BaseModel, Field
@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from src.config import config
 
 
-class NewUser(BaseModel):
+class User(BaseModel):
     """
     Модель нового пользователя (для базы данных).
     """
@@ -21,7 +21,21 @@ class NewUser(BaseModel):
     lang_code: str
 
 
-class NewPayment(BaseModel):
+class Profile(BaseModel):
+    """
+    Модель профиля пользователя (для базы данных)
+    """
+    user_id: int = Field(..., description="User ID")
+    nickname: str = Field(..., description="Уникальный никнейм пользователя")
+    email: str = Field(..., description="Email пользователя")
+    gender: str = Field(..., description="Пол пользователя")
+    intro: str = Field(..., description="Краткая информация о пользователе")
+    birthday: date = Field(..., description="Дата рождения пользователя")
+    dating: Optional[bool] = Field(False, description="Согласие на дэйтинг")
+    status: Optional[str] = Field('rookie', description="Видимый статус пользователя")
+
+
+class Payment(BaseModel):
     """
     Модель платежа (для базы данных).
     """
@@ -34,7 +48,10 @@ class NewPayment(BaseModel):
         "trial", description="Period of payment", examples=["month", "year"]
     )
     trial: Optional[bool] = Field(True, description="If it is trial period for user")
-    untill: Optional[datetime] = (
-        datetime.now(tz=config.bot.tzinfo) + timedelta(days=3)
+    is_active: Optional[bool] = Field(True, description='If this subscription is still active')
+    until: Optional[datetime] = Field(
+        default=datetime.now(tz=config.tzinfo) + timedelta(days=3), description="Trial period"
     )
+
     currency: Optional[str] = Field("RUB", description="Currency of payment")
+    payment_id: Optional[str] = Field(None, description="Payment ID")

@@ -43,7 +43,7 @@ async def run():
 
     redis = await get_redis()
     storage = RedisStorage(
-        redis.get_redis_client(),
+        await redis.get_redis_client(),
         state_ttl=timedelta(minutes=10),
         data_ttl=timedelta(minutes=60)
     )

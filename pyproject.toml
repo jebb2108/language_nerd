@@ -1,6 +1,6 @@
 [project]
 name = "tg-bot-service"
-version = "0.1.0"
+version = "0.2.0"
 description = "Telegram Bot for Learning Languages"
 authors = [
     {name = "Gabriel Bouchard",email = "gabouchard2002@gmail.com"}

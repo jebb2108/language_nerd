@@ -2,7 +2,6 @@ from aiogram import Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
-from aiohttp import ClientResponse
 
 from src.keyboards.inline_keyboards import show_where_from_keyboard
 from src.middlewares.rate_limit_middleware import RateLimitInfo
@@ -33,10 +32,11 @@ async def start_with_polling(message: Message, state: FSMContext, rate_limit_inf
         username = "NO USERNAME"
 
     gateway = await get_gateway()
-    async with gateway() as session:
-        user_exists = await session.get('check_user_exists', user_id)
+    async with gateway:
+        response = await gateway.get('check_user_exists', user_id)
 
-    if user_exists:
+
+    if response.json():
         # если пользователь есть — сразу меню
         return await message.answer(
             text="Press /menu to open menu"

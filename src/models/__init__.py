@@ -1,6 +1,7 @@
 __all__ = [
-    'NewUser',
-    'NewPayment'
+    'User',
+    'Payment',
+    'Profile'
 ]
 
-from .bot_models import NewUser, NewPayment
+from .bot_models import User, Payment, Profile

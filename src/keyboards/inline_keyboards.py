@@ -72,7 +72,7 @@ def show_fluency_keyboard(lang_code, new=False):
 
     return builder.as_markup()
 
-def show_topic_keyboard(lang_code, selected_options: set, new=False):
+def show_topic_keyboard(lang_code, selected_options: list, new=False):
     builder = InlineKeyboardBuilder()
     for key, value in QUESTIONARY["topics"][lang_code].items():
         builder.row(InlineKeyboardButton(
@@ -107,8 +107,8 @@ def confirm_choice_keyboard(lang_code):
 
 def get_on_main_menu_keyboard(lang_code):
     # Формируем URL с user_id для Web App
-    web_app_url = f"https://dict.lllang.site/?v={config.VERSION}"
-    find_partner_url = f"https://chat.lllang.site/?v={config.VERSION}"
+    web_app_url = f"https://dict.lllang.site/?v={config.version}"
+    find_partner_url = f"https://chat.lllang.site/?v={config.version}"
 
     builder = InlineKeyboardBuilder()
     profile_button = InlineKeyboardButton(

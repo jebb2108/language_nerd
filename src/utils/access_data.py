@@ -4,10 +4,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 
 from src.dependencies import get_gateway
+from src.exc import StorageDataException
 
-
-class StorageDataException(Exception):
-    pass
 
 class MultiSelection(StatesGroup):
     waiting_nickname = State()
@@ -21,7 +19,8 @@ class MultiSelection(StatesGroup):
 class DataStorage:
 
     async def get_storage_data(
-        self, user_id: int, state: FSMContext) -> dict:
+        self, user_id: int, state: FSMContext
+    ) -> dict:
         """Достаем нужные данные о пользователе"""
 
         s_data = await state.get_data()
@@ -44,12 +43,16 @@ class DataStorage:
         """Гарантирует, что машина состояние имеет все данные о пользователе"""
 
         gateway = await get_gateway()
-        async with gateway() as session:
-            user_info = await session.get('user_info')
-            profile_info = await session.get('profile_info')
+        async with gateway:
+            user_data = await gateway.get('user_data', user_id, target='users')
+            profile_data = await gateway.get('user_data', user_id, target='profiles')
+
+        user_info = user_data.json()
+        profile_info = profile_data.json()
 
         if not user_info:
             return {}
+
 
         result = {
             "user_id": user_id,
@@ -58,12 +61,13 @@ class DataStorage:
             "language": user_info["language"],
             "fluency": user_info["fluency"],
             "topics": ', '.join(user_info["topics"]),
+            "camefrom": user_info["camefrom"],
             "lang_code": user_info["lang_code"],
             "is_active": user_info["is_active"],
             "due_to": user_info.get('due_to', None)
         }
 
-        if profile_info:
+        if profile_info and not profile_info.get('error', False):
             birthday = profile_info["birthday"]
             if not isinstance(birthday, datetime):
                 birthday = datetime.combine(birthday, time.min)
@@ -71,14 +75,18 @@ class DataStorage:
             result.update(
                 {
                     "age": (datetime.now() - birthday).days // 365,
+                    "birthday": profile_info["birthday"],
                     "nickname": profile_info["nickname"],
+                    "email": profile_info["email"],
+                    "gender": profile_info["gender"],
                     "dating": profile_info["dating"],
-                    "status": profile_info["status"],
-                    "about": profile_info["about"],
+                    "intro": profile_info['intro'],
+                    "status": profile_info["status"]
                 }
             )
 
         return result
+
 
 
 data_storage = DataStorage()
