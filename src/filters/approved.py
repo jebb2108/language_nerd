@@ -31,7 +31,9 @@ async def approved(callback: Union["CallbackQuery", "Message"], state: FSMContex
         is_active = True if data and str(data.get('is_active', False)).lower() == 'true' else False
 
         # При передаче FSM обновляет состояние памяти с новым due_to
-        if data and state: await state.update_data(due_to=due_to, is_active=is_active)
+        if state: await state.update_data(due_to=due_to, is_active=is_active)
+
+        if not due_to: return True # Пользователь еще не зарегистрирован
 
         # При подходящем статусе ответа выполняет проверки:
         if due_to and status_code == 200:
